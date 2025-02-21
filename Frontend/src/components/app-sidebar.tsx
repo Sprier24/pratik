@@ -215,6 +215,18 @@ const data = {
         },
       ],
     },
+    {
+      title: "Calendar",
+      url: "#",
+      icon: CirclePlay,
+      isActive: window.location.pathname === "",
+      items: [
+        {
+          title: "Calendar",
+          url: "/calendar",
+        },
+      ],
+    },
   ],
 }
 

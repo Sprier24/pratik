@@ -113,7 +113,6 @@ export default function LeadPage() {
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
-                        {/* Add button in the header */}
                         <div className="ml-auto">
                             <Button>Lead Table</Button>
                         </div>
