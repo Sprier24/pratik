@@ -58,10 +58,6 @@ const data = {
           url: "/lead",
         },
         {
-          title: "List",
-          url: "",
-        },
-        {
           title: "Graph",
           url: "",
         },
@@ -82,10 +78,6 @@ const data = {
           url: "/invocie",
         },
         {
-          title: "List",
-          url: "",
-        },
-        {
           title: "Graph",
           url: "",
         },
@@ -102,15 +94,11 @@ const data = {
       isActive: window.location.pathname === "",
       items: [
         {
-          title: "List",
+          title: "Table",
           url: "/reminder",
         },
         {
           title: "Email",
-          url: "",
-        },
-        {
-          title: "Create",
           url: "",
         },
       ],
@@ -124,10 +112,6 @@ const data = {
         {
           title: "Create",
           url: "/deal",
-        },
-        {
-          title: "List",
-          url: "",
         },
         {
           title: "Graph",
@@ -150,14 +134,6 @@ const data = {
           url: "/task",
         },
         {
-          title: "List",
-          url: "",
-        },
-        {
-          title: "Graph",
-          url: "",
-        },
-        {
           title: "Drag & Drop",
           url: "",
         }
@@ -172,10 +148,6 @@ const data = {
         {
           title: "Create",
           url: "/complaint",
-        },
-        {
-          title: "List",
-          url: "",
         },
         {
           title: "Email",
@@ -194,10 +166,6 @@ const data = {
           url: "/contact",
         },
         {
-          title: "List",
-          url: "",
-        },
-        {
           title: "Email",
           url: "",
         },
@@ -212,10 +180,6 @@ const data = {
         {
           title: "Create",
           url: "/Account",
-        },
-        {
-          title: "List",
-          url: "",
         },
       ],
     },
@@ -248,10 +212,6 @@ const data = {
         {
           title: "Create",
           url: "/Scheduled",
-        },
-        {
-          title: "List",
-          url: "",
         },
       ],
     },

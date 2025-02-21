@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import reminder from "../reminder/table"
 import {
     SidebarInset,
     SidebarProvider,
@@ -8,7 +7,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button" // Import Button component
+import { Button } from "@/components/ui/button"
 
 
 export default function CertificatePage() {
@@ -46,12 +45,9 @@ export default function CertificatePage() {
                     <Card className="max-w-2xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Invocie Manager</CardTitle>
-                            <CardDescription className="text-center">
-                                Manage and track your Invocie effectively.
-                            </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <reminder />
+
                         </CardContent>
                     </Card>
                 </div>

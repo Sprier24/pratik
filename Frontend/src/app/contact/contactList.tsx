@@ -126,13 +126,8 @@ export const columns = [
   { name: "Contact Number", uid: "contactNumber", sortable: true },
   { name: "Email Address", uid: "emailAddress", sortable: true },
   { name: "Company Address", uid: "address", sortable: true },
-  { name: "Product Name", uid: "productName", sortable: true },
-  { name: "Product Amount", uid: "amount", sortable: true },
   { name: "GST Number", uid: "gstNumber", sortable: true },
-  { name: "Status", uid: "status", sortable: true },
-  { name: "Lead Date", uid: "date", sortable: true },
-  { name: "End Date", uid: "endDate", sortable: true },
-  { name: "Notes", uid: "notes", sortable: true },
+  { name: "Notes", uid: "description", sortable: true },
   { name: "Actions", uid: "isActive", sortable: true },
 ];
 
@@ -144,13 +139,8 @@ export const users = [
     contactNumber: "+91 9876543210",
     emailAddress: "abc@gmail.com",
     address: "Surat",
-    productName: "CRM",
-    amount: "1000",
     gstNumber: "QWE123ASD456ZXC789",
-    status: "New",
-    date: "01-02-2025",
-    endDate: "28-02-2025",
-    notes: "Ok",
+    description: "Information Technology Company",
   },
 ];
 
@@ -160,19 +150,14 @@ const INITIAL_VISIBLE_COLUMNS = [
   "contactNumber",
   "emailAddress",
   "address",
-  "productName",
-  "amount",
   "gstNumber",
-  "status",
-  "date",
-  "endDate",
-  "notes",
+  "description",
   "isActive",
 ];
 
 type User = (typeof users)[0];
 
-export default function Leadlist() {
+export default function Contactlist() {
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState<Selection>(

@@ -167,7 +167,7 @@ const INITIAL_VISIBLE_COLUMNS = [
     "date",
     "endDate",
     "notes",
-    "isActive"
+    "isActive",
 ];
 
 type User = (typeof users)[0];

@@ -121,49 +121,52 @@ export const ChevronDownIcon = ({ strokeWidth = 1.5, ...otherProps }: IconSvgPro
 };
 
 export const columns = [
-    { name: "Task", uid: "subject", sortable: true },
-    { name: "Related To", uid: "relatedTo", sortable: true },
-    { name: "Name", uid: "name", sortable: true },
-    { name: "Assigned By", uid: "assigned", sortable: true },
-    { name: "Task Date", uid: "taskDate", sortable: true },
-    { name: "Due Date", uid: "dueDate", sortable: true },
+    { name: "Subject", uid: "subject", sortable: true },
+    { name: "Assigned By", uid: "assignedUser", sortable: true },
+    { name: "Attender Name", uid: "customer", sortable: true },
+    { name: "Location", uid: "location", sortable: true },
     { name: "Status", uid: "status", sortable: true },
+    { name: "Event Type", uid: "eventType", sortable: true },
+    { name: "Recurrence", uid: "recurrence", sortable: true },
     { name: "Priority", uid: "priority", sortable: true },
-    { name: "Notes", uid: "notes", sortable: true },
+    { name: "Event Date", uid: "date", sortable: true },
+    { name: "Notes", uid: "description", sortable: true },
     { name: "Actions", uid: "isActive", sortable: true },
 ];
 
 export const users = [
     {
         id: 1,
-        subject: "Invoice",
-        relatedTo: "CRM",
-        name: "Jack",
-        assigned: "Peter",
-        taskDate: "01-02-2025",
-        dueDate: "10-02-2025",
-        status: "Pending",
+        subject: "Japan Techfest",
+        assignedUser: "Infosys",
+        customer: "Peter",
+        location: "Mumbai",
+        status: "Scheduled",
+        eventType: "Meeting",
+        recurrence: "one time",
         priority: "High",
-        notes: "Not Ok",
+        date: "28-02-2025",
+        description: "Global Tech Fest",
     },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = [
     "subject",
-    "relatedTo",
-    "name",
-    "assigned",
-    "taskDate",
-    "dueDate",
+    "assignedUser",
+    "customer",
+    "location",
     "status",
+    "eventType",
+    "recurrence",
     "priority",
-    "notes",
+    "date",
+    "description",
     "isActive",
 ];
 
 type User = (typeof users)[0];
 
-export default function Tasklist() {
+export default function Scheduledlist() {
     const [filterValue, setFilterValue] = React.useState("");
     const [selectedKeys, setSelectedKeys] = React.useState<Selection>(new Set([]));
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(
@@ -411,7 +414,7 @@ export default function Tasklist() {
                     </TableColumn>
                 )}
             </TableHeader>
-            <TableBody emptyContent={"No Task Available"} items={sortedItems}>
+            <TableBody emptyContent={"No Lead Available"} items={sortedItems}>
                 {(item) => (
                     <TableRow key={item.id}>
                         {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

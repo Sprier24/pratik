@@ -122,57 +122,48 @@ export const ChevronDownIcon = ({ strokeWidth = 1.5, ...otherProps }: IconSvgPro
 
 export const columns = [
   { name: "Company Name", uid: "companyName", sortable: true },
-  { name: "Customer Name", uid: "customerName", sortable: true },
+  { name: "Customer Name", uid: "complainerName", sortable: true },
   { name: "Contact Number", uid: "contactNumber", sortable: true },
   { name: "Email Address", uid: "emailAddress", sortable: true },
-  { name: "Company Address", uid: "address", sortable: true },
-  { name: "Product Name", uid: "productName", sortable: true },
-  { name: "Product Amount", uid: "amount", sortable: true },
-  { name: "GST Number", uid: "gstNumber", sortable: true },
-  { name: "Status", uid: "status", sortable: true },
-  { name: "Lead Date", uid: "date", sortable: true },
-  { name: "End Date", uid: "endDate", sortable: true },
-  { name: "Notes", uid: "notes", sortable: true },
-  { name: "Actions", uid: "isActive", sortable: true },
+  { name: "Subject", uid: "subject", sortable: true },
+  { name: "Date", uid: "date", sortable: true },
+  { name: "Status", uid: "caseStatus", sortable: true },
+  { name: "Priority", uid: "priority", sortable: true },
+  { name: "Problem", uid: "caseOrigin", sortable: true },
+  { name: "Action", uid: "isActive", sortable: true },
 ];
 
 export const users = [
   {
     id: 1,
     companyName: "ABC",
-    customerName: "Jack",
+    complainerName: "Jack",
     contactNumber: "+91 9876543210",
     emailAddress: "abc@gmail.com",
-    address: "Surat",
-    productName: "CRM",
-    amount: "1000",
-    gstNumber: "QWE123ASD456ZXC789",
-    status: "New",
+    subject: "CRM",
     date: "01-02-2025",
-    endDate: "28-02-2025",
-    notes: "Ok",
+    caseStatus: "Pending",
+    priority: "High",
+    caseOrigin: "Issue in Invoice",
   },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = [
   "companyName",
-  "customerName",
+  "complainerName",
   "contactNumber",
   "emailAddress",
-  "address",
-  "productName",
-  "amount",
-  "gstNumber",
-  "status",
+  "subject",
   "date",
-  "endDate",
-  "notes",
+  "caseStatus",
+  "priority",
+  "caseOrigin",
   "isActive",
 ];
 
 type User = (typeof users)[0];
 
-export default function Leadlist() {
+export default function Complaintlist() {
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState<Selection>(
