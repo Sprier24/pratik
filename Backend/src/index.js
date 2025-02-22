@@ -10,6 +10,9 @@ const routes = require("./routes/api/v1/index");
 const connectDB = require("./db/mongoosedb");
 const cors = require('cors');
 const { storeNotification } = require('./controller/notification.controller');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // Connect to the database
 connectDB();
@@ -48,7 +51,7 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|gif/;
     const mimeType = allowedTypes.test(file.mimetype);
     const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    
+
     if (mimeType && extName) {
       return cb(null, true);
     }
@@ -62,7 +65,8 @@ app.post('/upload', upload.single('image'), (req, res) => {
 });
 
 // API routes
-app.use("/api/v1", routes);
+app.use(express.json()); // Ensure this is added to parse JSON bodies
+app.use('/api', require('./routes/calenderRoutes')); // Adjust the path as needed
 
 // Define your routes here
 app.get("/", (req, res) => res.send("Home Page"));

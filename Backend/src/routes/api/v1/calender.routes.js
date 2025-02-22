@@ -1,12 +1,12 @@
 const express = require("express");
 
-const { getAllData, updateData, createData, deleteData } = require("../../../controller/calender.controller");
+const { getEvent, updateEvent, createEvent, deleteEvent } = require("../../../controller/calender.controller");
 
 const router = express.Router();
 
-router.post("/createData", createData);
-router.get("/getAllData", getAllData);
-router.put("/updateData/:id", updateData);  // Add this route for updating data
-router.delete("/deleteData", deleteData);  // Add this route for deleting data
+router.post("/createEvent", createEvent);
+router.get("/getEvent", getEvent);
+router.put("/updateEvent/:id", updateEvent); 
+router.delete("/deleteEvent/:id", deleteEvent);
 
 module.exports = router;

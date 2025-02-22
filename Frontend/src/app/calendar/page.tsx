@@ -25,12 +25,12 @@ export default function CalendarPage() {
   ];
 
   useEffect(() => {
-    const dummyEvents = [
-      { id: 1, title: 'Team Meeting', date: new Date(2023, 4, 15), calendarId: 2 },
-      { id: 2, title: 'Birthday Party', date: new Date(2023, 4, 20), calendarId: 3 },
-      { id: 3, title: 'Dentist Appointment', date: new Date(2023, 4, 25), calendarId: 1 },
-    ];
-    setEvents(dummyEvents);
+    const getEvent = async () => {
+      const response = await fetch('http://localhost:8000/api/v1/calender/getEvent');
+      const data = await response.json();
+      setEvents(data);
+    };
+    getEvent();
   }, []);
 
   const handlePrevMonth = () => {
@@ -41,27 +41,45 @@ export default function CalendarPage() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
+  const handleMonthChange = (e) => {
+    const newMonth = parseInt(e.target.value);
+    setCurrentDate(new Date(currentDate.getFullYear(), newMonth, 1));
+  };
+
+  const handleYearChange = (e) => {
+    const newYear = parseInt(e.target.value);
+    setCurrentDate(new Date(newYear, currentDate.getMonth(), 1));
+  };
+
   const handleAddEvent = () => {
     setSelectedEvent(null);
     setShowEventModal(true);
   };
 
-  const handleEditEvent = (event) => {
-    setSelectedEvent(event);
-    setShowEventModal(true);
+  const handleupdateEvent = async (newEvent) => {
+    const response = await fetch(`http://localhost:8000/api/v1/calender/updateEvent${newEvent.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEvent),
+    });
+    const data = await response.json();
+    setEvents(event.map((event) => (event.id === newEvent.id ? data : event)));
   };
 
-  const handleDeleteEvent = (eventId) => {
+
+  const handleDeleteEvent = async (eventId) => {
+    await fetch(`https://localhost:8000/api/v1/calender/deleteEvent${eventId}`, { method: 'DELETE' });
     setEvents(events.filter((event) => event.id !== eventId));
   };
 
-  const handleSaveEvent = (newEvent) => {
-    if (selectedEvent) {
-      setEvents(events.map((event) => (event.id === selectedEvent.id ? newEvent : event)));
-    } else {
-      setEvents([...events, { ...newEvent, id: events.length + 1 }]);
-    }
-    setShowEventModal(false);
+  const handlecreateEvent = async (newEvent) => {
+    const response = await fetch('http://localhost:8000/api/v1/calender/createEvent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEvent),
+    });
+    const data = await response.json();
+    setEvents([...event, data]);
   };
 
   const renderCalendarDays = () => {
@@ -82,14 +100,16 @@ export default function CalendarPage() {
       days.push(
         <div
           key={day}
-          className={`p-2 border border-gray-200 ${isToday ? 'bg-gradient-to-r from-green-400 via-green-600 to-green-800 text-white' : ''}`}
+          className={`p-2 border border-gray-200 ${isToday ? 'relative' : ''}`}
         >
-          <div className="font-bold">{day}</div>
+          <div className={`font-bold ${isToday ? 'flex items-center justify-center w-6 h-6 bg-blue-500 text-white rounded-full' : ''}`}>
+            {day}
+          </div>
           {dayEvents.map((event) => (
             <div
               key={event.id}
-              className={`${calendars.find((cal) => cal.id === event.calendarId).color} text-white p-1 mb-1 rounded cursor-pointer`}
-              onClick={() => handleEditEvent(event)}
+              className={`${calendar.find((cal) => cal.id === event.calendarId).color} text-white p-1 mb-1 rounded cursor-pointer`}
+              onClick={() => handleupdateEvent(event)}
             >
               {event.title}
             </div>
@@ -99,6 +119,13 @@ export default function CalendarPage() {
     }
     return days;
   };
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const years = Array.from({ length: 2100 - 1900 + 1 }, (_, i) => 1900 + i);
 
   return (
     <SidebarProvider>
@@ -126,9 +153,38 @@ export default function CalendarPage() {
         </header>
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">
-              {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </h1>
+            <div className="flex space-x-2">
+              <select
+                value={currentDate.getMonth()}
+                onChange={handleMonthChange}
+                className="bg-lime-500 dark:bg-lime-700 p-2 rounded hover:bg-lime-600 dark:hover:bg-lime-800 focus:outline-none focus:ring-2 focus:ring-lime-400 dark:focus:ring-lime-500 text-white"
+              >
+                {months.map((month, index) => (
+                  <option key={month} value={index} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    {month}
+                  </option>
+                ))}
+              </select>
+              <div className="relative">
+                <select
+                  value={currentDate.getFullYear()}
+                  onChange={handleYearChange}
+                  className="bg-lime-500 dark:bg-lime-700 p-2 rounded hover:bg-lime-600 dark:hover:bg-lime-800 focus:outline-none focus:ring-2 focus:ring-lime-400 dark:focus:ring-lime-500 text-white appearance-none"
+                  style={{ width: '100px', overflowY: 'auto' }}
+                >
+                  {Array.from({ length: 2100 - 1900 + 1 }, (_, i) => 1900 + i).map((year) => (
+                    <option key={year} value={year} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                      {year}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
             <div className="flex space-x-2">
               <button
                 onClick={handlePrevMonth}
@@ -161,7 +217,7 @@ export default function CalendarPage() {
           {showEventModal && (
             <EventModal
               event={selectedEvent}
-              onSave={handleSaveEvent}
+              onSave={handleAddEvent}
               onClose={() => setShowEventModal(false)}
               onDelete={handleDeleteEvent}
               calendars={calendars}
@@ -185,18 +241,20 @@ const EventModal = ({ event, onSave, onClose, onDelete, calendars }) => {
 
   const handleDelete = () => {
     if (event) {
-      onDelete(event.id);
-      onClose();
+      onDelete(event.id); // Directly remove the event from the state without confirmation
+      onClose(); // Close the modal after deletion
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-4 rounded-lg w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">{event ? 'Edit Event' : 'Add Event'}</h2>
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+          {event ? 'Edit Event' : 'Add Event'}
+        </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="title" className="block mb-2">
+            <label htmlFor="title" className="block mb-2 text-gray-900 dark:text-white">
               Title
             </label>
             <input
@@ -204,12 +262,12 @@ const EventModal = ({ event, onSave, onClose, onDelete, calendars }) => {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="date" className="block mb-2">
+            <label htmlFor="date" className="block mb-2 text-gray-900 dark:text-white">
               Date
             </label>
             <input
@@ -217,19 +275,19 @@ const EventModal = ({ event, onSave, onClose, onDelete, calendars }) => {
               id="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="calendar" className="block mb-2">
+            <label htmlFor="calendar" className="block mb-2 text-gray-900 dark:text-white">
               Calendar
             </label>
             <select
               id="calendar"
               value={calendarId}
               onChange={(e) => setCalendarId(parseInt(e.target.value))}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {calendars.map((calendar) => (
                 <option key={calendar.id} value={calendar.id}>
@@ -242,7 +300,7 @@ const EventModal = ({ event, onSave, onClose, onDelete, calendars }) => {
             {event && (
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={handleDelete} // Directly delete the event without confirmation
                 className="bg-red-500 text-white p-2 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
               >
                 Delete
@@ -251,7 +309,7 @@ const EventModal = ({ event, onSave, onClose, onDelete, calendars }) => {
             <button
               type="button"
               onClick={onClose}
-              className="bg-lime-500 p-2 rounded hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="bg-lime-500 text-white p-2 rounded hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-400"
             >
               Cancel
             </button>
