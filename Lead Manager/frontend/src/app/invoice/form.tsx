@@ -168,7 +168,7 @@ export default function InvoiceForm() {
                 <FormLabel>Contact Number (Optional)</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter contact number with country code"
+                    placeholder="Enter contact number"
                     type="tel"
                     {...field}
                     onChange={(e) => {
@@ -325,7 +325,6 @@ export default function InvoiceForm() {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="remainingAmount"

@@ -15,7 +15,7 @@ import axios from "axios";
 import { format } from "date-fns"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface Contact {
@@ -27,7 +27,6 @@ interface Contact {
     address: string;
     gstNumber: string;
     description: string;
-
 }
 
 const generateUniqueId = () => {
@@ -40,14 +39,14 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "COMPANY NAME", uid: "companyName", sortable: true, width: "120px" },
-    { name: "CUSTOMER NAME", uid: "customerName", sortable: true, width: "120px" },
-    { name: "CONTACT NUMBER", uid: "contactNumber", sortable: true, width: "150px" },
-    { name: "EMAIL ADDRESS", uid: "emailAddress", sortable: true, width: "120px" },
-    { name: "ADDRESS", uid: "address", sortable: true, width: "150px" },
-    { name: "GST NUMBER", uid: "gstNumber", sortable: true, width: "100px" },
-    { name: "DESCRIPTION", uid: "description", sortable: true, width: "100px" },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Company Name", uid: "companyName", sortable: true, width: "120px" },
+    { name: "Client / Customer Name", uid: "customerName", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contactNumber", sortable: true, width: "150px" },
+    { name: "Email Address", uid: "emailAddress", sortable: true, width: "120px" },
+    { name: "Company Address", uid: "address", sortable: true, width: "150px" },
+    { name: "GST Number", uid: "gstNumber", sortable: true, width: "100px" },
+    { name: "Notes", uid: "description", sortable: true, width: "100px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 
 ];
 
@@ -56,10 +55,13 @@ const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber",
 const contactSchema = z.object({
     companyName: z.string().min(2, { message: "Company name is required." }),
     customerName: z.string().min(2, { message: "Customer name is required." }),
-    contactNumber: z.string().optional(),
+    contactNumber: z
+        .string()
+        .regex(/^\d*$/, { message: "Contact number must be numeric" })
+        .nonempty({ message: "Contact number is required" }),
     emailAddress: z.string().email({ message: "Invalid email address." }),
-    address: z.string().min(2, { message: "Address is required." }),
-    gstNumber: z.string().min(1, { message: "GST Number is required." }),
+    address: z.string().min(2, { message: "Company address is required." }),
+    gstNumber: z.string().min(1, { message: "GST number is required." }),
     description: z.string().optional(),
 });
 
@@ -67,7 +69,7 @@ export default function ContactTable() {
     const [contact, setContact] = useState<Contact[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
-    const router = useRouter(); 
+    const router = useRouter();
 
     const fetchContacts = async () => {
         try {
@@ -234,7 +236,7 @@ export default function ContactTable() {
         });
         setIsEditOpen(true);
     };
-    
+
 
     // Function to handle delete button click
     const handleDeleteClick = async (contact: Contact) => {
@@ -386,7 +388,7 @@ export default function ContactTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -397,7 +399,7 @@ export default function ContactTable() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -410,7 +412,14 @@ export default function ContactTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -427,25 +436,14 @@ export default function ContactTable() {
                             variant="default"
                             size="default"
                             endContent={<PlusCircle />} // Add an icon at the end
-                            onClick={() => router.push("/contact")} 
+                            onClick={() => router.push("/contact")}
                         >
-                            Add New
+                            Create Contact
                         </Button>
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {contact.length} complaints</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {contact.length} contact</span>
                 </div>
             </div>
         );
@@ -546,133 +544,134 @@ export default function ContactTable() {
             </Table>
 
 
-            
+
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                        <DialogContent className="sm:max-w-[600px]">
-                            <DialogHeader>
-                                <DialogTitle>Edit Task</DialogTitle>
-                                <DialogDescription>
-                                    Update the task details.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit((values) => handleEditClick(values))} className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="companyName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Company Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter company name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="customerName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Customer Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter customer name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                    <DialogHeader>
+                        <DialogTitle>Update Contact</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit((values) => handleEditClick(values))} className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="companyName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter company name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="customerName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Client / Customer Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter client / customer Name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="contactNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Contact Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter contact number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="emailAddress"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email Address</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter email address" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="contactNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Contact Number</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter contact number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="emailAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email Address</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter valid email address" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="address"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Address</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter address" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="gstNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>GST Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter GST number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Address</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter company address" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="gstNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>GST Number</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter GST number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="description"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Description</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Enter description" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Notes (Optional)</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                placeholder="Enter more details here..."
+                                                {...field}
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows={3}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-
-                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Updating Contact...
-                                            </>
-                                        ) : (
-                                            "Update Contact"
-                                        )}
-                                    </Button>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating Contact...
+                                    </>
+                                ) : (
+                                    "Update Contact"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
 
         </div>
 

@@ -125,7 +125,7 @@ export default function DealForm() {
                                 <FormLabel>Contact Number</FormLabel>
                                 <FormControl>
                                     <Input
-                                        placeholder="Enter contact number with country code"
+                                        placeholder="Enter contact number"
                                         type="tel"
                                         {...field}
                                         onChange={(e) => {

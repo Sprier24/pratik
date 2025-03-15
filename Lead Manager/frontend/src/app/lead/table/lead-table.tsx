@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, Edit, Trash2, Loader2, PlusCircle, SearchIcon, ChevronDownIcon } from "lucide-react"
@@ -13,9 +14,9 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react"
 import axios from "axios";
 import { format } from "date-fns"
-import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
+import { Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface Lead {
@@ -35,119 +36,102 @@ interface Lead {
     isActive: string;
 }
 
-
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0]; // Returns "YYYY-MM-DD"
+    return date.toISOString().split("T")[0];
 };
 
 const columns = [
-    { name: "COMPANY", uid: "companyName", sortable: true, width: "120px" },
-    { name: "CUSTOMER", uid: "customerName", sortable: true, width: "120px" },
-    { name: "CONTACT", uid: "contactNumber", sortable: true, width: "100px" },
-    { name: "EMAIL", uid: "emailAddress", sortable: true, width: "150px" },
-    { name: "ADDRESS", uid: "address", sortable: true, width: "180px" },
-    { name: "PRODUCT", uid: "productName", sortable: true, width: "120px" },
-    { name: "AMOUNT", uid: "amount", sortable: true, width: "100px" },
-    { name: "GST", uid: "gstNumber", sortable: true, width: "100px" },
-    { name: "STATUS", uid: "status", sortable: true, width: "100px" },
+    { name: "Company Name", uid: "companyName", sortable: true, width: "120px" },
+    { name: "Client / Customer Name", uid: "customerName", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contactNumber", sortable: true, width: "100px" },
+    { name: "Email Address", uid: "emailAddress", sortable: true, width: "150px" },
+    { name: "Company Address", uid: "address", sortable: true, width: "180px" },
+    { name: "GST Number", uid: "gstNumber", sortable: true, width: "100px" },
+    { name: "Product Name", uid: "productName", sortable: true, width: "120px" },
+    { name: "Product Amount", uid: "amount", sortable: true, width: "100px" },
     {
-        name: "DATE",
+        name: "Lead Date",
         uid: "date",
         sortable: true,
         width: "170px",
         render: (row: any) => formatDate(row.date),
-    }
-    ,
+    },
     {
-        name: "END DATE",
+        name: "Final Date",
         uid: "endDate",
         sortable: true,
         width: "120px",
         render: (row: any) => formatDate(row.endDate)
     },
     {
-        name: "NOTES",
+        name: "Notes",
         uid: "notes",
         sortable: true,
         width: "180px"
     },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Status", uid: "status", sortable: true, width: "100px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "productName", "amount", "gstNumber", "status", "date", "endDate", "notes", "actions"];
 
 const formSchema = z.object({
-    companyName: z.string().min(2, { message: "Company name is required." }),
-    customerName: z.string().min(2, { message: "Customer name must be at least 2 characters." }),
-    contactNumber: z.string().optional(), // Optional field
+    companyName: z.string().nonempty({ message: "Company name is required" }),
+    customerName: z.string().nonempty({ message: "Customer name is required" }),
+    contactNumber: z
+        .string()
+        .regex(/^\d*$/, { message: "Contact number must be numeric" })
+        .nonempty({ message: "Contact number is required" }),
     emailAddress: z.string().email({ message: "Invalid email address" }),
-    address: z.string().min(2, { message: "Address is required." }),
-    productName: z.string().min(2, { message: "Product name is required." }),
-    amount: z.number().positive({ message: "Amount must be positive." }),
-    gstNumber: z.string().min(1, { message: "GST Number is required." }),
-    status: z.enum(["New", "Discussion", "Demo", "Proposal", "Decided"]),
-    date: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: "Invalid date",
-    }).transform((val) => new Date(val)),
-
-    endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: "Invalid date",
-    }).transform((val) => new Date(val)),
+    address: z.string().nonempty({ message: "Company address is required" }),
+    productName: z.string().nonempty({ message: "Product name is required" }),
+    amount: z.number().positive({ message: "Product amount is required" }),
+    gstNumber: z.string().nonempty({ message: "GST number is required" }),
+    status: z.enum(["Proposal", "New", "Discussion", "Demo", "Decided"]),
+    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Lead Date is required" }),
+    endDate: z.date().refine((val) => !isNaN(val.getTime()), { message: "Final Date is required" }),
     notes: z.string().optional(),
     isActive: z.boolean(),
-})
+});
 
 export default function LeadTable() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
 
-
-
     const fetchLeads = async () => {
         try {
             const response = await axios.get(
                 "http://localhost:8000/api/v1/lead/getAllLeads"
             );
-
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
                 type: typeof response.data,
                 hasData: 'data' in response.data
             });
-
-            // Handle the response based on its structure
             let leadsData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...leads] }
                 leadsData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...leads]
                 leadsData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
-
-            // Ensure leadsData is an array
             if (!Array.isArray(leadsData)) {
                 leadsData = [];
             }
-
-            // Map the data with safe key generation
             const leadsWithKeys = leadsData.map((lead: Lead) => ({
                 ...lead,
                 key: lead._id || generateUniqueId()
             }));
-
             setLeads(leadsWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching leads:", error);
             if (axios.isAxiosError(error)) {
@@ -155,7 +139,7 @@ export default function LeadTable() {
             } else {
                 setError("Failed to fetch leads.");
             }
-            setLeads([]); // Set empty array on error
+            setLeads([]);
         }
     };
 
@@ -173,7 +157,7 @@ export default function LeadTable() {
         direction: "ascending",
     });
     const [page, setPage] = useState(1);
-    const router = useRouter(); 
+    const router = useRouter();
 
     // Form setup
     const form = useForm<z.infer<typeof formSchema>>({
@@ -307,11 +291,7 @@ export default function LeadTable() {
         }
     };
 
-
-
-
     const [isSubmitting, setIsSubmitting] = useState(false)
-
 
     async function onEdit(values: z.infer<typeof formSchema>) {
         if (!selectedLead?._id) return;
@@ -358,11 +338,11 @@ export default function LeadTable() {
         if ((columnKey === "date" || columnKey === "endDate") && cellValue) {
             return formatDate(cellValue);
         }
-        
+
         if (columnKey === "notes") {
-            return cellValue || "No note available";
+            return cellValue || "N/A";
         }
-        
+
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
@@ -427,8 +407,8 @@ export default function LeadTable() {
                 <div className="flex justify-between gap-3 items-end">
                     <Input
                         isClearable
-                        className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        className="w-full sm:max-w-[80%]"
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -439,7 +419,7 @@ export default function LeadTable() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -452,7 +432,14 @@ export default function LeadTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -469,25 +456,14 @@ export default function LeadTable() {
                             variant="default"
                             size="default"
                             endContent={<PlusCircle />} // Add an icon at the end
-                            onClick={() => router.push("/lead")} 
+                            onClick={() => router.push("/lead")}
                         >
-                            Add New
+                            Create Lead
                         </Button>
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {leads.length} leads</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {leads.length} lead</span>
                 </div>
             </div>
         );
@@ -587,14 +563,10 @@ export default function LeadTable() {
                 </TableBody>
             </Table>
 
-
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
                     <DialogHeader>
-                        <DialogTitle>Edit Lead</DialogTitle>
-                        <DialogDescription>
-                            Update the lead details.
-                        </DialogDescription>
+                        <DialogTitle>Update Lead</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
@@ -617,9 +589,9 @@ export default function LeadTable() {
                                     name="customerName"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Customer Name</FormLabel>
+                                            <FormLabel>Client / Customer Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter customer name" {...field} />
+                                                <Input placeholder="Enter client / customer name" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -630,12 +602,20 @@ export default function LeadTable() {
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <FormField
                                     control={form.control}
-                                    name="emailAddress"
+                                    name="contactNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Email Address</FormLabel>
+                                            <FormLabel>Contact Number</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter email address" {...field} />
+                                                <Input
+                                                    placeholder="Enter contact number"
+                                                    type="tel"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -643,18 +623,32 @@ export default function LeadTable() {
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="address"
+                                    name="emailAddress"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Address</FormLabel>
+                                            <FormLabel>Email Address</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter address" {...field} />
+                                                <Input placeholder="Enter valid email address" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Company Address</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter full company address" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <FormField
@@ -675,10 +669,10 @@ export default function LeadTable() {
                                     name="amount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Amount</FormLabel>
+                                            <FormLabel>Product Amount</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Enter amount"
+                                                    placeholder="Enter product amount"
                                                     type="number"
                                                     {...field}
                                                     onChange={(e) => {
@@ -718,28 +712,12 @@ export default function LeadTable() {
                                                     {...field}
                                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 >
+                                                    <option value="Proposal">Proposal</option>
                                                     <option value="New">New</option>
                                                     <option value="Discussion">Discussion</option>
                                                     <option value="Demo">Demo</option>
-                                                    <option value="Proposal">Proposal</option>
                                                     <option value="Decided">Decided</option>
                                                 </select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="contactNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Contact Number</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter contact number" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -753,7 +731,7 @@ export default function LeadTable() {
                                     name="date"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Start Date</FormLabel>
+                                            <FormLabel>Lead Date</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
@@ -769,7 +747,7 @@ export default function LeadTable() {
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <Calendar
                                                         mode="single"
-                                                        
+
                                                         onSelect={field.onChange}
                                                         initialFocus
                                                     />
@@ -779,13 +757,12 @@ export default function LeadTable() {
                                         </FormItem>
                                     )}
                                 />
-
                                 <FormField
                                     control={form.control}
                                     name="endDate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>End Date</FormLabel>
+                                            <FormLabel>Final Date</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
@@ -801,7 +778,7 @@ export default function LeadTable() {
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <Calendar
                                                         mode="single"
-                                                        
+
                                                         onSelect={field.onChange}
                                                         initialFocus
                                                     />
@@ -819,12 +796,13 @@ export default function LeadTable() {
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Notes</FormLabel>
+                                        <FormLabel>Notes (Optional)</FormLabel>
                                         <FormControl>
                                             <textarea
-                                                placeholder="Enter notes"
+                                                placeholder="Enter more details here..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows={3}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -846,9 +824,7 @@ export default function LeadTable() {
                     </Form>
                 </DialogContent>
             </Dialog>
-
         </div>
-
     );
 }
 

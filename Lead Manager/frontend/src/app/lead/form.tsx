@@ -109,7 +109,7 @@ export default function LeadForm() {
                             <FormItem>
                                 <FormLabel>Client / Customer Name</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Enter client / customer Name" {...field} />
+                                    <Input placeholder="Enter client / customer name" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

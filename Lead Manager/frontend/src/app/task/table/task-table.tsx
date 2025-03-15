@@ -15,7 +15,7 @@ import axios from "axios";
 import { format } from "date-fns"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface Task {
@@ -41,52 +41,49 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "TASK", uid: "subject", sortable: true, width: "120px" },
-    { name: "NAME", uid: "name", sortable: true, width: "120px" },
-    { name: "ASSIGNED TO", uid: "assigned", sortable: true, width: "150px" },
-    { name: "RELATED TO", uid: "relatedTo", sortable: true, width: "120px" },
+    { name: "Subject", uid: "subject", sortable: true, width: "120px" },
+    { name: "Related To", uid: "relatedTo", sortable: true, width: "120px" },
+    { name: "Name", uid: "name", sortable: true, width: "120px" },
+    { name: "Assigned By", uid: "assigned", sortable: true, width: "150px" },
+    { name: "Task Notes", uid: "notes", sortable: true, width: "100px" },
     {
-        name: "TASK DATE",
+        name: "Task Date",
         uid: "taskDate",
         sortable: true,
         width: "170px",
         render: (row: any) => formatDate(row.date),
     },
     {
-        name: "DUE DATE",
+        name: "Due Date",
         uid: "dueDate",
         sortable: true,
         width: "170px",
         render: (row: any) => formatDate(row.date),
     },
-    { name: "STATUS", uid: "status", sortable: true, width: "100px" },
-    { name: "PRIORITY", uid: "priority", sortable: true, width: "100px" },
-    { name: "NOTES", uid: "notes", sortable: true, width: "100px" },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Priority", uid: "priority", sortable: true, width: "100px" },
+    { name: "Status", uid: "status", sortable: true, width: "100px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "taskDate","dueDate", "status", "priority", "notes","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "taskDate", "dueDate", "status", "priority", "notes", "actions"];
 
 const taskSchema = z.object({
     subject: z.string().min(2, { message: "Subject is required." }),
-    assigned: z.string().min(2, { message: "Assigned person is required." }),
-    relatedTo: z.string().min(2, { message: "Related to is required." }),
-    taskDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: "Invalid date",
-    }).transform((val) => new Date(val)),
-    dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: "Invalid date",
-    }).transform((val) => new Date(val)), // ✅ Convert string to Date
-    status: z.enum(["New", "In Progress", "Completed", "Pending"]),
-    priority: z.enum(["Low", "Medium", "High"]),
+    relatedTo: z.string().min(2, { message: "Related to  is required." }),
+    name: z.string().min(2, { message: "Name is required." }),
+    assigned: z.string().min(2, { message: "Assigned By is required." }),
+    taskDate: z.date().optional(),
+    dueDate: z.date().optional(),
+    status: z.enum(["Pending", "Resolved", "In Progress"]),
+    priority: z.enum(["High", "Medium", "Low"]),
     notes: z.string().optional(),
-})
+});
 
 export default function TaskTable() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
-    const router = useRouter(); 
+    const router = useRouter();
 
     const fetchTasks = async () => {
         try {
@@ -415,7 +412,7 @@ export default function TaskTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -426,7 +423,7 @@ export default function TaskTable() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hid Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -439,7 +436,14 @@ export default function TaskTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -456,25 +460,14 @@ export default function TaskTable() {
                             variant="default"
                             size="default"
                             endContent={<PlusCircle />} // Add an icon at the end
-                            onClick={() => router.push("/task")} 
+                            onClick={() => router.push("/task")}
                         >
-                            Add New
+                            Create Task
                         </Button>
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {tasks.length} leads</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {tasks.length} task</span>
                 </div>
             </div>
         );
@@ -576,12 +569,9 @@ export default function TaskTable() {
 
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
                     <DialogHeader>
-                        <DialogTitle>Edit Task</DialogTitle>
-                        <DialogDescription>
-                            Update the task details.
-                        </DialogDescription>
+                        <DialogTitle>Update Task</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
@@ -622,7 +612,7 @@ export default function TaskTable() {
                                         <FormItem>
                                             <FormLabel>Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter task name" {...field} />
+                                                <Input placeholder="Enter the name of the person who will do the task" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -633,10 +623,10 @@ export default function TaskTable() {
                                     name="assigned"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Assigned To</FormLabel>
+                                            <FormLabel>Assigned By</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Enter assignee's name"
+                                                    placeholder="Enter the name of the person who will give the task"
                                                     {...field} />
                                             </FormControl>
                                             <FormMessage />
@@ -651,7 +641,7 @@ export default function TaskTable() {
                                     name="taskDate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Date</FormLabel>
+                                            <FormLabel>Task Date</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
@@ -720,27 +710,9 @@ export default function TaskTable() {
                                             <FormControl>
                                                 <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                                     <option value="Pending">Pending</option>
-                                                    <option value="Resolved">Resolved</option>
                                                     <option value="In Progress">In Progress</option>
+                                                    <option value="Resolved">Resolved</option>
                                                 </select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="notes"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Task Notes</FormLabel>
-                                            <FormControl>
-                                                <textarea
-                                                    {...field}
-                                                    placeholder="Enter task notes"
-                                                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    value={field.value ? field.value.toString() : ''}
-                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -764,6 +736,25 @@ export default function TaskTable() {
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="notes"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Task Notes (Optional)</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                {...field}
+                                                placeholder="Enter task in detail..."
+                                                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows={3}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <Button type="submit" className="w-full" disabled={isSubmitting}>
                                 {isSubmitting ? (

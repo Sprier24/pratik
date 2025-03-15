@@ -15,7 +15,7 @@ import axios from "axios";
 import { format } from "date-fns"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface Complaint {
@@ -41,63 +41,55 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "COMPANY NAME", uid: "companyName", sortable: true, width: "120px" },
-    { name: "COMPLAINER NAME", uid: "complainerName", sortable: true, width: "120px" },
-    { name: "CONTACT NUMBER", uid: "contactNumber", sortable: true, width: "100px" },
-    { name: "EMAIL", uid: "emailAddress", sortable: true, width: "150px" },
-    { name: "SUBJECT", uid: "subject", sortable: true, width: "100px" },
+    { name: "Company Name", uid: "companyName", sortable: true, width: "120px" },
+    { name: "Client / Customer Name", uid: "complainerName", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contactNumber", sortable: true, width: "100px" },
+    { name: "Email Address", uid: "emailAddress", sortable: true, width: "150px" },
+    { name: "Subject", uid: "subject", sortable: true, width: "100px" },
+    { name: "Problem", uid: "caseOrigin", sortable: true, width: "100px" },
     {
-        name: "DATE",
+        name: "Date",
         uid: "date",
         sortable: true,
         width: "150px",
         render: (row: any) => formatDate(row.date),
     },
-    { name: "CASESTATUS", uid: "caseStatus", sortable: true, width: "100px" },
-    { name: "PRIORITY", uid: "priority", sortable: true, width: "100px" },
-    { name: "CASEORIGIN", uid: "caseOrigin", sortable: true, width: "100px" },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Priority", uid: "priority", sortable: true, width: "100px" },
+    { name: "Case Status", uid: "caseStatus", sortable: true, width: "100px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "complainerName", "contactNumber", "emailAddress", "subject", "date", "caseStatus", "priority", "caseOrigin", "actions"];
 
 const complaintSchema = z.object({
-    companyName: z.string().min(2, { message: "Company name is required." }),
-
+    companyName: z.string().optional(),
     complainerName: z.string().min(2, { message: "Complainer name is required." }),
-
     contactNumber: z.string().optional(),
-
-    emailAddress: z.string().email({ message: "Invalid email address." }),
-
+    emailAddress: z.string().optional(),
     subject: z.string().min(2, { message: "Subject is required." }),
-
     date: z.date().optional(),
-
     caseStatus: z.enum(["Pending", "Resolved", "In Progress"]),
-
     priority: z.enum(["High", "Medium", "Low"]),
-
     caseOrigin: z.string().optional(),
-})
+});
 
 export default function ComplaintTable() {
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
-    const router = useRouter(); 
+    const router = useRouter();
 
     const fetchComplaints = async () => {
         try {
-          const response = await axios.get(
-            "http://localhost:8000/api/v1/complaint/getAllComplaints"
-          );
-          setComplaints(response.data.complaints || []);
+            const response = await axios.get(
+                "http://localhost:8000/api/v1/complaint/getAllComplaints"
+            );
+            setComplaints(response.data.complaints || []);
         } catch (error) {
-          console.error("Error fetching complaints:", error);
-          setError("Failed to fetch complaints.");
-          
+            console.error("Error fetching complaints:", error);
+            setError("Failed to fetch complaints.");
+
         }
-      };
+    };
 
 
     useEffect(() => {
@@ -210,7 +202,7 @@ export default function ComplaintTable() {
     // Function to handle edit button click
     const handleEditClick = (complaint: Complaint) => {
         setSelectedcomplaint(complaint);
-    
+
         form.reset({
             companyName: complaint.companyName,
             complainerName: complaint.complainerName,
@@ -218,13 +210,13 @@ export default function ComplaintTable() {
             contactNumber: complaint.contactNumber,
             subject: complaint.subject,
             date: new Date(complaint.date),
-            caseStatus: complaint.caseStatus as "Pending" | "Resolved" | "In Progress", 
+            caseStatus: complaint.caseStatus as "Pending" | "Resolved" | "In Progress",
             priority: complaint.priority as "High" | "Medium" | "Low",
             caseOrigin: complaint.caseOrigin,
         });
         setIsEditOpen(true);
     };
-    
+
 
     // Function to handle delete button click
     const handleDeleteClick = async (complaint: Complaint) => {
@@ -377,7 +369,7 @@ export default function ComplaintTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -388,7 +380,7 @@ export default function ComplaintTable() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -401,7 +393,14 @@ export default function ComplaintTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -418,25 +417,14 @@ export default function ComplaintTable() {
                             variant="default"
                             size="default"
                             endContent={<PlusCircle />} // Add an icon at the end
-                            onClick={() => router.push("/complaint")} 
+                            onClick={() => router.push("/complaint")}
                         >
-                            Add New
+                            Create Complaint
                         </Button>
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {complaints.length} complaints</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {complaints.length} complaint</span>
                 </div>
             </div>
         );
@@ -537,186 +525,188 @@ export default function ComplaintTable() {
             </Table>
 
 
-            
+
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                        <DialogContent className="sm:max-w-[600px]">
-                            <DialogHeader>
-                                <DialogTitle>Edit Complaint</DialogTitle>
-                                <DialogDescription>
-                                    Update the complaint details.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="companyName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Company Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter company name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="complainerName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Complainer Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter complainer name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                    <DialogHeader>
+                        <DialogTitle>Update Complaint</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="companyName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Name (Optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter company name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="complainerName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Client / Customer Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter client / customer Name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="contactNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Contact Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter contact number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="emailAddress"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email Address</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter email address" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="contactNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Contact Number (Optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter contact number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="emailAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email Address (Optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter email address" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="subject"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Subject</FormLabel>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="subject"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Subject</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter subject" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
                                                     <FormControl>
-                                                        <Input placeholder="Enter subject" {...field} />
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                        >
+                                                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
                                                     </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="date"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Date</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant={"outline"}
-                                                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                                >
-                                                                    {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar
-                                                                mode="single"
-                                                                selected={field.value}
-                                                                onSelect={field.onChange}
-                                                                disabled={(date) => date > new Date()}
-                                                                initialFocus
-                                                            />
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) => date > new Date()}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="caseStatus"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Case Status</FormLabel>
-                                                    <FormControl>
-                                                        <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                            <option value="Pending">Pending</option>
-                                                            <option value="Resolved">Resolved</option>
-                                                            <option value="In Progress">In Progress</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="priority"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Priority</FormLabel>
-                                                    <FormControl>
-                                                        <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                            <option value="High">High</option>
-                                                            <option value="Medium">Medium</option>
-                                                            <option value="Low">Low</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                    <FormField
-                                            control={form.control}
-                                            name="caseOrigin"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>CaseOrigin</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter case origin" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage/>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            "Update Complaint"
-                                        )}
-                                    </Button>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="caseStatus"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Case Status</FormLabel>
+                                            <FormControl>
+                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Resolved">Resolved</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="priority"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Priority</FormLabel>
+                                            <FormControl>
+                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="High">High</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="Low">Low</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="caseOrigin"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Problem (Optional)</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                placeholder="Enter client / customer problem briefly..."
+                                                {...field}
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows={3}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update Complaint"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
 
         </div>
 
