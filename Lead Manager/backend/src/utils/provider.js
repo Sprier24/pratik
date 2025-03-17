@@ -2,7 +2,6 @@ require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const Users = require("../model/usersSchema.model");
-// const { createToken } = require('../controller/user.controller'); // Assuming you have a token generator
 const jwt = require('jsonwebtoken');
 
 passport.use(
@@ -18,31 +17,27 @@ passport.use(
         let user = await Users.findOne({ googleId: profile.id });
 
         if (!user) {
-          // Create new user on first login
           user = await Users.create({
             name: profile.displayName,
             email: profile.emails?.[0]?.value,
             image: profile.photos?.[0]?.value,
             password: null,
-            isFirstLogin: true, // ✅ Set to true for new users
+            isFirstLogin: true, 
           });
         }
 
-        // Check if it's the first login
         const isFirstLogin = user.isFirstLogin;
 
         if (isFirstLogin) {
-          user.isFirstLogin = false; // ✅ Set to false after first login
+          user.isFirstLogin = false; 
           await user.save();
         }
         const createToken = (id) => {
           return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         };
 
-        // Generate a token
         const newToken = createToken(user._id);
 
-        // Attach additional data to the user object
         const userWithToken = {
           ...user.toObject(),
           token: newToken,

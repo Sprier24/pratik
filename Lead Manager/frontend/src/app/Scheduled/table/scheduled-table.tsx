@@ -15,7 +15,7 @@ import axios from "axios";
 import { format } from "date-fns"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface ScheduledEvents {
@@ -42,45 +42,44 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "SUBJECT", uid: "subject", sortable: true, width: "120px" },
-    { name: "ASSINGNED USER", uid: "assignedUser", sortable: true, width: "120px" },
-    { name: "CUSTOMER NAME", uid: "customer", sortable: true, width: "100px" },
-    { name: "LOCATION", uid: "location", sortable: true, width: "150px" },
-    { name: "STATUS", uid: "status", sortable: true, width: "180px" },
-    { name: "EVENT TYPE", uid: "eventType", sortable: true, width: "120px" },
-    { name: "PRIORITY", uid: "priority", sortable: true, width: "100px" },
-    { name: "DESCRIPTION", uid: "description", sortable: true, width: "100px" },
-    { name: "RECURRENCE", uid: "recurrence", sortable: true, width: "100px" },
+    { name: "Subject", uid: "subject", sortable: true, width: "120px" },
+    { name: "Event or Meeting Location", uid: "location", sortable: true, width: "150px" },
+    { name: "Hosted By", uid: "assignedUser", sortable: true, width: "120px" },
+    { name: "Member Name", uid: "customer", sortable: true, width: "100px" },
+    { name: "Event Type", uid: "eventType", sortable: true, width: "120px" },
+    { name: "Recurrence", uid: "recurrence", sortable: true, width: "100px" },
+    { name: "Status", uid: "status", sortable: true, width: "180px" },
+    { name: "Priority", uid: "priority", sortable: true, width: "100px" },
     {
-        name: "DATE",
+        name: "Event Date",
         uid: "date",
         sortable: true,
         width: "150px",
         render: (row: any) => formatDate(row.date),
     },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Notes", uid: "description", sortable: true, width: "100px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["subject", "assignedUser", "customer", "location", "status", "eventType", "priority", "description", "recurrence", "date", "actions"];
 
 const eventSchema = z.object({
     subject: z.string().min(2, { message: "Subject is required." }),
-    assignedUser: z.string().min(2, { message: "Assigned user is required." }),
-    customer: z.string().min(2, { message: "Customer is required." }),
-    location: z.string().min(2, { message: "Location is required." }),
-    status: z.enum(["Scheduled", "Completed", "Cancelled", "Postpone"], { message: "Status is required." }),
+    assignedUser: z.string().optional(),
+    location: z.string().optional(),
+    customer: z.string().optional(),
     eventType: z.enum(["call", "Call", "Meeting", "meeting", "Demo", "demo", "Follow-Up", "follow-up"], { message: "Event type is required." }),
-    priority: z.enum(["Low", "low", "Medium", "medium", "High", "high"], { message: "Priority is required." }),
-    description: z.string().optional(),
     recurrence: z.enum(["one-time", "Daily", "Weekly", "Monthly", "Yearly"], { message: "Recurrence is required." }),
-    date: z.string().min(2, { message: "Date is required." }),
-    isActive: z.boolean(),
-})
+    status: z.enum(["Scheduled", "Completed", "Cancelled", "Postpone"], { message: "Status is required." }),
+    priority: z.enum(["Low", "low", "Medium", "medium", "High", "high"], { message: "Priority is required." }),
+    date: z.date().optional(),
+    description: z.string().optional(),
+});
 
 export default function ScheduledEvents() {
     const [scheduledEvents, setScheduledEvents] = useState<ScheduledEvents[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
-    const router = useRouter(); 
+    const router = useRouter();
 
     const fetchScheduledEvents = async () => {
         try {
@@ -191,7 +190,7 @@ export default function ScheduledEvents() {
         if (visibleColumns.size === columns.length) return columns; // Check if all columns are selected
         return columns.filter((column) => visibleColumns.has(column.uid));
     }, [visibleColumns]);
-    
+
     const filteredItems = React.useMemo(() => {
         let filteredScheduledEvents = [...scheduledEvents];
 
@@ -268,7 +267,7 @@ export default function ScheduledEvents() {
         });
         setIsEditOpen(true);
     };
-    
+
 
     // Function to handle delete button click
     const handleDeleteClick = async (scheduledEvents: ScheduledEvents) => {
@@ -421,7 +420,7 @@ export default function ScheduledEvents() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -432,7 +431,7 @@ export default function ScheduledEvents() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -445,7 +444,14 @@ export default function ScheduledEvents() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -462,25 +468,14 @@ export default function ScheduledEvents() {
                             variant="default"
                             size="default"
                             endContent={<PlusCircle />} // Add an icon at the end
-                            onClick={() => router.push("/Scheduled")} 
+                            onClick={() => router.push("/Scheduled")}
                         >
-                            Add New
+                            Create Event or Meeting
                         </Button>
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {scheduledEvents.length} scheduled</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {scheduledEvents.length} event or meeting</span>
                 </div>
             </div>
         );
@@ -571,7 +566,7 @@ export default function ScheduledEvents() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"No scheduled data  found"} items={sortedItems}>
+                <TableBody emptyContent={"Create event or meeting and add data"} items={sortedItems}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}
@@ -581,213 +576,214 @@ export default function ScheduledEvents() {
             </Table>
 
 
-            
+
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                        <DialogContent className="sm:max-w-[600px]">
-                            <DialogHeader>
-                                <DialogTitle>Edit Scheduled event</DialogTitle>
-                                <DialogDescription>
-                                    Update the scheduled details.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="subject"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Subject</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter subject" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="assignedUser"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Assigned User</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter assigned user" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                    <DialogHeader>
+                        <DialogTitle>Update Event or Meeting</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="subject"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Subject</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter subject" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="location"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Event or Meeting Location</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter event or meeting location" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="customer"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Customer</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter customer" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="location"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Location</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter location" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="assignedUser"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Hosted By</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter event or meeting, host name or host company name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="customer"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Member Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter member name who is going to attend by your company side" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Status</FormLabel>
-                                                    <FormControl>
-                                                        <select
-                                                            {...field}
-                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            <option value="Scheduled">Scheduled</option>
-                                                            <option value="Completed">Completed</option>
-                                                            <option value="Cancelled">Cancelled</option>
-                                                            <option value="Postpone">Postpone</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="eventType"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Event Type</FormLabel>
-                                                    <FormControl>
-                                                        <select
-                                                            {...field}
-                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            <option value="call">Call</option>
-                                                            <option value="Meeting">Meeting</option>
-                                                            <option value="Demo">Demo</option>
-                                                            <option value="Follow-Up">Follow-Up</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="eventType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Event Type</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="call">Call</option>
+                                                    <option value="Meeting">Meeting</option>
+                                                    <option value="Demo">Demo</option>
+                                                    <option value="Follow-Up">Follow Up</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="recurrence"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Recurrence</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="one-time">One Time</option>
+                                                    <option value="Daily">Daily</option>
+                                                    <option value="Weekly">Weekly</option>
+                                                    <option value="Monthly">Monthly</option>
+                                                    <option value="Yearly">Yearly</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="priority"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Priority</FormLabel>
-                                                    <FormControl>
-                                                        <select
-                                                            {...field}
-                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            <option value="Low">Low</option>
-                                                            <option value="Medium">Medium</option>
-                                                            <option value="High">High</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Status</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="Scheduled">Schedule</option>
+                                                    <option value="Postpone">Postpone</option>
+                                                    <option value="Completed">Complete</option>
+                                                    <option value="Cancelled">Cancel</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="priority"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Priority</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="High">High</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="Low">Low</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="recurrence"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Recurrence</FormLabel>
-                                                    <FormControl>
-                                                        <select
-                                                            {...field}
-                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            <option value="one-time">One-Time</option>
-                                                            <option value="Daily">Daily</option>
-                                                            <option value="Weekly">Weekly</option>
-                                                            <option value="Monthly">Monthly</option>
-                                                            <option value="Yearly">Yearly</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="date"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Date</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="date" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Event Date</FormLabel>
+                                            <FormControl>
+                                                <Input type="date" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="description"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Description</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Enter description" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Notes (Optional)</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                placeholder="Enter more details here..."
+                                                {...field}
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows={3}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-
-                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            "Update Lead"
-                                        )}
-                                    </Button>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
-
+                            <div className="text-right">
+                                <Button type="submit" className="w-25" disabled={isSubmitting}>
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="animate-spin mr-2" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        "Update Event or Meeting"
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
         </div>
-
     );
 }
 

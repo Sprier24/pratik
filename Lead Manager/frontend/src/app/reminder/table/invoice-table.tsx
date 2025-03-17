@@ -15,7 +15,7 @@ import axios from "axios";
 import { format } from "date-fns"
 import { Chip, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, Pagination, Tooltip, User } from "@heroui/react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface Invoice {
@@ -75,36 +75,33 @@ const formatDate = (date: any) => {
 };
 
 const columns = [
-    { name: "COMPANY", uid: "companyName", sortable: true },
-    { name: "CUSTOMER", uid: "customerName", sortable: true },
-    { name: "CONTACT", uid: "contactNumber", sortable: true },
-    { name: "EMAIL", uid: "emailAddress", sortable: true },
-    { name: "ADDRESS", uid: "address", sortable: true },
-    { name: "GST NUMBER", uid: "gstNumber", sortable: true },
-    { name: "PRODUCT", uid: "productName", sortable: true },
-    { name: "AMOUNT", uid: "amount", sortable: true },
-    { name: "DISCOUNT", uid: "discount", sortable: true },
-    { name: "GST RATE", uid: "gstRate", sortable: true },
-    { name: "STATUS", uid: "status", sortable: true },
+    { name: "Company Name", uid: "companyName", sortable: true },
+    { name: "Client / Customer Name", uid: "customerName", sortable: true },
+    { name: "Contact Number", uid: "contactNumber", sortable: true },
+    { name: "Email Address", uid: "emailAddress", sortable: true },
+    { name: "Company Address", uid: "address", sortable: true },
+    { name: "GST Number", uid: "gstNumber", sortable: true },
+    { name: "Product Name", uid: "productName", sortable: true },
+    { name: "Product Amount", uid: "amount", sortable: true },
+    { name: "Discount", uid: "discount", sortable: true },
+    { name: "GST Rate", uid: "gstRate", sortable: true },
+    { name: "Before GST", uid: "totalWithoutGst", sortable: true },
+    { name: "After GST", uid: "totalWithGst", sortable: true },
     {
-        name: "DATE",
+        name: "Invoice Date",
         uid: "date",
         sortable: true,
-        render: (row: any) => formatDate(row.date) // Ensure only date is shown
+        render: (row: any) => formatDate(row.date)
     },
-
-    { name: "TOTAL (WITHOUT GST)", uid: "totalWithoutGst", sortable: true },
-    { name: "TOTAL (WITH GST)", uid: "totalWithGst", sortable: true },
-    { name: "PAID AMOUNT", uid: "paidAmount", sortable: true },
-    { name: "REMAINING AMOUNT", uid: "remainingAmount", sortable: true },
-    { name: "ACTION", uid: "actions", sortable: true }
+    { name: "Paid Amount", uid: "paidAmount", sortable: true },
+    { name: "Remaining Amount", uid: "remainingAmount", sortable: true },
+    { name: "Status", uid: "status", sortable: true },
+    // { name: "Action", uid: "actions", sortable: true }
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "gstNumber", "productName", "amount", "discount", "gstRate", "status", "date", "endDate", "totalWithoutGst", "totalWithGst", "paidAmount", "remainingAmount", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "gstNumber", "productName", "amount", "discount", "gstRate", "status", "date", "endDate", "totalWithoutGst", "totalWithGst", "paidAmount", "remainingAmount"];
 
 const formSchema = invoiceSchema;
-
-
 
 export default function InvoiceTable() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -113,7 +110,7 @@ export default function InvoiceTable() {
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const router = useRouter(); 
+    const router = useRouter();
 
     const fetchInvoices = async () => {
         setIsLoading(true);
@@ -132,7 +129,6 @@ export default function InvoiceTable() {
             setIsLoading(false);
         }
     };
-
 
     useEffect(() => {
         fetchInvoices();
@@ -360,9 +356,9 @@ export default function InvoiceTable() {
                     </div>
                 );
             case "date":
-                return formatDate(cellValue); // Format the endDate
+                return formatDate(cellValue);
             case "endDate":
-                return formatDate(cellValue); // Format the endDate
+                return formatDate(cellValue);
             default:
                 return cellValue;
         }
@@ -407,7 +403,7 @@ export default function InvoiceTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -418,7 +414,7 @@ export default function InvoiceTable() {
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button endContent={<ChevronDownIcon className="text-small" />} variant="default">
-                                    Columns
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -431,7 +427,14 @@ export default function InvoiceTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}  // Set background and font color
+                                style={{
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#000000",
+                                    height: "400px",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none",
+                                    msOverflowStyle: "none"
+                                }}
                             >
                                 {columns.map((column) => (
                                     <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
@@ -444,18 +447,7 @@ export default function InvoiceTable() {
                     </div>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {invoices.length} leads</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
+                    <span className="text-default-400 text-small">Total {invoices.length} payment pending</span>
                 </div>
             </div>
         );
@@ -775,24 +767,24 @@ export default function InvoiceTable() {
                                 />
 
                                 <FormField
-                                control={form.control}
-                                name="date"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Invoice Date</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                        type="date"
-                                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                                        onChange={(e) => {
-                                            const selectedDate = e.target.value ? new Date(e.target.value) : null;
-                                            field.onChange(selectedDate);
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Invoice Date</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="date"
+                                                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                    onChange={(e) => {
+                                                        const selectedDate = e.target.value ? new Date(e.target.value) : null;
+                                                        field.onChange(selectedDate);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
                             </div>
 

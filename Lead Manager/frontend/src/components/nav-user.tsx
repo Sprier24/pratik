@@ -51,6 +51,7 @@ export function NavUser() {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hover, setHover] = useState(false);
+  const [dialogKey, setDialogKey] = useState(0);
   const storageValue = 33;
 
   const form = useForm<Owner>({
@@ -218,7 +219,7 @@ export function NavUser() {
         <SidebarMenuItem>
           <div className="px-4 py-3 space-y-1">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-            
+
               <span className="font-medium">Storage</span>
             </div>  <Cloud className="size-4 text-gray-500" />
             <div
@@ -238,7 +239,10 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={`http://localhost:8000/uploads/${currentOwner.logo}`} alt={currentOwner?.ownerName || "User"} />
+                  <AvatarImage
+                    src={currentOwner?.logo ? `http://localhost:8000/uploads/${currentOwner.logo}` : "/default-logo.png"}
+                    alt={currentOwner?.ownerName || "User"}
+                  />
                   <AvatarFallback className="rounded-lg">
                     {currentOwner?.ownerName?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
@@ -259,25 +263,37 @@ export function NavUser() {
                 <Trash2 className="size-4 mr-2" />
                 <span>Delete Account</span>
               </DropdownMenuItem>
-
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    setTimeout(() => setOpen(true), 100);
+                  }}
+                  className="w-full text-left"
 
-              <button onClick={() => setOpen(true)} className="w-full text-left">
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={`http://localhost:8000/uploads/${currentOwner.logo}`} alt={currentOwner?.ownerName || "User"} />
-                      <AvatarFallback className="rounded-lg">
-                        {currentOwner?.ownerName?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{currentOwner?.ownerName || "User"}</span>
-                      <span className="truncate text-xs">{currentOwner?.emailAddress || "No Email"}</span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-              </button>
+                >
+                  <Dialog key={dialogKey} open={open} onOpenChange={setOpen}>
+                    <DropdownMenuLabel className="p-0 font-normal">
+                      <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                        <Avatar className="h-8 w-8 rounded-lg">
+                          <AvatarImage
+                            src={currentOwner?.logo ? `http://localhost:8000/uploads/${currentOwner.logo}` : "/default-logo.png"}
+                            alt={currentOwner?.ownerName || "User"}
+                          />
+                          <AvatarFallback className="rounded-lg">
+                            {currentOwner?.ownerName?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="grid flex-1 text-left text-sm leading-tight">
+                          <span className="truncate font-semibold">{currentOwner?.ownerName || "User"}</span>
+                          <span className="truncate text-xs">{currentOwner?.emailAddress || "No Email"}</span>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+                  </Dialog>
+                </button>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>

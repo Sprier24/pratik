@@ -32,8 +32,7 @@ const createFile = async (req, res) => {
 
 const getFiles = async (req, res) => {
   try {
-    // Retrieve all files from the database
-    const files = await FileFolder.find({ type: 'file' }).exec(); // Fetch all files of type 'file'
+    const files = await FileFolder.find({ type: 'file' }).exec(); 
     
     res.json({ success: true, data: files });
   } catch (error) {

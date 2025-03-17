@@ -558,7 +558,7 @@ export default function TaskTable() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"No lead found"} items={sortedItems}>
+                <TableBody emptyContent={"Create task and add data"} items={sortedItems}>
                     {(item) => (
                         <TableRow key={item._id}>
                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}

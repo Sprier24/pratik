@@ -574,7 +574,7 @@ export default function DealTable() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"No deals found"} items={sortedItems}>
+                <TableBody emptyContent={"Create deal and add data"} items={sortedItems}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}

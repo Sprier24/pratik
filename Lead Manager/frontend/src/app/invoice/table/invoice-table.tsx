@@ -605,7 +605,7 @@ export default function InvoiceTable() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"No lead found"} items={sortedItems}>
+                <TableBody emptyContent={"Create invoice and add data"} items={sortedItems}>
                     {(item) => (
                         <TableRow key={item._id}>
                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}

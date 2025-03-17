@@ -5,22 +5,21 @@ const { storeNotification } = require('./notification.controller');
 const cron = require('node-cron');
 
 const remindEvent = async () => {
-    const io = require('../index'); // Get the initialized socket.io instance
+    const io = require('../index'); 
     const now = new Date();
-    const nowIST = new Date(now.getTime() + (5 * 60 + 30) * 60000); // Convert UTC to IST
-    const todayIST = nowIST.toISOString().split('T')[0]; // Today's date in IST (YYYY-MM-DD)
+    const nowIST = new Date(now.getTime() + (5 * 60 + 30) * 60000); 
+    const todayIST = nowIST.toISOString().split('T')[0]; 
     console.log('Cron job running at (IST):', nowIST.toISOString());
 
     try {
-        // Fetch owner details (assuming there is only one owner)
-        const owner = await Owner.findOne(); // Fetch owner details
+        const owner = await Owner.findOne(); 
 
         if (!owner) {
             console.error("Owner details not found!");
             return;
         }
         const invoices = await Invoice.find({
-            status: "Unpaid", // Only unpaid invoices
+            status: "Unpaid", 
         });
 
         if (!invoices.length) {
@@ -32,17 +31,15 @@ const remindEvent = async () => {
             const dueDate = new Date(invoice.date);
             if (isNaN(dueDate.getTime())) {
                 console.error(`Invalid due date for invoice: ${invoice._id}`);
-                continue; // Skip invalid invoices
+                continue; 
             }
 
-            // Calculate reminder dates
             const threeDaysBefore = new Date(dueDate);
             threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
 
             const oneDayBefore = new Date(dueDate);
             oneDayBefore.setDate(oneDayBefore.getDate() - 1);
 
-            // Check if today matches any of the reminder dates
             const reminderDateType = todayIST === threeDaysBefore.toISOString().split('T')[0]
                 ? "3 Days Before"
                 : todayIST === oneDayBefore.toISOString().split('T')[0]
@@ -54,18 +51,16 @@ const remindEvent = async () => {
             if (reminderDateType) {
                 console.log(`Reminder (${reminderDateType}): ${invoice.customerName} has an unpaid invoice`);
 
-                // Emit reminder via socket.io
                 io.emit('reminder', {
                     id: invoice._id,
                     customerName: invoice.customerName,
                     companyName: invoice.companyName,
                     amount: invoice.remainingAmount,
-                    dueDate: dueDate.toISOString().split('T')[0], // Only date
+                    dueDate: dueDate.toISOString().split('T')[0], 
                     reminderType: reminderDateType,
                 });
                 console.log(`Reminder (${reminderDateType}) emitted for:`, invoice.customerName);
 
-                // Example of emitting a notification event from backend
                 io.emit('notification', {
                     _id: "invoice._id",
                     title: `Reminder (${reminderDateType}): Unpaid Invoice for ${invoice.companyName}`,
@@ -74,7 +69,6 @@ const remindEvent = async () => {
                     createdAt: new Date().toISOString(),
                 });
 
-                // Store notification in MongoDB
                 const notificationData = {
                     title: `Invoice Reminder (${reminderDateType}): Unpaid Invoice for ${invoice.companyName}`,
                     message: `Customer ${invoice.customerName} has an unpaid invoice of ₹${invoice.remainingAmount} for the product "${invoice.productName}". The due date is ${dueDate.toISOString().split('T')[0]}.`,
@@ -97,7 +91,7 @@ const remindEvent = async () => {
             `;            
 
                 await sendEmailReminder({
-                    to: invoice.emailAddress, // Ensure this exists in the invoice schema
+                    to: invoice.emailAddress, 
                     subject: "Invoice Payment Reminder",
                     message: emailMessage,
                 });
@@ -112,13 +106,8 @@ const remindEvent = async () => {
     }
 };
 
-// Schedule the cron job to run every midnight (12:00 AM)
-cron.schedule('0 * * * *', remindEvent, {
-    // timezone: "Asia/Kolkata", // Set the timezone to IST
+cron.schedule('0 0 * * *', remindEvent, {
 });
-
-console.log('Cron job scheduled to run every midnight (12:00 AM IST).');
-
 
 const invoiceAdd = async (req, res) => {
     try {
@@ -139,25 +128,14 @@ const invoiceAdd = async (req, res) => {
             paidAmount 
         } = req.body;
 
-        // Ensure values are numbers
         const parsedAmount = parseFloat(amount) || 0;
         const parsedDiscount = parseFloat(discount) || 0;
         const parsedGstRate = parseFloat(gstRate) || 0;
         const parsedPaidAmount = parseFloat(paidAmount) || 0;
-
-        // ✅ Correct Discount Calculation
         const discountedAmount = parsedAmount - (parsedAmount * (parsedDiscount / 100));
-
-        // ✅ GST Calculation
         const gstAmount = discountedAmount * (parsedGstRate / 100);
-
-        // ✅ Total without GST
         const totalWithoutGst = discountedAmount;
-
-        // ✅ Total with GST
         const totalWithGst = totalWithoutGst + gstAmount;
-
-        // ✅ Remaining Amount
         const remainingAmount = totalWithGst - parsedPaidAmount;
 
         const newInvoice = new Invoice({
@@ -312,20 +290,6 @@ const getPaidInvoices = async (req, res) => {
 
     try {
         const paidInvoices = await Invoice.find({ status: 'Paid' });
-
-        // Map to extract only the desired fields
-        // const response = unpaidInvoices.map(invoice => ({
-        //     companyName: invoice.companyName,
-        //     withGstAmount:invoice.withGstAmount,
-        //     mobile:invoice.mobile,
-        //     productName: invoice.productName,
-        //     endDate: invoice.date // Assuming 'date' is your end date
-        // }));
-
-        // res.status(200).json({
-        //     success: true,
-        //     data: response
-        // });
         res.status(200).json({
             success: true,
             data: paidInvoices
@@ -340,10 +304,10 @@ const getPaidInvoices = async (req, res) => {
 };
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",  // Or another service like SendGrid
+    service: "gmail",  
     auth: {
-        user: process.env.EMAIL_USER,  // Get email from .env
-        pass: process.env.EMAIL_PASS,  // Get password from .env
+        user: process.env.EMAIL_USER,  
+        pass: process.env.EMAIL_PASS,  
     },
 });
 
@@ -362,64 +326,6 @@ const sendEmailReminder = async ({ to, subject = "(No Subject)", message = "(No 
 
     return transporter.sendMail(mailOptions);
 };
-
-const sendWhatsAppReminder = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // Find the invoice by ID
-        const invoice = await Invoice.findById(id);
-        if (!invoice) {
-            return res.status(404).json({ success: false, message: "Invoice not found" });
-        }
-
-        // Construct the recipient's WhatsApp number
-        const countryCode = '+91';
-        const customerNumber = invoice.contactNumber;
-        if (!customerNumber) {
-            return res.status(400).json({ success: false, message: "Customer contact number not found" });
-        }
-        const formattedNumber = `${countryCode}${customerNumber}`;
-
-        // Construct the reminder message
-        const message = `Hello ${invoice.customerName},\n\nThis is a reminder to pay your outstanding invoice of ₹${invoice.remainingAmount}. Please make the payment at your earliest convenience.`;
-
-        // Simulate sending a WhatsApp message
-        console.log(`Sending WhatsApp message to: ${formattedNumber}`);
-        console.log(`Message: ${message}`);
-
-        // Respond with success
-        res.status(200).json({
-            success: true,
-            message: "WhatsApp reminder sent successfully",
-        });
-    } catch (error) {
-        // Handle errors
-        console.error("Error sending WhatsApp reminder:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error: " + error.message,
-        });
-    }
-};
-
-const updateCustomMessage = async(req,res)=>{
-    try {
-        const { customMessage } = req.body;
-        const invoiceId = req.params.invoiceId;
-    
-        const updatedInvoice = await Invoice.findByIdAndUpdate(invoiceId, { customMessage }, { new: true });
-    
-        if (!updatedInvoice) {
-          return res.status(404).json({ message: 'Invoice not found' });
-        }
-    
-        return res.json({ data: updatedInvoice });
-      } catch (error) {
-        console.error('Error saving custom message:', error);
-        res.status(500).json({ message: 'Failed to save custom message' });
-      }
-}
 
 const getInvoicesByStatus = async (req, res) => {
     const { status } = req.query;
@@ -467,8 +373,6 @@ module.exports = {
     getUnpaidInvoices,
     getPaidInvoices,
     sendEmailReminder,
-    sendWhatsAppReminder,
-    updateCustomMessage,
     getInvoicesByStatus,
     updateStatus
 };

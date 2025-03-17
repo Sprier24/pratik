@@ -7,13 +7,12 @@ const remindEvent = async () => {
   const io = require('../index');
   const now = new Date();
   const nowIST = new Date(now.getTime() + (5 * 60 + 30) * 60000);
-  const todayIST = nowIST.toISOString().split('T')[0]; // Today's date in IST (YYYY-MM-DD)
+  const todayIST = nowIST.toISOString().split('T')[0]; 
   console.log('Cron job running at (IST): ', nowIST.toISOString());
 
   try {
-      // Log when the cron job runs
       const events = await Events.find({
-          date: { $gte: nowIST.toISOString().split('T')[0] }, // Fetch events happening today or later
+          date: { $gte: nowIST.toISOString().split('T')[0] }, 
       });
 
       if (!events.length) {
@@ -25,25 +24,22 @@ const remindEvent = async () => {
           const followUpDate = new Date(event.date);
           if (isNaN(followUpDate.getTime())) {
               console.error(`Invalid follow-up date for event: ${event.event}`);
-              continue; // Skip invalid events
+              continue; 
           }
 
-          // Check if the current date matches the event date
           if (
               nowIST.toISOString().split('T')[0] ===
               followUpDate.toISOString().split('T')[0]
           ) {
               console.log(`Reminder: ${event.event} is scheduled for today!`);
 
-              // Emit reminder to the client (admins/internal users)
               io.emit('calenderreminder', {
                   id: event._id,
                   event: event.event,
-                  followUpDate: followUpDate.toISOString().split('T')[0], // Extract only the date
+                  followUpDate: followUpDate.toISOString().split('T')[0], 
               });
               console.log('Reminder emitted for:', event.event);
 
-              // Example of emitting a notification event from backend
               io.emit('notification', {
                   _id: "event._id",
                   title: `Calendar Reminder: ${event.event}`,
@@ -52,7 +48,6 @@ const remindEvent = async () => {
                   type: 'calendar',
               });
 
-              // Store notification in MongoDB with an internal-focused message
               const notificationData = {
                   title: `Calendar Reminder: ${event.event}`,
                   message: `Your ${event.event} is scheduled for today (${followUpDate.toISOString().split('T')[0]}).`,
@@ -95,7 +90,6 @@ const getAllData = async (req, res) => {
   }
 };
 
-// Create a new event
 const createData = async (req, res) => {
   const { date, event, calendarId } = req.body;
 
@@ -130,7 +124,6 @@ const createData = async (req, res) => {
   }
 };
 
-// Update an event
 const updateData = async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
@@ -158,7 +151,6 @@ const updateData = async (req, res) => {
   }
 };
 
-// Delete an event
 const deleteData = async (req, res) => {
   const { id } = req.body;
 
@@ -192,7 +184,6 @@ const deleteData = async (req, res) => {
   }
 };
 
-// Get event by ID
 const getDataById = async (req, res) => {
   const { id } = req.params;
 

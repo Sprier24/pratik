@@ -6,7 +6,6 @@ const {
   deleteData,
   getDataById,
 } = require("../../../controller/calendar.controller");
-
 const router = express.Router();
 
 router.post("/createData", createData);

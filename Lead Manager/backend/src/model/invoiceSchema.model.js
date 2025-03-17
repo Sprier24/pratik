@@ -1,5 +1,3 @@
-// models/Invoice.js
-
 const mongoose = require('mongoose');
 
 const invoiceSchema = new mongoose.Schema(
@@ -16,7 +14,7 @@ const invoiceSchema = new mongoose.Schema(
     gstRate: { type: Number},
     status: { 
       type: String,
-      enum: ['Unpaid','Paid'],
+      enum: ['Unpaid','Paid','Pending'],
     },
     date: { type: Date},
     endDate:{type:Date},

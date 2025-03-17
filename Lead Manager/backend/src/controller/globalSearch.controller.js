@@ -11,11 +11,9 @@ const Search = async (req, res) => {
   try {
     const query = req.query.q;
     if (!query) return res.status(400).json({ message: "Query is required" });
-
     const regex = new RegExp(query, "i");
     const dateQuery = !isNaN(Date.parse(query)) ? new Date(query) : null;
     const isNumeric = !isNaN(query);
-    // Search queries for each model
     const leads = await Lead.find({
       $or: [
         { companyName: regex },
@@ -140,4 +138,4 @@ const Search = async (req, res) => {
   }
 };
 
-module.exports = { Search };//my updated search
+module.exports = { Search };
