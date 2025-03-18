@@ -69,14 +69,14 @@ export default function DealForm() {
                 throw new Error(data.error || "Failed to submit the lead")
             }
             toast({
-                title: "Lead Submitted",
-                description: `Your lead has been successfully submitted. ID: ${data.id}`,
+                title: "Deal Submitted",
+                description: `The deal has been successfully created`,
             })
             router.push("/deal/table")
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error submitting the lead.",
+                description: error instanceof Error ? error.message : "There was an error creating the deal",
                 variant: "destructive",
             })
         } finally {

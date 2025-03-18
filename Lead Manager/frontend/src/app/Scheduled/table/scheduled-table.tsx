@@ -287,8 +287,8 @@ export default function ScheduledEvents() {
             }
 
             toast({
-                title: "Scheduled Deleted",
-                description: "The scheduled has been successfully deleted.",
+                title: "Event or Meeting Deleted",
+                description: "The event or meeting has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -296,7 +296,7 @@ export default function ScheduledEvents() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete lead",
+                description: error instanceof Error ? error.message : "There was an error deleting the event or meeting",
                 variant: "destructive",
             });
         }
@@ -320,8 +320,8 @@ export default function ScheduledEvents() {
             }
 
             toast({
-                title: "Scheduled Updated",
-                description: "The Scheduled has been successfully updated.",
+                title: "Event or Meeting Updated",
+                description: "The event or meeting has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -334,7 +334,7 @@ export default function ScheduledEvents() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update scheduled",
+                description: error instanceof Error ? error.message : "There was an error deleting the event or meeting",
                 variant: "destructive",
             });
         } finally {

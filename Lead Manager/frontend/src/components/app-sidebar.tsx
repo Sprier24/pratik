@@ -30,10 +30,9 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
-      items: [
-        { title: "Dashboard", url: "/dashboard", }
-      ]
+      items: [{ title: "Dashboard", url: "/dashboard" }],
     },
+
     {
       title: "Lead",
       url: "/lead",
@@ -44,26 +43,7 @@ const data = {
         { title: "Drag & Drop", url: "/lead/leadDrop" }
       ],
     },
-    {
-      title: "Invoice",
-      url: "/invoice",
-      icon: ReceiptText,
-      items: [
-        { title: "Record", url: "/invoice/table" },
-        { title: "Graph", url: "/Invoice-chart" },
-        { title: "Drag & Drop", url: "/invoice/invoiceDrop" }
-      ],
-    },
-    {
-      title: "Reminder",
-      url: "/reminder",
-      icon: BellMinus,
 
-      items: [
-        { title: "Record", url: "/reminder/table" },
-        { title: "Email", url: "/reminder/reminderEmail" },
-      ],
-    },
     {
       title: "Deal",
       url: "/deal",
@@ -75,6 +55,29 @@ const data = {
         { title: "Drag & Drop", url: "/deal/dealDrop" }
       ],
     },
+
+    {
+      title: "Invoice",
+      url: "/invoice",
+      icon: ReceiptText,
+      items: [
+        { title: "Record", url: "/invoice/table" },
+        { title: "Graph", url: "/Invoice-chart" },
+        { title: "Drag & Drop", url: "/invoice/invoiceDrop" }
+      ],
+    },
+
+    {
+      title: "Reminder",
+      url: "/reminder",
+      icon: BellMinus,
+
+      items: [
+        { title: "Record", url: "/reminder/table" },
+        { title: "Email", url: "/reminder/reminderEmail" },
+      ],
+    },
+
     {
       title: "Task",
       url: "/task",
@@ -85,6 +88,7 @@ const data = {
         { title: "Drag & Drop", url: "/task/taskDrop" }
       ],
     },
+
     {
       title: "Complaint",
       url: "/complaint",
@@ -95,6 +99,7 @@ const data = {
         { title: "Email", url: "/complaint/complaintEmail" }
       ],
     },
+
     {
       title: "Contact",
       url: "/contact",
@@ -105,6 +110,7 @@ const data = {
         { title: "Email", url: "/contact/contactEmail" }
       ],
     },
+
     {
       title: "Account",
       url: "/account",
@@ -113,6 +119,7 @@ const data = {
         { title: "Record", url: "/Account/table" }
       ],
     },
+
     {
       title: "Documents",
       url: "/document",
@@ -121,8 +128,9 @@ const data = {
         { title: "Drive", url: "/flipflap" }
       ],
     },
+
     {
-      title: "Schedule",
+      title: "Event or Meeting",
       url: "/scheduled",
       icon: CalendarCog,
 
@@ -130,6 +138,7 @@ const data = {
         { title: "Record", url: "/Scheduled/table" }
       ],
     },
+
   ],
 }
 

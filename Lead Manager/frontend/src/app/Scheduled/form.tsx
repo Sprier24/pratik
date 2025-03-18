@@ -64,14 +64,14 @@ export default function ScheduledEventForm() {
         throw new Error(data.error || "Failed to submit the event.");
       }
       toast({
-        title: "Scheduled Event Created",
-        description: "Your scheduled event has been created successfully.",
+        title: "Event or Meeting Submitted",
+        description: "The event or meeting has been successfully created",
       });
       router.push("/Scheduled/table")
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "There was an error submitting the event.",
+        description: error instanceof Error ? error.message : "There was an error creating the event or meeting",
         variant: "destructive",
       });
     } finally {

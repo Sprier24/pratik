@@ -256,14 +256,14 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Deleted",
-                description: "The task has been successfully deleted.",
+                description: "The contact has been successfully deleted",
             });
 
             fetchContacts();
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete Contact",
+                description: error instanceof Error ? error.message : "There was an error deleting the contact",
                 variant: "destructive",
             });
         }
@@ -288,7 +288,7 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Updated",
-                description: "The contact has been successfully updated.",
+                description: "The contact has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -301,7 +301,7 @@ export default function ContactTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update contact",
+                description: error instanceof Error ? error.message : "There was an error updating the contact",
                 variant: "destructive",
             });
         } finally {
@@ -506,47 +506,47 @@ export default function ContactTable() {
     return (
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-w-screen-xl">
             <div className="rounded-xl border bg-card text-card-foreground shadow">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-12">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                    <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Contact Record</h1>
-                    <Table
-                        isHeaderSticky
-                        aria-label="Leads table with custom cells, pagination and sorting"
-                        bottomContent={bottomContent}
-                        bottomContentPlacement="outside"
-                        classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
-                        topContent={topContent}
-                        topContentPlacement="outside"
-                        onSelectionChange={setSelectedKeys}
-                        onSortChange={setSortDescriptor}
-                    >
-                    <TableHeader columns={headerColumns}>
-                      {(column) => (
-                        <TableColumn
-                          key={column.uid}
-                          align={column.uid === "actions" ? "center" : "start"}
-                          allowsSorting={column.sortable}
-                        >
-                          {column.name}
-                        </TableColumn>
-                      )}
-                    </TableHeader>
-                    <TableBody emptyContent={"Create contact and add data"} items={sortedItems}>
-                      {(item) => (
-                        <TableRow key={item._id}>
-                          {(columnKey) => (
-                            <TableCell style={{ fontSize: "12px", padding: "8px" }}>
-                              {renderCell(item, columnKey)}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-12">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                            <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Contact Record</h1>
+                            <Table
+                                isHeaderSticky
+                                aria-label="Leads table with custom cells, pagination and sorting"
+                                bottomContent={bottomContent}
+                                bottomContentPlacement="outside"
+                                classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
+                                topContent={topContent}
+                                topContentPlacement="outside"
+                                onSelectionChange={setSelectedKeys}
+                                onSortChange={setSortDescriptor}
+                            >
+                                <TableHeader columns={headerColumns}>
+                                    {(column) => (
+                                        <TableColumn
+                                            key={column.uid}
+                                            align={column.uid === "actions" ? "center" : "start"}
+                                            allowsSorting={column.sortable}
+                                        >
+                                            {column.name}
+                                        </TableColumn>
+                                    )}
+                                </TableHeader>
+                                <TableBody emptyContent={"Create contact and add data"} items={sortedItems}>
+                                    {(item) => (
+                                        <TableRow key={item._id}>
+                                            {(columnKey) => (
+                                                <TableCell style={{ fontSize: "12px", padding: "8px" }}>
+                                                    {renderCell(item, columnKey)}
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
             </div>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -593,7 +593,15 @@ export default function ContactTable() {
                                         <FormItem>
                                             <FormLabel>Contact Number</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter contact number" {...field} />
+                                                <Input
+                                                    placeholder="Enter contact number"
+                                                    type="tel"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

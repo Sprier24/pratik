@@ -71,13 +71,13 @@ export default function LeadForm() {
             }
             toast({
                 title: "Lead Submitted",
-                description: `Your lead has been successfully submitted. ID: ${data.id}`,
+                description: `The lead has been successfully created`,
             })
             router.push("/lead/table")
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error submitting the lead.",
+                description: error instanceof Error ? error.message : "There was an error creating the lead",
                 variant: "destructive",
             })
         } finally {

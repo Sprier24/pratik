@@ -54,7 +54,7 @@ export const invoiceSchema = z.object({
     gstRate: z.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
     date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Invoice Date is required" }),
-    paidAmount: z.string().optional(),
+    paidAmount: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
     remainingAmount: z.number().optional(),
     totalWithoutGst: z.number().optional(),
     totalWithGst: z.number().optional(),
@@ -278,7 +278,7 @@ export default function InvoiceTable() {
 
             toast({
                 title: "Invoice Deleted",
-                description: "The invoice has been successfully deleted.",
+                description: "The invoice has been successfully deleted",
             });
 
             // Refresh the invoices list
@@ -286,7 +286,7 @@ export default function InvoiceTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete invoice",
+                description: error instanceof Error ? error.message : "There was an error deleting the invoice",
                 variant: "destructive",
             });
         }
@@ -329,7 +329,7 @@ export default function InvoiceTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update invoice",
+                description: error instanceof Error ? error.message : "There was an error updating the invoice",
                 variant: "destructive",
             });
         } finally {
@@ -786,7 +786,15 @@ export default function InvoiceTable() {
                                         <FormItem>
                                             <FormLabel>Paid Amount</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter paid amount" {...field} />
+                                                <Input
+                                                    placeholder="Enter paid amount"
+                                                    type="tel"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

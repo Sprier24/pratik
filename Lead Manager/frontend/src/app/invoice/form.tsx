@@ -31,7 +31,7 @@ const formSchema = z.object({
   gstRate: z.number().optional(),
   status: z.enum(["Paid", "Unpaid"]),
   date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Invoice Date is required" }),
-  paidAmount: z.string().optional(),
+  paidAmount: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
   remainingAmount: z.number().optional(),
   totalWithoutGst: z.number().optional(),
   totalWithGst: z.number().optional(),
@@ -113,13 +113,13 @@ export default function InvoiceForm() {
       }
       toast({
         title: "Invoice Submitted",
-        description: `Your invoice has been successfully submitted.`,
+        description: `The invoice has been successfully created`,
       });
       router.push(`/invoice/table`);
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "There was an error submitting the invoice.",
+        description: error instanceof Error ? error.message : "There was an error creating the invoice",
         variant: "destructive",
       });
     } finally {
@@ -319,7 +319,15 @@ export default function InvoiceForm() {
               <FormItem>
                 <FormLabel>Paid Amount</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter paid amount" type="string" {...field} />
+                  <Input
+                    placeholder="Enter paid amount"
+                    type="tel"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

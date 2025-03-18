@@ -283,8 +283,6 @@ export default function LeadTable() {
 
     const handleInvocieSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Basic validation: Check if any required field is empty
         const {
             companyName,
             customerName,
@@ -304,7 +302,7 @@ export default function LeadTable() {
         ) {
             toast({
                 title: "Error",
-                description: "Plwasem Fill  The All the field sre required",
+                description: "Please fill the all the field are required",
             });
             return;
         }
@@ -336,14 +334,14 @@ export default function LeadTable() {
             });
 
             toast({
-                title: "Invoice Sunmitted",
-                description: "The Invoice has been successfully Added.",
+                title: "Invoice Submitted",
+                description: "The invoice has been successfully created",
             });
         } catch (error) {
             console.error("Error saving contact:", error);
             toast({
-                title: "Failed To Add Invoice",
-                description: "The Invoice has been Failed .",
+                title: "Error",
+                description: "There was an error creating the invoice",
             });
         }
     };
@@ -496,7 +494,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Lead Deleted",
-                description: "The lead has been successfully deleted.",
+                description: "The lead has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -504,7 +502,7 @@ export default function LeadTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete lead",
+                description: error instanceof Error ? error.message : "There was an error deleting the lead",
                 variant: "destructive",
             });
         }
@@ -530,7 +528,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Lead Updated",
-                description: "The lead has been successfully updated.",
+                description: "The lead has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -543,7 +541,7 @@ export default function LeadTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update lead",
+                description: error instanceof Error ? error.message : "There was an error updating the lead",
                 variant: "destructive",
             });
         } finally {
@@ -577,7 +575,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Error",
-                description: `Please Fill All Fields Are Required`,
+                description: `Please fill the all the field are required`,
             })
         }
         try {
@@ -598,14 +596,14 @@ export default function LeadTable() {
             });
             toast({
                 title: "Contact Submitted",
-                description: `Your Contact has been successfully submitted.`,
+                description: `The contact has been successfully created`,
             })
         } catch (error) {
             console.error("Error saving contact:", error);
 
             toast({
                 title: "Error",
-                description: `Your Contact has been Failed to submit.`,
+                description: `There was an error creating the contact`,
             })
         }
     };

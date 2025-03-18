@@ -18,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 const complaintSchema = z.object({
   companyName: z.string().optional(),
   complainerName: z.string().min(2, { message: "Complainer name is required." }),
-  contactNumber: z.string().optional(),
+  contactNumber: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
   emailAddress: z.string().optional(),
   subject: z.string().min(2, { message: "Subject is required." }),
   date: z.date().optional(),
@@ -59,14 +59,14 @@ export default function ComplaintForm() {
         throw new Error(data.error || "Failed to submit the complaint.");
       }
       toast({
-        title: "Complaint Created",
-        description: "Your complaint has been submitted successfully.",
+        title: "Complaint Submitted",
+        description: "The complaint has been successfully created",
       });
       router.push("/complaint/table")
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "There was an error submitting the complaint.",
+        description: error instanceof Error ? error.message : "There was an error creating the complaint",
         variant: "destructive",
       });
     } finally {
@@ -114,7 +114,15 @@ export default function ComplaintForm() {
               <FormItem>
                 <FormLabel>Contact Number (Optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter contact number" {...field} />
+                  <Input
+                    placeholder="Enter contact number"
+                    type="tel"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numeric values
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

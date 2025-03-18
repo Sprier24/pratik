@@ -247,8 +247,8 @@ export default function AccountTable() {
             }
 
             toast({
-                title: "Lead Deleted",
-                description: "The account has been successfully deleted.",
+                title: "Account Deleted",
+                description: "The account has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -256,7 +256,7 @@ export default function AccountTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete lead",
+                description: error instanceof Error ? error.message : "There was an error deleting the account",
                 variant: "destructive",
             });
         }
@@ -281,7 +281,7 @@ export default function AccountTable() {
 
             toast({
                 title: "Account Updated",
-                description: "The account has been successfully updated.",
+                description: "The account has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -294,7 +294,7 @@ export default function AccountTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update account",
+                description: error instanceof Error ? error.message : "There was an error updating the account",
                 variant: "destructive",
             });
         } finally {

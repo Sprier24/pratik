@@ -58,14 +58,14 @@ export default function Task() {
         throw new Error(data.error || "Failed to submit the task.");
       }
       toast({
-        title: "Task Created",
-        description: `Your task has been created successfully.`,
+        title: "Task Submitted",
+        description: `The task has been successfully created`,
       });
       router.push(`/task/table`);
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "There was an error submitting the task.",
+        description: error instanceof Error ? error.message : "There was an error creating the task",
         variant: "destructive",
       });
     } finally {

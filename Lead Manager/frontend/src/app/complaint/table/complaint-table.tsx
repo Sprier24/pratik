@@ -63,7 +63,7 @@ const INITIAL_VISIBLE_COLUMNS = ["companyName", "complainerName", "contactNumber
 const complaintSchema = z.object({
     companyName: z.string().optional(),
     complainerName: z.string().min(2, { message: "Complainer name is required." }),
-    contactNumber: z.string().optional(),
+    contactNumber: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
     emailAddress: z.string().optional(),
     subject: z.string().min(2, { message: "Subject is required." }),
     date: z.date().optional(),
@@ -235,8 +235,8 @@ export default function ComplaintTable() {
             }
 
             toast({
-                title: "deal Deleted",
-                description: "The deal has been successfully deleted.",
+                title: "Complaint Deleted",
+                description: "The complaint has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -244,7 +244,7 @@ export default function ComplaintTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete complaint",
+                description: error instanceof Error ? error.message : "There was an error deleting the complaint",
                 variant: "destructive",
             });
         }
@@ -268,8 +268,8 @@ export default function ComplaintTable() {
             }
 
             toast({
-                title: "deal Updated",
-                description: "The deal has been successfully updated.",
+                title: "Complaint Updated",
+                description: "The complaint has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -282,7 +282,7 @@ export default function ComplaintTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update deal",
+                description: error instanceof Error ? error.message : "There was an error updating the complaint",
                 variant: "destructive",
             });
         } finally {
@@ -480,49 +480,49 @@ export default function ComplaintTable() {
 
     return (
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-w-screen-xl">
-           <div className="rounded-xl border bg-card text-card-foreground shadow">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-12">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                    <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Complaint Record</h1>
-                    <Table
-                        isHeaderSticky
-                        aria-label="Leads table with custom cells, pagination and sorting"
-                        bottomContent={bottomContent}
-                        bottomContentPlacement="outside"
-                        classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
-                        topContent={topContent}
-                        topContentPlacement="outside"
-                        onSelectionChange={setSelectedKeys}
-                        onSortChange={setSortDescriptor}
-                    >
-                    <TableHeader columns={headerColumns}>
-                      {(column) => (
-                        <TableColumn
-                          key={column.uid}
-                          align={column.uid === "actions" ? "center" : "start"}
-                          allowsSorting={column.sortable}
-                        >
-                          {column.name}
-                        </TableColumn>
-                      )}
-                    </TableHeader>
-                    <TableBody emptyContent={"Create Complaint and add data"} items={sortedItems}>
-                      {(item) => (
-                        <TableRow key={item._id}>
-                          {(columnKey) => (
-                            <TableCell style={{ fontSize: "12px", padding: "8px" }}>
-                              {renderCell(item, columnKey)}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+            <div className="rounded-xl border bg-card text-card-foreground shadow">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-12">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                            <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Complaint Record</h1>
+                            <Table
+                                isHeaderSticky
+                                aria-label="Leads table with custom cells, pagination and sorting"
+                                bottomContent={bottomContent}
+                                bottomContentPlacement="outside"
+                                classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
+                                topContent={topContent}
+                                topContentPlacement="outside"
+                                onSelectionChange={setSelectedKeys}
+                                onSortChange={setSortDescriptor}
+                            >
+                                <TableHeader columns={headerColumns}>
+                                    {(column) => (
+                                        <TableColumn
+                                            key={column.uid}
+                                            align={column.uid === "actions" ? "center" : "start"}
+                                            allowsSorting={column.sortable}
+                                        >
+                                            {column.name}
+                                        </TableColumn>
+                                    )}
+                                </TableHeader>
+                                <TableBody emptyContent={"Create Complaint and add data"} items={sortedItems}>
+                                    {(item) => (
+                                        <TableRow key={item._id}>
+                                            {(columnKey) => (
+                                                <TableCell style={{ fontSize: "12px", padding: "8px" }}>
+                                                    {renderCell(item, columnKey)}
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-            </div> 
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
@@ -568,7 +568,15 @@ export default function ComplaintTable() {
                                         <FormItem>
                                             <FormLabel>Contact Number (Optional)</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter contact number" {...field} />
+                                                <Input
+                                                    placeholder="Enter contact number"
+                                                    type="tel"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numeric values
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

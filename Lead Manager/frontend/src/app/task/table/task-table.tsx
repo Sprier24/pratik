@@ -278,14 +278,14 @@ export default function TaskTable() {
 
             toast({
                 title: "Task Deleted",
-                description: "The task has been successfully deleted.",
+                description: "The task has been successfully deleted",
             });
 
             fetchTasks();
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete task",
+                description: error instanceof Error ? error.message : "There was an error deleting the task",
                 variant: "destructive",
             });
         }
@@ -315,7 +315,7 @@ export default function TaskTable() {
 
             toast({
                 title: "Task Updated",
-                description: "The task has been successfully updated.",
+                description: "The task has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -328,7 +328,7 @@ export default function TaskTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update lead",
+                description: error instanceof Error ? error.message : "There was an error deleting the task",
                 variant: "destructive",
             });
         } finally {

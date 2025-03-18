@@ -1023,7 +1023,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Leads Chart</CardTitle>
+            <CardTitle>Lead</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1057,7 +1057,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Pie Chart - Leads</CardTitle>
+            <CardTitle>Lead</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1094,7 +1094,7 @@ export default function Page() {
       return (
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
-            <CardTitle>Radial Chart - Lead</CardTitle>
+            <CardTitle>Lead</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1139,7 +1139,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Lead Bar Chart</CardTitle>
+            <CardTitle>Lead</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig}>
@@ -1205,7 +1205,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Invoice Chart</CardTitle>
+            <CardTitle>Invoice</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1239,7 +1239,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Pie Chart - Invoice</CardTitle>
+            <CardTitle>Invoice</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1276,7 +1276,7 @@ export default function Page() {
       return (
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
-            <CardTitle>Radial Chart - Invoice</CardTitle>
+            <CardTitle>Invoice</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1321,7 +1321,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Bar Chart</CardTitle>
+            <CardTitle>Invoice</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfigInvoice}>
@@ -1387,7 +1387,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Deals Chart</CardTitle>
+            <CardTitle>Deal</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1421,7 +1421,7 @@ export default function Page() {
       return (
         <Card>
           <CardHeader className="items-center">
-            <CardTitle>Pie Chart - Deals</CardTitle>
+            <CardTitle>Deal</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
@@ -1458,7 +1458,7 @@ export default function Page() {
       return (
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
-            <CardTitle>Radial Chart - Deal</CardTitle>
+            <CardTitle>Deal</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer
