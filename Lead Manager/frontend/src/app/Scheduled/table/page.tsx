@@ -37,9 +37,9 @@ export default function LeadTablePage() {
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
-                               <span>
-                                Event or Meeting Record
-                               </span>
+                                <span>
+                                    Event or Meeting Record
+                                </span>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
@@ -57,16 +57,7 @@ export default function LeadTablePage() {
                         </div>
                     </div>
                 </header>
-                <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-12 pt-15">
-                    <Card className="max-w-6xl mx-auto">
-                        <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Event or Meeting Record</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <SecheduledTable />
-                        </CardContent>
-                    </Card>
-                </div>
+                <SecheduledTable />
             </SidebarInset>
         </SidebarProvider>
     )
