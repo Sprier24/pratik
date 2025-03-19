@@ -53,15 +53,15 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "gstNumber", "description", "actions"];
 
 const contactSchema = z.object({
-    companyName: z.string().min(2, { message: "Company name is required." }),
-    customerName: z.string().min(2, { message: "Customer name is required." }),
+    companyName: z.string().nonempty({ message: "Company name is required." }),
+    customerName: z.string().nonempty({ message: "Customer name is required." }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
         .nonempty({ message: "Contact number is required" }),
     emailAddress: z.string().email({ message: "Invalid email address." }),
-    address: z.string().min(2, { message: "Company address is required." }),
-    gstNumber: z.string().min(1, { message: "GST number is required." }),
+    address: z.string().nonempty({ message: "Company address is required." }),
+    gstNumber: z.string().nonempty({ message: "GST number is required." }),
     description: z.string().optional(),
 });
 
@@ -256,14 +256,14 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Deleted",
-                description: "The contact has been successfully deleted",
+                description: "The task has been successfully deleted.",
             });
 
             fetchContacts();
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error deleting the contact",
+                description: error instanceof Error ? error.message : "Failed to delete Contact",
                 variant: "destructive",
             });
         }
@@ -288,7 +288,7 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Updated",
-                description: "The contact has been successfully updated",
+                description: "The contact has been successfully updated.",
             });
 
             // Close dialog and reset form
@@ -301,7 +301,7 @@ export default function ContactTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error updating the contact",
+                description: error instanceof Error ? error.message : "Failed to update contact",
                 variant: "destructive",
             });
         } finally {
@@ -399,11 +399,15 @@ export default function ContactTable() {
                         />
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
-                            <DropdownTrigger className="flex">
-                                <Button endContent={<ChevronDownIcon className="text-small" />} variant="default" className="px-3 py-2 text-sm sm:text-base">
-                                    Hide Column
+                            <DropdownTrigger className="w-full sm:w-auto">
+                                <Button
+                                    endContent={<ChevronDownIcon className="text-small" />}
+                                    variant="default"
+                                    className="px-3 py-2 text-sm sm:text-base w-full sm:w-auto flex items-center justify-between"
+                                >
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -416,24 +420,21 @@ export default function ContactTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{
-                                    backgroundColor: "#f0f0f0",
-                                    color: "#000000",
-                                    height: "400px",
-                                    overflowY: "scroll",
-                                    scrollbarWidth: "none",
-                                    msOverflowStyle: "none"
-                                }}
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
+                                    <DropdownItem
+                                        key={column.uid}
+                                        className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
+                                    >
                                         {column.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
+
                         <Button
-                            className="addButton"
+                            className="addButton w-full sm:w-auto flex items-center justify-between"
                             style={{ backgroundColor: 'hsl(339.92deg 91.04% 52.35%)' }}
                             variant="default"
                             size="default"
@@ -550,13 +551,13 @@ export default function ContactTable() {
             </div>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
                         <DialogTitle>Update Contact</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit((values) => handleEditClick(values))} className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="companyName"
@@ -593,15 +594,7 @@ export default function ContactTable() {
                                         <FormItem>
                                             <FormLabel>Contact Number</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Enter contact number"
-                                                    type="tel"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value.replace(/[^0-9]/g, '');
-                                                        field.onChange(value);
-                                                    }}
-                                                />
+                                                <Input placeholder="Enter contact number" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -689,5 +682,3 @@ export default function ContactTable() {
 
     );
 }
-
-

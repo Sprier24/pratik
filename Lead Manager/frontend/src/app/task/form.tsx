@@ -16,10 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const taskSchema = z.object({
-  subject: z.string().min(2, { message: "Subject is required." }),
-  relatedTo: z.string().min(2, { message: "Related to  is required." }),
-  name: z.string().min(2, { message: "Name is required." }),
-  assigned: z.string().min(2, { message: "Assigned By is required." }),
+  subject: z.string().nonempty({ message: "Subject is required." }),
+  relatedTo: z.string().nonempty({ message: "Related to  is required." }),
+  name: z.string().nonempty({ message: "Name is required." }),
+  assigned: z.string().nonempty({ message: "Assigned By is required." }),
   taskDate: z.date().optional(),
   dueDate: z.date().optional(),
   status: z.enum(["Pending", "Resolved", "In Progress"]),
@@ -211,7 +211,9 @@ export default function Task() {
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select {...field} 
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                >
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Resolved">Resolved</option>
@@ -228,7 +230,9 @@ export default function Task() {
               <FormItem>
                 <FormLabel>Priority</FormLabel>
                 <FormControl>
-                  <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select {...field} 
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                  >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
                     <option value="Low">Low</option>
@@ -250,7 +254,7 @@ export default function Task() {
                 <textarea
                   {...field}
                   placeholder="Enter task in detail..."
-                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
                   rows={3}
                 />
               </FormControl>
@@ -259,8 +263,8 @@ export default function Task() {
           )}
         />
 
-        <div className="text-right">
-          <Button type="submit" className="w-25" disabled={isSubmitting}>
+        <div className="flex justify-center sm:justify-end">
+          <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2" />

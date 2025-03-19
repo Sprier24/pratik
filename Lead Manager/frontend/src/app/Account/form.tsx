@@ -12,12 +12,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const accountSchema = z.object({
-  bankName: z.string().min(2, { message: "Bank name is required." }),
-  IFSCCode: z.string().min(2, { message: "Bank IFSC code is required." }),
-  accountHolderName: z.string().min(2, { message: "Bank account holder name is required." }),
-  accountNumber: z.string().min(2, { message: "Bank account number is required." }),
+  bankName: z.string().nonempty({ message: "Bank name is required." }),
+  IFSCCode: z.string().nonempty({ message: "Bank IFSC code is required." }),
+  accountHolderName: z.string().nonempty({ message: "Bank account holder name is required." }),
+  accountNumber: z.string().nonempty({ message: "Bank account number is required." }),
   accountType: z.enum(["Current", "Savings", "Other"], { message: "Account type is required." }),
-  UpiId: z.string().min(2, { message: "UpiId is required." }),
+  UpiId: z.string().nonempty({ message: "UpiId is required." }),
 });
 
 export default function AccountForm() {
@@ -134,8 +134,8 @@ export default function AccountForm() {
                 <FormControl>
                   <select
                     {...field}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                    >
                     <option value="Savings">Savings</option>
                     <option value="Current">Current</option>
                     <option value="Other">Other</option>
@@ -147,7 +147,7 @@ export default function AccountForm() {
           />
           <FormField
             control={form.control}
-            name="UpiCode"
+            name="UpiId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>UPI ID (Optional)</FormLabel>
@@ -160,8 +160,8 @@ export default function AccountForm() {
           />
         </div>
 
-        <div className="text-right">
-          <Button type="submit" className="w-25" disabled={isSubmitting}>
+        <div className="flex justify-center sm:justify-end">
+          <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2" />

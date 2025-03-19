@@ -1,7 +1,7 @@
 "use client"
 
 import { AppSidebar } from "@/components/app-sidebar"
-// import { ModeToggle } from "@/components/ModeToggle"
+import { ModeToggle } from "@/components/ModeToggle"
 import { Breadcrumb, BreadcrumbSeparator, BreadcrumbPage, BreadcrumbList, BreadcrumbLink, BreadcrumbItem } from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -237,57 +237,49 @@ interface CategorizedReminder {
 interface CategorizedScheduled {
   [key: string]: Schedule[];
 }
-//lead//
-const columns = [
-  { name: "COMPANY", uid: "companyName", sortable: true },
-  { name: "CUSTOMER", uid: "customerName", sortable: true },
-  { name: "CONTACT", uid: "contactNumber", sortable: true },
-  { name: "EMAIL", uid: "emailAddress", sortable: true },
-  { name: "ADDRESS", uid: "address", sortable: true },
-  { name: "PRODUCT", uid: "productName", sortable: true },
-  { name: "AMOUNT", uid: "amount", sortable: true },
-  { name: "GST", uid: "gstNumber", sortable: true },
-  { name: "STATUS", uid: "status", sortable: true },
-  { name: "DATE", uid: "date", sortable: true },
-  { name: "END DATE", uid: "endDate", sortable: true },
-  { name: "ACTION", uid: "actions", sortable: true }
-];
 
-//Invoice//
-const columnsInvoice = [
-  { name: "COMPANY", uid: "companyName", sortable: true },
-  { name: "CUSTOMER", uid: "customerName", sortable: true },
-  { name: "EMAIL", uid: "emailAddress", sortable: true },
-  { name: "PRODUCT", uid: "productName", sortable: true },
+const columns = [
+  { name: "Company Name", uid: "companyName", sortable: true },
+  { name: "Product Name", uid: "productName", sortable: true },
+  { name: "Product Amount", uid: "amount", sortable: true },
+  { name: "Status", uid: "status", sortable: true },
 ];
 
 const columnsDeal = [
-  { name: "COMPANY", uid: "companyName", sortable: true },
-  { name: "CUSTOMER", uid: "customerName", sortable: true },
-  { name: "EMAIL", uid: "emailAddress", sortable: true },
-  { name: "PRODUCT", uid: "productName", sortable: true },
+  { name: "Company Name", uid: "companyName", sortable: true },
+  { name: "Product Name", uid: "productName", sortable: true },
+  { name: "Product Amount", uid: "amount", sortable: true },
+  { name: "Status", uid: "status", sortable: true },
 ];
 
-const columnsTask = [
-  { name: "SUBJECT", uid: "subject", sortable: true },
-  { name: "RELATED TO", uid: "relatedTo", sortable: true },
-  { name: "CUSTOMER", uid: "name", sortable: true },
-  { name: "STATUS", uid: "status", sortable: true },
+const columnsInvoice = [
+  { name: "Company Name", uid: "companyName", sortable: true },
+  { name: "Product Name", uid: "productName", sortable: true },
+  { name: "Product Amount", uid: "amount", sortable: true },
+  { name: "Status", uid: "status", sortable: true },
 ];
 
 const columnsReminder = [
-  { name: "COMPANY", uid: "companyName", sortable: true },
-  { name: "CUSTOMER", uid: "customerName", sortable: true },
-  { name: "EMAIL", uid: "emailAddress", sortable: true },
-  { name: "STATUS", uid: "status", sortable: true },
+  { name: "Company Name", uid: "companyName", sortable: true },
+  { name: "Product Name", uid: "productName", sortable: true },
+  { name: "Paid Amount", uid: "paidAmount", sortable: true },
+  { NAME: "Remiaining Amount", uid: "remainingAmount", sortable: true },
+];
+
+const columnsTask = [
+  { name: "Subject", uid: "subject", sortable: true },
+  { name: "Name", uid: "name", sortable: true },
+  { name: "Task Date", uid: "taskDate", sortable: true },
+  { name: "Due Date", uid: "dueDate", sortable: true },
 ];
 
 const columnsSchedule = [
-  { name: "SUBJECT", uid: "subject", sortable: true },
-  { name: "CUSTOMER", uid: "customer", sortable: true },
-  { name: "LOCATION", uid: "location", sortable: true },
-  { name: "STATUS", uid: "status", sortable: true },
+  { name: "Subject", uid: "subject", sortable: true },
+  { name: "Location", uid: "location", sortable: true },
+  { name: "Member", uid: "assignedUser", sortable: true },
+  { name: "Date", uid: "date", sortable: true },
 ];
+
 
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "emailAddress", "productName"];
 
@@ -2015,7 +2007,7 @@ export default function Page() {
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            {/* <ModeToggle /> */}
+            <ModeToggle />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
@@ -2042,7 +2034,7 @@ export default function Page() {
           </div>
         </header>
         <Box sx={{ width: '100%' }}>
-          <h1 className="text-2xl font-semibold mb-8 mt-4" style={{ textAlign: "center" }}>S P R I E R S</h1>
+          <h1 className="text-amber-500 font-bold mb-8 mt-4 text-xl" style={{ textAlign: "center" }}>S P R I E R S</h1>
           <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
 
             <Grid item xs={12} md={6} lg={4}>
@@ -2148,7 +2140,7 @@ export default function Page() {
                       </TableColumn>
                     )}
                   </TableHeader>
-                  <TableBody emptyContent={"No leads found"} items={sortedItems}>
+                  <TableBody emptyContent={"No lead available"} items={sortedItems}>
                     {(item) => (
                       <TableRow key={item._id}>
                         {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
@@ -2198,7 +2190,7 @@ export default function Page() {
                       </TableColumn>
                     )}
                   </TableHeader>
-                  <TableBody emptyContent={"No deals found"} items={sortedDeals}>
+                  <TableBody emptyContent={"No deal available"} items={sortedDeals}>
                     {(item) => (
                       <TableRow key={item._id}>
                         {(columnKey) => <TableCell>{renderCellDeal(item, columnKey)}</TableCell>}
@@ -2246,7 +2238,7 @@ export default function Page() {
                       </TableColumn>
                     )}
                   </TableHeader>
-                  <TableBody emptyContent={"No invoices found"} items={itemsInvoice}>
+                  <TableBody emptyContent={"No invoice available"} items={itemsInvoice}>
                     {(item) => (
                       <TableRow key={item._id}>
                         {(columnKey) => <TableCell>{renderCellInvoice(item, columnKey)}</TableCell>}
@@ -2296,7 +2288,7 @@ export default function Page() {
                         </TableColumn>
                       )}
                     </TableHeader>
-                    <TableBody emptyContent={"No reminders found"} items={itemsReminder}>
+                    <TableBody emptyContent={"No reminder available"} items={itemsReminder}>
                       {(item) => (
                         <TableRow key={item._id}>
                           {(columnKey) => <TableCell>{renderCellReminder(item, columnKey)}</TableCell>}
@@ -2347,7 +2339,7 @@ export default function Page() {
                       </TableColumn>
                     )}
                   </TableHeader>
-                  <TableBody emptyContent={"No tasks found"} items={sortedTasks}>
+                  <TableBody emptyContent={"No task available"} items={sortedTasks}>
                     {(item) => (
                       <TableRow key={item._id}>
                         {(columnKey) => <TableCell>{renderCellTask(item, columnKey)}</TableCell>}
@@ -2399,7 +2391,7 @@ export default function Page() {
                         </TableColumn>
                       )}
                     </TableHeader>
-                    <TableBody emptyContent={"No schedule found"} items={sortedSchedule}>
+                    <TableBody emptyContent={"No event or meeting available"} items={sortedSchedule}>
                       {(item) => (
                         <TableRow key={item._id}>
                           {(columnKey) => <TableCell>{renderCellSchedule(item, columnKey)}</TableCell>}

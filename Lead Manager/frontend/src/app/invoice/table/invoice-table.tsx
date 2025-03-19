@@ -54,7 +54,7 @@ export const invoiceSchema = z.object({
     gstRate: z.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
     date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Invoice Date is required" }),
-    paidAmount: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
+    paidAmount: z.string().optional(),
     remainingAmount: z.number().optional(),
     totalWithoutGst: z.number().optional(),
     totalWithGst: z.number().optional(),
@@ -278,7 +278,7 @@ export default function InvoiceTable() {
 
             toast({
                 title: "Invoice Deleted",
-                description: "The invoice has been successfully deleted",
+                description: "The invoice has been successfully deleted.",
             });
 
             // Refresh the invoices list
@@ -286,7 +286,7 @@ export default function InvoiceTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error deleting the invoice",
+                description: error instanceof Error ? error.message : "Failed to delete invoice",
                 variant: "destructive",
             });
         }
@@ -329,7 +329,7 @@ export default function InvoiceTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error updating the invoice",
+                description: error instanceof Error ? error.message : "Failed to update invoice",
                 variant: "destructive",
             });
         } finally {
@@ -420,11 +420,15 @@ export default function InvoiceTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
-                            <DropdownTrigger className="flex">
-                                <Button endContent={<ChevronDownIcon className="text-small" />} variant="default" className="px-3 py-2 text-sm sm:text-base">
-                                    Hide Column
+                            <DropdownTrigger className="w-full sm:w-auto">
+                                <Button
+                                    endContent={<ChevronDownIcon className="text-small" />}
+                                    variant="default"
+                                    className="px-3 py-2 text-sm sm:text-base w-full sm:w-auto flex items-center justify-between"
+                                >
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -437,24 +441,21 @@ export default function InvoiceTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{
-                                    backgroundColor: "#f0f0f0",
-                                    color: "#000000",
-                                    height: "400px",
-                                    overflowY: "scroll",
-                                    scrollbarWidth: "none",
-                                    msOverflowStyle: "none"
-                                }}
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
+                                    <DropdownItem 
+                                        key={column.uid} 
+                                        className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
+                                    >
                                         {column.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
+
                         <Button
-                            className="addButton"
+                            className="addButton w-full sm:w-auto flex items-center justify-between"
                             style={{ backgroundColor: 'hsl(339.92deg 91.04% 52.35%)' }}
                             variant="default"
                             size="default"
@@ -464,6 +465,7 @@ export default function InvoiceTable() {
                             Create Invoice
                         </Button>
                     </div>
+
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-default-400 text-small">Total {invoices.length} invoice</span>
@@ -606,14 +608,14 @@ export default function InvoiceTable() {
             </div>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
                         <DialogTitle>Update Invoice</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <FormField
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
                                     control={form.control}
                                     name="companyName"
                                     render={({ field }) => (
@@ -786,15 +788,7 @@ export default function InvoiceTable() {
                                         <FormItem>
                                             <FormLabel>Paid Amount</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Enter paid amount"
-                                                    type="tel"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value.replace(/[^0-9]/g, '');
-                                                        field.onChange(value);
-                                                    }}
-                                                />
+                                                <Input placeholder="Enter paid amount" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -885,4 +879,3 @@ export default function InvoiceTable() {
         </div>
     );
 }
-

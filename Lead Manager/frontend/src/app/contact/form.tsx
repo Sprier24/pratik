@@ -12,15 +12,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useRouter } from "next/navigation";
 
 const contactSchema = z.object({
-  companyName: z.string().min(2, { message: "Company name is required." }),
-  customerName: z.string().min(2, { message: "Customer name is required." }),
+  companyName: z.string().nonempty({ message: "Company name is required." }),
+  customerName: z.string().nonempty({ message: "Customer name is required." }),
   contactNumber: z
     .string()
     .regex(/^\d*$/, { message: "Contact number must be numeric" })
     .nonempty({ message: "Contact number is required" }),
   emailAddress: z.string().email({ message: "Invalid email address." }),
-  address: z.string().min(2, { message: "Company address is required." }),
-  gstNumber: z.string().min(1, { message: "GST number is required." }),
+  address: z.string().nonempty({ message: "Company address is required." }),
+  gstNumber: z.string().nonempty({ message: "GST number is required." }),
   description: z.string().optional(),
 });
 
@@ -177,7 +177,7 @@ export default function ContactForm() {
                 <textarea
                   placeholder="Enter more details here..."
                   {...field}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
                   rows={3}
                 />
               </FormControl>
@@ -186,8 +186,8 @@ export default function ContactForm() {
           )}
         />
 
-        <div className="text-right">
-          <Button type="submit" className="w-25" disabled={isSubmitting}>
+        <div className="flex justify-center sm:justify-end">
+          <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2" />

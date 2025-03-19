@@ -17,10 +17,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const complaintSchema = z.object({
   companyName: z.string().optional(),
-  complainerName: z.string().min(2, { message: "Complainer name is required." }),
+  complainerName: z.string().nonempty({ message: "Complainer name is required." }),
   contactNumber: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
   emailAddress: z.string().optional(),
-  subject: z.string().min(2, { message: "Subject is required." }),
+  subject: z.string().nonempty({ message: "Subject is required." }),
   date: z.date().optional(),
   caseStatus: z.enum(["Pending", "Resolved", "In Progress"]),
   priority: z.enum(["High", "Medium", "Low"]),
@@ -199,7 +199,9 @@ export default function ComplaintForm() {
               <FormItem>
                 <FormLabel>Case Status</FormLabel>
                 <FormControl>
-                  <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select {...field} 
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                  >
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Resolved">Resolved</option>
@@ -216,7 +218,9 @@ export default function ComplaintForm() {
               <FormItem>
                 <FormLabel>Priority</FormLabel>
                 <FormControl>
-                  <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select {...field} 
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                  >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
                     <option value="Low">Low</option>
@@ -238,7 +242,7 @@ export default function ComplaintForm() {
                 <textarea
                   placeholder="Enter client / customer problem briefly..."
                   {...field}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
                   rows={3}
                 />
               </FormControl>
@@ -247,8 +251,8 @@ export default function ComplaintForm() {
           )}
         />
 
-        <div className="text-right">
-          <Button type="submit" className="w-25" disabled={isSubmitting}>
+        <div className="flex justify-center sm:justify-end">
+          <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>          
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2" />

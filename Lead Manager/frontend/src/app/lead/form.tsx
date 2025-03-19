@@ -86,7 +86,7 @@ export default function LeadForm() {
     }
 
     return (
-        <Form {...form}>
+       <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
@@ -228,7 +228,7 @@ export default function LeadForm() {
                                 <FormControl>
                                     <select
                                         {...field}
-                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
                                     >
                                         <option value="Proposal">Proposal</option>
                                         <option value="New">New</option>
@@ -326,7 +326,7 @@ export default function LeadForm() {
                                 <textarea
                                     placeholder="Enter more details here..."
                                     {...field}
-                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
                                     rows={3}
                                 />
                             </FormControl>
@@ -335,11 +335,11 @@ export default function LeadForm() {
                     )}
                 />
 
-                <div className="text-right">
-                    <Button type="submit" className="w-25" disabled={isSubmitting}>
+                <div className="flex justify-center sm:justify-end">
+                    <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="animate-spin mr-2" />
+                                <Loader2 className="animate-spin mr-2"/>
                                 Submitting...
                             </>
                         ) : (
@@ -348,6 +348,6 @@ export default function LeadForm() {
                     </Button>
                 </div>
             </form>
-        </Form>
+        </Form >
     )
 }

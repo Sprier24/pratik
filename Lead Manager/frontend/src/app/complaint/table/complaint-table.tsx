@@ -62,10 +62,10 @@ const INITIAL_VISIBLE_COLUMNS = ["companyName", "complainerName", "contactNumber
 
 const complaintSchema = z.object({
     companyName: z.string().optional(),
-    complainerName: z.string().min(2, { message: "Complainer name is required." }),
+    complainerName: z.string().nonempty({ message: "Complainer name is required." }),
     contactNumber: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
     emailAddress: z.string().optional(),
-    subject: z.string().min(2, { message: "Subject is required." }),
+    subject: z.string().nonempty({ message: "Subject is required." }),
     date: z.date().optional(),
     caseStatus: z.enum(["Pending", "Resolved", "In Progress"]),
     priority: z.enum(["High", "Medium", "Low"]),
@@ -235,8 +235,8 @@ export default function ComplaintTable() {
             }
 
             toast({
-                title: "Complaint Deleted",
-                description: "The complaint has been successfully deleted",
+                title: "deal Deleted",
+                description: "The deal has been successfully deleted.",
             });
 
             // Refresh the leads list
@@ -244,7 +244,7 @@ export default function ComplaintTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error deleting the complaint",
+                description: error instanceof Error ? error.message : "Failed to delete complaint",
                 variant: "destructive",
             });
         }
@@ -268,8 +268,8 @@ export default function ComplaintTable() {
             }
 
             toast({
-                title: "Complaint Updated",
-                description: "The complaint has been successfully updated",
+                title: "deal Updated",
+                description: "The deal has been successfully updated.",
             });
 
             // Close dialog and reset form
@@ -282,7 +282,7 @@ export default function ComplaintTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error updating the complaint",
+                description: error instanceof Error ? error.message : "Failed to update deal",
                 variant: "destructive",
             });
         } finally {
@@ -379,12 +379,15 @@ export default function ComplaintTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
-                            <DropdownTrigger className="flex">
-                                <Button endContent={<ChevronDownIcon className="text-small" />} variant="default" className="px-3 py-2 text-sm sm:text-base">
-                                    Hide Column
+                            <DropdownTrigger className="w-full sm:w-auto">
+                                <Button
+                                    endContent={<ChevronDownIcon className="text-small" />}
+                                    variant="default"
+                                    className="px-3 py-2 text-sm sm:text-base w-full sm:w-auto flex items-center justify-between"
+                                >
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -397,18 +400,20 @@ export default function ComplaintTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                className="min-w-[150px] sm:min-w-[200px]"
-                                style={{ backgroundColor: "#f0f0f0", color: "#000000" }}
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
+                                    <DropdownItem
+                                        key={column.uid}
+                                        className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
+                                    >
                                         {column.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
                         <Button
-                            className="addButton"
+                            className="addButton w-full sm:w-auto flex items-center justify-between"
                             style={{ backgroundColor: 'hsl(339.92deg 91.04% 52.35%)' }}
                             variant="default"
                             size="default"
@@ -525,13 +530,13 @@ export default function ComplaintTable() {
             </div>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
                         <DialogTitle>Update Complaint</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="companyName"
@@ -568,15 +573,7 @@ export default function ComplaintTable() {
                                         <FormItem>
                                             <FormLabel>Contact Number (Optional)</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Enter contact number"
-                                                    type="tel"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numeric values
-                                                        field.onChange(value);
-                                                    }}
-                                                />
+                                                <Input placeholder="Enter contact number" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -718,4 +715,3 @@ export default function ComplaintTable() {
 
     );
 }
-

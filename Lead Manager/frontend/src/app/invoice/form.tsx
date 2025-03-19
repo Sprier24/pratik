@@ -295,7 +295,7 @@ export default function InvoiceForm() {
                     {...field}
                     value={field.value}
                     onChange={(e) => field.onChange(Number(e.target.value))}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
                   >
                     <option value="">Select GST Rate</option>
                     <option value="5">5%</option>
@@ -358,8 +358,8 @@ export default function InvoiceForm() {
                 <FormControl>
                   <select
                     {...field}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                    >
                     <option value="Paid">Paid</option>
                     <option value="Unpaid">Unpaid</option>
                   </select>
@@ -401,9 +401,9 @@ export default function InvoiceForm() {
           />
         </div>
 
-        <div className="text-right">
-          <Button type="submit" className="w-25" disabled={isSubmitting}>
-            {isSubmitting ? (
+        <div className="flex justify-center sm:justify-end">
+        <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
+        {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin mr-2" />
                 Submitting...

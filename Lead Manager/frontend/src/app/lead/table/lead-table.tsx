@@ -283,6 +283,8 @@ export default function LeadTable() {
 
     const handleInvocieSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Basic validation: Check if any required field is empty
         const {
             companyName,
             customerName,
@@ -302,7 +304,7 @@ export default function LeadTable() {
         ) {
             toast({
                 title: "Error",
-                description: "Please fill the all the field are required",
+                description: "Plwasem Fill  The All the field sre required",
             });
             return;
         }
@@ -334,14 +336,14 @@ export default function LeadTable() {
             });
 
             toast({
-                title: "Invoice Submitted",
-                description: "The invoice has been successfully created",
+                title: "Invoice Sunmitted",
+                description: "The Invoice has been successfully Added.",
             });
         } catch (error) {
             console.error("Error saving contact:", error);
             toast({
-                title: "Error",
-                description: "There was an error creating the invoice",
+                title: "Failed To Add Invoice",
+                description: "The Invoice has been Failed .",
             });
         }
     };
@@ -494,7 +496,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Lead Deleted",
-                description: "The lead has been successfully deleted",
+                description: "The lead has been successfully deleted.",
             });
 
             // Refresh the leads list
@@ -502,7 +504,7 @@ export default function LeadTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error deleting the lead",
+                description: error instanceof Error ? error.message : "Failed to delete lead",
                 variant: "destructive",
             });
         }
@@ -528,7 +530,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Lead Updated",
-                description: "The lead has been successfully updated",
+                description: "The lead has been successfully updated.",
             });
 
             // Close dialog and reset form
@@ -541,7 +543,7 @@ export default function LeadTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error updating the lead",
+                description: error instanceof Error ? error.message : "Failed to update lead",
                 variant: "destructive",
             });
         } finally {
@@ -575,7 +577,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Error",
-                description: `Please fill the all the field are required`,
+                description: `Please Fill All Fields Are Required`,
             })
         }
         try {
@@ -596,14 +598,14 @@ export default function LeadTable() {
             });
             toast({
                 title: "Contact Submitted",
-                description: `The contact has been successfully created`,
+                description: `Your Contact has been successfully submitted.`,
             })
         } catch (error) {
             console.error("Error saving contact:", error);
 
             toast({
                 title: "Error",
-                description: `There was an error creating the contact`,
+                description: `Your Contact has been Failed to submit.`,
             })
         }
     };
@@ -710,11 +712,15 @@ export default function LeadTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
-                            <DropdownTrigger className="flex">
-                                <Button endContent={<ChevronDownIcon className="text-small" />} variant="default" className="px-3 py-2 text-sm sm:text-base">
-                                    Hide Column
+                            <DropdownTrigger className="w-full sm:w-auto">
+                                <Button
+                                    endContent={<ChevronDownIcon className="text-small" />}
+                                    variant="default"
+                                    className="px-3 py-2 text-sm sm:text-base w-full sm:w-auto flex items-center justify-between"
+                                >
+                                    Hide Columns
                                 </Button>
                             </DropdownTrigger>
                             <DropdownMenu
@@ -727,24 +733,21 @@ export default function LeadTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                style={{
-                                    backgroundColor: "#f0f0f0",
-                                    color: "#000000",
-                                    height: "400px",
-                                    overflowY: "scroll",
-                                    scrollbarWidth: "none",
-                                    msOverflowStyle: "none"
-                                }}
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem key={column.uid} className="capitalize" style={{ color: "#000000" }}>
+                                    <DropdownItem
+                                        key={column.uid}
+                                        className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
+                                    >
                                         {column.name}
                                     </DropdownItem>
                                 ))}
                             </DropdownMenu>
                         </Dropdown>
+
                         <Button
-                            className="addButton"
+                            className="addButton w-full sm:w-auto flex items-center justify-between"
                             style={{ backgroundColor: 'hsl(339.92deg 91.04% 52.35%)' }}
                             variant="default"
                             size="default"
@@ -1350,13 +1353,13 @@ export default function LeadTable() {
             )}
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[700px] h-[700px] overflow-auto hide-scrollbar">
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
                         <DialogTitle>Update Lead</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="companyName"
@@ -1613,4 +1616,3 @@ export default function LeadTable() {
         </div>
     );
 }
-
