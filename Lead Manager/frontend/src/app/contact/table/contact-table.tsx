@@ -53,15 +53,15 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "gstNumber", "description", "actions"];
 
 const contactSchema = z.object({
-    companyName: z.string().nonempty({ message: "Company name is required." }),
-    customerName: z.string().nonempty({ message: "Customer name is required." }),
+    companyName: z.string().min(2, { message: "Company name is required." }),
+    customerName: z.string().min(2, { message: "Customer name is required." }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
         .nonempty({ message: "Contact number is required" }),
     emailAddress: z.string().email({ message: "Invalid email address." }),
-    address: z.string().nonempty({ message: "Company address is required." }),
-    gstNumber: z.string().nonempty({ message: "GST number is required." }),
+    address: z.string().min(2, { message: "Company address is required." }),
+    gstNumber: z.string().min(1, { message: "GST number is required." }),
     description: z.string().optional(),
 });
 
@@ -399,7 +399,7 @@ export default function ContactTable() {
                         />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
+<div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
                             <DropdownTrigger className="w-full sm:w-auto">
                                 <Button
@@ -423,8 +423,8 @@ export default function ContactTable() {
                                 className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem
-                                        key={column.uid}
+                                    <DropdownItem 
+                                        key={column.uid} 
                                         className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
                                     >
                                         {column.name}
@@ -507,47 +507,47 @@ export default function ContactTable() {
     return (
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-w-screen-xl">
             <div className="rounded-xl border bg-card text-card-foreground shadow">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="lg:col-span-12">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                            <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Contact Record</h1>
-                            <Table
-                                isHeaderSticky
-                                aria-label="Leads table with custom cells, pagination and sorting"
-                                bottomContent={bottomContent}
-                                bottomContentPlacement="outside"
-                                classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
-                                topContent={topContent}
-                                topContentPlacement="outside"
-                                onSelectionChange={setSelectedKeys}
-                                onSortChange={setSortDescriptor}
-                            >
-                                <TableHeader columns={headerColumns}>
-                                    {(column) => (
-                                        <TableColumn
-                                            key={column.uid}
-                                            align={column.uid === "actions" ? "center" : "start"}
-                                            allowsSorting={column.sortable}
-                                        >
-                                            {column.name}
-                                        </TableColumn>
-                                    )}
-                                </TableHeader>
-                                <TableBody emptyContent={"Create contact and add data"} items={sortedItems}>
-                                    {(item) => (
-                                        <TableRow key={item._id}>
-                                            {(columnKey) => (
-                                                <TableCell style={{ fontSize: "12px", padding: "8px" }}>
-                                                    {renderCell(item, columnKey)}
-                                                </TableCell>
-                                            )}
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-12">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                    <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Contact Record</h1>
+                    <Table
+                        isHeaderSticky
+                        aria-label="Leads table with custom cells, pagination and sorting"
+                        bottomContent={bottomContent}
+                        bottomContentPlacement="outside"
+                        classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
+                        topContent={topContent}
+                        topContentPlacement="outside"
+                        onSelectionChange={setSelectedKeys}
+                        onSortChange={setSortDescriptor}
+                    >
+                    <TableHeader columns={headerColumns}>
+                      {(column) => (
+                        <TableColumn
+                          key={column.uid}
+                          align={column.uid === "actions" ? "center" : "start"}
+                          allowsSorting={column.sortable}
+                        >
+                          {column.name}
+                        </TableColumn>
+                      )}
+                    </TableHeader>
+                    <TableBody emptyContent={"Create contact and add data"} items={sortedItems}>
+                      {(item) => (
+                        <TableRow key={item._id}>
+                          {(columnKey) => (
+                            <TableCell style={{ fontSize: "12px", padding: "8px" }}>
+                              {renderCell(item, columnKey)}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
+              </div>
+            </div>
             </div>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -557,7 +557,7 @@ export default function ContactTable() {
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit((values) => handleEditClick(values))} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="companyName"
@@ -654,7 +654,7 @@ export default function ContactTable() {
                                             <textarea
                                                 placeholder="Enter more details here..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>

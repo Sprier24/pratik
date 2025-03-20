@@ -62,10 +62,10 @@ const INITIAL_VISIBLE_COLUMNS = ["companyName", "complainerName", "contactNumber
 
 const complaintSchema = z.object({
     companyName: z.string().optional(),
-    complainerName: z.string().nonempty({ message: "Complainer name is required." }),
-    contactNumber: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
+    complainerName: z.string().min(2, { message: "Complainer name is required." }),
+    contactNumber: z.string().optional(),
     emailAddress: z.string().optional(),
-    subject: z.string().nonempty({ message: "Subject is required." }),
+    subject: z.string().min(2, { message: "Subject is required." }),
     date: z.date().optional(),
     caseStatus: z.enum(["Pending", "Resolved", "In Progress"]),
     priority: z.enum(["High", "Medium", "Low"]),
@@ -77,6 +77,8 @@ export default function ComplaintTable() {
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
     const router = useRouter();
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+    const [complaintToDelete, setComplaintToDelete] = useState<Complaint | null>(null);
 
     const fetchComplaints = async () => {
         try {
@@ -106,6 +108,7 @@ export default function ComplaintTable() {
         direction: "ascending",
     });
     const [page, setPage] = useState(1);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const handleSortChange = (column: string) => {
         setSortDescriptor((prevState) => {
@@ -219,13 +222,15 @@ export default function ComplaintTable() {
 
 
     // Function to handle delete button click
-    const handleDeleteClick = async (complaint: Complaint) => {
-        if (!window.confirm("Are you sure you want to delete this deal?")) {
-            return;
-        }
+    const handleDeleteClick = (complaint: Complaint) => {
+        setSelectedcomplaint(complaint);
+        setIsDeleteDialogOpen(true);
+    };
 
+    const handleDeleteConfirm = async () => {
+        if (!selectedcomplaint?._id) return;
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/complaint/deleteComplaint/${complaint._id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/complaint/deleteComplaint/${selectedcomplaint._id}`, {
                 method: "DELETE",
             });
 
@@ -247,9 +252,11 @@ export default function ComplaintTable() {
                 description: error instanceof Error ? error.message : "Failed to delete complaint",
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setSelectedcomplaint(null);
         }
     };
-
     const [isSubmitting, setIsSubmitting] = useState(false)
     async function onEdit(values: z.infer<typeof complaintSchema>) {
         if (!selectedcomplaint?._id) return;
@@ -268,8 +275,8 @@ export default function ComplaintTable() {
             }
 
             toast({
-                title: "deal Updated",
-                description: "The deal has been successfully updated.",
+                title: "Complaint Updated",
+                description: "The complaint has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -282,7 +289,7 @@ export default function ComplaintTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update deal",
+                description: error instanceof Error ? error.message : "There was an error updating the complaint",
                 variant: "destructive",
             });
         } finally {
@@ -650,7 +657,9 @@ export default function ComplaintTable() {
                                         <FormItem>
                                             <FormLabel>Case Status</FormLabel>
                                             <FormControl>
-                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <select {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="Pending">Pending</option>
                                                     <option value="In Progress">In Progress</option>
                                                     <option value="Resolved">Resolved</option>
@@ -667,7 +676,9 @@ export default function ComplaintTable() {
                                         <FormItem>
                                             <FormLabel>Priority</FormLabel>
                                             <FormControl>
-                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <select {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="High">High</option>
                                                     <option value="Medium">Medium</option>
                                                     <option value="Low">Low</option>
@@ -688,7 +699,7 @@ export default function ComplaintTable() {
                                             <textarea
                                                 placeholder="Enter client / customer problem briefly..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -708,6 +719,34 @@ export default function ComplaintTable() {
                             </Button>
                         </form>
                     </Form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 
+        sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogDescription className="text-sm xs:text-xs">
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-4 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 

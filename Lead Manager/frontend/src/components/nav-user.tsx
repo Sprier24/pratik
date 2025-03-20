@@ -393,6 +393,10 @@ export function NavUser() {
                     <span className="font-bold">Business Registration</span>
                     <span className="block">{currentOwner.businessRegistration}</span>
                   </div>
+                  <div>
+                    <span className="font-bold">Gst Number:</span>
+                    <span className="block">{currentOwner.gstNumber}</span>
+                  </div>
 
                   {currentOwner.website && (
                     <div className="col-span-1 md:col-span-2">
@@ -537,6 +541,22 @@ export function NavUser() {
                 <div style={{ flex: '1 1 45%' }}>
                   <FormField
                     control={form.control}
+                    name="panNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>PAN Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="cursor-not-allowed" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 45%' }}>
+                  <FormField
+                    control={form.control}
                     name="businessRegistration"
                     render={({ field }) => (
                       <FormItem>
@@ -549,6 +569,22 @@ export function NavUser() {
                             <option value="Partnership">Partnership</option>
                             <option value="Private Limited">Private Limited</option>
                           </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 45%' }}>
+                  <FormField
+                    control={form.control}
+                    name="gstNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>GST Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="cursor-not-allowed" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -594,21 +630,7 @@ export function NavUser() {
                   />
                 </div>
 
-                <div style={{ flex: '1 1 45%' }}>
-                  <FormField
-                    control={form.control}
-                    name="panNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PAN Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="cursor-not-allowed" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              
 
                 <div style={{ flex: '1 1 45%' }}>
                   <FormField

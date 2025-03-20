@@ -261,13 +261,16 @@ export default function InvoiceTable() {
     };
 
     // Function to handle delete button click
-    const handleDeleteClick = async (invoice: Invoice) => {
-        if (!window.confirm("Are you sure you want to delete this invoice?")) {
-            return;
-        }
+    const handleDeleteClick = (invoice: Invoice) => {
+        setSelectedInvoice(invoice);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedInvoice?._id) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/invoice/deleteInvoice/${invoice._id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/invoice/deleteInvoice/${selectedInvoice._id}`, {
                 method: "DELETE",
             });
 
@@ -281,7 +284,6 @@ export default function InvoiceTable() {
                 description: "The invoice has been successfully deleted.",
             });
 
-            // Refresh the invoices list
             fetchInvoices();
         } catch (error) {
             toast({
@@ -289,11 +291,11 @@ export default function InvoiceTable() {
                 description: error instanceof Error ? error.message : "Failed to delete invoice",
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setSelectedInvoice(null);
         }
     };
-
-
-
 
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -444,8 +446,8 @@ export default function InvoiceTable() {
                                 className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem 
-                                        key={column.uid} 
+                                    <DropdownItem
+                                        key={column.uid}
                                         className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
                                     >
                                         {column.name}
@@ -614,8 +616,8 @@ export default function InvoiceTable() {
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField
                                     control={form.control}
                                     name="companyName"
                                     render={({ field }) => (
@@ -763,7 +765,7 @@ export default function InvoiceTable() {
                                                     {...field}
                                                     value={field.value}
                                                     onChange={(e) => field.onChange(Number(e.target.value))}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="">Select GST Rate</option>
                                                     <option value="0">0%</option>
@@ -819,7 +821,7 @@ export default function InvoiceTable() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="Paid">Paid</option>
                                                     <option value="Unpaid">Unpaid</option>
@@ -874,6 +876,34 @@ export default function InvoiceTable() {
                             </Button>
                         </form>
                     </Form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 
+        sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogDescription className="text-sm xs:text-xs">
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-4 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

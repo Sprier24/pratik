@@ -47,12 +47,12 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["accountHolderName", "accountNumber", "bankName", "accountType", "IFSCCode", "UpiID", "actions"];
 
 const accountSchema = z.object({
-    bankName: z.string().nonempty({ message: "Bank name is required." }),
-    IFSCCode: z.string().nonempty({ message: "Bank IFSC code is required." }),
-    accountHolderName: z.string().nonempty({ message: "Bank account holder name is required." }),
-    accountNumber: z.string().nonempty({ message: "Bank account number is required." }),
+    bankName: z.string().min(2, { message: "Bank name is required." }),
+    IFSCCode: z.string().min(2, { message: "Bank IFSC code is required." }),
+    accountHolderName: z.string().min(2, { message: "Bank account holder name is required." }),
+    accountNumber: z.string().min(2, { message: "Bank account number is required." }),
     accountType: z.enum(["Current", "Savings", "Other"], { message: "Account type is required." }),
-    UpiId: z.string().nonempty({ message: "UpiId is required." }),
+    UpiId: z.string().min(2, { message: "UpiId is required." }),
 });
 
 export default function AccountTable() {
@@ -416,8 +416,8 @@ export default function AccountTable() {
                                 className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem
-                                        key={column.uid}
+                                    <DropdownItem 
+                                        key={column.uid} 
                                         className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
                                     >
                                         {column.name}
@@ -550,7 +550,7 @@ export default function AccountTable() {
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="bankName"
@@ -618,8 +618,8 @@ export default function AccountTable() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                    >
                                                     <option value="Savings">Savings</option>
                                                     <option value="Current">Current</option>
                                                     <option value="Other">Other</option>
@@ -631,7 +631,7 @@ export default function AccountTable() {
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="UpiID"
+                                    name="UpiId"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>UPI ID (Optional)</FormLabel>

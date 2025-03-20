@@ -68,10 +68,10 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "taskDate", "dueDate", "status", "priority", "notes", "actions"];
 
 const taskSchema = z.object({
-    subject: z.string().nonempty({ message: "Subject is required." }),
-    relatedTo: z.string().nonempty({ message: "Related to  is required." }),
-    name: z.string().nonempty({ message: "Name is required." }),
-    assigned: z.string().nonempty({ message: "Assigned By is required." }),
+    subject: z.string().min(2, { message: "Subject is required." }),
+    relatedTo: z.string().min(2, { message: "Related to  is required." }),
+    name: z.string().min(2, { message: "Name is required." }),
+    assigned: z.string().min(2, { message: "Assigned By is required." }),
     taskDate: z.date().optional(),
     dueDate: z.date().optional(),
     status: z.enum(["Pending", "Resolved", "In Progress"]),
@@ -150,6 +150,8 @@ export default function TaskTable() {
         direction: "ascending",
     });
     const [page, setPage] = useState(1);
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
     const handleSortChange = (column: string) => {
         setSortDescriptor((prevState) => {
@@ -261,39 +263,10 @@ export default function TaskTable() {
 
     // Function to handle delete button click
 
-    const handleDeleteClick = async (task: Task) => {
-        if (!window.confirm("Are you sure you want to delete this task?")) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`http://localhost:8000/api/v1/task/deleteTask/${task._id}`, {
-                method: "DELETE",
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to delete task");
-            }
-
-            toast({
-                title: "Task Deleted",
-                description: "The task has been successfully deleted.",
-            });
-
-            fetchTasks();
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete task",
-                variant: "destructive",
-            });
-        }
+    const handleDeleteClick = (task: Task) => {
+        setTaskToDelete(task);
+        setIsDeleteConfirmationOpen(true);
     };
-
-
-
-
     const [isSubmitting, setIsSubmitting] = useState(false)
 
 
@@ -315,7 +288,7 @@ export default function TaskTable() {
 
             toast({
                 title: "Task Updated",
-                description: "The task has been successfully updated.",
+                description: "The task has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -328,7 +301,7 @@ export default function TaskTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update lead",
+                description: error instanceof Error ? error.message : "There was an error updating the task",
                 variant: "destructive",
             });
         } finally {
@@ -713,7 +686,9 @@ export default function TaskTable() {
                                         <FormItem>
                                             <FormLabel>Status</FormLabel>
                                             <FormControl>
-                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <select {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="Pending">Pending</option>
                                                     <option value="In Progress">In Progress</option>
                                                     <option value="Resolved">Resolved</option>
@@ -730,7 +705,9 @@ export default function TaskTable() {
                                         <FormItem>
                                             <FormLabel>Priority</FormLabel>
                                             <FormControl>
-                                                <select {...field} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <select {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="High">High</option>
                                                     <option value="Medium">Medium</option>
                                                     <option value="Low">Low</option>
@@ -752,7 +729,7 @@ export default function TaskTable() {
                                             <textarea
                                                 {...field}
                                                 placeholder="Enter task in detail..."
-                                                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -773,6 +750,61 @@ export default function TaskTable() {
                             </Button>
                         </form>
                     </Form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen}>
+                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this task? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-4 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteConfirmationOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
+                            variant="destructive"
+                            onClick={async () => {
+                                if (taskToDelete) {
+                                    try {
+                                        const response = await fetch(`http://localhost:8000/api/v1/task/deleteTask/${taskToDelete._id}`, {
+                                            method: "DELETE",
+                                        });
+
+                                        if (!response.ok) {
+                                            const errorData = await response.json();
+                                            throw new Error(errorData.message || "Failed to delete task");
+                                        }
+
+                                        toast({
+                                            title: "Task Deleted",
+                                            description: "The task has been successfully deleted.",
+                                        });
+
+                                        fetchTasks();
+                                    } catch (error) {
+                                        toast({
+                                            title: "Error",
+                                            description: error instanceof Error ? error.message : "Failed to delete task",
+                                            variant: "destructive",
+                                        });
+                                    } finally {
+                                        setIsDeleteConfirmationOpen(false);
+                                        setTaskToDelete(null);
+                                    }
+                                }
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 
