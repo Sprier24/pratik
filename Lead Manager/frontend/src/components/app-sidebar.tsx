@@ -145,10 +145,17 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isClient, setIsClient] = React.useState(false)
   const [activePath, setActivePath] = React.useState("")
+  const [windowWidth, setWindowWidth] = React.useState(0);
 
   React.useEffect(() => {
     setIsClient(true)
     setActivePath(window.location.pathname)
+    setWindowWidth(window.innerWidth)
+
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   const updatedNavMain = React.useMemo(
@@ -156,13 +163,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       data.navMain.map((item) => ({
         ...item,
         isActive: isClient && activePath === item.url,
-        items: item.items?.map((subItem) => ({
-          ...subItem,
-          isActive: isClient && activePath === subItem.url,
-        })),
+        items: item.items
+          ?.filter(
+            (subItem) => !(windowWidth < 768 && subItem.title === "Drag & Drop")
+          ) // Hide Drag & Drop if width < 768px
+          .map((subItem) => ({
+            ...subItem,
+            isActive: isClient && activePath === subItem.url,
+          })),
       })),
-    [isClient, activePath]
-  );
+    [isClient, activePath, windowWidth]
+  )
 
   return (
     <Sidebar collapsible="icon" {...props}>

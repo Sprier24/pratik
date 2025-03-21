@@ -86,7 +86,7 @@ export default function LeadForm() {
     }
 
     return (
-       <Form {...form}>
+        <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
@@ -248,70 +248,40 @@ export default function LeadForm() {
                         control={form.control}
                         name="date"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col justify-between">
-                                <FormLabel>Lead Date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-full pl-3 text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
-                                                {field.value ? (
-                                                    format(field.value, "dd-MM-yyyy")
-                                                ) : (
-                                                    <span>Pick a date</span>
-                                                )}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
+                            <div className="form-group">
+                                <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                    Lead Date
+                                </label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    id="date"
+                                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                                    className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                    required
+                                />
+                            </div>
                         )}
                     />
-
                     <FormField
                         control={form.control}
                         name="endDate"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col justify-between">
-                                <FormLabel>Final Date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                            >
-                                                {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
+                            <div className="form-group">
+                                <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
+                                    Final Date
+                                </label>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    id="endDate"
+                                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                                    className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                    required
+                                />
+                            </div>
                         )}
                     />
                 </div>
@@ -339,7 +309,7 @@ export default function LeadForm() {
                     <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="animate-spin mr-2"/>
+                                <Loader2 className="animate-spin mr-2" />
                                 Submitting...
                             </>
                         ) : (

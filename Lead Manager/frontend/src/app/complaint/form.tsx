@@ -22,7 +22,7 @@ const complaintSchema = z.object({
   emailAddress: z.string().optional(),
   subject: z.string().nonempty({ message: "Subject is required." }),
   date: z.date().optional(),
-  caseStatus: z.enum(["Pending", "Resolved", "In Progress"]),
+  caseStatus: z.enum(["Pending", "Resolved", "InProgress"]),
   priority: z.enum(["High", "Medium", "Low"]),
   caseOrigin: z.string().optional(),
 });
@@ -203,7 +203,7 @@ export default function ComplaintForm() {
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
                   >
                     <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
+                    <option value="InProgress">In Progress</option>
                     <option value="Resolved">Resolved</option>
                   </select>
                 </FormControl>
