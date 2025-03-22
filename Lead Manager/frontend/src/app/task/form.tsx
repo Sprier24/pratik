@@ -20,8 +20,8 @@ const taskSchema = z.object({
   relatedTo: z.string().nonempty({ message: "Related to  is required." }),
   name: z.string().nonempty({ message: "Name is required." }),
   assigned: z.string().nonempty({ message: "Assigned By is required." }),
-  taskDate: z.date().optional(),
-  dueDate: z.date().optional(),
+  date: z.date().optional(),
+  endDate: z.date().optional(),
   status: z.enum(["Pending", "Resolved", "InProgress"]),
   priority: z.enum(["High", "Medium", "Low"]),
   notes: z.string().optional(),
@@ -37,8 +37,8 @@ export default function Task() {
       relatedTo: "",
       name: "",
       assigned: "",
-      taskDate: new Date(),
-      dueDate: undefined,
+      date: new Date(),
+      endDate: undefined,
       status: "Pending",
       priority: "Medium",
       notes: "",
@@ -139,66 +139,42 @@ export default function Task() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <FormField
             control={form.control}
-            name="taskDate"
+            name="date"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Task Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
+              <div className="form-group">
+                <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                  Task Date
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  id="date"
+                  value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                  onChange={(e) => field.onChange(new Date(e.target.value))}
+                  className="w-full p-3 border border-gray-300 rounded-md text-black"
+                  required
+                />
+              </div>
             )}
           />
           <FormField
             control={form.control}
-            name="dueDate"
+            name="endDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Due Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
+              <div className="form-group">
+                <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  id="endDate"
+                  value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                  onChange={(e) => field.onChange(new Date(e.target.value))}
+                  className="w-full p-3 border border-gray-300 rounded-md text-black"
+                  required
+                />
+              </div>
             )}
           />
         </div>
@@ -211,9 +187,9 @@ export default function Task() {
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <select {...field} 
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
-                >
+                  <select {...field}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                  >
                     <option value="Pending">Pending</option>
                     <option value="InProgress">In Progress</option>
                     <option value="Resolved">Resolved</option>
@@ -230,7 +206,7 @@ export default function Task() {
               <FormItem>
                 <FormLabel>Priority</FormLabel>
                 <FormControl>
-                  <select {...field} 
+                  <select {...field}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
                   >
                     <option value="High">High</option>

@@ -125,7 +125,7 @@ const data = {
       url: "/document",
       icon: ScrollText,
       items: [
-        { title: "Drive", url: "/flipflap" }
+        { title: "Drive", url: "/document" }
       ],
     },
 

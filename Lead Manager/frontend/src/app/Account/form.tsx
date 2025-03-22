@@ -17,7 +17,7 @@ const accountSchema = z.object({
   accountHolderName: z.string().nonempty({ message: "Bank account holder name is required." }),
   accountNumber: z.string().nonempty({ message: "Bank account number is required." }),
   accountType: z.enum(["Current", "Savings", "Other"], { message: "Account type is required." }),
-  UpiId: z.string().nonempty({ message: "UpiId is required." }),
+  UpiId: z.string().optional(),
 });
 
 export default function AccountForm() {

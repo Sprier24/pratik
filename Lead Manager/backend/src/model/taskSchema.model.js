@@ -4,10 +4,10 @@ const taskSchema = new mongoose.Schema({
   subject: { type: String },
   name: { type: String },
   relatedTo: { type: String },
-  taskDate: {
+  date: {
     type: Date,
   },
-  dueDate: { 
+  endDate: { 
     type: Date,
   },
   status: {

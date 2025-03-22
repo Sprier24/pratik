@@ -6,7 +6,7 @@ const accountSchema = new mongoose.Schema({
   bankName: { type: String, required: true},
   accountType: { type: String, required: true, enum: ["Current", "Savings","Other"] },
   IFSCCode: { type: String, required: true},
-  UpiId: { type: String, required: true},
+  UpiId: { type: String},
 }, { timestamps: true });
 
 const Account = mongoose.model('Account', accountSchema);

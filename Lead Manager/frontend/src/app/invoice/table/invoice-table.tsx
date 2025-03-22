@@ -49,26 +49,27 @@ export const invoiceSchema = z.object({
     address: z.string().optional(),
     gstNumber: z.string().optional(),
     productName: z.string().nonempty({ message: "Product name is required" }),
-    amount: z.number().positive({ message: "Product amount is required" }),
-    discount: z.number().optional(),
-    gstRate: z.number().optional(),
+    amount: z.coerce.number().positive({ message: "Product amount is required" }),
+    discount: z.coerce.number().optional(),
+    gstRate: z.coerce.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
-    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Invoice Date is required" }),
-    paidAmount: z.string().optional(),
-    remainingAmount: z.number().optional(),
-    totalWithoutGst: z.number().optional(),
-    totalWithGst: z.number().optional(),
+    date: z.coerce.date({ message: "Invoice Date is required" }),
+    paidAmount: z.coerce.number().optional(),
+    remainingAmount: z.coerce.number().optional(),
+    totalWithoutGst: z.coerce.number().optional(),
+    totalWithGst: z.coerce.number().optional(),
 });
 
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
-const formatDate = (date: any) => {
-    if (!date) return "N/A"; // Handle undefined/null values gracefully
-    const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) return "Invalid Date"; // Handle invalid dates
-    return parsedDate.toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
+const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');  // Ensure two digits for day
+    const month = String(date.getMonth() + 1).padStart(2, '0');  // Get month and ensure two digits
+    const year = date.getFullYear();  // Get the full year
+    return `${day}/${month}/${year}`;  // Returns "dd-mm-yyyy"
 };
 
 const columns = [
@@ -570,6 +571,7 @@ export default function InvoiceTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Invoice Record</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Make an invoice for a client / customer</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"
@@ -767,7 +769,6 @@ export default function InvoiceTable() {
                                                     onChange={(e) => field.onChange(Number(e.target.value))}
                                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
-                                                    <option value="">Select GST Rate</option>
                                                     <option value="0">0%</option>
                                                     <option value="5">5%</option>
                                                     <option value="12">12%</option>
@@ -835,31 +836,20 @@ export default function InvoiceTable() {
                                     control={form.control}
                                     name="date"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Invoice Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                        >
-                                                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
+                                        <div className="form-group">
+                                            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                                Invoice Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                id="date"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                                required
+                                            />
+                                        </div>
                                     )}
                                 />
                             </div>

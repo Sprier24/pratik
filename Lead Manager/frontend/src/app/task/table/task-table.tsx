@@ -23,8 +23,8 @@ interface Task {
     subject: string;
     name: string;
     relatedTo: string;
-    taskDate: string;
-    dueDate: string;
+    date: string;
+    endDate: string;
     status: string;
     priority: string;
     assigned: string;
@@ -37,8 +37,12 @@ const generateUniqueId = () => {
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    const day = String(date.getDate()).padStart(2, '0');  // Ensure two digits for day
+    const month = String(date.getMonth() + 1).padStart(2, '0');  // Get month and ensure two digits
+    const year = date.getFullYear();  // Get the full year
+    return `${day}/${month}/${year}`;  // Returns "dd-mm-yyyy"
 };
+
 
 const columns = [
     { name: "Subject", uid: "subject", sortable: true, width: "120px" },
@@ -48,14 +52,14 @@ const columns = [
     { name: "Task Notes", uid: "notes", sortable: true, width: "100px" },
     {
         name: "Task Date",
-        uid: "taskDate",
+        uid: "date",
         sortable: true,
         width: "170px",
         render: (row: any) => formatDate(row.date),
     },
     {
         name: "Due Date",
-        uid: "dueDate",
+        uid: "endDate",
         sortable: true,
         width: "170px",
         render: (row: any) => formatDate(row.date),
@@ -65,15 +69,15 @@ const columns = [
     { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "taskDate", "dueDate", "status", "priority", "notes", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "date", "endDate", "status", "priority", "notes", "actions"];
 
 const taskSchema = z.object({
     subject: z.string().min(2, { message: "Subject is required." }),
     relatedTo: z.string().min(2, { message: "Related to  is required." }),
     name: z.string().min(2, { message: "Name is required." }),
     assigned: z.string().min(2, { message: "Assigned By is required." }),
-    taskDate: z.date().optional(),
-    dueDate: z.date().optional(),
+    date: z.date().optional(),
+    endDate: z.date().optional(),
     status: z.enum(["Pending", "Resolved", "In Progress"]),
     priority: z.enum(["High", "Medium", "Low"]),
     notes: z.string().optional(),
@@ -177,7 +181,7 @@ export default function TaskTable() {
             subject: "",
             assigned: "",
             relatedTo: "",
-            taskDate: new Date(),
+            date: new Date(),
             endDate: undefined,
             status: "New",
             priority: "Medium",
@@ -252,8 +256,8 @@ export default function TaskTable() {
             subject: task.subject,
             assigned: task.assigned,
             relatedTo: task.relatedTo,
-            taskDate: task.taskDate ? new Date(task.taskDate) : undefined,
-            dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+            date: task.date ? new Date(task.date) : undefined,
+            endDate: task.endDate ? new Date(task.endDate) : undefined,
             status: task.status,
             priority: task.priority,
             notes: task.notes,
@@ -317,7 +321,7 @@ export default function TaskTable() {
         }
 
         if (columnKey === "notes") {
-            return cellValue || "No note available";
+            return cellValue || "N/A";
         }
 
         if (columnKey === "actions") {
@@ -507,6 +511,7 @@ export default function TaskTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Task Record</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create your company's activities or task here</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"
@@ -616,64 +621,42 @@ export default function TaskTable() {
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <FormField
                                     control={form.control}
-                                    name="taskDate"
+                                    name="date"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Task Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                        >
-                                                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        onSelect={field.onChange}
-                                                        disabled={(date) => date > new Date()}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
+                                        <div className="form-group">
+                                            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                                Task Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                id="date"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                                required
+                                            />
+                                        </div>
                                     )}
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="dueDate"
+                                    name="endDate"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Due Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                                        >
-                                                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>Pick a date</span>}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        onSelect={field.onChange}
-                                                        disabled={(date) => date < new Date()}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
+                                        <div className="form-group">
+                                            <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
+                                                Due Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="endDate"
+                                                id="endDate"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                                required
+                                            />
+                                        </div>
                                     )}
                                 />
                             </div>

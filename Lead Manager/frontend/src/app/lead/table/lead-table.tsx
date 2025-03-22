@@ -66,13 +66,16 @@ interface Invoice {
     remainingAmount: number;
 }
 
-const generateUniqueId = () => {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
-
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    const day = String(date.getDate()).padStart(2, '0');  // Ensure two digits for day
+    const month = String(date.getMonth() + 1).padStart(2, '0');  // Get month and ensure two digits
+    const year = date.getFullYear();  // Get the full year
+    return `${day}/${month}/${year}`;  // Returns "dd-mm-yyyy"
+};
+
+const generateUniqueId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
 const columns = [
@@ -345,8 +348,8 @@ export default function LeadTable() {
         } catch (error) {
             console.error("Error saving contact:", error);
             toast({
-                title: "Failed To Add Invoice",
-                description: "The Invoice has been Failed .",
+                title: "Error",
+                description: "There was an error creating the invoice",
             });
         }
     };
@@ -614,7 +617,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Error",
-                description: `Your Contact has been Failed to submit.`,
+                description: `There was an error creating the contact`,
             })
         }
     };
@@ -833,6 +836,7 @@ export default function LeadTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Lead Record</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create client / customer leads here</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"
@@ -874,7 +878,7 @@ export default function LeadTable() {
             <Dialog open={isContactFormVisible} onOpenChange={(open) => setIsContactFormVisible(open)}>
                 <DialogContent className="w-[100vw] max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
-                        <DialogTitle>Add Contact</DialogTitle>
+                        <DialogTitle>Create Contact</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={handleContactSubmit} className="space-y-6">
@@ -1044,7 +1048,7 @@ export default function LeadTable() {
                                         Submitting Contact...
                                     </>
                                 ) : (
-                                    "Add Contact"
+                                    "Create Contact"
                                 )}
                             </Button>
                         </form>
@@ -1070,7 +1074,7 @@ export default function LeadTable() {
                             ✖
                         </button>
                         <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                            Add Invoice
+                            Create Invoice
                         </h3>
                         <form
                             onSubmit={handleInvocieSubmit}
@@ -1454,32 +1458,34 @@ export default function LeadTable() {
                                     <option value="unpaid">Unpaid</option>
                                 </select>
                             </div>
-                            <div className="form-group">
-                                <label
-                                    htmlFor="date"
-                                    className="text-sm font-medium text-gray-700"
-                                >
-                                    Invoice Date
-                                </label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    id="date"
-                                    value={newInvoice.date}
-                                    onChange={(e) =>
-                                        setNewInvoice({ ...newInvoice, date: e.target.value })
-                                    }
-                                    className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
-                                    required
-                                />
-                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="date"
+                                render={({ field }) => (
+                                    <div className="form-group">
+                                        <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                            Invoice Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="date"
+                                            id="date"
+                                            value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                                            className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            />
 
                             <div className="flex justify-end mt-6">
                                 <button
                                     type="submit"
                                     className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-400 w-full sm:w-auto text-sm sm:text-base"
                                 >
-                                    Add Invoice
+                                    Create Invoice
                                 </button>
                             </div>
                         </form>

@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 
 interface ScheduledEvents {
-    id: string;
+    _id: string;
     subject: string;
     assignedUser: string;
     customer: string;
@@ -38,7 +38,10 @@ const generateUniqueId = () => {
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0]; // Returns "YYYY-MM-DD"
+    const day = String(date.getDate()).padStart(2, '0');  // Ensure two digits for day
+    const month = String(date.getMonth() + 1).padStart(2, '0');  // Get month and ensure two digits
+    const year = date.getFullYear();  // Get the full year
+    return `${day}/${month}/${year}`;  // Returns "dd-mm-yyyy"
 };
 
 const columns = [
@@ -80,6 +83,7 @@ export default function ScheduledEvents() {
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Iterable<string> | 'all' | undefined>(undefined);
     const router = useRouter();
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const fetchScheduledEvents = async () => {
         try {
@@ -247,10 +251,8 @@ export default function ScheduledEvents() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedScheduledEvents, setSelectedScheduledEvents] = useState<ScheduledEvents | null>(null);
 
-    // Function to handle edit button click
     const handleEditClick = (scheduledEvents: ScheduledEvents) => {
         setSelectedScheduledEvents(scheduledEvents);
-        // Pre-fill the form with lead data
         form.reset({
             id: scheduledEvents.id,
             subject: scheduledEvents.subject,
@@ -268,16 +270,16 @@ export default function ScheduledEvents() {
         setIsEditOpen(true);
     };
 
+    const handleDeleteClick = (scheduledEvents: ScheduledEvents) => {
+        setSelectedScheduledEvents(scheduledEvents);
+        setIsDeleteDialogOpen(true);
+    };
 
-    // Function to handle delete button click
-    const handleDeleteClick = async (scheduledEvents: ScheduledEvents) => {
-        if (!window.confirm("Are you sure you want to delete this scheduled?")) {
-            return;
-        }
-
+    const handleDeleteConfirm = async () => {
+        if (!selectedScheduledEvents?._id) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/scheduledevents/deleteScheduledEvent/${scheduledEvents.id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/scheduledevents/deleteScheduledEvent/${selectedScheduledEvents._id}`, {
                 method: "DELETE",
             });
 
@@ -287,8 +289,8 @@ export default function ScheduledEvents() {
             }
 
             toast({
-                title: "Event or meeting Deleted",
-                description: "The event or meeting has been successfully deleted.",
+                title: "Scheduled Deleted",
+                description: "The scheduled has been successfully deleted.",
             });
 
             // Refresh the leads list
@@ -299,16 +301,19 @@ export default function ScheduledEvents() {
                 description: error instanceof Error ? error.message : "Failed to delete lead",
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setSelectedScheduledEvents(null);
         }
     };
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     async function onEdit(values: z.infer<typeof eventSchema>) {
-        if (!selectedScheduledEvents?.id) return;
+        if (!selectedScheduledEvents?._id) return;
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/scheduledevents/updateScheduledEvent/${selectedScheduledEvents.id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/scheduledevents/updateScheduledEvent/${selectedScheduledEvents._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(values),
@@ -350,8 +355,8 @@ export default function ScheduledEvents() {
             return formatDate(cellValue);
         }
         // Render note column with a fallback message if there's no note
-        if (columnKey === "notes") {
-            return cellValue || "No note available";
+        if (columnKey === "description") {
+            return cellValue || "N/A";
         }
         // Render actions column with edit and delete buttons
         if (columnKey === "actions") {
@@ -430,7 +435,7 @@ export default function ScheduledEvents() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-<div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
                         <Dropdown>
                             <DropdownTrigger className="w-full sm:w-auto">
                                 <Button
@@ -454,8 +459,8 @@ export default function ScheduledEvents() {
                                 className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem 
-                                        key={column.uid} 
+                                    <DropdownItem
+                                        key={column.uid}
                                         className="capitalize px-4 py-2 rounded-md text-gray-800 hover:bg-gray-200 transition-all"
                                     >
                                         {column.name}
@@ -542,6 +547,7 @@ export default function ScheduledEvents() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Event or Meeting Record</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center"> Make event or meeting, hosted by you or client / customer</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"
@@ -588,7 +594,7 @@ export default function ScheduledEvents() {
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="subject"
@@ -656,8 +662,8 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
-                                                    >
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="call">Call</option>
                                                     <option value="Meeting">Meeting</option>
                                                     <option value="Demo">Demo</option>
@@ -677,8 +683,8 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
-                                                    >
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="one-time">One Time</option>
                                                     <option value="Daily">Daily</option>
                                                     <option value="Weekly">Weekly</option>
@@ -702,8 +708,8 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
-                                                    >
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="Scheduled">Schedule</option>
                                                     <option value="Postpone">Postpone</option>
                                                     <option value="Completed">Complete</option>
@@ -723,8 +729,8 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
-                                                    >
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                >
                                                     <option value="High">High</option>
                                                     <option value="Medium">Medium</option>
                                                     <option value="Low">Low</option>
@@ -741,13 +747,20 @@ export default function ScheduledEvents() {
                                     control={form.control}
                                     name="date"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Event Date</FormLabel>
-                                            <FormControl>
-                                                <Input type="date" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                        <div className="form-group">
+                                            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                                Event or meeting Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                id="date"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                                required
+                                            />
+                                        </div>
                                     )}
                                 />
                             </div>
@@ -762,7 +775,7 @@ export default function ScheduledEvents() {
                                             <textarea
                                                 placeholder="Enter more details here..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -782,6 +795,34 @@ export default function ScheduledEvents() {
                             </Button>
                         </form>
                     </Form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 
+                    sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogDescription className="text-sm xs:text-xs">
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-4 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
