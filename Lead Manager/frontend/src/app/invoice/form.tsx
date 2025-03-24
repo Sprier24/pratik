@@ -50,8 +50,8 @@ export default function InvoiceForm() {
       address: "",
       gstNumber: "",
       productName: "",
-      amount: 0,
-      discount: 0,
+      amount: undefined,
+      discount: undefined,
       gstRate: 0,
       status: "Unpaid",
       date: new Date(),
@@ -295,7 +295,7 @@ export default function InvoiceForm() {
                     {...field}
                     value={field.value}
                     onChange={(e) => field.onChange(Number(e.target.value))}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                   ><option value="">0%</option>
                     <option value="5">5%</option>
                     <option value="12">12%</option>
@@ -357,7 +357,7 @@ export default function InvoiceForm() {
                 <FormControl>
                   <select
                     {...field}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                   >
                     <option value="Paid">Paid</option>
                     <option value="Unpaid">Unpaid</option>

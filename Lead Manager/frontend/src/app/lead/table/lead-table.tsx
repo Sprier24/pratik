@@ -636,7 +636,7 @@ export default function LeadTable() {
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
-                    <Tooltip content="Update">
+                    <Tooltip>
                         <span
                             className="text-lg text-default-400 cursor-pointer active:opacity-50"
                             onClick={() => handleEditClick(lead)}
@@ -644,7 +644,7 @@ export default function LeadTable() {
                             <Edit className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Delete">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleDeleteClick(lead)}
@@ -652,7 +652,7 @@ export default function LeadTable() {
                             <Trash2 className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Add Contact">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleAddContactClick(lead)}
@@ -660,7 +660,7 @@ export default function LeadTable() {
                             <ReceiptText className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Add Invoice">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleAddInvoice(lead)}
@@ -745,7 +745,7 @@ export default function LeadTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300 hide-scrollbar"
                             >
                                 {columns.map((column) => (
                                     <DropdownItem
@@ -1031,7 +1031,7 @@ export default function LeadTable() {
                                                 onChange={(e) =>
                                                     setNewContact({ ...newContact, description: e.target.value })
                                                 }
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -1424,6 +1424,7 @@ export default function LeadTable() {
                                         value={newInvoice.remainingAmount}
                                         onChange={handleChange}
                                         className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        readOnly
                                         required
                                     />
                                     <style>
@@ -1471,7 +1472,7 @@ export default function LeadTable() {
                                             type="date"
                                             name="date"
                                             id="date"
-                                            value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                            value={field.value ? format(field.value, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
                                             onChange={(e) => field.onChange(new Date(e.target.value))}
                                             className="w-full p-3 border border-gray-300 rounded-md text-black"
                                             required
@@ -1606,7 +1607,7 @@ export default function LeadTable() {
                                                     type="number"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        const value = e.target.valueAsNumber || 0;
+                                                        const value = e.target.valueAsNumber || "";
                                                         field.onChange(value);
                                                     }}
                                                 />

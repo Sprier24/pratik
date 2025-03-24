@@ -347,7 +347,7 @@ export default function InvoiceTable() {
             case "actions":
                 return (
                     <div className="relative flex items-center gap-2">
-                        <Tooltip content="Update">
+                        <Tooltip>
                             <span
                                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
                                 onClick={() => handleEditClick(invoice)}
@@ -355,7 +355,7 @@ export default function InvoiceTable() {
                                 <Edit className="h-4 w-4" />
                             </span>
                         </Tooltip>
-                        <Tooltip color="danger" content="Delete">
+                        <Tooltip>
                             <span
                                 className="text-lg text-danger cursor-pointer active:opacity-50"
                                 onClick={() => handleDeleteClick(invoice)}
@@ -366,14 +366,18 @@ export default function InvoiceTable() {
                     </div>
                 );
             case "date":
-                return formatDate(cellValue); // Format the endDate
+                return formatDate(cellValue);
             case "endDate":
-                return formatDate(cellValue); // Format the endDate
+                return formatDate(cellValue);
+            case "contactNumber":
+            case "emailAddress":
+            case "address":
+            case "gstNumber":
+                return cellValue ? cellValue : "N/A";
             default:
                 return cellValue;
         }
     }, []);
-
 
     const onNextPage = React.useCallback(() => {
         if (page < pages) {
@@ -444,7 +448,7 @@ export default function InvoiceTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300 hide-scrollbar"
                             >
                                 {columns.map((column) => (
                                     <DropdownItem

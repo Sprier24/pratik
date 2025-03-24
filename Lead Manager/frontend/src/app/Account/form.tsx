@@ -134,7 +134,7 @@ export default function AccountForm() {
                 <FormControl>
                   <select
                     {...field}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                     >
                     <option value="Savings">Savings</option>
                     <option value="Current">Current</option>

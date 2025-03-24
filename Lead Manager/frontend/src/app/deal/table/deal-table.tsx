@@ -74,7 +74,7 @@ const formatDate = (dateString: string): string => {
     const day = String(date.getDate()).padStart(2, '0');  // Ensure two digits for day
     const month = String(date.getMonth() + 1).padStart(2, '0');  // Get month and ensure two digits
     const year = date.getFullYear();  // Get the full year
-    return `${day}/${month}/${year}`;  // Returns "dd-mm-yyyy"
+    return `${day}-${month}-${year}`;  // Returns "dd-mm-yyyy"
 };
 
 const columns = [
@@ -235,6 +235,8 @@ export default function DealTable() {
         direction: "ascending",
     });
     const [page, setPage] = useState(1);
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+    const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
 
     const handleAddContactClick = (deal: Deal) => {
         setIsContactFormVisible(true);
@@ -276,7 +278,7 @@ export default function DealTable() {
         });
     };
 
-    const handleInvocieSubmit = async (e: React.FormEvent) => {
+    const handleInvoiceSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         // Basic validation: Check if any required field is empty
@@ -298,17 +300,20 @@ export default function DealTable() {
             !gstNumber
         ) {
             toast({
-                title: "Error",
-                description: "Plwasem Fill  The All the field sre required",
+                title: "Warning",
+                description: "All fields are required. Please fill them out.",
+                variant: "destructive",
             });
-            return;
+            return; // Stop execution if validation fails
         }
+
         try {
-            // Assuming you have an endpoint for saving contacts
-            await axios.post(
+            // API request to save invoice
+            const response = await axios.post(
                 "http://localhost:8000/api/v1/invoice/invoiceAdd",
                 newInvoice
             );
+
             setIsInvoiceFormVisible(false);
             setNewInvoice({
                 _id: "",
@@ -332,16 +337,13 @@ export default function DealTable() {
 
             toast({
                 title: "Invoice Submitted",
-                description: "The Invoice has been successfully created",
+                description: "The invoice has been successfully created",
             });
-        } catch (error) {
-            console.error("Error saving contact:", error);
-            toast({
-                title: "Error",
-                description: "There was an error creating the invoice",
-            });
+        } catch (error: any) {
+            console.error("Error saving invoice:", error);
         }
     };
+
 
     const calculateGST = (
         amount: number,
@@ -392,41 +394,17 @@ export default function DealTable() {
             setNewInvoice(updatedInvoice);
         }
     };
+
     const handleContactSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation: Check if any required field is empty
-        const {
-            companyName,
-            customerName,
-            contactNumber,
-            emailAddress,
-            address,
-            gstNumber,
-            description,
-        } = newContact;
-
-        if (
-            !companyName ||
-            !customerName ||
-            !contactNumber ||
-            !emailAddress ||
-            !address ||
-            !gstNumber ||
-            !description
-        ) {
-
-            toast({
-                title: "Error",
-                description: `Please Fill All Fields Are Required`,
-            })
-        }
         try {
-            // Assuming you have an endpoint for saving contacts
-            await axios.post(
+            // API request to save contact
+            const response = await axios.post(
                 "http://localhost:8000/api/v1/contact/createContact",
                 newContact
             );
+
             setIsContactFormVisible(false);
             setNewContact({
                 companyName: "",
@@ -437,20 +415,15 @@ export default function DealTable() {
                 gstNumber: "",
                 description: "",
             });
+
             toast({
                 title: "Contact Submitted",
-                description: `The contact has been successfully created`,
-            })
-        } catch (error) {
+                description: "The contact has been successfully created",
+            });
+        } catch (error: any) {
             console.error("Error saving contact:", error);
-
-            toast({
-                title: "Error",
-                description: `There was an error creating the contact`,
-            })
         }
     };
-
 
     // Form setup
     const form = useForm<z.infer<typeof formSchema>>({
@@ -580,7 +553,7 @@ export default function DealTable() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "There was an error deleting the deal",
+                description: error instanceof Error ? error.message : "Failed to delete deal",
                 variant: "destructive",
             });
         } finally {
@@ -642,7 +615,7 @@ export default function DealTable() {
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
-                    <Tooltip content="Update">
+                    <Tooltip>
                         <span
                             className="text-lg text-default-400 cursor-pointer active:opacity-50"
                             onClick={() => handleEditClick(Deals)}
@@ -650,7 +623,7 @@ export default function DealTable() {
                             <Edit className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Delete">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleDeleteClick(Deals)}
@@ -658,7 +631,7 @@ export default function DealTable() {
                             <Trash2 className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Add Contact">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleAddContactClick(Deals)}
@@ -666,7 +639,7 @@ export default function DealTable() {
                             <ReceiptText className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Add Invoice">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleAddInvoice(Deals)}
@@ -751,7 +724,7 @@ export default function DealTable() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300 hide-scrollbar"
                             >
                                 {columns.map((column) => (
                                     <DropdownItem
@@ -842,6 +815,7 @@ export default function DealTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Deal Record</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create a new deal for your company</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Deals table with custom cells, pagination and sorting"
@@ -880,6 +854,34 @@ export default function DealTable() {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 
+                    sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogDescription className="text-sm xs:text-xs">
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-4 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
+                        >
+                            Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
@@ -994,7 +996,7 @@ export default function DealTable() {
                                                     type="number"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        const value = e.target.valueAsNumber || 0;
+                                                        const value = e.target.valueAsNumber || "";
                                                         field.onChange(value);
                                                     }}
                                                 />
@@ -1028,7 +1030,7 @@ export default function DealTable() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="Proposal">Proposal</option>
                                                     <option value="New">New</option>
@@ -1050,7 +1052,7 @@ export default function DealTable() {
                                     render={({ field }) => (
                                         <div className="form-group">
                                             <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                                                Deal Date
+                                                Lead Date
                                             </label>
                                             <input
                                                 type="date"
@@ -1086,6 +1088,7 @@ export default function DealTable() {
                                 />
                             </div>
 
+
                             <FormField
                                 control={form.control}
                                 name="notes"
@@ -1096,7 +1099,7 @@ export default function DealTable() {
                                             <textarea
                                                 placeholder="Enter more details here..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -1120,38 +1123,10 @@ export default function DealTable() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 
-                    sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]">
-                    <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
-                        <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-end gap-4 mt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsDeleteDialogOpen(false)}
-                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDeleteConfirm}
-                            className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-800"
-                        >
-                            Delete
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
             <Dialog open={isContactFormVisible} onOpenChange={(open) => setIsContactFormVisible(open)}>
                 <DialogContent className="w-[100vw] max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
                     <DialogHeader>
-                        <DialogTitle>Add Contact</DialogTitle>
+                        <DialogTitle>Create Contact</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
                         <form onSubmit={handleContactSubmit} className="space-y-6">
@@ -1304,7 +1279,7 @@ export default function DealTable() {
                                                 onChange={(e) =>
                                                     setNewContact({ ...newContact, description: e.target.value })
                                                 }
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>
@@ -1321,26 +1296,36 @@ export default function DealTable() {
                                         Submitting Contact...
                                     </>
                                 ) : (
-                                    "Add Contact"
+                                    "Create Contact"
                                 )}
                             </Button>
                         </form>
                     </Form>
                 </DialogContent>
             </Dialog>
-            {isInvoiceFormVisible && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
-                    onClick={() => setIsInvoiceFormVisible(false)}
 
+            {isInvoiceFormVisible && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
+                    onClick={() => setIsInvoiceFormVisible(false)} // Close on clicking outside
                 >
-                    <div className="bg-white p-4 rounded-md shadow-lg  w-11/12 sm:w-full max-w-3xl max-h-[80vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
+                    <div
+                        className="bg-white p-4 rounded-md shadow-lg w-11/12 sm:w-full max-w-2xl max-h-[90vh] overflow-y-auto relative scrollbar-hide"
+                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
                     >
+
+                        {/* Close Icon */}
+                        <button
+                            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+                            onClick={() => setIsInvoiceFormVisible(false)}
+                        >
+                            ✖
+                        </button>
                         <h3 className="text-xl font-semibold text-gray-800 mb-4">
                             Create Invoice
                         </h3>
                         <form
-                            onSubmit={handleInvocieSubmit}
+                            onSubmit={handleInvoiceSubmit}
                             className="space-y-6 p-6 w-full"
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -1363,9 +1348,18 @@ export default function DealTable() {
                                                 companyName: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1386,9 +1380,18 @@ export default function DealTable() {
                                                 customerName: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
 
                                 <div className="form-group">
@@ -1410,9 +1413,18 @@ export default function DealTable() {
                                                 contactNumber: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1433,9 +1445,18 @@ export default function DealTable() {
                                                 emailAddress: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
 
                                 <div className="form-group">
@@ -1454,9 +1475,18 @@ export default function DealTable() {
                                         onChange={(e) =>
                                             setNewInvoice({ ...newInvoice, address: e.target.value })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1477,8 +1507,18 @@ export default function DealTable() {
                                                 gstNumber: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
 
                                 <div className="form-group">
@@ -1500,8 +1540,18 @@ export default function DealTable() {
                                                 productName: e.target.value,
                                             })
                                         }
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1517,9 +1567,18 @@ export default function DealTable() {
                                         placeholder="Enter product amount"
                                         value={newInvoice.amount}
                                         onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
                                         required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
 
                                 <div className="form-group">
@@ -1536,8 +1595,18 @@ export default function DealTable() {
                                         placeholder="Enter discount"
                                         value={newInvoice.discount}
                                         onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1550,10 +1619,9 @@ export default function DealTable() {
                                         name="gstRate"
                                         id="gstRate"
                                         value={newInvoice.gstRate}
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
                                         onChange={handleChange}
                                     >
-                                        <option value="">Select GST Rate</option>
                                         <option value="0">0%</option>
                                         <option value="5">5%</option>
                                         <option value="12">12%</option>
@@ -1577,8 +1645,18 @@ export default function DealTable() {
                                         placeholder="Enter paid amount"
                                         value={newInvoice.paidAmount}
                                         onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                                 <div className="form-group">
                                     <label
@@ -1593,8 +1671,18 @@ export default function DealTable() {
                                         id="remainingAmount"
                                         value={newInvoice.remainingAmount}
                                         onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input"
+                                        required
                                     />
+                                    <style>
+                                        {`
+                                    .custom-input:focus {
+                                        border-color: black !important;
+                                        box-shadow: none !important;
+                                        outline: none !important;
+                                    }
+                                    `}
+                                    </style>
                                 </div>
                             </div>
 
@@ -1612,46 +1700,55 @@ export default function DealTable() {
                                     onChange={(e) =>
                                         setNewInvoice({ ...newInvoice, status: e.target.value })
                                     }
-                                    className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                    className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
                                 >
                                     <option value="paid">Paid</option>
                                     <option value="unpaid">Unpaid</option>
                                 </select>
                             </div>
-                            <div className="form-group">
-                                <label
-                                    htmlFor="date"
-                                    className="text-sm font-medium text-gray-700"
-                                >
-                                    Invoice Date
-                                </label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    id="date"
-                                    value={newInvoice.date}
-                                    onChange={(e) =>
-                                        setNewInvoice({ ...newInvoice, date: e.target.value })
-                                    }
-                                    className="w-full p-3 border border-gray-300 rounded-md text-black"
-                                    required
-                                />
-                            </div>
 
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Submitting Contact...
-                                    </>
-                                ) : (
-                                    "Add Invoice"
+                            <FormField
+                                control={form.control}
+                                name="date"
+                                render={({ field }) => (
+                                    <div className="form-group">
+                                        <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                            Invoice Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="date"
+                                            id="date"
+                                            value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                                            className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                            required
+                                        />
+                                    </div>
                                 )}
-                            </Button>
+                            />
+
+                            <div className="flex justify-end mt-6">
+                                <button
+                                    type="submit"
+                                    className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-400 w-full sm:w-auto text-sm sm:text-base"
+                                >
+                                    Create Invoice
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
             )}
+
+
+
         </div>
+
     );
 }
+
+
+
+
+

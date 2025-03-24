@@ -359,6 +359,11 @@ export default function InvoiceTable() {
                 return formatDate(cellValue);
             case "endDate":
                 return formatDate(cellValue);
+            case "contactNumber":
+            case "emailAddress":
+            case "address":
+            case "gstNumber":
+                return cellValue ? cellValue : "N/A";
             default:
                 return cellValue;
         }

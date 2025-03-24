@@ -350,19 +350,26 @@ export default function ScheduledEvents() {
     const renderCell = React.useCallback((scheduledEvents: ScheduledEvents, columnKey: string) => {
         const cellValue = scheduledEvents[columnKey as keyof ScheduledEvents];
 
-        // Format dates if the column is "date" or "endDate"
+        // Format date fields (date and endDate)
         if ((columnKey === "date" || columnKey === "endDate") && cellValue) {
             return formatDate(cellValue);
         }
-        // Render note column with a fallback message if there's no note
-        if (columnKey === "description") {
+
+        // Handle fields that should default to "N/A" if empty
+        if (
+            columnKey === "description" ||
+            columnKey === "location" ||
+            columnKey === "assignedUser" ||
+            columnKey === "customer"
+        ) {
             return cellValue || "N/A";
         }
-        // Render actions column with edit and delete buttons
+
+        // Handle actions column with buttons for editing and deleting
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
-                    <Tooltip content="Update">
+                    <Tooltip>
                         <span
                             className="text-lg text-default-400 cursor-pointer active:opacity-50"
                             onClick={() => handleEditClick(scheduledEvents)}
@@ -370,7 +377,7 @@ export default function ScheduledEvents() {
                             <Edit className="h-4 w-4" />
                         </span>
                     </Tooltip>
-                    <Tooltip color="danger" content="Delete">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleDeleteClick(scheduledEvents)}
@@ -382,7 +389,6 @@ export default function ScheduledEvents() {
             );
         }
 
-        // For all other columns, return the raw cell value
         return cellValue;
     }, []);
 
@@ -456,7 +462,7 @@ export default function ScheduledEvents() {
                                     const newKeys = new Set<string>(Array.from(keys as Iterable<string>));
                                     setVisibleColumns(newKeys);
                                 }}
-                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300"
+                                className="min-w-[180px] sm:min-w-[220px] max-h-96 overflow-auto rounded-lg shadow-lg p-2 bg-white border border-gray-300 hide-scrollbar"
                             >
                                 {columns.map((column) => (
                                     <DropdownItem
@@ -662,7 +668,7 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="call">Call</option>
                                                     <option value="Meeting">Meeting</option>
@@ -683,7 +689,7 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="one-time">One Time</option>
                                                     <option value="Daily">Daily</option>
@@ -708,7 +714,7 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="Scheduled">Schedule</option>
                                                     <option value="Postpone">Postpone</option>
@@ -729,7 +735,7 @@ export default function ScheduledEvents() {
                                             <FormControl>
                                                 <select
                                                     {...field}
-                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="High">High</option>
                                                     <option value="Medium">Medium</option>
@@ -775,7 +781,7 @@ export default function ScheduledEvents() {
                                             <textarea
                                                 placeholder="Enter more details here..."
                                                 {...field}
-                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                                 rows={3}
                                             />
                                         </FormControl>

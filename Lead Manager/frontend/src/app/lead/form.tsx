@@ -46,7 +46,7 @@ export default function LeadForm() {
             emailAddress: "",
             address: "",
             productName: "",
-            amount: 0,
+            amount: undefined,
             gstNumber: "",
             status: "New",
             date: new Date(),
@@ -194,7 +194,7 @@ export default function LeadForm() {
                                         type="number"
                                         {...field}
                                         onChange={(e) => {
-                                            const value = e.target.valueAsNumber || 0;
+                                            const value = e.target.valueAsNumber || "";
                                             field.onChange(value);
                                         }}
                                     />
@@ -228,7 +228,7 @@ export default function LeadForm() {
                                 <FormControl>
                                     <select
                                         {...field}
-                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                     >
                                         <option value="Proposal">Proposal</option>
                                         <option value="New">New</option>
@@ -296,7 +296,7 @@ export default function LeadForm() {
                                 <textarea
                                     placeholder="Enter more details here..."
                                     {...field}
-                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                     rows={3}
                                 />
                             </FormControl>
