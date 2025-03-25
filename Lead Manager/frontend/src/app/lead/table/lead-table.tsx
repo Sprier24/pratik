@@ -279,7 +279,7 @@ export default function LeadTable() {
             discount: 0, // Default to 0 (since discount is a number)
             gstRate: 0, // Default to 0 (since gstRate is a number)
             status: "", // Default empty string for status
-            date: "", // Default empty string for date
+            date: new Date(), // Default empty string for date
             totalWithGst: 0, // Default to 0 (since totalWithGst is a number)
             totalWithoutGst: 0, // Default to 0 (since totalWithoutGst is a number)
             paidAmount: 0, // Default to 0 (since paidAmount is a number)
@@ -333,7 +333,7 @@ export default function LeadTable() {
                 amount: 0,
                 discount: 0,
                 gstRate: 0,
-                status: "paid",
+                status: "",
                 date: "",
                 totalWithoutGst: 0,
                 totalWithGst: 0,
@@ -407,7 +407,7 @@ export default function LeadTable() {
     const hasSearchFilter = Boolean(filterValue);
 
     const headerColumns = React.useMemo(() => {
-        if (visibleColumns.size === columns.length) return columns; // Check if all columns are selected
+        if (visibleColumns.size === columns.length) return columns;
         return columns.filter((column) => visibleColumns.has(column.uid));
     }, [visibleColumns]);
 
@@ -419,10 +419,16 @@ export default function LeadTable() {
                 const searchableFields = {
                     companyName: lead.companyName,
                     customerName: lead.customerName,
+                    contactNumber: lead.contactNumber,
                     emailAddress: lead.emailAddress,
+                    address: lead.address,
+                    gstNumber: lead.gstNumber,
                     productName: lead.productName,
-                    status: lead.status,
+                    amount: lead.amount,
+                    date: lead.date,
+                    endDate: lead.endDate,
                     notes: lead.notes,
+                    status: lead.status,
                 };
 
                 return Object.values(searchableFields).some(value =>
@@ -563,41 +569,40 @@ export default function LeadTable() {
         }
     }
 
+    const contactSchema = z.object({
+        companyName: z.string().nonempty({ message: "Company name is required." }),
+        customerName: z.string().nonempty({ message: "Customer name is required." }),
+        contactNumber: z
+            .string()
+            .regex(/^\d*$/, { message: "Contact number must be numeric" })
+            .nonempty({ message: "Contact number is required" }),
+        emailAddress: z.string().email({ message: "Invalid email address." }),
+        address: z.string().nonempty({ message: "Company address is required." }),
+        gstNumber: z.string().nonempty({ message: "GST number is required." }),
+        description: z.string().optional(),
+    });
+
     const handleContactSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation: Check if any required field is empty
-        const {
-            companyName,
-            customerName,
-            contactNumber,
-            emailAddress,
-            address,
-            gstNumber,
-            description,
-        } = newContact;
+        // Validate using the Zod schema
+        const result = contactSchema.safeParse(newContact);
 
-        if (
-            !companyName ||
-            !customerName ||
-            !contactNumber ||
-            !emailAddress ||
-            !address ||
-            !gstNumber ||
-            !description
-        ) {
-
-            toast({
-                title: "Error",
-                description: `Please Fill All Fields Are Required`,
-            })
+        if (!result.success) {
+            // If validation fails, show error messages for each field
+            result.error.errors.forEach(error => {
+                toast({
+                    title: "Error",
+                    description: error.message,
+                });
+            });
+            return; // stop the function if validation fails
         }
+
         try {
             // Assuming you have an endpoint for saving contacts
-            await axios.post(
-                "http://localhost:8000/api/v1/contact/createContact",
-                newContact
-            );
+            await axios.post("http://localhost:8000/api/v1/contact/createContact", newContact);
+
             setIsContactFormVisible(false);
             setNewContact({
                 companyName: "",
@@ -608,17 +613,18 @@ export default function LeadTable() {
                 gstNumber: "",
                 description: "",
             });
+
             toast({
                 title: "Contact Submitted",
                 description: `The contact has been successfully created`,
-            })
+            });
         } catch (error) {
             console.error("Error saving contact:", error);
 
             toast({
                 title: "Error",
                 description: `There was an error creating the contact`,
-            })
+            });
         }
     };
 
@@ -1437,49 +1443,49 @@ export default function LeadTable() {
                                     `}
                                     </style>
                                 </div>
-                            </div>
 
-                            <div className="form-group">
-                                <label
-                                    htmlFor="status"
-                                    className="text-sm font-medium text-gray-700"
-                                >
-                                    Status
-                                </label>
-                                <select
-                                    name="status"
-                                    id="status"
-                                    value={newInvoice.status}
-                                    onChange={(e) =>
-                                        setNewInvoice({ ...newInvoice, status: e.target.value })
-                                    }
-                                    className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
-                                >
-                                    <option value="paid">Paid</option>
-                                    <option value="unpaid">Unpaid</option>
-                                </select>
-                            </div>
+                                <div className="form-group">
+                                    <label
+                                        htmlFor="status"
+                                        className="text-sm font-medium text-gray-700"
+                                    >
+                                        Status
+                                    </label>
+                                    <select
+                                        name="status"
+                                        id="status"
+                                        value={newInvoice.status}
+                                        onChange={(e) =>
+                                            setNewInvoice({ ...newInvoice, status: e.target.value })
+                                        }
+                                        className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
+                                    >
+                                        <option value="unpaid">Unpaid</option>
+                                        <option value="paid">Paid</option>
+                                    </select>
+                                </div>
 
-                            <FormField
-                                control={form.control}
-                                name="date"
-                                render={({ field }) => (
-                                    <div className="form-group">
-                                        <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                                            Invoice Date
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="date"
-                                            id="date"
-                                            value={field.value ? format(field.value, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
-                                            onChange={(e) => field.onChange(new Date(e.target.value))}
-                                            className="w-full p-3 border border-gray-300 rounded-md text-black"
-                                            required
-                                        />
-                                    </div>
-                                )}
-                            />
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <div className="form-group">
+                                            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                                Invoice Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                id="date"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-300 rounded-md text-black"
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                />
+                            </div>
 
                             <div className="flex justify-end mt-6">
                                 <button

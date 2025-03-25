@@ -78,7 +78,7 @@ const taskSchema = z.object({
     assigned: z.string().min(2, { message: "Assigned By is required." }),
     date: z.date().optional(),
     endDate: z.date().optional(),
-    status: z.enum(["Pending", "Resolved", "In Progress"]),
+    status: z.enum(["Pending", "Resolved", "InProgress"]),
     priority: z.enum(["High", "Medium", "Low"]),
     notes: z.string().optional(),
 });
@@ -204,10 +204,14 @@ export default function TaskTable() {
             filteredTasks = filteredTasks.filter((task) => {
                 const searchableFields = {
                     subject: task.subject,
-                    assigned: task.assigned,
                     relatedTo: task.relatedTo,
-                    status: task.status,
+                    name: task.name,
+                    assigned: task.assigned,
+                    notes: task.notes,
+                    date: task.date,
+                    endDate: task.endDate,
                     priority: task.priority,
+                    status: task.status,
                 };
 
                 return Object.values(searchableFields).some(value =>
@@ -673,7 +677,7 @@ export default function TaskTable() {
                                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
                                                 >
                                                     <option value="Pending">Pending</option>
-                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="InProgress">In Progress</option>
                                                     <option value="Resolved">Resolved</option>
                                                 </select>
                                             </FormControl>

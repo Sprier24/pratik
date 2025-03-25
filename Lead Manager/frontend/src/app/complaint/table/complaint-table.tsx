@@ -164,12 +164,13 @@ export default function ComplaintTable() {
                 const searchableFields = {
                     companyName: complaint.companyName,
                     complainerName: complaint.complainerName,
-                    emailAddress: complaint.emailAddress,
                     contactNumber: complaint.contactNumber,
-                    date: complaint.date,
-                    caseStatus: complaint.caseStatus,
-                    priority: complaint.priority,
+                    emailAddress: complaint.emailAddress,
+                    subject: complaint.subject,
                     caseOrigin: complaint.caseOrigin,
+                    date: complaint.date,
+                    priority: complaint.priority,
+                    caseStatus: complaint.caseStatus,
                 };
 
                 return Object.values(searchableFields).some(value =>

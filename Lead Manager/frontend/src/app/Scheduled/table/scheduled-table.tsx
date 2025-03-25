@@ -211,7 +211,6 @@ export default function ScheduledEvents() {
                     description: scheduledEvents.description,
                     recurrence: scheduledEvents.recurrence,
                     date: scheduledEvents.date
-
                 };
 
                 return Object.values(searchableFields).some(value =>

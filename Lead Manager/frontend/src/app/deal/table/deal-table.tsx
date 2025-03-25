@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { CalendarIcon, Edit, Trash2, Loader2, PlusCircle, SearchIcon, ChevronDownIcon, ReceiptText, SquareUser } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "@/hooks/use-toast"
-import { z } from "zod"
+import { date, z } from "zod"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -270,7 +270,7 @@ export default function DealTable() {
             discount: 0, // Default to 0 (since discount is a number)
             gstRate: 0, // Default to 0 (since gstRate is a number)
             status: "", // Default empty string for status
-            date: "", // Default empty string for date
+            date: new Date(), // Default empty string for date
             totalWithGst: 0, // Default to 0 (since totalWithGst is a number)
             totalWithoutGst: 0, // Default to 0 (since totalWithoutGst is a number)
             paidAmount: 0, // Default to 0 (since paidAmount is a number)
@@ -460,10 +460,16 @@ export default function DealTable() {
                 const searchableFields = {
                     companyName: Deals.companyName,
                     customerName: Deals.customerName,
+                    contactNumber: Deals.contactNumber,
                     emailAddress: Deals.emailAddress,
+                    address: Deals.address,
+                    gstNumber: Deals.gstNumber,
                     productName: Deals.productName,
-                    status: Deals.status,
+                    amount: Deals.amount,
+                    date: Deals.date,
+                    endDate: Deals.endDate,
                     notes: Deals.notes,
+                    status: Deals.status,
                 };
 
                 return Object.values(searchableFields).some(value =>
@@ -1702,8 +1708,8 @@ export default function DealTable() {
                                     }
                                     className="w-full p-3 border border-gray-300 rounded-md text-black custom-input cursor-pointer"
                                 >
-                                    <option value="paid">Paid</option>
                                     <option value="unpaid">Unpaid</option>
+                                    <option value="paid">Paid</option>
                                 </select>
                             </div>
 

@@ -36,6 +36,7 @@ const addOwner = async (req, res) => {
         panNumber,
         documentType,
         documentNumber,
+        gstNumber,
       } = req.body;
 
       const logoPath = req.file ? `/uploads/${path.basename(req.file.path)}` : null;
@@ -54,6 +55,7 @@ const addOwner = async (req, res) => {
         documentType,
         documentNumber,
         dataFilled: true,
+        gstNumber,
       });
 
       await newOwner.save();

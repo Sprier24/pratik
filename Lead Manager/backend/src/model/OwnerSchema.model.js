@@ -44,6 +44,9 @@ const ownerSchema = new mongoose.Schema(
     dataFilled: {
       type: Boolean,
     },
+    gstNumber: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
