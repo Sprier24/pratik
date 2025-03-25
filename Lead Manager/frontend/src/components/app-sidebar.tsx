@@ -166,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: item.items
           ?.filter(
             (subItem) => !(windowWidth < 768 && subItem.title === "Drag & Drop")
-          ) // Hide Drag & Drop if width < 768px
+          )
           .map((subItem) => ({
             ...subItem,
             isActive: isClient && activePath === subItem.url,
