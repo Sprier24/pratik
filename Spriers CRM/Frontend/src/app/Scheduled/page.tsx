@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import SearchBar from '@/components/globalSearch';
 import Notification from '@/components/notification';
-import { Calendar1 } from "lucide-react"
+import { Calendar1, Mail } from "lucide-react"
 
 export default function CertificatePage() {
     return (
@@ -18,19 +18,19 @@ export default function CertificatePage() {
                         <SidebarTrigger className="-ml-1" />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
-                        <BreadcrumbList className="flex items-center space-x-2">
-                            <BreadcrumbItem className="hidden sm:block md:block">
-                            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                            </BreadcrumbItem>
+                            <BreadcrumbList className="flex items-center space-x-2">
+                                <BreadcrumbItem className="hidden sm:block md:block">
+                                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                                </BreadcrumbItem>
 
-                            <BreadcrumbSeparator className="hidden sm:block md:block"/>
+                                <BreadcrumbSeparator className="hidden sm:block md:block" />
 
-                            <BreadcrumbItem className="hidden sm:block md:block">
-                            <BreadcrumbLink href="/Scheduled/table">Event or Meeting</BreadcrumbLink>
-                            </BreadcrumbItem>
+                                <BreadcrumbItem className="hidden sm:block md:block">
+                                    <BreadcrumbLink href="/Scheduled/table">Event or Meeting</BreadcrumbLink>
+                                </BreadcrumbItem>
 
-                            <BreadcrumbSeparator className="hidden sm:block md:block"/>
-                                <span  className="hidden sm:block md:block">
+                                <BreadcrumbSeparator className="hidden sm:block md:block" />
+                                <span className="hidden sm:block md:block">
                                     Create Event or Meeting
                                 </span>
                             </BreadcrumbList>
@@ -40,6 +40,11 @@ export default function CertificatePage() {
                         <div  >
                             <SearchBar />
                         </div>
+                        <a href="/email">
+                            <div>
+                                <Mail />
+                            </div>
+                        </a>
                         <a href="/calendar">
                             <div>
                                 <Calendar1 />

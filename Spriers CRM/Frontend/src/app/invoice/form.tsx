@@ -16,8 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const formSchema = z.object({
-  companyName: z.string().nonempty({ message: "Company name is required" }),
-  customerName: z.string().nonempty({ message: "Customer name is required" }),
+  companyName: z.string().nonempty({ message: "Required" }),
+  customerName: z.string().nonempty({ message: "Required" }),
   contactNumber: z
     .string()
     .regex(/^\d*$/, { message: "Contact number must be numeric" })
@@ -25,12 +25,12 @@ const formSchema = z.object({
   emailAddress: z.string().optional(),
   address: z.string().optional(),
   gstNumber: z.string().optional(),
-  productName: z.string().nonempty({ message: "Product name is required" }),
-  amount: z.number().positive({ message: "Product amount is required" }),
+  productName: z.string().nonempty({ message: "Required" }),
+  amount: z.number().positive({ message: "Required" }),
   discount: z.number().optional(),
   gstRate: z.number().optional(),
   status: z.enum(["Paid", "Unpaid"]),
-  date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Invoice Date is required" }),
+  date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
   paidAmount: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
   remainingAmount: z.number().optional(),
   totalWithoutGst: z.number().optional(),
@@ -268,7 +268,7 @@ export default function InvoiceForm() {
             name="discount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Discount (Optional)</FormLabel>
+                <FormLabel>Discount % (Optional)</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter discount"
@@ -289,7 +289,7 @@ export default function InvoiceForm() {
             name="gstRate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>GST Rate (Optional)</FormLabel>
+                <FormLabel>GST Rate % (Optional)</FormLabel>
                 <FormControl>
                   <select
                     {...field}

@@ -7,7 +7,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 // import { ModeToggle } from "@/components/ModeToggle"
 import SearchBar from '@/components/globalSearch';
 import Notification from '@/components/notification';
-import { Calendar1 } from "lucide-react"
+import { Calendar1, Mail } from "lucide-react"
 
 export default function DealTablePage() {
     return (
@@ -38,6 +38,11 @@ export default function DealTablePage() {
                         <div  >
                             <SearchBar />
                         </div>
+                        <a href="/email">
+                            <div>
+                                <Mail />
+                            </div>
+                        </a>
                         <a href="/calendar">
                             <div>
                                 <Calendar1 />

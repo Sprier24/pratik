@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { ModeToggle } from "@/components/ModeToggle"
 import SearchBar from '@/components/globalSearch';
 import Notification from '@/components/notification';
-import { Calendar1 } from "lucide-react";
+import { Calendar1, Mail } from "lucide-react";
 interface Lead {
   _id: string;
   companyName: string;
@@ -169,6 +169,11 @@ export default function App() {
             <div  >
               <SearchBar />
             </div>
+            <a href="/email">
+              <div>
+                <Mail />
+              </div>
+            </a>
             <a href="/calendar">
               <div>
                 <Calendar1 />
@@ -203,7 +208,7 @@ export default function App() {
                   </div>
                   <div className="mt-4 flex flex-col gap-3 min-h-[250px] max-h-[500px] h-[350px] overflow-y-auto scrollbar-hide">
                     {leadsInStatus.length === 0 ? (
-                      <p className="text-gray-500 text-center">No lead available</p>
+                        <h1 className="text-1xl mb-4 mt-4 text-center">No lead available</h1>
                     ) : (
                       leadsInStatus.map((lead) => (
                         <div

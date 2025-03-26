@@ -31,7 +31,7 @@ import {
   styled,
 } from "@mui/material";
 import { Button, Pagination, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Chip, Tooltip, ChipProps, Input } from "@heroui/react"
-import { Pencil, Trash2, Search, Calendar1, Calendar, Filter, Plus } from "lucide-react";
+import { Pencil, Trash2, Search, Calendar1, Calendar, Filter, Plus, Mail } from "lucide-react";
 
 const chartConfig = {
   visitors: {
@@ -2025,6 +2025,11 @@ if (pageSchedule > 1) {
             <div  >
               <SearchBar />
             </div>
+            <a href="/email">
+              <div>
+                <Mail />
+              </div>
+            </a>
             <a href="/calendar">
               <div>
                 <Calendar1 />

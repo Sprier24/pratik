@@ -62,8 +62,6 @@ const data = {
       icon: ReceiptText,
       items: [
         { title: "Record", url: "/invoice/table" },
-        { title: "Graph", url: "/Invoice-chart" },
-        { title: "Drag & Drop", url: "/invoice/invoiceDrop" }
       ],
     },
 
@@ -74,7 +72,6 @@ const data = {
 
       items: [
         { title: "Record", url: "/reminder/table" },
-        { title: "Email", url: "/reminder/reminderEmail" },
       ],
     },
 
@@ -96,7 +93,6 @@ const data = {
 
       items: [
         { title: "Record", url: "/complaint/table" },
-        { title: "Email", url: "/complaint/complaintEmail" }
       ],
     },
 
@@ -107,7 +103,6 @@ const data = {
 
       items: [
         { title: "Record", url: "/contact/table" },
-        { title: "Email", url: "/contact/contactEmail" }
       ],
     },
 

@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { ModeToggle } from "@/components/ModeToggle"
 import SearchBar from '@/components/globalSearch';
 import Notification from '@/components/notification';
-import { Calendar1 } from "lucide-react";
+import { Calendar1, Mail } from "lucide-react";
 
 interface Lead {
   _id: string;
@@ -170,6 +170,11 @@ export default function App() {
             <div  >
               <SearchBar />
             </div>
+            <a href="/email">
+              <div>
+                <Mail />
+              </div>
+            </a>
             <a href="/calendar">
               <div>
                 <Calendar1 />

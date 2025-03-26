@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Calendar1 } from "lucide-react"
+import { Calendar1, Mail } from "lucide-react"
 
 export default function LeadTablePage() {
     return (
@@ -38,6 +38,11 @@ export default function LeadTablePage() {
                         <div  >
                             <SearchBar />
                         </div>
+                        <a href="/email">
+                            <div>
+                                <Mail />
+                            </div>
+                        </a>
                         <a href="/calendar">
                             <div>
                                 <Calendar1 />

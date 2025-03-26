@@ -67,8 +67,8 @@ interface Invoice {
 }
 
 export const invoiceSchema = z.object({
-    companyName: z.string().nonempty({ message: "Company name is required" }),
-    customerName: z.string().nonempty({ message: "Customer name is required" }),
+    companyName: z.string().nonempty({ message: "Required" }),
+    customerName: z.string().nonempty({ message: "Required" }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
@@ -76,28 +76,28 @@ export const invoiceSchema = z.object({
     emailAddress: z.string().optional(),
     address: z.string().optional(),
     gstNumber: z.string().optional(),
-    productName: z.string().nonempty({ message: "Product name is required" }),
-    amount: z.coerce.number().positive({ message: "Product amount is required" }),
-    discount: z.coerce.number().optional(),
-    gstRate: z.coerce.number().optional(),
+    productName: z.string().nonempty({ message: "Required" }),
+    amount: z.number().positive({ message: "Required" }),
+    discount: z.number().optional(),
+    gstRate: z.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
-    date: z.coerce.date({ message: "Invoice Date is required" }),
-    paidAmount: z.coerce.number().optional(),
-    remainingAmount: z.coerce.number().optional(),
-    totalWithoutGst: z.coerce.number().optional(),
-    totalWithGst: z.coerce.number().optional(),
+    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
+    paidAmount: z.number().optional(),
+    remainingAmount: z.number().optional(),
+    totalWithoutGst: z.number().optional(),
+    totalWithGst: z.number().optional(),
 });
 
 const contactSchema = z.object({
-    companyName: z.string().min(2, { message: "Company name is required." }),
-    customerName: z.string().min(2, { message: "Customer name is required." }),
+    companyName: z.string().nonempty({ message: "Required" }),
+    customerName: z.string().nonempty({ message: "Required" }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
-        .nonempty({ message: "Contact number is required" }),
-    emailAddress: z.string().email({ message: "Invalid email address." }),
-    address: z.string().min(2, { message: "Company address is required." }),
-    gstNumber: z.string().min(1, { message: "GST number is required." }),
+        .nonempty({ message: "Required" }),
+    emailAddress: z.string().email({ message: "Required" }),
+    address: z.string().nonempty({ message: "Required" }),
+    gstNumber: z.string().nonempty({ message: "Required" }),
     description: z.string().optional(),
 });
 
@@ -148,20 +148,20 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "productName", "amount", "gstNumber", "status", "date", "endDate", "notes", "actions"];
 
 const formSchema = z.object({
-    companyName: z.string().nonempty({ message: "Company name is required" }),
-    customerName: z.string().nonempty({ message: "Customer name is required" }),
+    companyName: z.string().nonempty({ message: "Required" }),
+    customerName: z.string().nonempty({ message: "Required" }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
-        .nonempty({ message: "Contact number is required" }),
+        .nonempty({ message: "Required" }),
     emailAddress: z.string().email({ message: "Invalid email address" }),
-    address: z.string().nonempty({ message: "Company address is required" }),
-    productName: z.string().nonempty({ message: "Product name is required" }),
-    amount: z.number().positive({ message: "Product amount is required" }),
-    gstNumber: z.string().nonempty({ message: "GST number is required" }),
+    address: z.string().nonempty({ message: "Required" }),
+    productName: z.string().nonempty({ message: "Required" }),
+    amount: z.number().positive({ message: "Required" }),
+    gstNumber: z.string().nonempty({ message: "Required" }),
     status: z.enum(["Proposal", "New", "Discussion", "Demo", "Decided"]),
-    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Lead Date is required" }),
-    endDate: z.date().refine((val) => !isNaN(val.getTime()), { message: "Final Date is required" }),
+    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
+    endDate: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
     notes: z.string().optional(),
     isActive: z.boolean(),
 });
@@ -183,15 +183,15 @@ export default function LeadTable() {
         address: "",
         gstNumber: "",
         productName: "",
-        amount: 0, 
-        discount: 0, 
-        gstRate: 0, 
+        amount: 0,
+        discount: 0,
+        gstRate: 0,
         status: "",
         date: "",
-        totalWithGst: 0, 
-        totalWithoutGst: 0, 
-        paidAmount: 0, 
-        remainingAmount: 0, 
+        totalWithGst: 0,
+        totalWithoutGst: 0,
+        paidAmount: 0,
+        remainingAmount: 0,
     });
 
     const [newContact, setNewContact] = useState<Contact>({
@@ -283,18 +283,18 @@ export default function LeadTable() {
     })
 
     const contactformSchema = contactSchema;
-     const contactform = useForm<z.infer<typeof contactSchema>>({
-            resolver: zodResolver(contactSchema),
-            defaultValues: {
-                companyName: "",
-                customerName: "",
-                contactNumber: "",
-                emailAddress: "",
-                address: "",
-                gstNumber: "",
-                description: "",
-            },
-        });
+    const contactform = useForm<z.infer<typeof contactSchema>>({
+        resolver: zodResolver(contactSchema),
+        defaultValues: {
+            companyName: "",
+            customerName: "",
+            contactNumber: "",
+            emailAddress: "",
+            address: "",
+            gstNumber: "",
+            description: "",
+        },
+    });
 
     const invoiceformSchema = invoiceSchema;
     const invoiceform = useForm<z.infer<typeof invoiceSchema>>({
@@ -490,10 +490,16 @@ export default function LeadTable() {
                 const searchableFields = {
                     companyName: lead.companyName,
                     customerName: lead.customerName,
+                    contactNumber: lead.contactNumber,
                     emailAddress: lead.emailAddress,
+                    address: lead.address,
+                    gstNumber: lead.gstNumber,
                     productName: lead.productName,
-                    status: lead.status,
+                    amount: lead.amount,
+                    date: lead.date,
+                    endDate: lead.endDate,
                     notes: lead.notes,
+                    status: lead.status,
                 };
 
                 return Object.values(searchableFields).some(value =>
@@ -637,15 +643,15 @@ export default function LeadTable() {
     const handleContactSubmit = async (values: z.infer<typeof contactSchema>) => {
         try {
             setIsSubmitting(true);
-            
+
             await axios.post(
                 "http://localhost:8000/api/v1/contact/createContact",
                 values
             );
-            
+
             setIsContactFormVisible(false);
             contactform.reset();
-            
+
             toast({
                 title: "Contact Submitted",
                 description: "The contact has been successfully created",
@@ -876,7 +882,7 @@ export default function LeadTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Lead Record</h1>
-                            <h1 className="text-1xl mb-4 mt-4 text-center">Create client / customer leads here</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create client / customer lead here</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"
@@ -915,18 +921,18 @@ export default function LeadTable() {
                     </div>
                 </div>
             </div>
-          
+
 
             <Dialog open={isContactFormVisible} onOpenChange={(open) => {
-                            if (!open) {
-                                setIsContactFormVisible(false);
-                            }
-                        }}>
+                if (!open) {
+                    setIsContactFormVisible(false);
+                }
+            }}>
                 <DialogContent className="w-[100vw] max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
                     onInteractOutside={(e) => {
-                                e.preventDefault();
-                            }}
-                            >      
+                        e.preventDefault();
+                    }}
+                >
                     <DialogHeader>
                         <DialogTitle>Create Contact</DialogTitle>
                     </DialogHeader>
@@ -1088,9 +1094,9 @@ export default function LeadTable() {
                 }
             }}>
                 <DialogContent className="w-[100vw] max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
-                onInteractOutside={(e) => {
-                    e.preventDefault();
-                }}
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                    }}
                 >
                     <DialogHeader>
                         <DialogTitle>Create Invoice</DialogTitle>
@@ -1236,7 +1242,7 @@ export default function LeadTable() {
                                                     placeholder="Enter amount"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        const value = e.target.valueAsNumber || 0;
+                                                        const value = e.target.valueAsNumber || "";
                                                         field.onChange(value);
                                                         updateCalculatedFields();
                                                     }}
@@ -1252,14 +1258,14 @@ export default function LeadTable() {
                                     name="discount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Discount (%) (Optional)</FormLabel>
+                                            <FormLabel>Discount (%)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
                                                     placeholder="Enter discount"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        const value = e.target.valueAsNumber || 0;
+                                                        const value = e.target.valueAsNumber || "";
                                                         field.onChange(value);
                                                         updateCalculatedFields();
                                                     }}
@@ -1275,7 +1281,7 @@ export default function LeadTable() {
                                     name="gstRate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>GST Rate (%) (Optional)</FormLabel>
+                                            <FormLabel>GST Rate (%)</FormLabel>
                                             <FormControl>
                                                 <select
                                                     {...field}
@@ -1291,6 +1297,7 @@ export default function LeadTable() {
                                                     <option value="12">12%</option>
                                                     <option value="18">18%</option>
                                                     <option value="28">28%</option>
+                                                    <option value="35">35%</option>
                                                 </select>
                                             </FormControl>
                                             <FormMessage />
@@ -1310,7 +1317,7 @@ export default function LeadTable() {
                                                     placeholder="Enter paid amount"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        const value = e.target.valueAsNumber || 0;
+                                                        const value = e.target.valueAsNumber || "";
                                                         field.onChange(value);
                                                         updateCalculatedFields();
                                                     }}
@@ -1367,7 +1374,7 @@ export default function LeadTable() {
                                     render={({ field }) => (
                                         <div className="form-group">
                                             <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                                            Invoice Date
+                                                Invoice Date
                                             </label>
                                             <input
                                                 type="date"
@@ -1408,277 +1415,277 @@ export default function LeadTable() {
                 </DialogContent>
             </Dialog>
 
-                <Dialog open={isEditOpen} onOpenChange={(open) => {
-                        if (!open) {
-                            setIsEditOpen(false);
-                        }
-                    }}>
-                        <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
-                        onInteractOutside={(e) => {
-                            e.preventDefault();
-                        }}
-                        >
-                            <DialogHeader>
-                                <DialogTitle>Update Lead</DialogTitle>
-                            </DialogHeader>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <FormField
-                                            control={form.control}
-                                            name="companyName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Company Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter company name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="customerName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Client / Customer Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter client / customer name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+            <Dialog open={isEditOpen} onOpenChange={(open) => {
+                if (!open) {
+                    setIsEditOpen(false);
+                }
+            }}>
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                    }}
+                >
+                    <DialogHeader>
+                        <DialogTitle>Update Lead</DialogTitle>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onEdit)} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="companyName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter company name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="customerName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Client / Customer Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter client / customer name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="contactNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Contact Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Enter contact number"
-                                                            type="tel"
-                                                            {...field}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value.replace(/[^0-9]/g, '');
-                                                                field.onChange(value);
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="emailAddress"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email Address</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter valid email address" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="contactNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Contact Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Enter contact number"
+                                                    type="tel"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="emailAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email Address</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter valid email address" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="address"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Company Address</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Enter full company address" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Company Address</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter full company address" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="productName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Product Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter product name" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="amount"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Product Amount</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Enter product amount"
-                                                            type="number"
-                                                            {...field}
-                                                            onChange={(e) => {
-                                                                const value = e.target.valueAsNumber || "";
-                                                                field.onChange(value);
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="productName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Product Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter product name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="amount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Product Amount</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Enter product amount"
+                                                    type="number"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.valueAsNumber || "";
+                                                        field.onChange(value);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="gstNumber"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>GST Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter GST number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Status</FormLabel>
-                                                    <FormControl>
-                                                        <select
-                                                            {...field}
-                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
-                                                        >
-                                                            <option value="Proposal">Proposal</option>
-                                                            <option value="New">New</option>
-                                                            <option value="Discussion">Discussion</option>
-                                                            <option value="Demo">Demo</option>
-                                                            <option value="Decided">Decided</option>
-                                                        </select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="gstNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>GST Number</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter GST number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Status</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                >
+                                                    <option value="Proposal">Proposal</option>
+                                                    <option value="New">New</option>
+                                                    <option value="Discussion">Discussion</option>
+                                                    <option value="Demo">Demo</option>
+                                                    <option value="Decided">Decided</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <FormField
-                                            control={form.control}
-                                            name="date"
-                                            render={({ field }) => (
-                                                <div className="form-group">
-                                                    <label htmlFor="date" className="text-sm font-medium text-gray-700">
-                                                        Lead Date
-                                                    </label>
-                                                    <input
-                                                        type="date"
-                                                        name="date"
-                                                        id="date"
-                                                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                                                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input cursor-pointer"
-                                                        required
-                                                    />
-                                                    <style>
-                                                        {`
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="date"
+                                    render={({ field }) => (
+                                        <div className="form-group">
+                                            <label htmlFor="date" className="text-sm font-medium text-gray-700">
+                                                Lead Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="date"
+                                                id="date"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-400 rounded-md text-black custom-input cursor-pointer"
+                                                required
+                                            />
+                                            <style>
+                                                {`
                                                     .custom-input:focus {
                                                         border-color: black !important;
                                                         box-shadow: none !important;
                                                         outline: none !important;
                                                     }
                                                     `}
-                                                    </style>
-                                                </div>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="endDate"
-                                            render={({ field }) => (
-                                                <div className="form-group">
-                                                    <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
-                                                        Final Date
-                                                    </label>
-                                                    <input
-                                                        type="date"
-                                                        name="endDate"
-                                                        id="endDate"
-                                                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                                                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                                                        className="w-full p-3 border border-gray-400 rounded-md text-black custom-input cursor-pointer"
-                                                        required
-                                                    />
-                                                    <style>
-                                                        {`
+                                            </style>
+                                        </div>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="endDate"
+                                    render={({ field }) => (
+                                        <div className="form-group">
+                                            <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
+                                                Final Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="endDate"
+                                                id="endDate"
+                                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                className="w-full p-3 border border-gray-400 rounded-md text-black custom-input cursor-pointer"
+                                                required
+                                            />
+                                            <style>
+                                                {`
                                                     .custom-input:focus {
                                                         border-color: black !important;
                                                         box-shadow: none !important;
                                                         outline: none !important;
                                                     }
                                                     `}
-                                                    </style>
-                                                </div>
-                                            )}
-                                        />
-                                    </div>
+                                            </style>
+                                        </div>
+                                    )}
+                                />
+                            </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="notes"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Notes (Optional)</FormLabel>
-                                                <FormControl>
-                                                    <textarea
-                                                        placeholder="Enter more details here..."
-                                                        {...field}
-                                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
-                                                        rows={3}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                            <FormField
+                                control={form.control}
+                                name="notes"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Notes (Optional)</FormLabel>
+                                        <FormControl>
+                                            <textarea
+                                                placeholder="Enter more details here..."
+                                                {...field}
+                                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                                                rows={3}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            "Update Lead"
-                                        )}
-                                    </Button>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update Lead"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
 
-           
+
             <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsDeleteDialogOpen(false);
-                    }
-                }}>
+                if (!open) {
+                    setIsDeleteDialogOpen(false);
+                }
+            }}>
                 <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]"
                     onInteractOutside={(e) => {
                         e.preventDefault();
