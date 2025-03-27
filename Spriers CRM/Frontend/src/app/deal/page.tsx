@@ -62,9 +62,7 @@ export default function CertificatePage() {
                     <Card className="max-w-8xl mx-auto border-none shadow-none">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Create Deal</CardTitle>
-                            <CardDescription className="text-center">
-                                Create a new deal for your company
-                            </CardDescription>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create a new deal for your company</h1>
                         </CardHeader>
                         <CardContent>
                             <DealFrom />

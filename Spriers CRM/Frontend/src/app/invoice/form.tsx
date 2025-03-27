@@ -31,7 +31,7 @@ const formSchema = z.object({
   gstRate: z.number().optional(),
   status: z.enum(["Paid", "Unpaid"]),
   date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
-  paidAmount: z.string().regex(/^\d*$/, { message: "Paid amount must be numeric" }).optional(),
+  paidAmount: z.number().optional(),
   remainingAmount: z.number().optional(),
   totalWithoutGst: z.number().optional(),
   totalWithGst: z.number().optional(),
@@ -57,7 +57,7 @@ export default function InvoiceForm() {
       date: new Date(),
       totalWithoutGst: 0,
       totalWithGst: 0,
-      paidAmount: "",
+      paidAmount: 0,
       remainingAmount: 0,
     },
   });
@@ -251,7 +251,7 @@ export default function InvoiceForm() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.valueAsNumber || 0;
+                      const value = e.target.valueAsNumber || "";
                       field.onChange(value);
                     }}
                   />
@@ -268,14 +268,14 @@ export default function InvoiceForm() {
             name="discount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Discount % (Optional)</FormLabel>
+                <FormLabel>Discount (%)</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter discount"
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.valueAsNumber || 0;
+                      const value = e.target.valueAsNumber || "";
                       field.onChange(value);
                     }}
                   />
@@ -289,7 +289,7 @@ export default function InvoiceForm() {
             name="gstRate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>GST Rate % (Optional)</FormLabel>
+                <FormLabel>GST Rate (%)</FormLabel>
                 <FormControl>
                   <select
                     {...field}
@@ -319,11 +319,11 @@ export default function InvoiceForm() {
                 <FormLabel>Paid Amount</FormLabel>
                 <FormControl>
                   <Input
+                    type="number"
                     placeholder="Enter paid amount"
-                    type="tel"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      const value = e.target.valueAsNumber || "";
                       field.onChange(value);
                     }}
                   />
@@ -383,8 +383,8 @@ export default function InvoiceForm() {
                   onChange={(e) => field.onChange(new Date(e.target.value))}
                   className="w-full p-3 border border-gray-400 rounded-md text-black custom-input cursor-pointer"
                   required
-              />
-              <style>
+                />
+                <style>
                   {`
               .custom-input:focus {
                   border-color: black !important;
@@ -392,7 +392,7 @@ export default function InvoiceForm() {
                   outline: none !important;
               }
               `}
-              </style>
+                </style>
               </div>
             )}
           />

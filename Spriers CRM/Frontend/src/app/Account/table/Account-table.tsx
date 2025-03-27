@@ -47,11 +47,11 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["accountHolderName", "accountNumber", "bankName", "accountType", "IFSCCode", "UpiId", "actions"];
 
 const accountSchema = z.object({
-    bankName: z.string().min(2, { message: "Bank name is required." }),
-    IFSCCode: z.string().min(2, { message: "Bank IFSC code is required." }),
-    accountHolderName: z.string().min(2, { message: "Bank account holder name is required." }),
-    accountNumber: z.string().min(2, { message: "Bank account number is required." }),
-    accountType: z.enum(["Current", "Savings", "Other"], { message: "Account type is required." }),
+    bankName: z.string().nonempty({ message: "Required" }),
+    IFSCCode: z.string().nonempty({ message: "Required" }),
+    accountHolderName: z.string().nonempty({ message: "Required" }),
+    accountNumber: z.string().nonempty({ message: "Required" }),
+    accountType: z.enum(["Current", "Savings", "Other"], { message: "Required" }),
     UpiId: z.string().optional(),
 });
 
@@ -554,10 +554,10 @@ export default function AccountTable() {
                     setIsEditOpen(false);
                 }
             }}>
-                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4" 
-                onInteractOutside={(e) => {
-                    e.preventDefault();
-                }}>
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                    }}>
                     <DialogHeader>
                         <DialogTitle>Update Account</DialogTitle>
                     </DialogHeader>
@@ -672,10 +672,10 @@ export default function AccountTable() {
             </Dialog>
 
             <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsDeleteDialogOpen(false);
-                    }
-                }}>
+                if (!open) {
+                    setIsDeleteDialogOpen(false);
+                }
+            }}>
                 <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]"
                     onInteractOutside={(e) => {
                         e.preventDefault();

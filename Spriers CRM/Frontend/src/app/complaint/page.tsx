@@ -63,9 +63,7 @@ export default function CertificatePage() {
                     <Card className="max-w-8xl mx-auto border-none shadow-none">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Create Complaint</CardTitle>
-                            <CardDescription className="text-center">
-                                Create complaint reported by the client / customer
-                            </CardDescription>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Create complaint reported by the client / customer</h1>
                         </CardHeader>
                         <CardContent>
                             <ComplaintForm />

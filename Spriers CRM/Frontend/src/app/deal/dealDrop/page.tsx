@@ -209,7 +209,7 @@ export default function App() {
                   </div>
                   <div className="mt-4 flex flex-col gap-3 min-h-[250px] max-h-[500px] h-[350px] overflow-y-auto scrollbar-hide">
                     {leadsInStatus.length === 0 ? (
-                      <p className="text-gray-500 text-center">No deal available</p>
+                      <h1 className="text-1xl mb-4 mt-4 text-center">No deal available</h1>
                     ) : (
                       leadsInStatus.map((lead) => (
                         <div

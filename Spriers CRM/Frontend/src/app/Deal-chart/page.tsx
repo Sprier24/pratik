@@ -59,10 +59,8 @@ export default function CertificatePage() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-8xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Deal Manager</CardTitle>
-                            <CardDescription className="text-center">
-                                Manage and track your deals effectively.
-                            </CardDescription>
+                            <CardTitle className="text-3xl font-bold text-center">Deal</CardTitle>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Manage and track your deal effectively</h1>
                         </CardHeader>
                         <CardContent>
                             <CardLineChart />

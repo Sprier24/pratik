@@ -72,10 +72,10 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["subject", "name", "assigned", "relatedTo", "date", "endDate", "status", "priority", "notes", "actions"];
 
 const taskSchema = z.object({
-    subject: z.string().min(2, { message: "Subject is required." }),
-    relatedTo: z.string().min(2, { message: "Related to  is required." }),
-    name: z.string().min(2, { message: "Name is required." }),
-    assigned: z.string().min(2, { message: "Assigned By is required." }),
+    subject: z.string().nonempty({ message: "Required" }),
+    relatedTo: z.string().nonempty({ message: "Required" }),
+    name: z.string().nonempty({ message: "Required" }),
+    assigned: z.string().nonempty({ message: "Required" }),
     date: z.date().optional(),
     endDate: z.date().optional(),
     status: z.enum(["Pending", "Resolved", "InProgress"]),
@@ -559,11 +559,11 @@ export default function TaskTable() {
                 if (!open) {
                     setIsEditOpen(false);
                 }
-            }}>                
-            <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
-                onInteractOutside={(e) => {
-                    e.preventDefault();
-                }}>
+            }}>
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                    }}>
                     <DialogHeader>
                         <DialogTitle>Update Task</DialogTitle>
                     </DialogHeader>
@@ -766,10 +766,10 @@ export default function TaskTable() {
             </Dialog>
 
             <Dialog open={isDeleteConfirmationOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsDeleteConfirmationOpen(false);
-                    }
-                }}>
+                if (!open) {
+                    setIsDeleteConfirmationOpen(false);
+                }
+            }}>
                 <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6"
                     onInteractOutside={(e) => {
                         e.preventDefault();

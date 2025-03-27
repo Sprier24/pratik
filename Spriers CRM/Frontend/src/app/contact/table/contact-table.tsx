@@ -53,15 +53,15 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "customerName", "contactNumber", "emailAddress", "address", "gstNumber", "description", "actions"];
 
 const contactSchema = z.object({
-    companyName: z.string().min(2, { message: "Company name is required." }),
-    customerName: z.string().min(2, { message: "Customer name is required." }),
+    companyName: z.string().nonempty({ message: "Required" }),
+    customerName: z.string().nonempty({ message: "Required" }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
-        .nonempty({ message: "Contact number is required" }),
-    emailAddress: z.string().email({ message: "Invalid email address." }),
-    address: z.string().min(2, { message: "Company address is required." }),
-    gstNumber: z.string().min(1, { message: "GST number is required." }),
+        .nonempty({ message: "Required" }),
+    emailAddress: z.string().email({ message: "Required" }),
+    address: z.string().nonempty({ message: "Required" }),
+    gstNumber: z.string().nonempty({ message: "Required" }),
     description: z.string().optional(),
 });
 
@@ -558,12 +558,12 @@ export default function ContactTable() {
                 </div>
             </div>
 
-                <Dialog open={isEditOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsEditOpen(false);
-                        }
-                }}>                
-                    <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
+            <Dialog open={isEditOpen} onOpenChange={(open) => {
+                if (!open) {
+                    setIsEditOpen(false);
+                }
+            }}>
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
                     onInteractOutside={(e) => {
                         e.preventDefault();
                     }}>
@@ -694,10 +694,10 @@ export default function ContactTable() {
             </Dialog>
 
             <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsDeleteDialogOpen(false);
-                    }
-                }}>
+                if (!open) {
+                    setIsDeleteDialogOpen(false);
+                }
+            }}>
                 <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]"
                     onInteractOutside={(e) => {
                         e.preventDefault();

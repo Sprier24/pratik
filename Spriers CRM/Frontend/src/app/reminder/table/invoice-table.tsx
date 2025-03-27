@@ -557,7 +557,7 @@ export default function InvoiceTable() {
                     <div className="lg:col-span-12">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                             <h1 className="text-3xl font-bold mb-4 mt-4 text-center">Reminder Record</h1>
-                            <h1 className="text-1xl mb-4 mt-4 text-center">Only unpaid data</h1>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Check your client / customer's due payment</h1>
                             <Table
                                 isHeaderSticky
                                 aria-label="Leads table with custom cells, pagination and sorting"

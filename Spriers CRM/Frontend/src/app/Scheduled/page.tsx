@@ -59,9 +59,7 @@ export default function CertificatePage() {
                     <Card className="max-w-8xl mx-auto border-none shadow-none">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Create Event or Meeting</CardTitle>
-                            <CardDescription className="text-center">
-                                Make event or meeting, hosted by you or client / customer
-                            </CardDescription>
+                            <h1 className="text-1xl mb-4 mt-4 text-center"> Make event or meeting, hosted by you or client / customer</h1>
                         </CardHeader>
                         <CardContent>
                             <ScheduledEventForm />

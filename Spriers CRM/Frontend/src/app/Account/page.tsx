@@ -67,9 +67,7 @@ export default function CertificatePage() {
                     <Card className="max-w-8xl mx-auto border-none shadow-none">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Create Account</CardTitle>
-                            <CardDescription className="text-center">
-                                Store client / customer's bank account details
-                            </CardDescription>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Store client / customer's bank account details</h1>
                         </CardHeader>
                         <CardContent>
                             <AccountForm />

@@ -62,9 +62,7 @@ export default function CertificatePage() {
                     <Card className="max-w-8xl mx-auto border-none shadow-none">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">Create Contact</CardTitle>
-                            <CardDescription className="text-center">
-                                Store client / customer's contact details
-                            </CardDescription>
+                            <h1 className="text-1xl mb-4 mt-4 text-center">Store client / customer's contact details</h1>
                         </CardHeader>
                         <CardContent>
                             <ContactForm />

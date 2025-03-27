@@ -39,8 +39,8 @@ interface Invoice {
 }
 
 export const invoiceSchema = z.object({
-    companyName: z.string().nonempty({ message: "Company name is required" }),
-    customerName: z.string().nonempty({ message: "Customer name is required" }),
+    companyName: z.string().nonempty({ message: "Required" }),
+    customerName: z.string().nonempty({ message: "Required" }),
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
@@ -48,16 +48,16 @@ export const invoiceSchema = z.object({
     emailAddress: z.string().optional(),
     address: z.string().optional(),
     gstNumber: z.string().optional(),
-    productName: z.string().nonempty({ message: "Product name is required" }),
-    amount: z.coerce.number().positive({ message: "Product amount is required" }),
-    discount: z.coerce.number().optional(),
-    gstRate: z.coerce.number().optional(),
+    productName: z.string().nonempty({ message: "Required" }),
+    amount: z.number().positive({ message: "Required" }),
+    discount: z.number().optional(),
+    gstRate: z.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
-    date: z.coerce.date({ message: "Invoice Date is required" }),
-    paidAmount: z.coerce.number().optional(),
-    remainingAmount: z.coerce.number().optional(),
-    totalWithoutGst: z.coerce.number().optional(),
-    totalWithGst: z.coerce.number().optional(),
+    date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
+    paidAmount: z.number().optional(),
+    remainingAmount: z.number().optional(),
+    totalWithoutGst: z.number().optional(),
+    totalWithGst: z.number().optional(),
 });
 
 const generateUniqueId = () => {
@@ -621,16 +621,16 @@ export default function InvoiceTable() {
                     </div>
                 </div>
             </div>
-            
+
             <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
                 if (!open) {
                     setIsEditDialogOpen(false);
                 }
             }}>
                 <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4"
-                onInteractOutside={(e) => {
-                    e.preventDefault();
-                }}
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                    }}
                 >
                     <DialogHeader>
                         <DialogTitle>Update Invoice</DialogTitle>
@@ -767,7 +767,7 @@ export default function InvoiceTable() {
                                     name="discount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Discount (Optional)</FormLabel>
+                                            <FormLabel>Discount (%)</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Enter discount" type="number" {...field} />
                                             </FormControl>
@@ -780,7 +780,7 @@ export default function InvoiceTable() {
                                     name="gstRate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>GST Rate (Optional)</FormLabel>
+                                            <FormLabel>GST Rate (%)</FormLabel>
                                             <FormControl>
                                                 <select
                                                     {...field}
@@ -898,10 +898,10 @@ export default function InvoiceTable() {
             </Dialog>
 
             <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-                    if (!open) {
-                        setIsDeleteDialogOpen(false);
-                    }
-                }}>
+                if (!open) {
+                    setIsDeleteDialogOpen(false);
+                }
+            }}>
                 <DialogContent className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]"
                     onInteractOutside={(e) => {
                         e.preventDefault();

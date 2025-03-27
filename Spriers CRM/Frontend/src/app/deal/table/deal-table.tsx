@@ -81,7 +81,7 @@ export const invoiceSchema = z.object({
     gstRate: z.number().optional(),
     status: z.enum(["Paid", "Unpaid"]),
     date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
-    paidAmount: z.string().optional(),
+    paidAmount: z.number().optional(),
     remainingAmount: z.number().optional(),
     totalWithoutGst: z.number().optional(),
     totalWithGst: z.number().optional(),
@@ -532,10 +532,16 @@ export default function DealTable() {
                 const searchableFields = {
                     companyName: Deals.companyName,
                     customerName: Deals.customerName,
+                    contactNumber: Deals.contactNumber,
                     emailAddress: Deals.emailAddress,
+                    address: Deals.address,
+                    gstNumber: Deals.gstNumber,
                     productName: Deals.productName,
-                    status: Deals.status,
+                    amount: Deals.amount,
+                    date: Deals.date,
+                    endDate: Deals.endDate,
                     notes: Deals.notes,
+                    status: Deals.status,
                 };
 
                 return Object.values(searchableFields).some(value =>
