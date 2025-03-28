@@ -129,7 +129,7 @@ interface Invoice {
   amount: number;
   discount: number;
   gstRate: number;
-  status: "Paid" | "Unpaid" | "Pending"; 
+  status: "Paid" | "Unpaid" | "Pending";
   date: Date;
   endDate: Date;
   totalWithoutGst: number;
@@ -150,7 +150,7 @@ interface Reminder {
   amount: number;
   discount: number;
   gstRate: number;
-  status: "Paid" | "Unpaid" | "Pending"; 
+  status: "Paid" | "Unpaid" | "Pending";
   date: Date;
   endDate: Date;
   totalWithoutGst: number;
@@ -309,11 +309,11 @@ const Item = styled(Paper)(({ theme }) => ({
 
 const getChartDimensions = () => {
   if (typeof window !== 'undefined') {
-    const width = Math.min(600, window.innerWidth - 40); 
+    const width = Math.min(600, window.innerWidth - 40);
     const height = Math.min(400, width * 0.8);
     return { width, height };
   }
-  return { width: 600, height: 400 }; 
+  return { width: 600, height: 400 };
 };
 
 export default function Page() {
@@ -378,7 +378,7 @@ export default function Page() {
     direction: "ascending",
   });
 
-  const [sortDescriptorInvoice, setSortDescriptorInvoice] = useState ({
+  const [sortDescriptorInvoice, setSortDescriptorInvoice] = useState({
     column: "companyName",
     direction: "ascending",
   })
@@ -402,7 +402,7 @@ export default function Page() {
     column: "status",
     direction: "ascending",
   })
-  
+
   const filteredItems = React.useMemo(() => {
     let filteredLeads = [...leads];
 
@@ -579,7 +579,7 @@ export default function Page() {
   }, [schedule, filterValueSchedule, statusFilter]);
 
   const headerColumns = React.useMemo(() => {
-    if (visibleColumns.size === columns.length) return columns; 
+    if (visibleColumns.size === columns.length) return columns;
     return columns.filter((column) => visibleColumns.has(column.uid));
   }, [visibleColumns]);
 
@@ -737,7 +737,7 @@ export default function Page() {
         setInvoices(result.data);
 
         const categorized = result.data.reduce((acc: Record<string, Invoice[]>, invoice: Invoice) => {
-          if (!invoice.status) return acc; 
+          if (!invoice.status) return acc;
           if (!acc[invoice.status]) {
             acc[invoice.status] = [];
           }
@@ -895,70 +895,70 @@ export default function Page() {
     }
   }, [page]);
 
-//Invoice  Page
-const onNextPageInvoice = React.useCallback(() => {
-  if (pageInvoice < pagesInvoice) {
-    setPageInvoice(pageInvoice + 1);
-  }
-}, [pageInvoice, pagesInvoice]);
+  //Invoice  Page
+  const onNextPageInvoice = React.useCallback(() => {
+    if (pageInvoice < pagesInvoice) {
+      setPageInvoice(pageInvoice + 1);
+    }
+  }, [pageInvoice, pagesInvoice]);
 
-const onPreviousPageInvoice = React.useCallback(() => {
-  if (pageInvoice > 1) {
-    setPageInvoice(pageInvoice - 1);
-  }
-}, [pageInvoice]);
+  const onPreviousPageInvoice = React.useCallback(() => {
+    if (pageInvoice > 1) {
+      setPageInvoice(pageInvoice - 1);
+    }
+  }, [pageInvoice]);
 
-//Deal Page
-const onNextPageDeal = React.useCallback(() => {
-if (pageDeal < pagesDeal) {
-  setPageDeal(pageDeal + 1);
-}
-}, [pageDeal, pagesDeal]);
+  //Deal Page
+  const onNextPageDeal = React.useCallback(() => {
+    if (pageDeal < pagesDeal) {
+      setPageDeal(pageDeal + 1);
+    }
+  }, [pageDeal, pagesDeal]);
 
-const onPreviousPageDeal = React.useCallback(() => {
-if (pageDeal > 1) {
-  setPageDeal(pageDeal - 1);
-}
-}, [pageDeal]);
+  const onPreviousPageDeal = React.useCallback(() => {
+    if (pageDeal > 1) {
+      setPageDeal(pageDeal - 1);
+    }
+  }, [pageDeal]);
 
-//Taskk Page
-const onNextPageTask = React.useCallback(() => {
-if (pageTask < pagesTask) {
-  setPageTask(pageTask + 1);
-}
-}, [pageTask, pagesTask]);
+  //Taskk Page
+  const onNextPageTask = React.useCallback(() => {
+    if (pageTask < pagesTask) {
+      setPageTask(pageTask + 1);
+    }
+  }, [pageTask, pagesTask]);
 
-const onPreviousPageTask = React.useCallback(() => {
-if (pageTask > 1) {
-  setPageTask(pageTask - 1);
-}
-}, [pageTask]);
+  const onPreviousPageTask = React.useCallback(() => {
+    if (pageTask > 1) {
+      setPageTask(pageTask - 1);
+    }
+  }, [pageTask]);
 
-//Reminder Page
-const onNextPageReminder = React.useCallback(() => {
-if (pageReminder < pagesReminder) {
-  setPageReminder(pageReminder + 1);
-}
-}, [pageReminder, pagesReminder]);
+  //Reminder Page
+  const onNextPageReminder = React.useCallback(() => {
+    if (pageReminder < pagesReminder) {
+      setPageReminder(pageReminder + 1);
+    }
+  }, [pageReminder, pagesReminder]);
 
-const onPreviousPageReminder = React.useCallback(() => {
-if (pageReminder > 1) {
-  setPageReminder(pageReminder - 1);
-}
-}, [pageReminder]);
+  const onPreviousPageReminder = React.useCallback(() => {
+    if (pageReminder > 1) {
+      setPageReminder(pageReminder - 1);
+    }
+  }, [pageReminder]);
 
-//Schedule Page
-const onNextPageSchedule = React.useCallback(() => {
-if (pageSchedule < pagesSchedule) {
-  setPageSchedule(pageSchedule + 1);
-}
-}, [pageSchedule, pagesSchedule]);
+  //Schedule Page
+  const onNextPageSchedule = React.useCallback(() => {
+    if (pageSchedule < pagesSchedule) {
+      setPageSchedule(pageSchedule + 1);
+    }
+  }, [pageSchedule, pagesSchedule]);
 
-const onPreviousPageSchedule = React.useCallback(() => {
-if (pageSchedule > 1) {
-  setPageSchedule(pageSchedule - 1);
-}
-}, [pageSchedule]);
+  const onPreviousPageSchedule = React.useCallback(() => {
+    if (pageSchedule > 1) {
+      setPageSchedule(pageSchedule - 1);
+    }
+  }, [pageSchedule]);
 
   //Lead Chart
   const dynamicChartData = useMemo(() => {
@@ -1499,7 +1499,7 @@ if (pageSchedule > 1) {
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
-                  tick={{ fill: "white" }} 
+                  tick={{ fill: "white" }}
                   tickFormatter={(value) =>
                     chartConfigDeal[value as keyof typeof chartConfigDeal]?.label
                   }
@@ -1901,20 +1901,20 @@ if (pageSchedule > 1) {
             </Tooltip>
           </div>
         );
-        case "date":
-        case "endDate": {
-          if (!cellValue) return "N/A"; 
+      case "date":
+      case "endDate": {
+        if (!cellValue) return "N/A";
 
-          const date = new Date(cellValue);
-          if (isNaN(date.getTime())) return "Invalid Date"; 
+        const date = new Date(cellValue);
+        if (isNaN(date.getTime())) return "Invalid Date";
 
-          // Format date as dd-mm-yyyy
-          const day = String(date.getDate()).padStart(2, "0");
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const year = date.getFullYear();
+        // Format date as dd-mm-yyyy
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
 
-          return `${day}/${month}/${year}`;
-        }
+        return `${day}/${month}/${year}`;
+      }
 
       default:
         return cellValue;
@@ -1988,18 +1988,18 @@ if (pageSchedule > 1) {
             </Tooltip>
           </div>
         );
-        case "date":{
-          if (!cellValue) return "N/A"; 
-        
-          const date = new Date(cellValue);
-          if (isNaN(date.getTime())) return "Invalid Date"; 
-        
-          const day = String(date.getDate()).padStart(2, "0");
-          const month = String(date.getMonth() + 1).padStart(2, "0"); 
-          const year = date.getFullYear();
-        
-          return `${day}/${month}/${year}`;
-        }
+      case "date": {
+        if (!cellValue) return "N/A";
+
+        const date = new Date(cellValue);
+        if (isNaN(date.getTime())) return "Invalid Date";
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+      }
     }
   }, []);
 
@@ -2041,225 +2041,171 @@ if (pageSchedule > 1) {
           </div>
         </header>
         <Box sx={{ width: '100%', maxWidth: '100%' }} className="mx-auto min-w-[360px]">
-        <h1 className="text-amber-500 font-bold mb-8 mt-4 text-xl text-center">S P R I E R S</h1>
-        <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }} className="w-full max-w-[360px] md:max-w-full mx-auto">
+          <h1 className="text-amber-500 font-bold mb-8 mt-4 text-xl text-center">S P R I E R S</h1>
+          <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }} className="w-full max-w-[360px] md:max-w-full mx-auto">
 
-          {/* Lead Analytics Chart */}
-          <Grid item xs={12} md={6} lg={4} className="pb-4">
-            <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-800">Lead Analytics</h2>
-                  <FormControl className="min-w-[120px]" size="small">
-                  <Select
-                    value={selectedChart}
-                    onChange={(e) => setSelectedChart(e.target.value)}
-                    className="text-sm"
-                    sx={{
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Set border color to black
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure hover color stays black
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure focus color stays black
-                      },
-                    }}
-                  >
-                    <MenuItem value="Pie Chart">Pie Chart</MenuItem>
-                    <MenuItem value="Radial Chart">Radial Chart</MenuItem>
-                    <MenuItem value="Bar Chart">Bar Chart</MenuItem>
-                  </Select>
-
-                  </FormControl>
-                </div>
-                <div className="flex-1 min-h-[300px]">{renderChartLead()}</div>
-              </div>
-            </Item>
-          </Grid>
-
-          {/* Invoice Chart */}
-          <Grid item xs={12} md={6} lg={4} className="pb-4">
-            <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-800">Invoice Analytics</h2>
-                  <FormControl className="min-w-[120px]" size="small">
-                    <Select
-                      value={selectedChartInvoice}
-                      onChange={(e) => setSelectedChartInvoice(e.target.value)}
-                      className="text-sm"
-                    sx={{
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Set border color to black
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure hover color stays black
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure focus color stays black
-                      },
-                    }}
-                  >
-                      <MenuItem value="Pie Chart">Pie Chart</MenuItem>
-                      <MenuItem value="Radial Chart">Radial Chart</MenuItem>
-                      <MenuItem value="Bar Chart">Bar Chart</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
-                <div className="flex-1 min-h-[300px]">{renderChartInvoice()}</div>
-              </div>
-            </Item>
-          </Grid>
-
-          {/* Deal Chart */}
-          <Grid item xs={12} md={6} lg={4} className="pb-4">
-            <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-800">Deal Analytics</h2>
-                  <FormControl className="min-w-[120px]" size="small">
-                    <Select
-                      value={selectedChartDeal}
-                      onChange={(e) => setSelectedChartDeal(e.target.value)}
-                      className="text-sm"
-                    sx={{
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Set border color to black
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure hover color stays black
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "black !important", // Ensure focus color stays black
-                      },
-                    }}
-                  >
-                      <MenuItem value="Pie Chart">Pie Chart</MenuItem>
-                      <MenuItem value="Radial Chart">Radial Chart</MenuItem>
-                      <MenuItem value="Bar Chart">Bar Chart</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
-                <div className="flex-1 min-h-[300px]">{renderChartDeal()}</div>
-              </div>
-            </Item>
-          </Grid>
-
-
-          {/* Lead Record Section */}
-          <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
-            <Item className="bg-white shadow-lg rounded-xl p-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Lead Record</h1>
-              <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-                <Input
-                  isClearable
-                  className="w-full focus:ring-1 focus:ring-blue-500 focus:outline-none rounded-lg px-4 py-2 transition duration-200"
-                  placeholder="Search"
-                  startContent={<Search size={20} className="text-gray-500" />}
-                  value={filterValue}
-                  onClear={() => setFilterValue("")}
-                  onValueChange={setFilterValue}
-                />
-              </div>
-              <div className="w-full">
-                <Table
-                  isHeaderSticky
-                  aria-label="Leads table with custom cells, pagination and sorting"
-                  bottomContent={bottomContent}
-                  bottomContentPlacement="outside"
-                  classNames={{
-                    wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
-                  }}
-                  selectedKeys={selectedKeys}
-                  selectionMode="none"
-                  sortDescriptor={sortDescriptor}
-                  onSelectionChange={setSelectedKeys}
-                  onSortChange={setSortDescriptor}
-                >
-                  <TableHeader columns={headerColumns}>
-                    {(column) => (
-                      <TableColumn
-                        key={column.uid}
-                        align={column.uid === "actions" ? "center" : "start"}
-                        allowsSorting={column.sortable}
-                        className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
+            {/* Lead Analytics Chart */}
+            <Grid item xs={12} md={6} lg={4} className="pb-4">
+              <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Lead Analytics</h2>
+                    <FormControl className="min-w-[120px]" size="small">
+                      <Select
+                        value={selectedChart}
+                        onChange={(e) => setSelectedChart(e.target.value)}
+                        className="text-sm"
+                        sx={{
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Set border color to black
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure hover color stays black
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure focus color stays black
+                          },
+                        }}
                       >
-                        {column.name}
-                      </TableColumn>
-                    )}
-                  </TableHeader>
-                  <TableBody emptyContent={"No lead available"} items={sortedItems}>
-                    {(item) => (
-                      <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
-                        {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCell(item, columnKey)}</TableCell>)}
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Item>
-          </Grid>
+                        <MenuItem value="Pie Chart">Pie Chart</MenuItem>
+                        <MenuItem value="Radial Chart">Radial Chart</MenuItem>
+                        <MenuItem value="Bar Chart">Bar Chart</MenuItem>
+                      </Select>
 
-          <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
+                    </FormControl>
+                  </div>
+                  <div className="flex-1 min-h-[300px]">{renderChartLead()}</div>
+                </div>
+              </Item>
+            </Grid>
+
+            {/* Invoice Chart */}
+            <Grid item xs={12} md={6} lg={4} className="pb-4">
+              <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Invoice Analytics</h2>
+                    <FormControl className="min-w-[120px]" size="small">
+                      <Select
+                        value={selectedChartInvoice}
+                        onChange={(e) => setSelectedChartInvoice(e.target.value)}
+                        className="text-sm"
+                        sx={{
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Set border color to black
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure hover color stays black
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure focus color stays black
+                          },
+                        }}
+                      >
+                        <MenuItem value="Pie Chart">Pie Chart</MenuItem>
+                        <MenuItem value="Radial Chart">Radial Chart</MenuItem>
+                        <MenuItem value="Bar Chart">Bar Chart</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div className="flex-1 min-h-[300px]">{renderChartInvoice()}</div>
+                </div>
+              </Item>
+            </Grid>
+
+            {/* Deal Chart */}
+            <Grid item xs={12} md={6} lg={4} className="pb-4">
+              <Item className="bg-white shadow-lg rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Deal Analytics</h2>
+                    <FormControl className="min-w-[120px]" size="small">
+                      <Select
+                        value={selectedChartDeal}
+                        onChange={(e) => setSelectedChartDeal(e.target.value)}
+                        className="text-sm"
+                        sx={{
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Set border color to black
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure hover color stays black
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "black !important", // Ensure focus color stays black
+                          },
+                        }}
+                      >
+                        <MenuItem value="Pie Chart">Pie Chart</MenuItem>
+                        <MenuItem value="Radial Chart">Radial Chart</MenuItem>
+                        <MenuItem value="Bar Chart">Bar Chart</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div className="flex-1 min-h-[300px]">{renderChartDeal()}</div>
+                </div>
+              </Item>
+            </Grid>
+
+
+            {/* Lead Record Section */}
+            <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
               <Item className="bg-white shadow-lg rounded-xl p-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Invoice Record</h1>
-              <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Lead Record</h1>
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                   <Input
                     isClearable
                     className="w-full focus:ring-1 focus:ring-blue-500 focus:outline-none rounded-lg px-4 py-2 transition duration-200"
                     placeholder="Search"
                     startContent={<Search size={20} className="text-gray-500" />}
-                    value={filterValueInvoice}
-                    onClear={() => setFilterValueInvoice("")}
-                    onValueChange={setFilterValueInvoice}
+                    value={filterValue}
+                    onClear={() => setFilterValue("")}
+                    onValueChange={setFilterValue}
                   />
                 </div>
                 <div className="w-full">
-                <Table
-                  isHeaderSticky
-                  aria-label="Invoices table with custom cells, pagination and sorting"
-                  bottomContent={bottomContentInvoice}
-                  bottomContentPlacement="outside"
-                  classNames={{
-                    wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
-                  }}
-                  selectedKeys={selectedKeysInvoice}
-                  selectionMode="none"
-                  sortDescriptor={sortDescriptorInvoice}
-                  onSortChange={setSortDescriptorInvoice}
-                  topContentPlacement="outside"
-                  
-                >
-                  <TableHeader columns={columnsInvoice}>
-                    {(column) => (
-                      <TableColumn
-                        key={column.uid}
-                        align={column.uid === "actions" ? "center" : "start"}
-                        allowsSorting={column.sortable}
-                        className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
-                      >
-                        {column.name}
-                      </TableColumn>
-                    )}
-                  </TableHeader>
-                  <TableBody emptyContent={"No invoice available"} items={sortedInvoice}>
-                    {(item) => (
-                      <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
-                        {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCellInvoice(item, columnKey)}</TableCell>)}
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                  <Table
+                    isHeaderSticky
+                    aria-label="Leads table with custom cells, pagination and sorting"
+                    bottomContent={bottomContent}
+                    bottomContentPlacement="outside"
+                    classNames={{
+                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
+                    }}
+                    selectedKeys={selectedKeys}
+                    selectionMode="none"
+                    sortDescriptor={sortDescriptor}
+                    onSelectionChange={setSelectedKeys}
+                    onSortChange={setSortDescriptor}
+                  >
+                    <TableHeader columns={headerColumns}>
+                      {(column) => (
+                        <TableColumn
+                          key={column.uid}
+                          align={column.uid === "actions" ? "center" : "start"}
+                          allowsSorting={column.sortable}
+                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
+                        >
+                          {column.name}
+                        </TableColumn>
+                      )}
+                    </TableHeader>
+                    <TableBody emptyContent={"No lead available"} items={sortedItems}>
+                      {(item) => (
+                        <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
+                          {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCell(item, columnKey)}</TableCell>)}
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </Item>
             </Grid>
 
             <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
               <Item className="bg-white shadow-lg rounded-xl p-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Deal Record</h1>
-              <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Deal Record</h1>
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                   <Input
                     isClearable
                     className="w-full focus:ring-1 focus:ring-blue-500 focus:outline-none rounded-lg px-4 py-2 transition duration-200"
@@ -2271,47 +2217,101 @@ if (pageSchedule > 1) {
                   />
                 </div>
                 <div className="w-full">
-                <Table
-                  isHeaderSticky
-                  aria-label="Deals table with custom cells, pagination and sorting"
-                  bottomContent={bottomContentDeal}
-                  bottomContentPlacement="outside"
-                  classNames={{
-                    wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
-                  }}
-                  selectedKeys={selectedKeysDeal}
-                  selectionMode="none"
-                  sortDescriptor={sortDescriptorDeal}
-                  onSortChange={setSortDescriptorDeal}
-                  topContentPlacement="outside"
-                >
-                  <TableHeader columns={columnsDeal}>
-                    {(column) => (
-                      <TableColumn
-                        key={column.uid}
-                        align={column.uid === "actions" ? "center" : "start"}
-                        allowsSorting={column.sortable}
-                        className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
-                      >
-                        {column.name}
-                      </TableColumn>
-                    )}
-                  </TableHeader>
-                  <TableBody emptyContent={"No deal available"} items={sortedDeals}>
-                    {(item) => (
-                      <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
-                        {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCellDeal(item, columnKey)}</TableCell>)}
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                  <Table
+                    isHeaderSticky
+                    aria-label="Deals table with custom cells, pagination and sorting"
+                    bottomContent={bottomContentDeal}
+                    bottomContentPlacement="outside"
+                    classNames={{
+                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
+                    }}
+                    selectedKeys={selectedKeysDeal}
+                    selectionMode="none"
+                    sortDescriptor={sortDescriptorDeal}
+                    onSortChange={setSortDescriptorDeal}
+                    topContentPlacement="outside"
+                  >
+                    <TableHeader columns={columnsDeal}>
+                      {(column) => (
+                        <TableColumn
+                          key={column.uid}
+                          align={column.uid === "actions" ? "center" : "start"}
+                          allowsSorting={column.sortable}
+                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
+                        >
+                          {column.name}
+                        </TableColumn>
+                      )}
+                    </TableHeader>
+                    <TableBody emptyContent={"No deal available"} items={sortedDeals}>
+                      {(item) => (
+                        <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
+                          {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCellDeal(item, columnKey)}</TableCell>)}
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </Item>
             </Grid>
 
             <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
               <Item className="bg-white shadow-lg rounded-xl p-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Reminder Record</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Invoice Record</h1>
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+                  <Input
+                    isClearable
+                    className="w-full focus:ring-1 focus:ring-blue-500 focus:outline-none rounded-lg px-4 py-2 transition duration-200"
+                    placeholder="Search"
+                    startContent={<Search size={20} className="text-gray-500" />}
+                    value={filterValueInvoice}
+                    onClear={() => setFilterValueInvoice("")}
+                    onValueChange={setFilterValueInvoice}
+                  />
+                </div>
+                <div className="w-full">
+                  <Table
+                    isHeaderSticky
+                    aria-label="Invoices table with custom cells, pagination and sorting"
+                    bottomContent={bottomContentInvoice}
+                    bottomContentPlacement="outside"
+                    classNames={{
+                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
+                    }}
+                    selectedKeys={selectedKeysInvoice}
+                    selectionMode="none"
+                    sortDescriptor={sortDescriptorInvoice}
+                    onSortChange={setSortDescriptorInvoice}
+                    topContentPlacement="outside"
+
+                  >
+                    <TableHeader columns={columnsInvoice}>
+                      {(column) => (
+                        <TableColumn
+                          key={column.uid}
+                          align={column.uid === "actions" ? "center" : "start"}
+                          allowsSorting={column.sortable}
+                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
+                        >
+                          {column.name}
+                        </TableColumn>
+                      )}
+                    </TableHeader>
+                    <TableBody emptyContent={"No invoice available"} items={sortedInvoice}>
+                      {(item) => (
+                        <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
+                          {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">{renderCellInvoice(item, columnKey)}</TableCell>)}
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Item>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
+              <Item className="bg-white shadow-lg rounded-xl p-6">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Reminder Record</h1>
                 <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                   <Input
                     isClearable
@@ -2357,13 +2357,13 @@ if (pageSchedule > 1) {
                       )}
                     </TableBody>
                   </Table>
-                  </div>
+                </div>
               </Item>
             </Grid>
 
             <Grid item xs={12} md={6} lg={6} className="w-full max-w-[360px] md:max-w-full pb-4">
               <Item className="bg-white shadow-lg rounded-xl p-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Task Record</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Task Record</h1>
                 <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                   <Input
                     isClearable
@@ -2376,40 +2376,40 @@ if (pageSchedule > 1) {
                   />
                 </div>
                 <div className="w-full">
-                <Table
-                  isHeaderSticky
-                  aria-label="Tasks table with custom cells, pagination and sorting"
-                  bottomContent={bottomContentTask}
-                  bottomContentPlacement="outside"
-                  classNames={{
-                    wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
-                  }}
-                  selectedKeys={selectedKeysTask}
-                  selectionMode="none"
-                  sortDescriptor={sortDescriptorTask}
-                  onSelectionChange={setSelectedKeysTask}
-                  onSortChange={setSortDescriptorTask}
-                >
-                  <TableHeader columns={columnsTask}>
-                    {(column) => (
-                      <TableColumn
-                        key={column.uid}
-                        align={column.uid === "actions" ? "center" : "start"}
-                        allowsSorting={column.sortable}
-                        className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"                        >
-                        {column.name}
-                      </TableColumn>
-                    )}
-                  </TableHeader>
-                  <TableBody emptyContent={"No task available"} items={sortedTasks}>
-                    {(item) => (
-                      <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
-                        {(columnKey) => (
-                          <TableCell className="px-4 py-3 text-gray-700">{renderCellTask(item, columnKey)}</TableCell>)}
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                  <Table
+                    isHeaderSticky
+                    aria-label="Tasks table with custom cells, pagination and sorting"
+                    bottomContent={bottomContentTask}
+                    bottomContentPlacement="outside"
+                    classNames={{
+                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
+                    }}
+                    selectedKeys={selectedKeysTask}
+                    selectionMode="none"
+                    sortDescriptor={sortDescriptorTask}
+                    onSelectionChange={setSelectedKeysTask}
+                    onSortChange={setSortDescriptorTask}
+                  >
+                    <TableHeader columns={columnsTask}>
+                      {(column) => (
+                        <TableColumn
+                          key={column.uid}
+                          align={column.uid === "actions" ? "center" : "start"}
+                          allowsSorting={column.sortable}
+                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"                        >
+                          {column.name}
+                        </TableColumn>
+                      )}
+                    </TableHeader>
+                    <TableBody emptyContent={"No task available"} items={sortedTasks}>
+                      {(item) => (
+                        <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
+                          {(columnKey) => (
+                            <TableCell className="px-4 py-3 text-gray-700">{renderCellTask(item, columnKey)}</TableCell>)}
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </Item>
             </Grid>
@@ -2438,7 +2438,7 @@ if (pageSchedule > 1) {
                     bottomContent={bottomContentSchedule}
                     bottomContentPlacement="outside"
                     classNames={{
-                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide", 
+                      wrapper: "w-full rounded-lg shadow-sm max-h-[300px] overflow-y-auto scrollbar-hide",
                     }}
                     selectedKeys={selectedKeysSchedule}
                     selectionMode="none"
@@ -2452,8 +2452,8 @@ if (pageSchedule > 1) {
                           key={column.uid}
                           align={column.uid === "actions" ? "center" : "start"}
                           allowsSorting={column.sortable}
-                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"                        
-                          >
+                          className="text-gray-700 font-semibold bg-gray-50 px-2 py-4"
+                        >
                           {column.name}
                         </TableColumn>
                       )}
@@ -2475,8 +2475,8 @@ if (pageSchedule > 1) {
               </Item>
             </Grid>
 
-        </Grid>
-      </Box>
+          </Grid>
+        </Box>
 
       </SidebarInset>
     </SidebarProvider>

@@ -36,6 +36,7 @@ interface Invoice {
     totalWithGst: number;
     paidAmount: number;
     remainingAmount: number;
+    createdAt: string;
 }
 
 export const invoiceSchema = z.object({
@@ -116,24 +117,49 @@ export default function InvoiceTable() {
     const fetchInvoices = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.get("http://localhost:8000/api/v1/invoice/getAllInvoices");
-            const invoicesData = Array.isArray(response.data) ? response.data : response.data.data || [];
-            setInvoices(invoicesData);
+            const response = await axios.get(
+                "http://localhost:8000/api/v1/invoice/getAllInvoices"
+            );
+
+            let invoicesData;
+            if (typeof response.data === 'object' && 'data' in response.data) {
+                invoicesData = response.data.data;
+            } else if (Array.isArray(response.data)) {
+                invoicesData = response.data;
+            } else {
+                console.error('Unexpected response format:', response.data);
+                throw new Error('Invalid response format');
+            }
+
+            if (!Array.isArray(invoicesData)) {
+                invoicesData = [];
+            }
+
+            const sortedInvoices = [...invoicesData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const invoicesWithKeys = sortedInvoices.map((invoice: Invoice) => ({
+                ...invoice,
+                key: invoice._id || generateUniqueId()
+            }));
+
+            setInvoices(invoicesWithKeys);
             setError(null);
         } catch (error) {
             console.error("Error fetching invoices:", error);
-            setError(error instanceof Error ? error.message : "Failed to fetch invoices");
+            if (axios.isAxiosError(error)) {
+                setError(`Failed to fetch invoices: ${error.response?.data?.message || error.message}`);
+            } else {
+                setError("Failed to fetch invoice.");
+            }
             setInvoices([]);
-        } finally {
-            setIsLoading(false);
         }
     };
-
 
     useEffect(() => {
         fetchInvoices();
     }, []);
-
 
     const [isAddNewOpen, setIsAddNewOpen] = useState(false);
     const [filterValue, setFilterValue] = useState("");
@@ -143,8 +169,8 @@ export default function InvoiceTable() {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
 

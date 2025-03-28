@@ -34,6 +34,7 @@ interface Lead {
     endDate: string;
     notes: string;
     isActive: string;
+    createdAt: string;
 }
 
 interface Contact {
@@ -158,7 +159,7 @@ const formSchema = z.object({
     address: z.string().nonempty({ message: "Required" }),
     productName: z.string().nonempty({ message: "Required" }),
     amount: z.number().positive({ message: "Required" }),
-    gstNumber: z.string().nonempty({ message: "Required" }),
+    gstNumber: z.string().optional(),
     status: z.enum(["Proposal", "New", "Discussion", "Demo", "Decided"]),
     date: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
     endDate: z.date().refine((val) => !isNaN(val.getTime()), { message: "Required" }),
@@ -227,7 +228,12 @@ export default function LeadTable() {
             if (!Array.isArray(leadsData)) {
                 leadsData = [];
             }
-            const leadsWithKeys = leadsData.map((lead: Lead) => ({
+
+            const sortedLeads = [...leadsData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const leadsWithKeys = sortedLeads.map((lead: Lead) => ({
                 ...lead,
                 key: lead._id || generateUniqueId()
             }));
@@ -254,8 +260,8 @@ export default function LeadTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
     const router = useRouter();
@@ -675,6 +681,10 @@ export default function LeadTable() {
             return formatDate(cellValue);
         }
 
+        if (columnKey === "gstNumber") {
+            return cellValue || "N/A";
+        }
+
         if (columnKey === "notes") {
             return cellValue || "N/A";
         }
@@ -770,7 +780,7 @@ export default function LeadTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 w-full">
+                    <div className="flex gap-3">
                         <Dropdown>
                             <DropdownTrigger className="w-full sm:w-auto">
                                 <Button
@@ -1553,7 +1563,7 @@ export default function LeadTable() {
                                     name="gstNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>GST Number</FormLabel>
+                                            <FormLabel>GST Number (Optional)</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Enter GST number" {...field} />
                                             </FormControl>

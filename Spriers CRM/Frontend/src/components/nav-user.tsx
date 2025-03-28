@@ -220,7 +220,7 @@ export function NavUser() {
           <div className="px-4 py-3 space-y-1">
             <div className="flex items-center gap-2 text-sm text-gray-600">
 
-              <span className="font-medium">Storage</span>
+              <span className="font-medium">Your Cloud Storage</span>
             </div>  <Cloud className="size-4 text-gray-500" />
             <div
               className="relative group"
@@ -299,12 +299,12 @@ export function NavUser() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      
-        <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
-          if (!open) {
-            setDeleteModalOpen(false);
-          }
-        }}>      
+
+      <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteModalOpen(false);
+        }
+      }}>
         <DialogContent
           onInteractOutside={(e) => {
             e.preventDefault();
@@ -361,52 +361,48 @@ export function NavUser() {
               {/* Two-column grid for other details */}
               <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-gray-700 dark:text-gray-300 py-4 md:py-6 text-base md:text-sm text-center">
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Owner Name</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.ownerName}</span>
+                  <span className="md:text-2xl text-black">Company Name</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.companyName}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Company Name</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2 ">{currentOwner.companyName}</span>
+                  <span className="md:text-2xl text-black">Owner Name</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.ownerName}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Company Type</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2 ">{currentOwner.companyType}</span>
+                  <span className="md:text-2xl text-black">Contact Number</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.contactNumber}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Employee Size</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2 ">{currentOwner.employeeSize}</span>
+                  <span className="md:text-2xl text-black">Email Address</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.emailAddress}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Contact Number</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.contactNumber}</span>
+                  <span className="md:text-2xl text-black">Company Type</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.companyType}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Email Address</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.emailAddress}</span>
+                  <span className="md:text-2xl text-black">Business Registration</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.businessRegistration}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Document Type</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.documentType}</span>
+                  <span className="md:text-2xl text-black">Employee Size</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.employeeSize}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Document Number</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.documentNumber || "N/A"}</span>
+                  <span className="md:text-2xl text-black">PAN Number</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.panNumber}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">PAN Number</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.panNumber}</span>
+                  <span className="md:text-2xl text-black">Document Type</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.documentType}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">Business Registration</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.businessRegistration}</span>
-                </div>
-                <div>
-                  <span className="font-bold text-xl md:text-2xl font-semibold">GST Number</span>
-                  <span className="block text-lg md:text-xl py-2 px-3 mr-2">{currentOwner.gstNumber}</span>
+                  <span className="md:text-2xl text-black">Document Number</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.documentNumber || "N/A"}</span>
                 </div>
                 {currentOwner.website && (
                   <div>
-                    <span className="font-bold text-xl md:text-2xl font-semibold">Company Website</span>
+                    <span className="md:text-2xl text-black">Company Website</span>
                     <br />
                     <a
                       href={currentOwner.website}
@@ -419,15 +415,11 @@ export function NavUser() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end mt-6">
-                <button
-                  type="submit"
-                  className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-400 w-full sm:w-auto text-sm sm:text-base"
-                  onClick={() => handleEditClick(currentOwner)}
-                >
-                  Update Profile
-                </button>
-              </div>
+              <Button type="submit"
+                className="w-full" onClick={() => handleEditClick(currentOwner)}
+              >
+                Update Profile
+              </Button>
             </div>
           ) : (
             <div className="text-center text-gray-600 dark:text-gray-400 text-lg">No profile found</div>
@@ -435,19 +427,15 @@ export function NavUser() {
         </DialogContent>
       </Dialog>
 
-
-
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[700px] overflow-auto hide-scrollbar p-4">
           <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogTitle>Update Profile</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-6 w-full">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <label htmlFor="logo" style={{ textAlign: 'center' }}>
-                  Logo
-                  <br />
                   <img
                     src={logoPreview || (currentOwner?.logo ? `http://localhost:8000/uploads/${currentOwner.logo}` : "/default-logo.png")}
                     style={{
@@ -478,7 +466,7 @@ export function NavUser() {
                     <FormItem>
                       <FormLabel>Company Name</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter company name" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -491,7 +479,7 @@ export function NavUser() {
                     <FormItem>
                       <FormLabel>Owner Name</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter owner name" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -507,7 +495,7 @@ export function NavUser() {
                     <FormItem>
                       <FormLabel>Contact Number</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter contact number" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -536,7 +524,7 @@ export function NavUser() {
                     <FormItem>
                       <FormLabel>Website</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Provide website link" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -577,19 +565,19 @@ export function NavUser() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="gstNumber"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>GST Number</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter GST number"/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -600,7 +588,7 @@ export function NavUser() {
                     <FormItem>
                       <FormLabel>Company Type</FormLabel>
                       <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter company type" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -664,7 +652,7 @@ export function NavUser() {
                     Save Changes...
                   </>
                 ) : (
-                  "Save Changes"
+                  "Update Profile"
                 )}
               </Button>
             </form>

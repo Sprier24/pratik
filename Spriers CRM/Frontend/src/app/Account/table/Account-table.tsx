@@ -22,6 +22,7 @@ interface Account {
     accountType: string;
     IFSCCode: string;
     UpiId: string;
+    createdAt: string;
 }
 
 const generateUniqueId = () => {
@@ -68,40 +69,31 @@ export default function AccountTable() {
                 `http://localhost:8000/api/v1/account/getAllAccounts`
             );
 
-            // Log the response structure
-            console.log('Full API Response:', {
-                status: response.status,
-                data: response.data,
-                type: typeof response.data,
-                hasData: 'data' in response.data
-            });
-
-            // Handle the response based on its structure
             let accountsData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...leads] }
                 accountsData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...leads]
                 accountsData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
 
-            // Ensure leadsData is an array
             if (!Array.isArray(accountsData)) {
                 accountsData = [];
             }
 
-            // Map the data with safe key generation
-            const accountsWithKeys = accountsData.map((account: Account) => ({
+            const sortedAccounts = [...accountsData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const accountsWithKeys = sortedAccounts.map((account: Account) => ({
                 ...account,
                 key: account._id || generateUniqueId()
             }));
 
             setLeads(accountsWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching accounts:", error);
             if (axios.isAxiosError(error)) {
@@ -109,10 +101,9 @@ export default function AccountTable() {
             } else {
                 setError("Failed to fetch account.");
             }
-            setLeads([]); // Set empty array on error
+            setLeads([]);
         }
     };
-
 
     useEffect(() => {
         fetchAccounts();
@@ -124,8 +115,8 @@ export default function AccountTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
 
@@ -518,6 +509,7 @@ export default function AccountTable() {
                                 classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
                                 topContent={topContent}
                                 topContentPlacement="outside"
+                                sortDescriptor={sortDescriptor}
                                 onSelectionChange={setSelectedKeys}
                                 onSortChange={setSortDescriptor}
                             >

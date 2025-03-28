@@ -30,6 +30,7 @@ interface ScheduledEvents {
     description: string;
     recurrence: string;
     date: string;
+    createdAt: string;
 }
 
 const generateUniqueId = () => {
@@ -91,40 +92,31 @@ export default function ScheduledEvents() {
                 `http://localhost:8000/api/v1/scheduledevents/getAllScheduledEvents`
             );
 
-            // Log the response structure
-            console.log('Full API Response:', {
-                status: response.status,
-                data: response.data,
-                type: typeof response.data,
-                hasData: 'data' in response.data
-            });
-
-            // Handle the response based on its structure
             let scheduledEventsData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...leads] }
                 scheduledEventsData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...leads]
                 scheduledEventsData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
 
-            // Ensure leadsData is an array
             if (!Array.isArray(scheduledEventsData)) {
                 scheduledEventsData = [];
             }
 
-            // Map the data with safe key generation
-            const ScheduledEventsWithKeys = scheduledEventsData.map((scheduledEvents: ScheduledEvents) => ({
+            const sortedSchedules = [...scheduledEventsData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const ScheduledEventsWithKeys = sortedSchedules.map((scheduledEvents: ScheduledEvents) => ({
                 ...scheduledEvents,
-                key: scheduledEvents.id || generateUniqueId()
+                key: scheduledEvents._id || generateUniqueId()
             }));
 
             setScheduledEvents(ScheduledEventsWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching ScheduledEvents:", error);
             if (axios.isAxiosError(error)) {
@@ -146,8 +138,8 @@ export default function ScheduledEvents() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
 

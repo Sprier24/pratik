@@ -29,6 +29,7 @@ interface Complaint {
     caseStatus: string;
     priority: string;
     caseOrigin: string;
+    createdAt: string;
 }
 
 const generateUniqueId = () => {
@@ -88,11 +89,39 @@ export default function ComplaintTable() {
             const response = await axios.get(
                 "http://localhost:8000/api/v1/complaint/getAllComplaints"
             );
-            setComplaints(response.data.complaints || []);
+            let complaintsData;
+            if (typeof response.data === 'object' && 'data' in response.data) {
+                complaintsData = response.data.data;
+            } else if (Array.isArray(response.data)) {
+                complaintsData = response.data;
+            } else {
+                console.error('Unexpected response format:', response.data);
+                throw new Error('Invalid response format');
+            }
+
+            if (!Array.isArray(complaintsData)) {
+                complaintsData = [];
+            }
+
+            const sortedComplaints = [...complaintsData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const complaintsWithKeys = sortedComplaints.map((complaint: Complaint) => ({
+                ...complaint,
+                key: complaint._id || generateUniqueId()
+            }));
+
+            setComplaints(complaintsWithKeys);
+            setError(null);
         } catch (error) {
             console.error("Error fetching complaints:", error);
-            setError("Failed to fetch complaints.");
-
+            if (axios.isAxiosError(error)) {
+                setError(`Failed to fetch complaints: ${error.response?.data?.message || error.message}`);
+            } else {
+                setError("Failed to fetch complaint.");
+            }
+            setComplaints([]);
         }
     };
 
@@ -107,8 +136,8 @@ export default function ComplaintTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

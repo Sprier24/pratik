@@ -1,0 +1,2 @@
+UninstallDisplayIcon={uninstallexe}
+UninstallDisplayName=Hisab Kitab v1.0

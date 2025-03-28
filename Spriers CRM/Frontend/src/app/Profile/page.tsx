@@ -46,14 +46,14 @@ const formSchema = z.object({
     .min(1, { message: 'Business registration is required.' }),
   gstNumber: z.string()
     .optional()
-    .refine(val => !val || val.length === 15, { 
+    .refine(val => !val || val.length === 15, {
       message: 'GST number must be exactly 15 characters when provided.',
     })
     .refine(val => !val || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[Z]{1}[0-9]{1}$/.test(val), {
       message: 'Invalid GST number format.',
     }),
   logo: z.instanceof(File)
-    .refine(file => file.size <= 5 * 1024 * 1024, { 
+    .refine(file => file.size <= 5 * 1024 * 1024, {
       message: "Logo must be less than 5MB.",
     })
     .refine(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
@@ -88,7 +88,7 @@ const NewProfile: React.FC = () => {
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      
+
       // Validate file type
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
         form.setError('logo', {
@@ -97,7 +97,7 @@ const NewProfile: React.FC = () => {
         });
         return;
       }
-      
+
       // Validate file size
       if (file.size > 5 * 1024 * 1024) {
         form.setError('logo', {
@@ -106,7 +106,7 @@ const NewProfile: React.FC = () => {
         });
         return;
       }
-      
+
       setLogoPreview(URL.createObjectURL(file));
       form.setValue('logo', file);
       form.clearErrors('logo');
@@ -116,7 +116,7 @@ const NewProfile: React.FC = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     const formData = new FormData();
-  
+
     Object.keys(values).forEach((key) => {
       const value = values[key as keyof typeof values];
       if (value instanceof File) {
@@ -125,11 +125,11 @@ const NewProfile: React.FC = () => {
         formData.append(key, value);
       }
     });
-  
+
     try {
       const token = localStorage.getItem("authToken");
       console.log("Token being sent:", token);
-  
+
       if (!token) {
         toast({
           title: "Authentication Error",
@@ -139,7 +139,7 @@ const NewProfile: React.FC = () => {
         setIsSubmitting(false);
         return;
       }
-  
+
       const response = await fetch("http://localhost:8000/api/v1/owner/add-owner", {
         method: "POST",
         headers: {
@@ -147,10 +147,10 @@ const NewProfile: React.FC = () => {
         },
         body: formData,
       });
-  
+
       const data = await response.json();
       console.log("Response from server:", data);
-  
+
       if (response.status === 401) {
         toast({
           title: "Unauthorized",
@@ -161,7 +161,7 @@ const NewProfile: React.FC = () => {
         router.push("/login");
         return;
       }
-  
+
       if (response.status === 403) {
         toast({
           title: "Unauthorized",
@@ -170,16 +170,16 @@ const NewProfile: React.FC = () => {
         });
         return;
       }
-  
+
       if (!response.ok) {
         throw new Error(data.message || "Failed to submit the profile.");
       }
-  
+
       toast({
         title: "Profile Created",
         description: "Your profile has been created successfully.",
       });
-  
+
       router.push("/dashboard");
     } catch (error) {
       console.error("Error submitting profile:", error);
@@ -192,25 +192,21 @@ const NewProfile: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '50px', height: '100vh' }}>
-      {/* Centered Header */}
-      <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', textAlign: 'center' }}>Create Profile</h1>
+      <h1 style={{ margin: 0, fontSize: '25px', textAlign: 'center' }}>Create Profile</h1>
       <Separator className="my-4 border-gray-500 border-1" />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-grow">
-          {/* Logo Section */}
           <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between mb-6 w-full">
             <div className="text-center">
               <label htmlFor="logo">
-                Logo
-                <br />
                 <img
                   src={logoPreview || 'https://via.placeholder.com/80'}
                   className="w-20 h-20 rounded-full border border-gray-300 mx-auto"
-                  alt=""
+                  alt="Logo"
                 />
               </label>
               <input
@@ -226,6 +222,22 @@ const NewProfile: React.FC = () => {
                 </p>
               )}
             </div>
+
+            {/* Save Profile Button */}
+            <Button
+              type="submit"
+              className="w-full sm:w-auto flex items-center justify-center mt-4 sm:mt-0"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                "Save Profile"
+              )}
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -236,7 +248,7 @@ const NewProfile: React.FC = () => {
                 <FormItem>
                   <FormLabel>Company Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter Company Name" {...field} />
+                    <Input placeholder="Enter company name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -250,7 +262,7 @@ const NewProfile: React.FC = () => {
                 <FormItem>
                   <FormLabel>Owner Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter Owner Name" {...field} />
+                    <Input placeholder="Enter owner name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -264,9 +276,9 @@ const NewProfile: React.FC = () => {
                 <FormItem>
                   <FormLabel>Contact Number</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter Contact Number" 
-                      {...field} 
+                    <Input
+                      placeholder="Enter contact number"
+                      {...field}
                       onChange={(e) => {
                         // Allow only numbers
                         const value = e.target.value.replace(/\D/g, '');
@@ -281,16 +293,12 @@ const NewProfile: React.FC = () => {
 
             <FormField
               control={form.control}
-              name="emailAddress"
+              name="companyType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Company Type</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter Email Address" 
-                      {...field} 
-                      type="email"
-                    />
+                    <Input placeholder="Enter company type" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -299,15 +307,44 @@ const NewProfile: React.FC = () => {
 
             <FormField
               control={form.control}
-              name="website"
+              name="businessRegistration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Website</FormLabel>
+                  <FormLabel>Business Registration</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter Website URL (include http:// or https://)" 
-                      {...field} 
-                    />
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                      <option value="">Select Business Registration</option>
+                      <option value="Private Limited">Private Limited</option>
+                      <option value="One person Company">One person Company</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="Sole proprietorship">Sole proprietorship</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="employeeSize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employee Size</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                      <option value="">Select Employee Size</option>
+                      <option value="1-10">1-10</option>
+                      <option value="11-50">11-50</option>
+                      <option value="51-100">51-100</option>
+                      <option value=">100">&gt;100</option>
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -321,9 +358,9 @@ const NewProfile: React.FC = () => {
                 <FormItem>
                   <FormLabel>PAN Number</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter PAN Number (e.g., ABCDE1234F)" 
-                      {...field} 
+                    <Input
+                      placeholder="Enter PAN number"
+                      {...field}
                       onChange={(e) => {
                         // Convert to uppercase and limit to 10 characters
                         const value = e.target.value.toUpperCase().slice(0, 10);
@@ -338,17 +375,56 @@ const NewProfile: React.FC = () => {
 
             <FormField
               control={form.control}
+              name="gstNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GST Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter GST number"
+                      {...field}
+                      onChange={(e) => {
+                        // Convert to uppercase
+                        const value = e.target.value.toUpperCase();
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Provide website link"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="documentType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Document Type</FormLabel>
                   <FormControl>
-                    <select 
-                      {...field} 
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                     >
                       <option value="">Select Document Type</option>
-                      <option value="UdhyamAadhar Number">UdhyamAadhar Number</option>
+                      <option value="Udhyam Aadhar Number">Udyam Aadhaar Number</option>
                       <option value="State Certificate">State Certificate</option>
                       <option value="Certificate of Incorporation">Certificate of Incorporation</option>
                     </select>
@@ -374,100 +450,6 @@ const NewProfile: React.FC = () => {
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="gstNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>GST Number (optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Enter GST Number (22AAAAA0000A1Z5)" 
-                      {...field} 
-                      onChange={(e) => {
-                        // Convert to uppercase
-                        const value = e.target.value.toUpperCase();
-                        field.onChange(value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="companyType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Type</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter Company Type" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="employeeSize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employee Size</FormLabel>
-                  <FormControl>
-                    <select 
-                      {...field} 
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    >
-                      <option value="">Select Employee Size</option>
-                      <option value="1-10">1-10</option>
-                      <option value="11-50">11-50</option>
-                      <option value="51-100">51-100</option>
-                      <option value=">100">&gt;100</option>
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="businessRegistration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Business Registration</FormLabel>
-                  <FormControl>
-                    <select 
-                      {...field} 
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    >
-                      <option value="">Select Business Registration</option>
-                      <option value="Sole proprietorship">Sole proprietorship</option>
-                      <option value="One person Company">One person Company</option>
-                      <option value="Partnership">Partnership</option>
-                      <option value="Private Limited">Private Limited</option>
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="flex justify-center sm:justify-end">
-            <Button type="submit" className="w-full sm:w-auto flex items-center justify-center" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                "Save Profile"
-              )}
-            </Button>
           </div>
         </form>
       </Form>

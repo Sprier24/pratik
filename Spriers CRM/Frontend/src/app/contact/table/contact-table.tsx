@@ -27,6 +27,7 @@ interface Contact {
     address: string;
     gstNumber: string;
     description: string;
+    createdAt: string;
 }
 
 const generateUniqueId = () => {
@@ -78,7 +79,6 @@ export default function ContactTable() {
                 "http://localhost:8000/api/v1/contact/getallContacts"
             );
 
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
@@ -86,7 +86,6 @@ export default function ContactTable() {
                 hasData: 'data' in response.data
             });
 
-            // Handle the response based on its structure
             let TaskData;
             if (typeof response.data === 'object' && 'data' in response.data) {
 
@@ -99,19 +98,21 @@ export default function ContactTable() {
                 throw new Error('Invalid response format');
             }
 
-            // Ensure leadsData is an array
             if (!Array.isArray(TaskData)) {
                 TaskData = [];
             }
 
-            // Map the data with safe key generation
-            const ContactWithKeys = TaskData.map((contact: Contact) => ({
+            const sortedContacts = [...TaskData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const ContactWithKeys = sortedContacts.map((contact: Contact) => ({
                 ...contact,
                 key: contact._id || generateUniqueId()
             }));
 
             setContact(ContactWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching Contacts:", error);
             if (axios.isAxiosError(error)) {
@@ -119,7 +120,7 @@ export default function ContactTable() {
             } else {
                 setError("Failed to fetch Contacts.");
             }
-            setContact([]); // Set empty array on error
+            setContact([]);
         }
     };
 
@@ -133,8 +134,8 @@ export default function ContactTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "subject",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
 

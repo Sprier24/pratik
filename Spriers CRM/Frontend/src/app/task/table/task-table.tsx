@@ -29,6 +29,7 @@ interface Task {
     priority: string;
     assigned: string;
     notes: string;
+    createdAt: string;
 }
 
 const generateUniqueId = () => {
@@ -95,7 +96,6 @@ export default function TaskTable() {
                 "http://localhost:8000/api/v1/task/getAllTasks"
             );
 
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
@@ -103,7 +103,6 @@ export default function TaskTable() {
                 hasData: 'data' in response.data
             });
 
-            // Handle the response based on its structure
             let TaskData;
             if (typeof response.data === 'object' && 'data' in response.data) {
 
@@ -116,19 +115,21 @@ export default function TaskTable() {
                 throw new Error('Invalid response format');
             }
 
-            // Ensure leadsData is an array
             if (!Array.isArray(TaskData)) {
                 TaskData = [];
             }
 
-            // Map the data with safe key generation
-            const TaskWithKeys = TaskData.map((task: Task) => ({
+            const sortedTasks = [...TaskData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const TaskWithKeys = sortedTasks.map((task: Task) => ({
                 ...task,
                 key: task._id || generateUniqueId()
             }));
 
             setTasks(TaskWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching tasks:", error);
             if (axios.isAxiosError(error)) {
@@ -136,7 +137,7 @@ export default function TaskTable() {
             } else {
                 setError("Failed to fetch tasks.");
             }
-            setTasks([]); // Set empty array on error
+            setTasks([]);
         }
     };
 
@@ -150,8 +151,8 @@ export default function TaskTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "subject",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);

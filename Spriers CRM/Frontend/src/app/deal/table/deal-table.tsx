@@ -33,6 +33,7 @@ interface Deal {
     endDate: string;
     notes: string;
     isActive: string;
+    createdAt: string;
 }
 
 interface Contact {
@@ -212,7 +213,6 @@ export default function DealTable() {
                 'http://localhost:8000/api/v1/deal/getAllDeals'
             );
 
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
@@ -220,32 +220,31 @@ export default function DealTable() {
                 hasData: 'data' in response.data
             });
 
-            // Handle the response based on its structure
             let leadsData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...leads] }
                 leadsData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...leads]
                 leadsData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
 
-            // Ensure leadsData is an array
             if (!Array.isArray(leadsData)) {
                 leadsData = [];
             }
 
-            // Map the data with safe key generation
-            const leadsWithKeys = leadsData.map((deal: Deal) => ({
+            const sortedDeals = [...leadsData].sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            const leadsWithKeys = sortedDeals.map((deal: Deal) => ({
                 ...deal,
                 key: deal._id || generateUniqueId()
             }));
 
             setDeals(leadsWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching deals:", error);
             if (axios.isAxiosError(error)) {
@@ -253,7 +252,7 @@ export default function DealTable() {
             } else {
                 setError("Failed to fetch deals.");
             }
-            setDeals([]); // Set empty array on error
+            setDeals([]);
         }
     };
 
@@ -267,8 +266,8 @@ export default function DealTable() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortDescriptor, setSortDescriptor] = useState({
-        column: "companyName",
-        direction: "ascending",
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = useState(1);
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
