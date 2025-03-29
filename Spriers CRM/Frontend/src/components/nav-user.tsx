@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { z } from "zod";
 
 interface Owner {
   _id: string;
@@ -53,6 +54,31 @@ export function NavUser() {
   const [hover, setHover] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const storageValue = 33;
+
+  const formSchema = z.object({
+    companyName: z.string().nonempty({ message: "Required" }),
+    ownerName: z.string().nonempty({ message: "Required" }),
+    contactNumber: z
+      .string()
+      .regex(/^\d*$/, { message: "Contact number must be numeric" })
+      .nonempty({ message: "Required" }),
+    companyType: z.string().nonempty({ message: "Required" }),
+    businessRegistration: z.string().nonempty({ message: "Required" }),
+    employeeSize: z.string().nonempty({ message: "Required" }),
+    panNumber: z.string().nonempty({ message: "Required" }),
+    gstNumber: z.string().optional(),
+    website: z.string().optional(),
+    documentType: z.string().nonempty({ message: "Required" }),
+    documentNumber: z.string().nonempty({ message: "Required" }),
+    logo: z.instanceof(File)
+      .refine(file => file.size <= 5 * 1024 * 1024, {
+        message: "Logo must be less than 5MB.",
+      })
+      .refine(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
+        message: "Only .jpg, .png, and .webp formats are supported.",
+      })
+      .optional(),
+  });
 
   const form = useForm<Owner>({
     defaultValues: {
@@ -340,7 +366,6 @@ export function NavUser() {
                 {currentOwner.logo ? (
                   <img
                     src={`http://localhost:8000/uploads/${currentOwner.logo}`}
-                    alt="Company Logo"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -373,10 +398,6 @@ export function NavUser() {
                   <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.contactNumber}</span>
                 </div>
                 <div>
-                  <span className="md:text-2xl text-black">Email Address</span>
-                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.emailAddress}</span>
-                </div>
-                <div>
                   <span className="md:text-2xl text-black">Company Type</span>
                   <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.companyType}</span>
                 </div>
@@ -391,6 +412,10 @@ export function NavUser() {
                 <div>
                   <span className="md:text-2xl text-black">PAN Number</span>
                   <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.panNumber}</span>
+                </div>
+                <div>
+                  <span className="md:text-2xl text-black">GST Number</span>
+                  <span className="block text-sm md:text-base py-2 px-3 mr-2">{currentOwner.gstNumber}</span>
                 </div>
                 <div>
                   <span className="md:text-2xl text-black">Document Type</span>
@@ -444,7 +469,6 @@ export function NavUser() {
                       borderRadius: '50%',
                       border: '1px solid #ccc',
                     }}
-                    alt="Logo Preview"
                   />
 
                 </label>
@@ -457,7 +481,6 @@ export function NavUser() {
                 />
               </div>
 
-              {/* Form Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -503,41 +526,12 @@ export function NavUser() {
                 />
                 <FormField
                   control={form.control}
-                  name="emailAddress"
+                  name="companyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Company Type</FormLabel>
                       <FormControl>
-                        <Input disabled className="!text-black !opacity-100 bg-gray-200" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Website</FormLabel>
-                      <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Provide website link" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="panNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PAN Number</FormLabel>
-                      <FormControl>
-                        <Input disabled className="!text-black !opacity-100 bg-gray-200" {...field} />
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter company type" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -565,35 +559,6 @@ export function NavUser() {
                     </FormItem>
                   )}
                 />
-                {/* <FormField
-                  control={form.control}
-                  name="gstNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>GST Number</FormLabel>
-                      <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter GST number"/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="companyType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Type</FormLabel>
-                      <FormControl>
-                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter company type" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="employeeSize"
@@ -608,6 +573,35 @@ export function NavUser() {
                           <option value="51-100">51-100</option>
                           <option value=">100">&gt;100</option>
                         </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="panNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PAN Number</FormLabel>
+                      <FormControl>
+                        <Input disabled className="!text-black !opacity-100 bg-gray-200" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gstNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GST Number</FormLabel>
+                      <FormControl>
+                        <Input className="w-full p-2 border rounded-md" {...field} placeholder="Enter GST number" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -643,6 +637,20 @@ export function NavUser() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input className="w-full p-2 border rounded-md" {...field} placeholder="Provide website link" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Buttons */}
               <Button type="submit" className="w-full" disabled={isSubmitting}>

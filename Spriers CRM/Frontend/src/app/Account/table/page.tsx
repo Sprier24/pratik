@@ -9,7 +9,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-// import { ModeToggle } from "@/components/ModeToggle"
+import { ModeToggle } from "@/components/ModeToggle"
 import SearchBar from '@/components/globalSearch';
 import Notification from '@/components/notification';
 import { Calendar1, Mail } from "lucide-react"

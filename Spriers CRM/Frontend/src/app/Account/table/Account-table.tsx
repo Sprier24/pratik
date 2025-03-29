@@ -31,9 +31,8 @@ const generateUniqueId = () => {
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0]; // Returns "YYYY-MM-DD"
+    return date.toISOString().split("T")[0];
 };
-
 
 const columns = [
     { name: "Bank Name", uid: "bankName", sortable: true, width: "120px" },
@@ -334,7 +333,6 @@ export default function AccountTable() {
             );
         }
 
-        // For all other columns, return the raw cell value
         return cellValue;
     }, []);
 

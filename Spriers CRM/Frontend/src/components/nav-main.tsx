@@ -25,7 +25,7 @@ export function NavMain({
         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mb-4"
       >
         <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-          <img src="1500px.png" alt="Logo" className="w-full h-auto max-w-[150px]" />
+          <img src="1500px.png" className="w-full h-auto max-w-[150px]" />
         </div>
         <SidebarGroupLabel className="text-amber-500 font-bold text-xl">S P R I E R S</SidebarGroupLabel>
       </SidebarMenuButton>

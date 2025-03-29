@@ -11,47 +11,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
-// Enhanced form schema with better validation
 const formSchema = z.object({
-  companyName: z.string()
-    .min(2, { message: 'Company name must be at least 2 characters.' })
-    .max(100, { message: 'Company name must be less than 100 characters.' }),
-  ownerName: z.string()
-    .min(2, { message: 'Owner name must be at least 2 characters.' })
-    .max(100, { message: 'Owner name must be less than 100 characters.' }),
-  contactNumber: z.string()
-    .min(10, { message: 'Contact number must be at least 10 digits.' })
-    .max(15, { message: 'Contact number must be less than 15 digits.' })
-    .regex(/^[0-9]+$/, { message: 'Contact number must contain only numbers.' }),
-  emailAddress: z.string()
-    .email({ message: 'Invalid email address' })
-    .max(100, { message: 'Email must be less than 100 characters.' }),
-  website: z.string()
-    .url({ message: 'Invalid website URL. Include http:// or https://' })
-    .max(100, { message: 'Website URL must be less than 100 characters.' }),
-  documentType: z.string()
-    .min(1, { message: 'Document type is required.' }),
-  documentNumber: z.string()
-    .min(1, { message: 'Document number is required.' })
-    .max(50, { message: 'Document number must be less than 50 characters.' }),
-  panNumber: z.string()
-    .min(8, { message: 'PAN number must be at least 8 characters.' })
-    .max(10, { message: 'PAN number must be exactly 10 characters.' })
-    .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, { message: 'Invalid PAN number format.' }),
-  companyType: z.string()
-    .min(1, { message: 'Company type is required.' }),
-  employeeSize: z.string()
-    .min(1, { message: 'Employee size is required.' }),
-  businessRegistration: z.string()
-    .min(1, { message: 'Business registration is required.' }),
-  gstNumber: z.string()
-    .optional()
-    .refine(val => !val || val.length === 15, {
-      message: 'GST number must be exactly 15 characters when provided.',
-    })
-    .refine(val => !val || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[Z]{1}[0-9]{1}$/.test(val), {
-      message: 'Invalid GST number format.',
-    }),
+  companyName: z.string().nonempty({ message: "Required" }),
+  ownerName: z.string().nonempty({ message: "Required" }),
+  contactNumber: z
+    .string()
+    .regex(/^\d*$/, { message: "Contact number must be numeric" })
+    .nonempty({ message: "Required" }),
+  companyType: z.string().nonempty({ message: "Required" }),
+  businessRegistration: z.string().nonempty({ message: "Required" }),
+  employeeSize: z.string().nonempty({ message: "Required" }),
+  panNumber: z.string().nonempty({ message: "Required" }),
+  gstNumber: z.string().optional(),
+  website: z.string().optional(),
+  documentType: z.string().nonempty({ message: "Required" }),
+  documentNumber: z.string().nonempty({ message: "Required" }),
   logo: z.instanceof(File)
     .refine(file => file.size <= 5 * 1024 * 1024, {
       message: "Logo must be less than 5MB.",
@@ -73,7 +47,6 @@ const NewProfile: React.FC = () => {
       companyName: '',
       ownerName: '',
       contactNumber: '',
-      emailAddress: '',
       website: '',
       documentType: '',
       documentNumber: '',
@@ -206,7 +179,6 @@ const NewProfile: React.FC = () => {
                 <img
                   src={logoPreview || 'https://via.placeholder.com/80'}
                   className="w-20 h-20 rounded-full border border-gray-300 mx-auto"
-                  alt="Logo"
                 />
               </label>
               <input
@@ -235,7 +207,7 @@ const NewProfile: React.FC = () => {
                   Submitting...
                 </>
               ) : (
-                "Save Profile"
+                "Submit"
               )}
             </Button>
           </div>
