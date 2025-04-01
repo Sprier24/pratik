@@ -1,8 +1,0 @@
-# Set the window to fullscreen
-root.attributes('-fullscreen', True)
-
-# Optional: Bind a key to exit fullscreen (e.g., Escape key)
-def toggle_fullscreen(event=None):
-    root.attributes("-fullscreen", not root.attributes("-fullscreen"))
-
-root.bind("<Escape>", toggle_fullscreen)

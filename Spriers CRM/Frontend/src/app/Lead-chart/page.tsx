@@ -44,14 +44,18 @@ export default function CertificatePage() {
                         <div  >
                             <SearchBar />
                         </div>
-                        <a href="/email">
-                            <div>
-                                <Mail />
+                        <a href="/email" className="relative group">
+                            <Mail className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" />
+                            <div className="absolute left-1/2 top-8 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                Email
                             </div>
                         </a>
-                        <a href="/calendar">
-                            <div>
-                                <Calendar1 />
+
+                        {/* Calendar Icon with Tooltip */}
+                        <a href="/calendar" className="relative group">
+                            <Calendar1 className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" />
+                            <div className="absolute left-1/2 top-8 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                Calendar
                             </div>
                         </a>
                         <div>
@@ -60,11 +64,7 @@ export default function CertificatePage() {
                     </div>
                 </header>
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
-                    <Card className="max-w-8xl mx-auto ">
-                        <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Lead</CardTitle>
-                            <h1 className="text-1xl mb-4 mt-4 text-center">Manage and track your lead effectively</h1>
-                        </CardHeader>
+                    <Card className="max-w-6xl mx-auto border-none shadow-none">
                         <CardContent>
                             <CardLineChart />
                         </CardContent>

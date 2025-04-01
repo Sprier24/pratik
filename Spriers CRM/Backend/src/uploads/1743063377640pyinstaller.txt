@@ -1,8 +1,0 @@
-pyinstaller --onefile --noconsole --icon="" login.py
-
-pyinstaller --onefile --windowed --icon="" login.py
-
-pyinstaller --onefile --windowed --hidden-import=babel.numbers --icon="" login.py
-
-pyinstaller --onefile --add-data "department.py;." --add-data "salary.py;." --add-data "attendance.py;." --add-data "employee.py;." --add-data "login.py;." login.py
-

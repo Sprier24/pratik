@@ -1,6 +1,8 @@
 'use client';
 import React, { useState, useEffect, useRef } from "react";
 import { Chart } from 'chart.js/auto'; 
+import { FiTrendingUp, FiBarChart2 } from 'react-icons/fi';
+import { Tooltip } from "react-tooltip";
 
 export default function CardChart() {
   const [selectedChartType, setSelectedChartType] = useState("line");
@@ -78,12 +80,24 @@ export default function CardChart() {
         },
         scales: {
           x: {
+            title: {
+              display: true,
+              text: "Deal Status",
+              color: "black",
+              font: { size: 14 },
+            },
             ticks: { color: "black" },
-            grid: { display: false, color: "rgba(33, 37, 41, 0.3)" },
+            grid: { display: true, color: "rgba(200, 200, 200, 0.3)" }, 
           },
           y: {
+            title: {
+              display: true,
+              text: "Total Deal Value (₹)",
+              color: "black",
+              font: { size: 14 },
+            },
             ticks: { color: "black" },
-            grid: { color: "rgba(250, 250, 250, 0.15)" },
+            grid: { display: true, color: "rgba(200, 200, 200, 0.3)" }, // Y-axis grid
           },
         },
       },
@@ -97,7 +111,9 @@ export default function CardChart() {
   }, [chartData, selectedChartType]);
 
   return (
-    <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-blueGray-700">
+  <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-700 border border-gray-150">
+    <h1 className="text-3xl font-bold mb-1 mt-6 text-center">Deal Record</h1>
+    <h1 className="text-1xl mb-6 text-center">Manage and track your deals effectively</h1>
       <div className="rounded-t mb-0 px-4 py-3 bg-transparent">
         <div className="flex flex-wrap items-center justify-between">
           <div className="relative w-full max-w-full flex-grow flex-1">
@@ -105,15 +121,24 @@ export default function CardChart() {
             <h2 className="text-black text-blueGray-100 font-semibold">Total Deal Value</h2>
           </div>
 
-          <div className="flex gap-4">
-            <select
-              value={selectedChartType}
-              onChange={(e) => setSelectedChartType(e.target.value)}
-              className="w-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <div className="flex gap-2 bg-gray-200 p-1 rounded-md">
+            <button 
+              onClick={() => setSelectedChartType("line")} 
+              data-tooltip-id="line-chart-tooltip"
+              className={`p-2 rounded-md transition-colors ${selectedChartType === "line" ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}
             >
-              <option value="line">Line Chart</option>
-              <option value="bar">Bar Chart</option>
-            </select>
+              <FiTrendingUp className="text-gray-700" />
+            </button>
+            <Tooltip id="line-chart-tooltip" place="top" content="Line Chart" />
+
+            <button 
+              onClick={() => setSelectedChartType("bar")} 
+              data-tooltip-id="bar-chart-tooltip"
+              className={`p-2 rounded-md transition-colors ${selectedChartType === "bar" ? 'bg-white shadow-sm' : 'hover:bg-gray-300'}`}
+            >
+              <FiBarChart2 className="text-gray-700" />
+            </button>
+            <Tooltip id="bar-chart-tooltip" place="top" content="Bar Chart" />
           </div>
         </div>
       </div>

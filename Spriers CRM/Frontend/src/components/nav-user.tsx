@@ -243,24 +243,6 @@ export function NavUser() {
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-          <div className="px-4 py-3 space-y-1">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-
-              <span className="font-medium">Your Cloud Storage</span>
-            </div>  <Cloud className="size-4 text-gray-500" />
-            <div
-              className="relative group"
-              onMouseEnter={() => setHover(true)}
-              onMouseLeave={() => setHover(false)}
-            >
-              <Progress value={storageValue} className="h-1" />
-              {hover && (
-                <div className="absolute left-1/2 -top-6 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-md">
-                  {storageValue}% Used
-                </div>
-              )}
-            </div>
-          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
@@ -464,8 +446,8 @@ export function NavUser() {
                   <img
                     src={logoPreview || (currentOwner?.logo ? `http://localhost:8000/uploads/${currentOwner.logo}` : "/default-logo.png")}
                     style={{
-                      width: '120px',  // Increased width
-                      height: '120px', // Increased height
+                      width: '120px',
+                      height: '120px',
                       borderRadius: '50%',
                       border: '1px solid #ccc',
                     }}
