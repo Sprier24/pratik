@@ -37,7 +37,7 @@ const SearchBar = () => {
         onChange={handleSearch}
         className="w-full p-2 border rounded-md shadow-sm focus:ring focus:ring-blue-300"
       />
-      {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
+      {/* {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>} */}
 
       {/* Show the dropdown only if there's a query or results */}
       {query && results && results.suggestions.length > 0 && (
@@ -45,7 +45,7 @@ const SearchBar = () => {
           <Card className="p-2">
             <CardContent className="space-y-2">
               {results.suggestions.length === 0 ? (
-                <p className="text-gray-500 text-sm">No data found</p>
+                <p className="text-gray-500 text-sm">No data available</p>
               ) : (
                 results.suggestions.map((item, index) => (
                   <Link key={index} href={item.path} className="block p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded">
@@ -63,7 +63,7 @@ const SearchBar = () => {
         <div className="absolute w-full bg-white border mt-2 rounded-lg shadow-lg z-50">
           <Card className="p-2">
             <CardContent className="space-y-2">
-              <p className="text-gray-500 text-sm">No data found</p>
+              <p className="text-gray-500 text-sm">No data available</p>
             </CardContent>
           </Card>
         </div>

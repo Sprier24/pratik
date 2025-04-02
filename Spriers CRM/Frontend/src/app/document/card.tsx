@@ -166,7 +166,7 @@ const GoogleDriveClone = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-gray-50 text-gray-900 p-2 rounded-md w-full mb-4 border border-gray-300"
         />
-        <h3 className="text-lg font-semibold mb-2 text-gray-800">Files</h3>
+        <h3 className="text-lg font-semibold mb-2 text-gray-800">Documents</h3>
 
         {/* Filter Buttons */}
         <div className="filter-buttons mb-4 flex space-x-2">
@@ -186,7 +186,7 @@ const GoogleDriveClone = () => {
             onClick={() => setFilter('photo')}
             className={`filter-btn ${filter === 'photo' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'} py-1 px-3 rounded-md text-sm`}
           >
-            Photos
+            Images
           </button>
         </div>
 
@@ -213,7 +213,7 @@ const GoogleDriveClone = () => {
           onClick={() => document.getElementById('fileInput')?.click()}
           className="bg-blue-500 text-white py-2 px-4 rounded-md w-full mt-4 hover:bg-blue-600"
         >
-          Upload File
+          Upload
         </button>
       </div>
 

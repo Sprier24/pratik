@@ -278,8 +278,8 @@ export default function ScheduledEvents() {
             }
 
             toast({
-                title: "Scheduled Deleted",
-                description: "The scheduled has been successfully deleted.",
+                title: "Event or meeting Deleted",
+                description: "The event or meeting has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -821,9 +821,10 @@ export default function ScheduledEvents() {
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
                         <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
+                            Are you sure you want to delete this event or meeting?,
+                            The data won't be retrieved again.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-4 mt-4">

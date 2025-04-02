@@ -261,7 +261,7 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Deleted",
-                description: "The task has been successfully deleted.",
+                description: "The contact has been successfully deleted",
             });
 
             fetchContacts();
@@ -296,7 +296,7 @@ export default function ContactTable() {
 
             toast({
                 title: "Contact Updated",
-                description: "The contact has been successfully updated.",
+                description: "The contact has been successfully updated",
             });
 
             // Close dialog and reset form
@@ -705,9 +705,10 @@ export default function ContactTable() {
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
                         <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        Are you sure you want to delete this contact?,
+                        The data won't be retrieved again.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-4 mt-4">

@@ -21,6 +21,7 @@ import { Calendar1, Mail, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface Task {
+  notes: string;
   _id: string;
   subject: string;
   relatedTo: string;
@@ -29,18 +30,18 @@ interface Task {
   assigned: string;
   date: string;
   endDate: string;
-  status: "Pending" | "In Progress" | "Resolved";
+  status: "Pending" | "InProgress" | "Resolved";
   isActive: boolean;
   priority: "High" | "Medium" | "Low";
 }
 
 const statusColors = {
   Pending: "bg-blue-100 text-blue-800 border-blue-200",
-  "In Progress": "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "InProgress": "bg-yellow-100 text-yellow-800 border-yellow-200",
   Resolved: "bg-green-100 text-green-800 border-green-200",
 };
 
-const statusOrder = ["Pending", "In Progress", "Resolved"];
+const statusOrder = ["Pending", "InProgress", "Resolved"];
 
 const getAllTasks = async (): Promise<Task[]> => {
   try {
@@ -309,7 +310,7 @@ export default function TaskBoard() {
                   </div>
                   <div>
                     <h3 className="font-medium text-sm text-muted-foreground mb-1">Notes</h3>
-                    <p className="whitespace-pre-line">{selectedTask.name || "No description"}</p>
+                    <p className="whitespace-pre-line">{selectedTask.notes || "No description"}</p>
                   </div>
                 </div>
               </div>

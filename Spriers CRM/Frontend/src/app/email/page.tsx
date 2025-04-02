@@ -81,7 +81,7 @@ const EmailInput: React.FC = () => {
             if (!response.ok) throw new Error("Failed to send email");
 
             toast({
-                title: "Email Sent Successfully",
+                title: "Email Submitted",
                 description: "The email has been sent successfully",
             });
 

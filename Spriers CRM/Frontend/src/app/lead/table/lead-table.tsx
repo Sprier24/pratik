@@ -394,7 +394,7 @@ export default function LeadTable() {
             );
 
             toast({
-                title: "Invoice Created",
+                title: "Invoice Submitted",
                 description: "The invoice has been successfully created",
             });
 
@@ -588,7 +588,7 @@ export default function LeadTable() {
 
             toast({
                 title: "Lead Deleted",
-                description: "The lead has been successfully deleted.",
+                description: "The lead has been successfully deleted",
             });
 
             // Refresh the leads list
@@ -1161,7 +1161,12 @@ export default function LeadTable() {
                                             <FormControl>
                                                 <Input
                                                     placeholder="Enter contact number"
+                                                    type="tel"
                                                     {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -1702,9 +1707,10 @@ export default function LeadTable() {
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
                         <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
+                            Are you sure you want to delete this lead?,
+                            The data won't be retrieved again.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-4 mt-4">

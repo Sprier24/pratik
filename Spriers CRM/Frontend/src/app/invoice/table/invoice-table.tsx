@@ -333,7 +333,7 @@ export default function InvoiceTable() {
                 <p><strong>Company Name : ${companyName ?? "N/A"}</strong></p>
                 <p>Customer Name : ${customerName ?? "N/A"}</p>
                 <p>Contact Number : ${contactNumber ?? "N/A"}</p>
-                <p>Email : ${emailAddress ?? "N/A"}</p>
+                <p>Email Address : ${emailAddress ?? "N/A"}</p>
             </div>
             
             <div class="table-container">
@@ -539,7 +539,7 @@ export default function InvoiceTable() {
 
             toast({
                 title: "Invoice Deleted",
-                description: "The invoice has been successfully deleted.",
+                description: "The invoice has been successfully deleted",
             });
 
             fetchInvoices();
@@ -1011,7 +1011,15 @@ export default function InvoiceTable() {
                                         <FormItem>
                                             <FormLabel>Product Amount</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter product amount" type="number" {...field} />
+                                                <Input
+                                                    placeholder="Enter product amount"
+                                                    type="number"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.valueAsNumber || "";
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -1027,7 +1035,15 @@ export default function InvoiceTable() {
                                         <FormItem>
                                             <FormLabel>Discount (%)</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter discount" type="number" {...field} />
+                                                <Input
+                                                    placeholder="Enter discount"
+                                                    type="number"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.valueAsNumber || "";
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -1068,7 +1084,15 @@ export default function InvoiceTable() {
                                         <FormItem>
                                             <FormLabel>Paid Amount</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter paid amount" {...field} />
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Enter paid amount"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.valueAsNumber || "";
+                                                        field.onChange(value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -1166,9 +1190,10 @@ export default function InvoiceTable() {
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
                         <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
+                            Are you sure you want to delete this invoice?,
+                            The data won't be retrieved again.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-4 mt-4">
