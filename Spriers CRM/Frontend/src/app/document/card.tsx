@@ -1,5 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type File = {
   id: string;
@@ -19,9 +21,11 @@ const GoogleDriveClone = () => {
   const [filter, setFilter] = useState<'all' | 'file' | 'photo'>('all');
   const modalRef = useRef<HTMLDivElement>(null);
   const modalBackdropRef = useRef<HTMLDivElement>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
 
   const getFileImage = (fileName: string) => {
-    const extension = fileName.split(".").pop()?.toLowerCase(); // Extract file extension
+    const extension = fileName.split(".").pop()?.toLowerCase();
 
     switch (extension) {
       case "pdf":
@@ -111,23 +115,32 @@ const GoogleDriveClone = () => {
     }
   };
 
-  const handleDelete = (fileId: string) => {
-    fetch(`http://localhost:8000/api/v1/file-folder/files/${fileId}`, {
-      method: 'DELETE',
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          console.log('File deleted successfully');
-          setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
-          setSelectedFile(null); // Close the modal after deletion
-        } else {
-          console.log('Failed to delete file');
-        }
-      })
-      .catch(error => {
-        console.error('Error deleting file:', error);
+  const handleDeleteClick = (fileId: string) => {
+    setFileToDelete(fileId);
+    setIsDeleteDialogOpen(true);
+    setSelectedFile(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!fileToDelete) return;
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/file-folder/files/${fileToDelete}`, {
+        method: 'DELETE',
       });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setFiles(prevFiles => prevFiles.filter(file => file.id !== fileToDelete));
+        setIsDeleteDialogOpen(false);
+        setFileToDelete(null);
+      } else {
+        console.error('Failed to delete file');
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
   };
 
   const handleFileClick = (item: File) => {
@@ -148,16 +161,15 @@ const GoogleDriveClone = () => {
     setTimeout(() => setDownloadStatus(null), 2000);
   };
 
-  // Close the modal if clicked outside the modal content
   const handleClickOutside = (e: React.MouseEvent) => {
     if (modalBackdropRef.current && !modalRef.current?.contains(e.target as Node)) {
-      setSelectedFile(null); // Close the modal if clicked outside
+      setSelectedFile(null);
     }
   };
 
   return (
     <div className="google-drive-clone flex flex-col md:flex-row h-[90vh] bg-gray-100 border border-gray-300 shadow-[0_4px_10px_rgba(0,0,0,0.4)] p-4">
-      {/* Sidebar */}
+
       <div className="sidebar w-full md:w-64 p-4 bg-white border-r border-gray-200">
         <input
           type="text"
@@ -166,9 +178,8 @@ const GoogleDriveClone = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-gray-50 text-gray-900 p-2 rounded-md w-full mb-4 border border-gray-300"
         />
-        <h3 className="text-lg font-semibold mb-2 text-gray-800">Documents</h3>
+        <h3 className="text-lg font-semibold mb-2 text-gray-800">Files</h3>
 
-        {/* Filter Buttons */}
         <div className="filter-buttons mb-4 flex space-x-2">
           <button
             onClick={() => setFilter('all')}
@@ -186,7 +197,7 @@ const GoogleDriveClone = () => {
             onClick={() => setFilter('photo')}
             className={`filter-btn ${filter === 'photo' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'} py-1 px-3 rounded-md text-sm`}
           >
-            Images
+            Photos
           </button>
         </div>
 
@@ -213,16 +224,10 @@ const GoogleDriveClone = () => {
           onClick={() => document.getElementById('fileInput')?.click()}
           className="bg-blue-500 text-white py-2 px-4 rounded-md w-full mt-4 hover:bg-blue-600"
         >
-          Upload
+          Upload File
         </button>
-
-        {/* Filtered File Count - Styled Box */}
-        <div className="file-count mt-4 p-4 bg-gray-100 border border-gray-300 rounded-md shadow-md text-sm text-gray-600">
-          Total: {filteredFoldersAndFiles.length} {filter === 'all' ? 'files' : filter === 'file' ? 'files' : 'images'}
-        </div>
       </div>
 
-      {/* Main Content */}
       <div className="main-content flex-1 p-6 bg-gray-60 overflow-y-auto scrollbar-hide">
         <div className="files grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredFoldersAndFiles.map((item: File) =>
@@ -264,7 +269,7 @@ const GoogleDriveClone = () => {
                     <img
                       src={getFileImage(item.name)}
                       alt={item.name}
-                      className="w-20 h-20 object-contain mb-2" // Adjust size as needed
+                      className="w-20 h-20 object-contain mb-2"
                     />
                     <p className="text-gray-900 text-center max-w-full overflow-hidden text-ellipsis mt-2">
                       {item.name}
@@ -277,7 +282,6 @@ const GoogleDriveClone = () => {
         </div>
       </div>
 
-      {/* Modal */}
       {selectedFile && (
         <div
           className="modal fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4"
@@ -288,7 +292,7 @@ const GoogleDriveClone = () => {
             className="modal-content bg-white p-6 rounded-lg w-full sm:w-3/4 max-w-md shadow-lg"
             ref={modalRef}
           >
-            {/* File Preview */}
+
             <div className="mb-4">
               {selectedFile.fileType === "image" ? (
                 <img
@@ -309,14 +313,13 @@ const GoogleDriveClone = () => {
                   <img
                     src={getFileImage(selectedFile?.name)}
                     alt={selectedFile?.name}
-                    className="w-20 h-20 object-contain mb-2" // Adjust size as needed
+                    className="w-20 h-20 object-contain mb-2"
                   />
                   <h3 className="truncate">{selectedFile?.name}</h3>
                 </div>
               )}
             </div>
 
-            {/* Buttons Section */}
             <div className="flex justify-between">
               <button
                 onClick={() => handleDownload(selectedFile)}
@@ -324,20 +327,54 @@ const GoogleDriveClone = () => {
               >
                 Download
               </button>
-
               <button
-                onClick={() => handleDelete(selectedFile.id)}
+                onClick={() => handleDeleteClick(selectedFile.id)}
                 className="flex-1 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition duration-200"
               >
                 Delete
               </button>
             </div>
-
-            {/* Download Status */}
             {downloadStatus && <div className="text-green-500 mt-2">{downloadStatus}</div>}
           </div>
         </div>
       )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsDeleteDialogOpen(false);
+        }
+      }}>
+        <DialogContent
+          className="fixed left-1/2 top-[7rem] transform -translate-x-1/2 z-[9999] w-full max-w-md bg-white shadow-lg rounded-lg p-6 sm:max-w-sm sm:p-4 xs:max-w-[90%] xs:p-3 xs:top-[5rem]"
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+            <DialogDescription className="text-sm xs:text-xs">
+              Are you sure you want to delete this file? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 text-sm xs:px-3 xs:py-1 xs:text-xs bg-gray-600 hover:bg-red-700"
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

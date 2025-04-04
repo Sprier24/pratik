@@ -9,6 +9,7 @@ export default function CardChart() {
   const [chartData, setChartData] = useState({});
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   const statuses = ["Proposal", "New", "Discussion", "Demo", "Decided"];
 
@@ -16,6 +17,7 @@ export default function CardChart() {
     const fetchAllData = async () => {
       try {
         const statusData = {};
+        let  total = 0;
 
         for (const status of statuses) {
           const response = await fetch(`http://localhost:8000/api/v1/lead/getLeadsByStatus?status=${status}`);
@@ -24,10 +26,12 @@ export default function CardChart() {
           if (data.success) {
             const totalAmount = data.data.reduce((sum, deal) => sum + deal.amount, 0);
             statusData[status] = totalAmount;
+            total += totalAmount; 
           }
         }
 
         setChartData(statusData);
+        setTotalAmount(total); 
       } catch (error) {
         console.error("Error fetching deal data:", error);
       }
@@ -92,7 +96,7 @@ export default function CardChart() {
           y: {
             title: {
               display: true,
-              text: "Total Lead Value (₹)",
+              text: `Total Lead Value  (₹${totalAmount.toLocaleString()})`,
               color: "black",
               font: { size: 14 },
             },
@@ -108,7 +112,7 @@ export default function CardChart() {
         chartInstance.current.destroy();
       }
     };
-  }, [chartData, selectedChartType]);
+  }, [chartData, selectedChartType,totalAmount]);
 
   return (
     <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-700 border border-gray-150">
@@ -118,7 +122,7 @@ export default function CardChart() {
         <div className="flex flex-wrap items-center justify-between">
           <div className="relative w-full max-w-full flex-grow flex-1">
             <h6 className="uppercase text-blueGray-100 mb-1 text-xs font-semibold">Overview</h6>
-            <h2 className="text-black text-blueGray-100 font-semibold">Total Lead Value</h2>
+            <h2 className="text-black text-blueGray-100 font-semibold">Total Lead Value (₹{totalAmount.toLocaleString()})</h2>
           </div>
 
           <div className="flex gap-2 bg-gray-200 p-1 rounded-md">
