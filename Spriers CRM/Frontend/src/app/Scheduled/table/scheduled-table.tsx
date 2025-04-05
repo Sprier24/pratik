@@ -68,8 +68,8 @@ const eventSchema = z.object({
     assignedUser: z.string().optional(),
     location: z.string().optional(),
     customer: z.string().optional(),
-    eventType: z.enum(["call", "Call", "Meeting", "meeting", "Demo", "demo", "FollowUp", "followup"], { message: "Required" }),
-    recurrence: z.enum(["OneTime", "Daily", "Weekly", "Monthly", "Yearly"], { message: "Required" }),
+    eventType: z.enum(["Call", "Meeting", "Demo", "Follow-Up"], { message: "Required" }),
+    recurrence: z.enum(["one-time", "Daily", "Weekly", "Monthly", "Yearly"], { message: "Required" }),
     status: z.enum(["Scheduled", "Completed", "Cancelled", "Postpone"], { message: "Required" }),
     priority: z.enum(["Low", "Medium", "High"], { message: "Required" }),
     date: z.date().optional(),
@@ -150,7 +150,7 @@ export default function ScheduledEvents() {
             eventType: "Call",
             priority: "Medium",
             description: "",
-            recurrence: "OneTime",
+            recurrence: "one-time",
             date: new Date(),
         },
     })
@@ -248,7 +248,7 @@ export default function ScheduledEvents() {
             }
             toast({
                 title: "Scheduled Deleted",
-                description: "The scheduled has been successfully deleted",
+                description: "The scheduled has been successfully deleted.",
             });
             fetchScheduledEvents();
         } catch (error) {
@@ -622,7 +622,7 @@ export default function ScheduledEvents() {
                                                     <option value="call">Call</option>
                                                     <option value="Meeting">Meeting</option>
                                                     <option value="Demo">Demo</option>
-                                                    <option value="FollowUp">Follow Up</option>
+                                                    <option value="Follow-Up">Follow Up</option>
                                                 </select>
                                             </FormControl>
                                             <FormMessage />

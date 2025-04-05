@@ -43,7 +43,7 @@ export default function DealForm() {
             emailAddress: "",
             address: "",
             productName: "",
-            amount: undefined,
+            amount: 0,
             gstNumber: "",
             status: "New",
             date: new Date(),

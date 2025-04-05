@@ -178,7 +178,7 @@ const GoogleDriveClone = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-gray-50 text-gray-900 p-2 rounded-md w-full mb-4 border border-gray-300"
         />
-        <h3 className="text-lg font-semibold mb-2 text-gray-800">Files</h3>
+        <h3 className="text-lg font-semibold mb-2 text-gray-800">Documents</h3>
 
         <div className="filter-buttons mb-4 flex space-x-2">
           <button
@@ -197,7 +197,7 @@ const GoogleDriveClone = () => {
             onClick={() => setFilter('photo')}
             className={`filter-btn ${filter === 'photo' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'} py-1 px-3 rounded-md text-sm`}
           >
-            Photos
+            Images
           </button>
         </div>
 
@@ -224,8 +224,12 @@ const GoogleDriveClone = () => {
           onClick={() => document.getElementById('fileInput')?.click()}
           className="bg-blue-500 text-white py-2 px-4 rounded-md w-full mt-4 hover:bg-blue-600"
         >
-          Upload File
+          Upload
         </button>
+
+        <div className="file-count mt-4 p-4 bg-gray-100 border border-gray-300 rounded-md shadow-md text-sm text-gray-600">
+          Total: {filteredFoldersAndFiles.length} {filter === 'all' ? 'files' : filter === 'file' ? 'files' : 'images'}
+        </div>
       </div>
 
       <div className="main-content flex-1 p-6 bg-gray-60 overflow-y-auto scrollbar-hide">
@@ -351,9 +355,10 @@ const GoogleDriveClone = () => {
           }}
         >
           <DialogHeader>
-            <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+            <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
             <DialogDescription className="text-sm xs:text-xs">
-              Are you sure you want to delete this file? This action cannot be undone.
+              Are you sure you want to delete this file?,
+              The data won't be retrieved again.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-4 mt-4">

@@ -121,7 +121,7 @@ const formSchema = z.object({
     contactNumber: z
         .string()
         .regex(/^\d*$/, { message: "Contact number must be numeric" })
-        .optional(),
+        .nonempty({ message: "Required" }),
     emailAddress: z.string().email({ message: "Invalid email address" }),
     address: z.string().nonempty({ message: "Required" }),
     productName: z.string().nonempty({ message: "Required" }),
@@ -785,9 +785,10 @@ export default function DealTable() {
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-lg xs:text-base">Confirm Deletion</DialogTitle>
+                        <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
                         <DialogDescription className="text-sm xs:text-xs">
-                            Are you sure you want to delete this invoice? This action cannot be undone.
+                            Are you sure you want to delete this deal?,
+                            The data won't be retrieved again.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-4 mt-4">
@@ -1127,9 +1128,13 @@ export default function DealTable() {
                                             <FormLabel>Contact Number</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    className="w-full"
                                                     placeholder="Enter contact number"
+                                                    type="tel"
                                                     {...field}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                                        field.onChange(value);
+                                                    }}
                                                 />
                                             </FormControl>
                                             <FormMessage />

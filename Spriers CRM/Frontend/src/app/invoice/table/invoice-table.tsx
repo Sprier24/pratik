@@ -316,21 +316,20 @@ export default function InvoiceTable() {
                             <div class="column">
                                 <div class="info-section">
                                     <h3>Company Infomation</h3>
-                                    <div class="info-row"><strong>Company:</strong> ${owner.companyName || "N/A"}</div>
-                                    <div class="info-row"><strong>Contact:</strong> ${owner.contactNumber || "N/A"}</div>
-                                    <div class="info-row"><strong>Email:</strong> ${owner.emailAddress || "N/A"}</div>
-                                    <div class="info-row"><strong>GST No:</strong> ${owner.gstNumber || "N/A"}</div>
+                                    <div class="info-row"><strong>Name :</strong> ${owner.companyName || "N/A"}</div>
+                                    <div class="info-row"><strong>Contact :</strong> ${owner.contactNumber || "N/A"}</div>
+                                    <div class="info-row"><strong>Email :</strong> ${owner.emailAddress || "N/A"}</div>
+                                    <div class="info-row"><strong>GST No :</strong> ${owner.gstNumber || "N/A"}</div>
                                 </div>
                             </div>
                             
                             <div class="column">
                                 <div class="info-section">
                                     <h3>Invoice To</h3>
-                                    <div class="info-row"><strong>Company:</strong> ${companyName || "N/A"}</div>
-                                    <div class="info-row"><strong>Customer:</strong> ${customerName || "N/A"}</div>
-                                    <div class="info-row"><strong>Phone:</strong> ${contactNumber || "N/A"}</div>
-                                    <div class="info-row"><strong>Email:</strong> ${emailAddress || "N/A"}</div>
-                                    <div class="info-row"><strong>Address:</strong> ${address || "N/A"}</div>
+                                    <div class="info-row"><strong>Company :</strong> ${companyName || "N/A"}</div>
+                                    <div class="info-row"><strong>Customer :</strong> ${customerName || "N/A"}</div>
+                                    <div class="info-row"><strong>Contact :</strong> ${contactNumber || "N/A"}</div>
+                                    <div class="info-row"><strong>Email :</strong> ${emailAddress || "N/A"}</div>
                                 </div>
                             </div>
                         </div>
@@ -355,11 +354,11 @@ export default function InvoiceTable() {
                         </table>
                         
                         <div class="total-section">
-                            <div>Subtotal: ₹${totalWithoutGst?.toFixed(2) || "0.00"}</div>
-                            <div>GST (${gstAmount > 0 ? `${cgst.toFixed(2)}% CGST + ${sgst.toFixed(2)}% SGST` : '0%'}): ₹${gstAmount.toFixed(2)}</div>
-                            <div class="grand-total">Total Due: ₹${totalWithGst?.toFixed(2) || "0.00"}</div>
-                            <div style="margin-top: 15px;">Amount Paid: ₹${paidAmount?.toFixed(2) || "0.00"}</div>
-                            <div>Balance Due: ₹${remainingAmount?.toFixed(2) || "0.00"}</div>
+                            <div>Subtotal : ₹${totalWithoutGst?.toFixed(2) || "0.00"}</div>
+                            <div>GST (${gstAmount > 0 ? `${cgst.toFixed(2)}% CGST + ${sgst.toFixed(2)}% SGST` : '0%'}) : ₹${gstAmount.toFixed(2)}</div>
+                            <div class="grand-total">Grand Total : ₹${totalWithGst?.toFixed(2) || "0.00"}</div>
+                            <div style="margin-top: 15px;">Paid Amount : ₹${paidAmount?.toFixed(2) || "0.00"}</div>
+                            <div>Remaining Amount : ₹${remainingAmount?.toFixed(2) || "0.00"}</div>
                         </div>
                         
                    <div class="footer">

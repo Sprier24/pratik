@@ -375,7 +375,7 @@ export default function Page() {
 
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
 
-    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "createdAt",
     direction: "descending",
   });
@@ -982,7 +982,7 @@ export default function Page() {
       browser: status,
       visitors: leads.length,
       fill: chartData[status as keyof typeof chartData] || "#ccc",
-      }));
+    }));
   }, [categorizedLeads]);
 
   //Invoice Chart
@@ -1098,10 +1098,10 @@ export default function Page() {
             <CardTitle>Lead</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 pb-0">
-            <ChartContainer 
-            config={chartConfig}
-            className="mx-auto aspect-square max-h-[300px] md:h-[400px] lg:h-[500px] [&_.recharts-text]:fill-background"
-          >
+            <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square max-h-[300px] md:h-[400px] lg:h-[500px] [&_.recharts-text]:fill-background"
+            >
               <RadialBarChart
                 width={width}
                 height={height}
@@ -1279,7 +1279,7 @@ export default function Page() {
               config={chartConfigInvoice}
               className="mx-auto aspect-square max-h-[300px] md:h-[400px] lg:h-[500px]"
             >
-              
+
               <RadialBarChart
                 width={width}
                 height={height}
@@ -1583,7 +1583,7 @@ export default function Page() {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-        {selectedKeysInvoice === "all"
+          {selectedKeysInvoice === "all"
             ? "All items selected"
             : `${selectedKeysInvoice.size} of ${filteredItemsInvoice.length} selected`}
         </span>
@@ -1617,7 +1617,7 @@ export default function Page() {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-        {selectedKeysDeal === "all"
+          {selectedKeysDeal === "all"
             ? "All items selected"
             : `${selectedKeysDeal.size} of ${filteredItemsDeal.length} selected`}
         </span>
@@ -1651,7 +1651,7 @@ export default function Page() {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-        {selectedKeysTask === "all"
+          {selectedKeysTask === "all"
             ? "All items selected"
             : `${selectedKeysTask.size} of ${filteredItemsTask.length} selected`}
         </span>
@@ -1685,7 +1685,7 @@ export default function Page() {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-        {selectedKeysReminder === "all"
+          {selectedKeysReminder === "all"
             ? "All items selected"
             : `${selectedKeysReminder.size} of ${filteredItemsReminder.length} selected`}
         </span>
@@ -1719,7 +1719,7 @@ export default function Page() {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-        {selectedKeysSchedule === "all"
+          {selectedKeysSchedule === "all"
             ? "All items selected"
             : `${selectedKeysSchedule.size} of ${filteredItemsSchedule.length} selected`}
         </span>
@@ -1812,7 +1812,7 @@ export default function Page() {
             size="sm"
             variant="flat"
           >
-          {cellValue}
+            {cellValue}
           </Chip>
         );
       case "actions":
@@ -1909,9 +1909,9 @@ export default function Page() {
 
         if (typeof cellValue !== 'string' && typeof cellValue !== 'number') {
           return "Invalid Date";
-        }   
+        }
 
-        const date = new Date(cellValue); 
+        const date = new Date(cellValue);
         if (isNaN(date.getTime())) return "Invalid Date";
 
         const day = String(date.getDate()).padStart(2, "0");
@@ -1960,14 +1960,15 @@ export default function Page() {
 
     switch (columnKey) {
       case "subject":
-      case "customer":
       case "assignedUser":
-      case "location":
       case "eventType":
       case "priority":
       case "recurrence":
       case "description":
         return cellValue;
+      case "customer":
+      case "location":
+        return cellValue ? cellValue : "N/A";
       case "status":
         return (
           <Chip
@@ -2026,12 +2027,18 @@ export default function Page() {
           </div>
           <div className="flex items-center space-x-4 ml-auto mr-4">
             <div><SearchBar /></div>
-            <a href="/email">
-              <div>
-                <Mail />
+            <a href="/email" className="relative group">
+              <Mail className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" />
+              <div className="absolute left-1/2 top-8 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                Email
               </div>
             </a>
-            <a href="/calendar"><div><Calendar1 /></div></a>
+            <a href="/calendar" className="relative group">
+              <Calendar1 className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" />
+              <div className="absolute left-1/2 top-8 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                Calendar
+              </div>
+            </a>
             <div><Notification /></div>
           </div>
         </header>
@@ -2314,8 +2321,8 @@ export default function Page() {
                         {(item) => (
                           <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
                             {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">
-                              {renderCellInvoice(item, columnKey)}                            
-                              </TableCell>)}
+                              {renderCellInvoice(item, columnKey)}
+                            </TableCell>)}
                           </TableRow>
                         )}
                       </TableBody>
@@ -2370,7 +2377,7 @@ export default function Page() {
                           <TableRow key={item._id} className="hover:bg-gray-50 transition duration-200">
                             {(columnKey) => (<TableCell className="px-4 py-3 text-gray-700">
                               {renderCellReminder(item, columnKey).toLocaleString()}
-                              </TableCell>)}
+                            </TableCell>)}
                           </TableRow>
                         )}
                       </TableBody>
