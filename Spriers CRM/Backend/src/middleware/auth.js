@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../model/usersSchema.model');
+const User = require('../model/usersSchema.model'); // Adjust the path based on your project structure
 
 const authenticateUser = async (req, res, next) => {
   const token = req.header("Authorization")?.split(" ")[1];

@@ -290,8 +290,10 @@ export function NavUser() {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Confirm Account Deletion</DialogTitle>
-            <DialogDescription>Are you sure you want to delete your account? This action cannot be undone.</DialogDescription>
+            <DialogTitle className="text-lg xs:text-base">Confirm Delete</DialogTitle>
+            <DialogDescription className="text-sm xs:text-xs">
+              "Are you sure you want to delete this account? Once deleted, your account cannot be recreated"
+            </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
