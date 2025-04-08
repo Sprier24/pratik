@@ -95,7 +95,7 @@ const NewProfile: React.FC = () => {
         });
         router.push('/login');
       } finally {
-        setIsLoading(false);
+        setIsRedirecting(false);
       }
     };
 
@@ -493,6 +493,6 @@ const NewProfile: React.FC = () => {
 
 export default NewProfile;
 
-function setIsLoading(arg0: boolean) {
+function setIsRedirecting(arg0: boolean) {
   throw new Error('Function not implemented.');
 }
