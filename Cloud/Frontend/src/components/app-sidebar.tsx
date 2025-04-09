@@ -30,11 +30,11 @@ const data = {
       items: [
         {
           title: "Company Details",
-          url: "admin/adminCompany",
+          url: "user/companytable",
         },
         {
           title: "Contact Person",
-          url: "admin/admincustomer",
+          url: "user/contacttable",
         },
       ],
     },
@@ -45,19 +45,19 @@ const data = {
       items: [
         {
           title: "Admin Certificate",
-          url: "admin/addcategory",
+          url: "user/certificateform",
         },
         {
           title: "Admin Certificate Table",
-          url: "admin/admincertificatetable",
+          url: "user/certificatetable",
         },
         {
           title: "Admin Service",
-          url: "admin/adminservice",
+          url: "user/serviceform",
         },
         {
           title: "Admin Service Table",
-          url: "admin/adminservicetable",
+          url: "user/servicetable",
         },
       ],
     },
@@ -106,9 +106,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={updatedNavMain} />
       </SidebarContent>
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <NavUser user={data.user} />
-      </SidebarFooter>
+      </SidebarFooter> */}
       <SidebarRail />
     </Sidebar>
   );

@@ -1,8 +1,27 @@
 "use client";
+
 import * as React from "react";
+import {
+  AudioWaveform,
+  Command,
+  File,
+  GalleryVerticalEnd,
+  Settings,
+  CircleUser,
+  ListEndIcon,
+  InfoIcon
+} from "lucide-react";
+
 import { NavMain } from "@/components/nav-main";
-import { File, Settings, CircleUser, InfoIcon, LayoutDashboard } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
+import { NavUser } from "@/app/admin/components/nav-admin";
+import { TeamSwitcher } from "@/components/team-switcher";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -10,30 +29,37 @@ const data = {
     email: "",
     avatar: "",
   },
-  navMain: [
+  teams: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: LayoutDashboard,
-      items: [
-        {
-          title: "Dashboard",
-          url: "/dashboard",
-        }
-      ],
+      name: "Spriers",
+      logo: GalleryVerticalEnd,
+      plan: "Enterprise",
     },
     {
-      title: "Company",
+      name: "OSCorp",
+      logo: AudioWaveform,
+      plan: "Startup",
+    },
+    {
+      name: "Evil Corp",
+      logo: Command,
+      plan: "Free",
+    },
+  ],
+  navMain: [
+    {
+      title: "Company Info",
       url: "#",
       icon: InfoIcon,
+      
       items: [
         {
-          title: "Company Details",
-          url: "admin/companytable",
+          title: "Company details",
+          url: "adminCompany",
         },
         {
-          title: "Contact Person",
-          url: "admin/contacttable",
+          title: "Contact person",
+          url: "admincustomer",
         },
       ],
     },
@@ -41,15 +67,15 @@ const data = {
       title: "Users",
       url: "#",
       icon: CircleUser,
-
+      
       items: [
         {
-          title: "Create User",
-          url: "admin/userform",
+          title: "Create user",
+          url: "adminregister",
         },
         {
-          title: "User Details",
-          url: "admin/usertable",
+          title: "User details",
+          url: "u",
         },
       ],
     },
@@ -60,19 +86,26 @@ const data = {
       items: [
         {
           title: "Admin Certificate",
-          url: "admin/certificateform",
-        },
-        {
-          title: "Admin Certificate Table",
-          url: "admin/certificatetable",
+          url: "addcategory",
         },
         {
           title: "Admin Service",
-          url: "admin/serviceform",
+          url: "adminservice",
+        },
+      ],
+    },
+    {
+      title: "Table",
+      url: "#",
+      icon: ListEndIcon,
+      items: [
+        {
+          title: "Admin Certificate Table",
+          url: "admincertificatetable",
         },
         {
           title: "Admin Service Table",
-          url: "admin/servicetable",
+          url: "adminservicetable",
         },
       ],
     },
@@ -82,51 +115,57 @@ const data = {
       icon: Settings,
       items: [
         {
-          title: "Add Model",
-          url: "admin/addmodel",
+          title: "add model",
+          url: "addmodel",
         },
       ],
     },
   ],
 };
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isClient, setIsClient] = React.useState(false);
   const [activePath, setActivePath] = React.useState("");
   const [activeDropdowns, setActiveDropdowns] = React.useState<{ [key: string]: boolean }>({});
+
+  
   React.useEffect(() => {
     setIsClient(true);
     setActivePath(window.location.pathname);
+
+    
     const savedDropdowns = JSON.parse(localStorage.getItem('activeDropdowns') || '{}');
     setActiveDropdowns(savedDropdowns);
   }, []);
 
+  
   const toggleDropdown = (dropdownTitle: string) => {
     setActiveDropdowns((prev) => {
       const updated = { ...prev, [dropdownTitle]: !prev[dropdownTitle] };
-
+      
       localStorage.setItem('activeDropdowns', JSON.stringify(updated));
       return updated;
     });
   };
 
+
   const updatedNavMain = React.useMemo(
     () =>
       data.navMain.map((item) => {
-        const isItemActive = item.items?.some(
-          (subItem) => isClient && activePath === `/admin${subItem.url}`
+        
+        const isItemActive = item.items.some(
+          (subItem) => isClient && activePath === subItem.url
         );
+
         return {
           ...item,
-          isActive: isItemActive,
+          isActive: isItemActive, 
           isOpen: activeDropdowns[item.title] ?? false,
-          toggleDropdown: () => toggleDropdown(item.title),
-          items: item.items
-            ? item.items.map((subItem) => ({
-              ...subItem,
-              isActive: isClient && activePath === `/admin${subItem.url}`,
-            }))
-            : [],
+          toggleDropdown: () => toggleDropdown(item.title), 
+          items: item.items.map((subItem) => ({
+            ...subItem,
+            isActive: isClient && activePath === subItem.url,   
+          })),
         };
       }),
     [isClient, activePath, activeDropdowns]
@@ -134,12 +173,15 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
 
   return (
     <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <TeamSwitcher teams={data.teams} />
+      </SidebarHeader>
       <SidebarContent>
         <NavMain items={updatedNavMain} />
       </SidebarContent>
-      {/* <SidebarFooter>
+      <SidebarFooter>
         <NavUser user={data.user} />
-      </SidebarFooter> */}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
