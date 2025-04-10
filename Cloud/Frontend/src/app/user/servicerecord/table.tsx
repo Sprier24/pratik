@@ -71,7 +71,7 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 const INITIAL_VISIBLE_COLUMNS = ["nameAndLocation", "contactPerson", "contactNumber", "serviceEngineer", "reportNo", "actions"];
 
 
-export default function ServiceTable() {
+export default function Servicetable() {
     const [services, setServices] = useState<Service[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
     const [error, setError] = useState<string | null>(null);

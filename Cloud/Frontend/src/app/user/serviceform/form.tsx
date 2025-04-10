@@ -36,7 +36,7 @@ interface ServiceResponse {
     downloadUrl: string;
 }
 
-export default function GenerateService() {
+export default function Serviceform() {
     const [formData, setFormData] = useState<ServiceRequest>({
         customerName: "",
         customerLocation: "",

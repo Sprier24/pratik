@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/app/admin/components/nav-admin";
+import { NavUser } from "@/app/admin/adminComponents/nav-admin";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,

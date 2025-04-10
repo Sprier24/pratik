@@ -73,7 +73,7 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "range", "serialNo", "calibrationGas", "gasCanisterDetails", "dateOfCalibration", "calibrationDueDate", "engineerName", "actions"];
 
 
-export default function CertificateTable() {
+export default function Certificatetable() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -10,6 +10,7 @@ const addCategoryRoutes = require("./addcategory.routs");
 const addEngineerRoutes = require("./addengineer.Router");
 const companyRoutes = require("./company.router");
 const contactPersonRoutes = require("./contactperson.routs");
+const serviceEngineerRoutes = require("./serviceEngineerRouter");
 
 router.use("/certificates", certificateRoutes);
 router.use("/services", serviceRoutes);
@@ -19,7 +20,7 @@ router.use("/addcategory", addCategoryRoutes);
 router.use("/engineers", addEngineerRoutes);
 router.use("/company", companyRoutes);
 router.use("/contactperson", contactPersonRoutes);
+router.use("/ServiceEngineer", serviceEngineerRoutes);
 
 module.exports = router;
-
 

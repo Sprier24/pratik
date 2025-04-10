@@ -42,7 +42,7 @@ interface engineer {
   name: string;
 }
 
-export default function GenerateCertificate() {
+export default function Certificateform() {
   const [formData, setFormData] = useState<CertificateRequest>({
     customerName: "",
     siteLocation: "",

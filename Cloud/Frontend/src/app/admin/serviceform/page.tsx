@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import axios from "axios";
 import { toast } from "@heroui/react";
-// import { toast } from "@/components/ui/use-toast";
 
 interface EngineerRemarks {
     serviceSpares: string;
@@ -46,7 +45,12 @@ interface ServiceResponse {
 }
 
 interface Engineer {
-    id?: string;
+    _id: string;
+    name: string;
+}
+
+interface ServiceEngineer {
+    _id: string;
     name: string;
 }
 
@@ -80,12 +84,17 @@ export default function GenerateService() {
     const [error, setError] = useState<string | null>(null);
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
+    const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
+
+    // Fetch engineers and service data
     useEffect(() => {
         const fetchEngineers = async () => {
             try {
                 const response = await fetch("http://localhost:5000/api/v1/engineers/getEngineers");
                 const data = await response.json();
+                console.log("API Response:", data);
                 setEngineers(data);
             } catch (error) {
                 console.error("Error fetching engineers:", error);
@@ -158,9 +167,45 @@ export default function GenerateService() {
         }
     }, [serviceId, isEditMode, router]);
 
+    useEffect(() => {
+        // Generate a report number when the form initializes
+        if (!isEditMode && !formData.reportNo) {
+            const generateReportNo = () => {
+                const date = new Date();
+                const randomNum = Math.floor(1000 + Math.random() * 9000);
+                return `SRV-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
+            };
+            
+            setFormData(prev => ({
+                ...prev,
+                reportNo: generateReportNo()
+            }));
+        }
+    }, [isEditMode]);
+
+    // Separate useEffect for fetching service engineers
+    useEffect(() => {
+        const fetchServiceEngineers = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/v1/ServiceEngineer/getServiceEngineers");
+                const data = await response.json();
+                setServiceEngineers(data);
+            } catch (error) {
+                console.error("Error fetching service engineers:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load service engineers",
+                    variant: "destructive",
+                });
+            }
+        };
+        fetchServiceEngineers();
+    }, []);
+
+    // Rest of your component code remains the same...
     const handleServiceEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
-        const selectedEngineer = engineers.find(engineer => engineer.id === selectedId);
+        const selectedEngineer = serviceEngineers.find(engineer => engineer._id === selectedId);
 
         setFormData(prev => ({
             ...prev,
@@ -171,7 +216,7 @@ export default function GenerateService() {
 
     const handleEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
-        const selectedEngineer = engineers.find(engineer => engineer.id === selectedId);
+        const selectedEngineer = engineers.find(engineer => engineer._id === selectedId);
 
         setFormData(prev => ({
             ...prev,
@@ -214,7 +259,8 @@ export default function GenerateService() {
         setLoading(true);
         setError(null);
 
-        const sanitizedRemarks = formData.engineerRemarks
+        // Process engineer remarks and ensure they are structured correctly
+        const processedRemarks = formData.engineerRemarks
             .filter(remark =>
                 remark.serviceSpares?.trim() &&
                 remark.partNo?.trim() &&
@@ -226,82 +272,75 @@ export default function GenerateService() {
                 serviceSpares: remark.serviceSpares.trim(),
                 partNo: remark.partNo.trim(),
                 rate: remark.rate.trim(),
-                quantity: Number(remark.quantity),
+                quantity: Number(remark.quantity), // Ensure quantity is a number
                 poNo: remark.poNo.trim()
             }));
 
+        // Ensure at least one valid engineer remark is added
+        if (processedRemarks.length === 0) {
+            setError("Please add at least one valid engineer remark.");
+            setLoading(false);
+            return;
+        }
+
+        // Prepare the submission data
         const submissionData = {
-            ...formData,
-            engineerRemarks: sanitizedRemarks.length > 0 ? sanitizedRemarks : [],
+            customerName: formData.customerName.trim(),
+            customerLocation: formData.customerLocation.trim(),
+            contactPerson: formData.contactPerson.trim(),
+            contactNumber: formData.contactNumber.trim(),
             serviceEngineer: formData.serviceEngineer.trim(),
-            engineerName: formData.engineerName.trim()
+            serviceEngineerId: formData.serviceEngineerId?.trim(),
+            date: formData.date,
+            place: formData.place.trim(),
+            placeOptions: formData.placeOptions,
+            natureOfJob: formData.natureOfJob,
+            reportNo: formData.reportNo.trim(),
+            makeModelNumberoftheInstrumentQuantity: formData.makeModelNumberoftheInstrumentQuantity.trim(),
+            serialNumberoftheInstrumentCalibratedOK: formData.serialNumberoftheInstrumentCalibratedOK.trim(),
+            serialNumberoftheFaultyNonWorkingInstruments: formData.serialNumberoftheFaultyNonWorkingInstruments.trim(),
+            engineerRemarks: processedRemarks,
+            engineerName: formData.engineerName.trim(),
+            engineerId: formData.engineerId?.trim(),
+            status: formData.status
         };
 
-        const requiredFields = {
-            customerName: "Customer Name",
-            customerLocation: "Customer Location",
-            contactPerson: "Contact Person",
-            contactNumber: "Contact Number",
-            serviceEngineer: "Service Engineer",
-            date: "Date",
-            place: "Place",
-            placeOptions: "Place Options",
-            natureOfJob: "Nature of Job",
-            makeModelNumberoftheInstrumentQuantity: "Make & Model Number",
-            serialNumberoftheInstrumentCalibratedOK: "Serial Number (Calibrated OK)",
-            serialNumberoftheFaultyNonWorkingInstruments: "Serial Number (Faulty/Non-Working)",
-            engineerName: "Engineer Name",
-            status: "Status"
-        };
+        // Validate required fields
+        const requiredFields = [
+            'customerName', 'customerLocation', 'contactPerson', 'contactNumber',
+            'serviceEngineer', 'date', 'place', 'placeOptions', 'natureOfJob',
+            'makeModelNumberoftheInstrumentQuantity','serialNumberoftheInstrumentCalibratedOK','serialNumberoftheFaultyNonWorkingInstruments',
+             'engineerRemarks','engineerName','engineerId', 'status',
+            
+        ];
 
-        const emptyFields = Object.entries(requiredFields)
-            .filter(([key]) => !submissionData[key as keyof ServiceRequest]?.toString().trim())
-            .map(([_, label]) => label);
+        const missingFields = requiredFields.filter(field => !submissionData[field as keyof typeof submissionData]?.toString().trim());
 
-        if (emptyFields.length > 0) {
-            setError(`Please fill in: ${emptyFields.join(", ")}`);
-            setLoading(false);
-            return;
-        }
-
-        if (sanitizedRemarks.length === 0) {
-            setError("Please add at least one valid engineer remark");
-            setLoading(false);
-            return;
-        }
-
-        const hasInvalidQuantity = sanitizedRemarks.some(remark => isNaN(Number(remark.quantity)));
-        if (hasInvalidQuantity) {
-            setError("Quantity must be a number in all remarks");
+        if (missingFields.length > 0) {
+            setError(`Missing required fields: ${missingFields.join(', ')}`);
             setLoading(false);
             return;
         }
 
         try {
-            let response;
-            if (isEditMode) {
-                response = await axios.put(
-                    `http://localhost:5000/api/v1/services/update/${serviceId}`,
-                    submissionData,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-            } else {
-                response = await axios.post(
-                    "http://localhost:5000/api/v1/services/generateServices",
-                    submissionData,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-            }
+            // Send the request
+            setIsGeneratingPDF(true);
+            const response = await axios({
+                method: isEditMode ? 'put' : 'post',
+                url: isEditMode
+                    ? `http://localhost:5000/api/v1/services/updateServiceEngineer/${serviceId}`
+                    : "http://localhost:5000/api/v1/services/generateServices",
+                data: submissionData,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('API Response:', response.data); // Log successful response
 
             setService(response.data);
+            setIsGeneratingPDF(false);
+
             toast({
                 title: "Success",
                 description: isEditMode
@@ -310,17 +349,47 @@ export default function GenerateService() {
                 variant: "default",
             });
 
-            if (isEditMode) {
+            // Reset form if creating new entry
+            if (!isEditMode) {
+                setFormData({
+                    customerName: "",
+                    customerLocation: "",
+                    contactPerson: "",
+                    contactNumber: "",
+                    serviceEngineer: "",
+                    date: new Date().toISOString().split('T')[0],
+                    place: "",
+                    placeOptions: "At Site",
+                    natureOfJob: "AMC",
+                    reportNo: "",
+                    makeModelNumberoftheInstrumentQuantity: "",
+                    serialNumberoftheInstrumentCalibratedOK: "",
+                    serialNumberoftheFaultyNonWorkingInstruments: "",
+                    engineerRemarks: [{ serviceSpares: "", partNo: "", rate: "", quantity: "", poNo: "" }],
+                    engineerName: "",
+                    status: ""
+                });
+            } else {
                 router.push("/admincertificatetable");
             }
         } catch (err: any) {
-            console.error("Error:", err.response?.data || err.message);
-            setError(err.response?.data?.error ||
-                (isEditMode ? "Failed to update service" : "Failed to generate service"));
+            setIsGeneratingPDF(false);
+            // Log error details to the console
+            console.error("Error:", err);
+
+            // Determine specific error message from response or fallback
+            const errorMessage = err.response?.data?.message ||
+                err.response?.data?.error ||
+                err.message ||
+                "Failed to process request";
+
+            // Log error response
+            console.error("Error Response:", errorMessage);
+
+            setError(errorMessage); // Set error for UI
             toast({
                 title: "Error",
-                description: err.response?.data?.error ||
-                    (isEditMode ? "Failed to update service" : "Failed to generate service"),
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {
@@ -329,31 +398,63 @@ export default function GenerateService() {
     };
 
     const handleDownload = async () => {
-        if (!service?.downloadUrl) return;
-
-        try {
-            const response = await axios.get(
-                `http://localhost:5000${service.downloadUrl}`,
-                { responseType: 'blob' }
-            );
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `service-${service.serviceId}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-        } catch (err) {
-            setError("Failed to download certificate. Please try again.");
-            toast({
-                title: "Error",
-                description: "Failed to download service report",
-                variant: "destructive",
-            });
+        if (!service?.serviceId) {
+          toast({
+            title: "Error",
+            description: "No service ID available",
+            variant: "destructive",
+          });
+          return;
         }
-    };
+      
+        try {
+          // Show loading state
+          setIsGeneratingPDF(true);
+          
+          // First ensure the PDF exists by calling the generate endpoint
+          await axios.get(`http://localhost:5000/api/v1/services/download/${service.serviceId}`, {
+            params: { ensure: true }, // Add this parameter to your backend
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+      
+          // Then download it
+          const timestamp = new Date().getTime();
+          const downloadUrl = `http://localhost:5000/api/v1/services/download/${service.serviceId}?t=${timestamp}`;
+          
+          // Open in new tab to avoid issues with popup blockers
+          window.open(downloadUrl, '_blank');
+          
+          // Send notification email
+          try {
+            await axios.post('http://localhost:5000/api/v1/services/sendMail', {
+              serviceId: service.serviceId
+            });
+            toast({
+              title: "Success",
+              description: "Certificate downloaded and notification sent!",
+              variant: "default",
+            });
+          } catch (emailError) {
+            console.error("Email error:", emailError);
+            toast({
+              title: "Downloaded",
+              description: "Certificate downloaded but notification failed",
+              variant: "default",
+            });
+          }
+        } catch (err) {
+          console.error("Download failed:", err);
+          toast({
+            title: "Error",
+            description: err.response?.data?.message || "Failed to download certificate",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingPDF(false);
+        }
+      };
 
     return (
         <SidebarProvider>
@@ -370,6 +471,7 @@ export default function GenerateService() {
                                         Add Model
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
+                                <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem className="hidden md:block">
                                     <BreadcrumbLink href="adminservice" >
                                         Admin Service
@@ -380,7 +482,6 @@ export default function GenerateService() {
                                     <BreadcrumbLink href="adminservicetable">
                                         Admin Service Table
                                     </BreadcrumbLink>
-
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -460,22 +561,18 @@ export default function GenerateService() {
                                     />
 
                                     <select
-                                        value={formData.serviceEngineerId}
+                                        name="serviceEngineerId"
+                                        value={formData.serviceEngineerId || ""}
                                         onChange={handleServiceEngineerChange}
                                         className="p-2 border rounded"
                                         required
-                                        disabled={isLoadingEngineers}
                                     >
                                         <option value="">Select Service Engineer</option>
-                                        {isLoadingEngineers ? (
-                                            <option>Loading engineers...</option>
-                                        ) : (
-                                            engineers.map((engineer) => (
-                                                <option key={engineer.id} value={engineer.id}>
-                                                    {engineer.name}
-                                                </option>
-                                            ))
-                                        )}
+                                        {serviceEngineers.map((engineer) => (
+                                            <option key={engineer._id} value={engineer._id}>
+                                                {engineer.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -565,24 +662,35 @@ export default function GenerateService() {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <select
-                                        value={formData.engineerId}
-                                        onChange={handleEngineerChange}
-                                        className="p-2 border rounded"
-                                        required
-                                        disabled={isLoadingEngineers}
-                                    >
-                                        <option value="">Select Engineer</option>
-                                        {isLoadingEngineers ? (
-                                            <option>Loading engineers...</option>
-                                        ) : (
-                                            engineers.map((engineer) => (
-                                                <option key={engineer.id} value={engineer.id}>
-                                                    {engineer.name}
-                                                </option>
-                                            ))
-                                        )}
-                                    </select>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Engineer *
+                                        </label>
+                                        <select
+                                            name="engineerId"
+                                            value={formData.engineerId || ""}
+                                            onChange={handleEngineerChange}
+                                            className="p-2 border rounded w-full"
+                                            required
+                                            disabled={isLoadingEngineers}
+                                        >
+                                            <option value="">Select Engineer</option>
+                                            {isLoadingEngineers ? (
+                                                <option>Loading engineers...</option>
+                                            ) : (
+                                                engineers.map((engineer) => (
+                                                    <option key={engineer._id} value={engineer._id}>
+                                                        {engineer.name}
+                                                    </option>
+                                                ))
+                                            )}
+                                        </select>
+                                        <input
+                                            type="hidden"
+                                            name="engineerName"
+                                            value={formData.engineerName}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex flex-col gap-4">
                                     <textarea
@@ -720,17 +828,17 @@ export default function GenerateService() {
 
                             {service && (
                                 <div className="mt-4 text-center">
-                                    <p className="text-green-600 mb-2">{service.message}</p>
+                                    <p className="text-green-600 mb-2">Click here to download the certificate</p>
                                     <button
                                         onClick={handleDownload}
                                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-                                    >
-                                        Download Certificate
+                                        disabled={isGeneratingPDF || loading}
+                                        >
+                                          {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
                                     </button>
                                 </div>
                             )}
                         </CardContent>
-                        
                     </Card>
                 </div>
             </SidebarInset>

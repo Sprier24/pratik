@@ -9,14 +9,14 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { ModeToggle } from "@/components/ModeToggle"
-import CertificateTable from "./tablecs"
+import Certificatetable from "@/app/user/certificaterecord/table"
 
 export const metadata: Metadata = {
     title: 'Certificate Table',
     description: 'View and manage certificates',
 }
 
-export default function CertificatePage() {
+export default function CertificatetablePage() {
     return (
         <SidebarProvider>
             <AppSidebar />
@@ -29,14 +29,14 @@ export default function CertificatePage() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/certificate">
-                                        Certificate
+                                    <BreadcrumbLink href="/user/dashboard">
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/certificateTable">
-                                        Certificate Table
+                                    <BreadcrumbLink href="/user/certificateform">
+                                        Create Certificate
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -46,10 +46,10 @@ export default function CertificatePage() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-7xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Certificate Table</CardTitle>
+                            <CardTitle className="text-3xl font-bold text-center">Certificate Record</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <CertificateTable />
+                            <Certificatetable />
                         </CardContent>
                     </Card>
                 </div>

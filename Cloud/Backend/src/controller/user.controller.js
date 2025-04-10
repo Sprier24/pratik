@@ -1,26 +1,31 @@
 const bcrypt = require('bcryptjs');
+const Admin = require('../model/admin.model');
 const Users = require('../model/user.model');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 
+const createToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",  
+  service: "gmail",
   auth: {
-      user: process.env.EMAIL_USER,  
-      pass: process.env.EMAIL_PASS,  
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-let loggedInUsersCount = 0; 
-const MAX_LOGINS = 10; 
+let loggedInUsersCount = 0;
+const MAX_LOGINS = 10;
 
 
 const register = async (req, res) => {
   try {
     const { name, email, password, contact } = req.body;
 
-    const userCount = await Users.countDocuments(); 
+    const userCount = await Users.countDocuments();
     if (userCount >= MAX_LOGINS) {
       return res.status(403).json({ message: 'Registration limit reached. Please try again later.' });
     }
@@ -57,13 +62,13 @@ const getUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
-      error: error.message 
+      error: error.message
     });
   }
-};  
+};
 
 
 
@@ -120,7 +125,7 @@ const deleteUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const { id } = req.params;
-  
+
   try {
     const user = await Users.findById(id);
     if (!user) {
@@ -154,39 +159,39 @@ const updateUser = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
 
-  console.log('Login attempt with email:', email); 
+  console.log('Login attempt with email:', email);
 
   // Validate input
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
-  const JWT_SECRET = process.env.JWT_SECRET || "randome#certificate"; 
+  const JWT_SECRET = process.env.JWT_SECRET || "randome#certificate";
 
   if (loggedInUsersCount >= MAX_LOGINS) {
     return res.status(403).json({ message: 'You have reached the login limit. Try again later.' });
   }
 
   try {
-    
+
     const normalizedEmail = email.toLowerCase();
 
     const user = await Users.findOne({ email: normalizedEmail });
 
     if (!user) {
-      console.log('User not found with email:', normalizedEmail); 
+      console.log('User not found with email:', normalizedEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      console.log('Invalid password for user:', normalizedEmail); 
+      console.log('Invalid password for user:', normalizedEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT tokens
-    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET); 
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_SECRET); 
+    const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET);
+    const refreshToken = jwt.sign({ userId: user._id }, JWT_SECRET);
 
     // Store the refresh token in the user record
     user.refreshToken = refreshToken;
@@ -241,126 +246,175 @@ const logout = async (req, res) => {
 
   loggedInUsersCount--;
 
-  res.sendStatus(204); 
+  res.sendStatus(204);
 };
 
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-      const user = await Users.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ success: false, message: "User not found" });
-      }
+    // Check both User and Admin collections
+    const user = await Users.findOne({ email }) || await Admin.findOne({ email });
 
+    if (user) {
       const token = createToken(user._id, { expiresIn: '1h' });
       user.resetPasswordToken = token;
-      user.resetPasswordExpires = Date.now() + 3600000; 
+      user.resetPasswordExpires = Date.now() + 3600000;
       await user.save();
 
       const resetLink = `http://localhost:3000/Resetpassword/${token}?email=${encodeURIComponent(user.email)}`;
 
       await transporter.sendMail({
-          from: process.env.EMAIL, 
-          to: email, 
-          subject: "Reset Password", 
-          html: `
-              <!DOCTYPE html>
-              <html lang="en">
-              <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Password Reset Request</title>
-                  <style>
-                      body {
-                          font-family: Arial, sans-serif;
-                          line-height: 1.6;
-                          color: #333;
-                          margin: 0;
-                          padding: 0;
-                          background-color: #f9f9f9;
-                      }
-                      .email-container {
-                          max-width: 600px;
-                          margin: 20px auto;
-                          padding: 25px;
-                          background-color: #ffffff;
-                          border: 1px solid #ddd;
-                          border-radius: 8px;
-                          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                      }
-                          .alert {
-                              background-color: #e6f2ff;
-                              color: #0056b3;
-                              padding: 12px;
-                              border-radius: 5px;
-                              text-align: center;
-                              font-weight: bold;
-                              margin-bottom: 15px;
-                              border: 1px solid #0056b3;
-                          }
-                      h4 {
-                          color: #333;
-                          font-size: 18px;
-                          margin: 0 0 15px 0;
-                      }
-                      p {
-                          font-size: 14px;
-                          color: #555;
-                          margin-bottom: 15px;
-                          line-height: 1.5;
-                      }
-                      .footer {
-                          margin-top: 20px;
-                          font-size: 13px;
-                          color: #777;
-                      }
-                      hr {
-                          border: 0;
-                          height: 1px;
-                          background: #ddd;
-                          margin: 20px 0;
-                      }
-                  </style>
-              </head>
-              <body>
-                  <div class="email-container">
-                      <div class="alert">🔑 Password Reset Request</div>
-                      <h4>Hello ${user.name},</h4>
-                      <hr> <!-- Visual separation -->
-                      <p>We received a request to reset your password for your CRM account. If you made this request, you can reset your password by clicking the button below.</p>
-                      
-                      <p><strong>This link can be used only once and will expire in 1 hour.</strong></p>
-
-                      <div >
-                          <p><a href="${resetLink}"     
-                          style =                         
-                          "background-color: #0056b3;
-                          color: white;
-                          padding: 6px 20px;
-                          text-decoration: none;
-                          border-radius: 5px;
-                          font-weight: bold;
-                          display: inline-block;">Reset Password</a></p>
-                      </div>
-
-                      <p>If you didn’t request this, ignore this email, and your account will remain secure.</p>
-                      
-                      <p>Need help? Contact us at <a href="mailto:support@crmteam.com">support@crmteam.com</a>.</p>
-
-                      <div class="footer">
-                          <p>Best regards,<br><strong>The CRM Team</strong></p>
-                      </div>
-                  </div>
-              </body>
-              </html>
-
-          `
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: "Password Reset Request",
+        html: generateResetEmailHtml(user.name, resetLink)
       });
-      res.json({ success: true, message: "Password reset link sent to your email" });
+    }
+
+    // Return same response whether user exists or not (security best practice)
+    res.json({
+      success: true,
+      message: "If an account exists with this email, you'll receive a password reset link."
+    });
+
   } catch (error) {
-      console.error("Forgot Password Error:", error);
-      res.status(500).json({ success: false, message: "Server error" });
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while processing your request"
+    });
+  }
+};
+
+// Helper function for email template
+const generateResetEmailHtml = (name, resetLink) => {
+  return `
+    <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Password Reset Request</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            line-height: 1.6;
+                            color: #333;
+                            margin: 0;
+                            padding: 0;
+                            background-color: #f9f9f9;
+                        }
+                        .email-container {
+                            max-width: 600px;
+                            margin: 20px auto;
+                            padding: 25px;
+                            background-color: #ffffff;
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                        }
+                            .alert {
+                                background-color: #e6f2ff;
+                                color: #0056b3;
+                                padding: 12px;
+                                border-radius: 5px;
+                                text-align: center;
+                                font-weight: bold;
+                                margin-bottom: 15px;
+                                border: 1px solid #0056b3;
+                            }
+                        h4 {
+                            color: #333;
+                            font-size: 18px;
+                            margin: 0 0 15px 0;
+                        }
+                        p {
+                            font-size: 14px;
+                            color: #555;
+                            margin-bottom: 15px;
+                            line-height: 1.5;
+                        }
+                        .footer {
+                            margin-top: 20px;
+                            font-size: 13px;
+                            color: #777;
+                        }
+                        hr {
+                            border: 0;
+                            height: 1px;
+                            background: #ddd;
+                            margin: 20px 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="alert">🔑 Password Reset Request</div>
+                        <h4>Hello ${name},</h4>
+                        <hr> <!-- Visual separation -->
+                        <p>We received a request to reset your password for your  account. If you made this request, you can reset your password by clicking the button below.</p>
+                        
+                        <p><strong>This link can be used only once and will expire in 1 hour.</strong></p>
+
+                        <div >
+                            <p><a href="${resetLink}"     
+                            style =                         
+                            "background-color: #0056b3;
+                            color: white;
+                            padding: 6px 20px;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            font-weight: bold;
+                            display: inline-block;">Reset Password</a></p>
+                        </div>
+
+                        <p>If you didn’t request this, ignore this email, and your account will remain secure.</p>
+                        
+                        <p>Need help? Contact us at <a href="mailto:support@crmteam.com">support@crmteam.com</a>.</p>
+
+                        <div class="footer">
+                            <p>Best regards,<br><strong>The CRM Team</strong></p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+  `;
+};
+
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check both collections for the user
+    let user = await Users.findById(decoded.id);
+    if (!user) {
+      user = await Admin.findById(decoded.id);
+    }
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return res.json({ 
+      success: true, 
+      message: "Password reset successfully", 
+      email: user.email,
+      userType: user instanceof Users ? 'user' : 'admin' // Indicate which type of user was reset
+    });
+
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -371,7 +425,8 @@ module.exports = {
   logout,
   getUsers,
   deleteUser,
-  updateUser, 
+  updateUser,
   getUserById,
   forgotPassword,
+  resetPassword,
 };

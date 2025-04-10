@@ -2,6 +2,8 @@ const path = require("path");
 const fs = require("fs");
 const generatePDFService = require("../utils/serviceGenerator");
 const Service = require("../model/serviceModel");
+const nodemailer = require("nodemailer");
+
 
 const getServices = async (req, res) => {
     try {
@@ -298,6 +300,85 @@ const getServiceById = async (req, res) => {
 };
 
 
+const sendCertificateNotification = async (req, res) => {
+    try {
+        const { serviceId } = req.body;
+
+        if (!serviceId) {
+            return res.status(400).json({ error: "Service ID is required" });
+        }
+
+        // Find the service
+        let service;
+        if (/^[0-9a-fA-F]{24}$/.test(serviceId)) {
+            service = await Service.findById(serviceId);
+        } else {
+            service = await Service.findOne({ serviceId });
+        }
+
+        if (!service) {
+            return res.status(404).json({ error: "Service not found" });
+        }
+
+        // Get the PDF path
+        const pdfPath = path.join(process.cwd(), "services", `${service.serviceId}.pdf`);
+
+        // Check if the PDF exists
+        if (!fs.existsSync(pdfPath)) {
+            return res.status(404).json({ error: "PDF certificate not found. Please generate it first." });
+        }
+
+        // Create transporter
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        const defaultRecipient = process.env.DEFAULT_NOTIFICATION_EMAIL;
+        if (!defaultRecipient) {
+            return res.status(400).json({ error: "Default notification email not configured" });
+        }
+
+        // Email options with attachment
+        const mailOptions = {
+            from: process.env.EMAIL_FROM,
+            to: defaultRecipient,
+            subject: `Certificate Generated - ${service.serviceId}`,
+            text: `A new certificate has been generated for ${service.customerName}.\n\n` +
+                  `Service ID: ${service.serviceId}\n` +
+                  `Customer: ${service.customerName}\n` +
+                  `Date: ${service.date.toDateString()}\n\n` +
+                  `Certificate is attached as a PDF.`,
+            attachments: [
+                {
+                    filename: `certificate-${service.serviceId}.pdf`,
+                    path: pdfPath,
+                    contentType: 'application/pdf'
+                }
+            ]
+        };
+
+        // Send the email
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            message: "Notification email with certificate sent successfully",
+            serviceId: service.serviceId,
+            recipient: defaultRecipient
+        });
+
+    } catch (error) {
+        console.error("Error sending notification email:", error);
+        res.status(500).json({
+            error: "Failed to send notification email",
+            details: error.message
+        });
+    }
+};
+
 
 module.exports ={
     createService,
@@ -306,4 +387,5 @@ module.exports ={
     updateService,
     deleteService,
     getServiceById,
+    sendCertificateNotification,
 }

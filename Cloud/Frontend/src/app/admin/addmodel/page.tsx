@@ -39,6 +39,10 @@ export default function AddModel() {
     const [engineers, setEngineers] = useState<{ name: string; id: string }[]>([]);
     const [newEngineer, setNewEngineer] = useState<string>("");
     const [selectedEngineer, setSelectedEngineer] = useState<string>("");
+    const [serviceEngineers, setServiceEngineers] = useState<{ name: string; id: string }[]>([]);
+    const [newServiceEngineer, setNewServiceEngineer] = useState<string>("");
+    const [selectedServiceEngineer, setSelectedServiceEngineer] = useState<string>("");
+
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -53,6 +57,58 @@ export default function AddModel() {
 
         fetchCategories();
     }, []);
+
+    useEffect(() => {
+        const fetchServiceEngineers = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/v1/ServiceEngineer/getServiceEngineers");
+                const data = await response.json();
+                setServiceEngineers(data);
+            } catch (error) {
+                console.error("Error fetching service engineers:", error);
+            }
+        };
+        fetchServiceEngineers();
+    }, []);
+
+    const handleAddServiceEngineer = async () => {
+        if (newServiceEngineer) {
+          setLoading(true);
+          try {
+            const response = await fetch("http://localhost:5000/api/v1/ServiceEngineer/addServiceEngineer", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ name: newServiceEngineer }),
+            });
+      
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+              throw new Error("Server did not return JSON");
+            }
+      
+            const result = await response.json();
+            
+            if (!response.ok) {
+              throw new Error(result.error || "Failed to add service engineer");
+            }
+      
+            setServiceEngineers([...serviceEngineers, { name: newServiceEngineer, id: result.id }]);
+            setNewServiceEngineer("");
+            alert("Service engineer added successfully");
+          } catch (error) {
+            console.error("Error adding service engineer:", error);
+            alert(error.message || "Failed to add service engineer. Check console for details.");
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          alert("Please enter a service engineer name.");
+        }
+      };
+
 
     useEffect(() => {
         const fetchEngineers = async () => {
@@ -213,7 +269,7 @@ export default function AddModel() {
 
     return (
         <SidebarProvider>
-            <AppSidebar/>
+            <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -278,8 +334,8 @@ export default function AddModel() {
                                     />
                                 </div>
 
-                                
-                                
+
+
 
                                 {/* Add New Model and Range */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -341,6 +397,41 @@ export default function AddModel() {
                                 >
                                     {loading ? "Adding..." : "Add Engineer"}
                                 </button>
+
+                                <h2 className="text-lg font-bold mt-4">Add New Service Engineer</h2>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                    <select
+                                        name="selectedServiceEngineer"
+                                        value={selectedServiceEngineer}
+                                        onChange={(e) => setSelectedServiceEngineer(e.target.value)}
+                                        className="p-2 border rounded"
+                                    >
+                                        <option value="">Select Service Engineer</option>
+                                        {serviceEngineers.map((engineer) => (
+                                            <option key={engineer.id} value={engineer.id}>
+                                                {engineer.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <input
+                                        type="text"
+                                        placeholder="New Service Engineer Name"
+                                        value={newServiceEngineer}
+                                        onChange={(e) => setNewServiceEngineer(e.target.value)}
+                                        className="p-2 border rounded"
+                                    />
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddServiceEngineer}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                                    disabled={loading}
+                                >
+                                    {loading ? "Adding..." : "Add Service Engineer"}
+                                </button>
+
                             </form>
                         </CardContent>
                         <CardFooter></CardFooter>

@@ -8,7 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { ModeToggle } from "@/components/ModeToggle"
-import GenerateService from "./form"
+import Serviceform from "@/app/user/serviceform/form"
 
 export default function CertificatePage() {
     return (
@@ -23,16 +23,15 @@ export default function CertificatePage() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink >
-                                        Service
+                                    <BreadcrumbLink href="/user/dashboard">
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block"/>
                                 <BreadcrumbItem>
-                                <BreadcrumbLink href="/serviceTable">
-                                        Service Table
+                                <BreadcrumbLink href="/user/servicerecord">
+                                        Service Record
                                     </BreadcrumbLink>
-                                    
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -41,13 +40,13 @@ export default function CertificatePage() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-7xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Service</CardTitle>
+                            <CardTitle className="text-3xl font-bold text-center">Create Service</CardTitle>
                             <CardDescription className="text-center">
-                                Please fill out the form below to generate a new Service.
+                                Please fill out the form below to generate a new Service
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <GenerateService />
+                            <Serviceform />
                         </CardContent>
                     </Card>
                 </div>

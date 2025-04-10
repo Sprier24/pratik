@@ -1,8 +1,27 @@
 "use client";
+
 import * as React from "react";
+import {
+  AudioWaveform,
+  Command,
+  File,
+  GalleryVerticalEnd,
+  Settings,
+  CircleUser,
+  ListEndIcon,
+  InfoIcon
+} from "lucide-react";
+
 import { NavMain } from "@/components/nav-main";
-import { File, Settings, CircleUser, InfoIcon, LayoutDashboard } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
+import { NavUser } from "@/app/admin/adminComponents/nav-admin";
+import { TeamSwitcher } from "@/components/team-switcher";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -10,35 +29,41 @@ const data = {
     email: "",
     avatar: "",
   },
-  navMain: [
+  teams: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: LayoutDashboard,
-      items: [
-        {
-          title: "Dashboard",
-          url: "/dashboard",
-        }
-      ],
+      name: "Spriers",
+      logo: GalleryVerticalEnd,
+      plan: "Enterprise",
     },
+    {
+      name: "OSCorp",
+      logo: AudioWaveform,
+      plan: "Startup",
+    },
+    {
+      name: "Evil Corp",
+      logo: Command,
+      plan: "Free",
+    },
+  ],
+  navMain: [
     {
       title: "Company",
       url: "#",
       icon: InfoIcon,
       items: [
         {
-          title: "Company Details",
-          url: "admin/companytable",
+          title: "Company Record",
+          url: "/admin/companyrecord",
         },
         {
-          title: "Contact Person",
-          url: "admin/contacttable",
+          title: "Contact Record",
+          url: "/admin/contactrecord",
         },
       ],
     },
     {
-      title: "Users",
+      title: "User",
       url: "#",
       icon: CircleUser,
 
@@ -48,8 +73,8 @@ const data = {
           url: "admin/userform",
         },
         {
-          title: "User Details",
-          url: "admin/usertable",
+          title: "User Record",
+          url: "/admin/userrecord",
         },
       ],
     },
@@ -59,20 +84,20 @@ const data = {
       icon: File,
       items: [
         {
-          title: "Admin Certificate",
-          url: "admin/certificateform",
+          title: "Create Certificate",
+          url: "/admin/certificateform",
         },
         {
-          title: "Admin Certificate Table",
-          url: "admin/certificatetable",
+          title: "Certificate Record",
+          url: "/admin/certificaterecord",
         },
         {
-          title: "Admin Service",
-          url: "admin/serviceform",
+          title: "Create Service",
+          url: "/admin/serviceform",
         },
         {
-          title: "Admin Service Table",
-          url: "admin/servicetable",
+          title: "Service Record",
+          url: "/admin/servicerecord",
         },
       ],
     },
@@ -83,23 +108,28 @@ const data = {
       items: [
         {
           title: "Add Model",
-          url: "admin/addmodel",
+          url: "/admin/addmodel",
         },
       ],
     },
   ],
 };
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isClient, setIsClient] = React.useState(false);
   const [activePath, setActivePath] = React.useState("");
   const [activeDropdowns, setActiveDropdowns] = React.useState<{ [key: string]: boolean }>({});
+
+
   React.useEffect(() => {
     setIsClient(true);
     setActivePath(window.location.pathname);
+
+
     const savedDropdowns = JSON.parse(localStorage.getItem('activeDropdowns') || '{}');
     setActiveDropdowns(savedDropdowns);
   }, []);
+
 
   const toggleDropdown = (dropdownTitle: string) => {
     setActiveDropdowns((prev) => {
@@ -110,36 +140,41 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
     });
   };
 
+
   const updatedNavMain = React.useMemo(
     () =>
       data.navMain.map((item) => {
-        const isItemActive = item.items?.some(
-          (subItem) => isClient && activePath === `/admin${subItem.url}`
+        const isItemActive = item.items.some(
+          (subItem) => isClient && activePath === `/admin${subItem.url}` // Prepend /admin dynamically
         );
+
         return {
           ...item,
           isActive: isItemActive,
           isOpen: activeDropdowns[item.title] ?? false,
           toggleDropdown: () => toggleDropdown(item.title),
-          items: item.items
-            ? item.items.map((subItem) => ({
-              ...subItem,
-              isActive: isClient && activePath === `/admin${subItem.url}`,
-            }))
-            : [],
+          items: item.items.map((subItem) => ({
+            ...subItem,
+            isActive: isClient && activePath === `/admin/${subItem.url}`, // Prepend /admin dynamically
+          })),
         };
       }),
     [isClient, activePath, activeDropdowns]
   );
 
+
+
   return (
     <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <TeamSwitcher teams={data.teams} />
+      </SidebarHeader>
       <SidebarContent>
         <NavMain items={updatedNavMain} />
       </SidebarContent>
-      {/* <SidebarFooter>
+      <SidebarFooter>
         <NavUser user={data.user} />
-      </SidebarFooter> */}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

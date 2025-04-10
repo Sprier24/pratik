@@ -8,31 +8,31 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { ModeToggle } from "@/components/ModeToggle"
-import ServiceTable from "./tableces"
+import Servicetable from "@/app/user/servicerecord/table"
 
 export default function CertificatePage() {
     return (
         <SidebarProvider>
-            <AppSidebar/>
+            <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
-                        <SidebarTrigger className="-ml-1"/>
-                        <ModeToggle/>
-                        <Separator orientation="vertical" className="mr-2 h-4"/>
+                        <SidebarTrigger className="-ml-1" />
+                        <ModeToggle />
+                        <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/service" >
-                                        Service
+                                    <BreadcrumbLink href="/user/dashboard" >
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block"/>
+                                <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                <BreadcrumbLink href="/serviceTable">
-                                        Service Table
+                                    <BreadcrumbLink href="/user/serviceform">
+                                        Create Service
                                     </BreadcrumbLink>
-                                    
+
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -41,10 +41,10 @@ export default function CertificatePage() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-7xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Service Table</CardTitle>
+                            <CardTitle className="text-3xl font-bold text-center">Service Record</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ServiceTable />
+                            <Servicetable />
                         </CardContent>
                     </Card>
                 </div>
