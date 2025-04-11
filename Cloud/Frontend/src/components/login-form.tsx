@@ -94,7 +94,7 @@ export function LoginForm() {
           title: "Login successful",
           description: "You have logged in successfully",
         });
-        router.push("/dashboard");
+        router.push("/user/dashboard");
         return;
       }
 
@@ -116,7 +116,7 @@ export function LoginForm() {
           title: "Admin login successful",
           description: "You have logged in as admin",
         });
-        router.push("/admin");
+        router.push("/admin/dashboard");
         return;
       }
 

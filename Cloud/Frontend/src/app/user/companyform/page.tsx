@@ -149,7 +149,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="companyName"
-                                        placeholder="Company name"
+                                        placeholder="Company Name"
                                         value={formData.companyName}
                                         onChange={handleChange}
                                         className="p-2 border rounded w-full"
@@ -159,7 +159,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="address"
-                                        placeholder="Address"
+                                        placeholder="Company Address"
                                         value={formData.address}
                                         onChange={handleChange}
                                         className="p-2 border rounded w-full"
@@ -167,7 +167,6 @@ export default function AddCategory() {
                                         disabled={loading}
                                     />
                                 </div>
-
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
@@ -181,18 +180,6 @@ export default function AddCategory() {
                                     />
                                     <input
                                         type="text"
-                                        name="website"
-                                        placeholder="Website"
-                                        value={formData.website}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
                                         name="industriesType"
                                         placeholder="Industries Type"
                                         value={formData.industriesType}
@@ -200,6 +187,9 @@ export default function AddCategory() {
                                         className="p-2 border rounded w-full"
                                         disabled={loading}
                                     />
+
+                                </div>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
                                         name="gstNumber"
@@ -207,6 +197,16 @@ export default function AddCategory() {
                                         value={formData.gstNumber}
                                         onChange={handleChange}
                                         className="p-2 border rounded w-full"
+                                        disabled={loading}
+                                    />
+                                    <input
+                                        type="text"
+                                        name="website"
+                                        placeholder="Website"
+                                        value={formData.website}
+                                        onChange={handleChange}
+                                        className="p-2 border rounded w-full"
+                                        required
                                         disabled={loading}
                                     />
                                 </div>

@@ -35,12 +35,12 @@ const generateUniqueId = () => {
 
 // Define columns for the table
 const columns = [
-    { name: "FIRST NAME", uid: "firstName", sortable: true, width: "120px" },
-    { name: "MIDDLE NAME", uid: "middleName", sortable: true, width: "120px" },
-    { name: "LAST NAME", uid: "lastName", sortable: true, width: "120px" },
-    { name: "CONTACT NO", uid: "contactNo", sortable: true, width: "120px" },
-    { name: "EMAIL", uid: "email", sortable: true, width: "120px" },
-    { name: "DESIGNATION", uid: "designation", sortable: true, width: "120px" },
+    { name: "First Name", uid: "firstName", sortable: true, width: "120px" },
+    { name: "Middle Name", uid: "middleName", sortable: true, width: "120px" },
+    { name: "Last Name", uid: "lastName", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contactNo", sortable: true, width: "120px" },
+    { name: "Email Address", uid: "email", sortable: true, width: "120px" },
+    { name: "Designation", uid: "designation", sortable: true, width: "120px" },
 ];
 
 // Define initial visible columns
@@ -148,7 +148,7 @@ export default function ContactPersonDetailsTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]"
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -156,18 +156,19 @@ export default function ContactPersonDetailsTable() {
                     />
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {contactPersons.length} contacts</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                            defaultValue="15"
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
+                    <span className="text-default-400 text-small">Total {contactPersons.length} account</span>
+                    <label className="flex items-center text-default-400 text-small gap-2">
+                        Rows per page
+                        <div className="relative">
+                            <select
+                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                onChange={onRowsPerPageChange}
+                            >
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
                     </label>
                 </div>
             </div>
@@ -254,16 +255,12 @@ export default function ContactPersonDetailsTable() {
                                         <TableColumn key={column.uid}>{column.name}</TableColumn>
                                     ))}
                                 </TableHeader>
-                                <TableBody>
-                                    {paginatedItems.map((contact) => (
-                                        <TableRow key={contact.key}>
-                                            {columns.map((column) => (
-                                                <TableCell key={column.uid}>
-                                                    {(column.uid)}
-                                                </TableCell>
-                                            ))}
+                                <TableBody emptyContent={"Create contact and add data"} items={paginatedItems}>
+                                    {(item) => (
+                                        <TableRow key={item._id}>
+                                            {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{(columnKey as string)}</TableCell>}
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                             {bottomContent}

@@ -56,21 +56,15 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-  { name: "CERTIFICATE NO", uid: "certificateNo", sortable: true, width: "120px" },
-  { name: "CUSTOMER", uid: "customerName", sortable: true, width: "120px" },
-  { name: "SITE LOCATION", uid: "siteLocation", sortable: true, width: "120px" },
-  { name: "MAKE MODEL", uid: "makeModel", sortable: true, width: "120px" },
-  // { name: "RANGE", uid: "range", sortable: true, width: "120px" },
-  { name: "SERIAL NO", uid: "serialNo", sortable: true, width: "120px" },
-  // { name: "CALIBRATION GAS", uid: "calibrationGas", sortable: true, width: "120px" },
-  // { name: "GAS CANISTER DETAILS", uid: "gasCanisterDetails", sortable: true, width: "120px" },
-  // { name: "DATE OF CALIBRATION", uid: "dateOfCalibration", sortable: true, width: "120px" },
-  // { name: "CALIBRATION DUE DATE", uid: "calibrationDueDate", sortable: true, width: "120px" },
-  { name: "ENGINEER NAME", uid: "engineerName", sortable: true, width: "120px" },
-
-  { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+  { name: "Certificate Number", uid: "certificateNo", sortable: true, width: "120px" },
+  { name: "Customer Name", uid: "customerName", sortable: true, width: "120px" },
+  { name: "Site Location", uid: "siteLocation", sortable: true, width: "120px" },
+  { name: "Model", uid: "makeModel", sortable: true, width: "120px" },
+  { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
+  { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
+  { name: "Download", uid: "actions", sortable: true, width: "100px" },
 ];
-const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "range", "serialNo", "calibrationGas", "gasCanisterDetails", "dateOfCalibration", "calibrationDueDate", "engineerName", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "serialNo", "engineerName", "actions"];
 
 
 export default function Certificatetable() {
@@ -201,11 +195,11 @@ export default function Certificatetable() {
     try {
       setIsDownloading(certificateId);
       console.log('Attempting to download certificate:', certificateId);
-      
+
       // Now download the PDF directly
       const pdfResponse = await axios.get(
         `http://localhost:5000/api/v1/certificates/download/${certificateId}`,
-        { 
+        {
           responseType: 'blob',
           headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`,
@@ -238,14 +232,14 @@ export default function Certificatetable() {
     } catch (err) {
       console.error('Download error:', err);
       let errorMessage = "Failed to download certificate. Please try again.";
-      
+
       if (axios.isAxiosError(err)) {
         console.error('Error details:', {
           status: err.response?.status,
           data: err.response?.data,
           url: err.config?.url
         });
-        
+
         if (err.response?.status === 401) {
           errorMessage = "Please login again to download the certificate.";
         } else if (err.response?.status === 404) {
@@ -254,7 +248,7 @@ export default function Certificatetable() {
           errorMessage = "No internet connection. Please check your network.";
         }
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -303,7 +297,7 @@ export default function Certificatetable() {
           <Input
             isClearable
             className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-            placeholder="Search by name..."
+            placeholder="Search"
             startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
@@ -314,17 +308,18 @@ export default function Certificatetable() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">Total {certificates.length} certificates</span>
-          <label className="flex items-center text-default-400 text-small">
-            Rows per page:
-            <select
-              className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-              onChange={onRowsPerPageChange}
-              defaultValue="15"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
+          <label className="flex items-center text-default-400 text-small gap-2">
+            Rows per page
+            <div className="relative">
+              <select
+                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                onChange={onRowsPerPageChange}
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
+            </div>
           </label>
         </div>
       </div>
@@ -406,7 +401,7 @@ export default function Certificatetable() {
       return (
         <div className="relative flex items-center gap-2">
           <Tooltip color="danger" content="Download Certificate">
-            <span 
+            <span
               className="text-lg text-danger cursor-pointer active:opacity-50"
               onClick={(e) => {
                 e.preventDefault();
@@ -460,7 +455,7 @@ export default function Certificatetable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No certificate found"} items={sortedItems}>
+        <TableBody emptyContent={"Create certificate and add data"} items={sortedItems}>
           {(item) => (
             <TableRow key={item._id}>
               {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

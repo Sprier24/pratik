@@ -37,13 +37,13 @@ const generateUniqueId = () => {
 };
 
 const columns = [
-    { name: "COMPANY NAME", uid: "companyName", sortable: true, width: "120px" },
-    { name: "ADDRESS", uid: "address", sortable: true, width: "120px" },
-    { name: "GST NUMBER", uid: "gstNumber", sortable: true, width: "120px" },
-    { name: "INDUSTRIES", uid: "industries", sortable: true, width: "120px" },
-    { name: "WEBSITE", uid: "website", sortable: true, width: "120px" },
-    { name: "INDUSTRIES TYPE", uid: "industriesType", sortable: true, width: "120px" },
-    { name: "FLAG", uid: "flag", sortable: true, width: "120px" },
+    { name: "Company Name", uid: "companyName", sortable: true, width: "120px" },
+    { name: "Company Address", uid: "address", sortable: true, width: "120px" },
+    { name: "Industries", uid: "industries", sortable: true, width: "120px" },
+    { name: "Industries Type", uid: "industriesType", sortable: true, width: "120px" },
+    { name: "GST Number", uid: "gstNumber", sortable: true, width: "120px" },
+    { name: "Website", uid: "website", sortable: true, width: "120px" },
+    { name: "Flag", uid: "flag", sortable: true, width: "120px" },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = ["companyName", "address", "gstNumber", "industries", "website", "industriesType", "flag"];
@@ -58,7 +58,7 @@ export default function CompanyDetailsTable() {
     const [filterValue, setFilterValue] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
-    
+
     const [sortDescriptor, setSortDescriptor] = useState({
         column: "companyName",
         direction: "ascending" as "ascending" | "descending",
@@ -78,15 +78,15 @@ export default function CompanyDetailsTable() {
                     }
                 }
             );
-    
-            let companiesData = Array.isArray(response.data) ? response.data : 
-                                response.data?.data ? response.data.data : [];
-            
+
+            let companiesData = Array.isArray(response.data) ? response.data :
+                response.data?.data ? response.data.data : [];
+
             const companiesWithKeys = companiesData.map((company: CompanyDetails) => ({
                 ...company,
                 key: company._id || generateUniqueId()
             }));
-    
+
             setCompanies(companiesWithKeys);
             setError(null);
         } catch (error) {
@@ -95,7 +95,7 @@ export default function CompanyDetailsTable() {
             setCompanies([]);
         }
     };
-    
+
     useEffect(() => {
         fetchCompanies();
     }, []);
@@ -106,10 +106,10 @@ export default function CompanyDetailsTable() {
 
     const filteredItems = React.useMemo(() => {
         let filtered = [...companies];
-        
+
         if (hasSearchFilter) {
             const searchLower = filterValue.toLowerCase();
-            filtered = filtered.filter(company => 
+            filtered = filtered.filter(company =>
                 company.companyName.toLowerCase().includes(searchLower) ||
                 company.gstNumber.toLowerCase().includes(searchLower)
             );
@@ -122,11 +122,11 @@ export default function CompanyDetailsTable() {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof CompanyDetails] || "";
             const second = b[sortDescriptor.column as keyof CompanyDetails] || "";
-            
+
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-            
+
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
@@ -158,7 +158,7 @@ export default function CompanyDetailsTable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]"
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -166,18 +166,19 @@ export default function CompanyDetailsTable() {
                     />
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {companies.length} companies</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                            defaultValue="15"
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
+                    <span className="text-default-400 text-small">Total {companies.length} company</span>
+                    <label className="flex items-center text-default-400 text-small gap-2">
+                        Rows per page
+                        <div className="relative">
+                            <select
+                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                onChange={onRowsPerPageChange}
+                            >
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
                     </label>
                 </div>
             </div>
@@ -288,7 +289,7 @@ export default function CompanyDetailsTable() {
                                             </TableColumn>
                                         )}
                                     </TableHeader>
-                                    <TableBody emptyContent={"No companies found"} items={paginatedItems}>
+                                    <TableBody emptyContent={"Create company and add data"} items={paginatedItems}>
                                         {(item) => (
                                             <TableRow key={item._id}>
                                                 {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{(columnKey as string)}</TableCell>}
@@ -302,5 +303,5 @@ export default function CompanyDetailsTable() {
                 </div>
             </SidebarInset>
         </SidebarProvider>
-    );  
+    );
 }

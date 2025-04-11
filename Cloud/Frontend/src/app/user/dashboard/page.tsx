@@ -668,9 +668,6 @@ export default function Page() {
                                 <div className="flex items-center justify-between">
                                     <div className="text-2xl font-bold">{certificates.length}</div>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                </p>
                             </CardContent>
                         </Card>
                         <Card className="rounded-lg border shadow-sm">
@@ -681,9 +678,6 @@ export default function Page() {
                                 <div className="flex items-center justify-between">
                                     <div className="text-2xl font-bold">{services.length}</div>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                </p>
                             </CardContent>
                         </Card>
                     </div>

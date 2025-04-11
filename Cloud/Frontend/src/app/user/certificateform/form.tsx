@@ -46,7 +46,7 @@ interface engineer {
 
 export default function GenerateCertificate() {
   const [formData, setFormData] = useState<CertificateRequest>({
-    certificateNo: "", 
+    certificateNo: "",
     customerName: "",
     siteLocation: "",
     makeModel: "",
@@ -61,11 +61,10 @@ export default function GenerateCertificate() {
     engineerName: "",
     status: "",
   });
-  
+
   const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [timePeriod, setTimePeriod] = useState<number | null>(null);
@@ -108,7 +107,7 @@ export default function GenerateCertificate() {
     fetchEngineers();
   }, []);
 
-  
+
 
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,7 +261,7 @@ export default function GenerateCertificate() {
     } catch (err) {
       setError("Failed to download certificate. Please try again.");
     }
-  };  
+  };
 
   return (
     <div>
@@ -272,7 +271,7 @@ export default function GenerateCertificate() {
           <input
             type="text"
             name="customerName"
-            placeholder="Enter Name"
+            placeholder="Customer Name"
             value={formData.customerName}
             onChange={handleChange}
             className="p-2 border rounded"
@@ -280,7 +279,7 @@ export default function GenerateCertificate() {
           <input
             type="text"
             name="siteLocation"
-            placeholder="Enter Site Location"
+            placeholder="Site Location"
             value={formData.siteLocation}
             onChange={handleChange}
             className="p-2 border rounded"
@@ -295,7 +294,7 @@ export default function GenerateCertificate() {
             required
             disabled={isLoadingModels}
           >
-            <option value="">Select Make and Model</option>
+            <option value="">Select Model</option>
             {isLoadingModels ? (
               <option value="" disabled>Loading models...</option>
             ) : models.length > 0 ? (
@@ -306,9 +305,6 @@ export default function GenerateCertificate() {
               ))
             ) : (
               <>
-                <option value="GMIleakSurveyor">GMI leak Surveyor</option>
-                <option value="GMIGT41Series">GMI GT 41 Series</option>
-                <option value="GMIGT44">GMI GT 44</option>
               </>
             )}
           </select>
@@ -327,7 +323,7 @@ export default function GenerateCertificate() {
           <input
             type="text"
             name="serialNo"
-            placeholder="Enter Serial Number"
+            placeholder="Serial Number"
             value={formData.serialNo}
             onChange={handleChange}
             className="p-2 border rounded"
@@ -336,7 +332,7 @@ export default function GenerateCertificate() {
           <input
             type="text"
             name="calibrationGas"
-            placeholder="Enter Calibration Gas"
+            placeholder="Calibration Gas"
             value={formData.calibrationGas}
             onChange={handleChange}
             className="p-2 border rounded"
@@ -346,11 +342,11 @@ export default function GenerateCertificate() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-1">
           <textarea
             name="gasCanisterDetails"
-            placeholder="Enter Gas Canister Details"
+            placeholder="Gas Canister Details"
             value={formData.gasCanisterDetails}
             onChange={handleChange}
-            className="p-2 border rounded"
-
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+            rows={3}
           />
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -437,7 +433,7 @@ export default function GenerateCertificate() {
             className="bg-black-500 text-white px-4 py-2 border rounded hover:bg-gray-900"
             disabled={formData.observations.length >= 5}
           >
-            Add Observation
+            Create Observation
           </button>
         </div>
         <table className="table-auto border-collapse border border-gray-500 rounded w-full">
@@ -447,7 +443,7 @@ export default function GenerateCertificate() {
               <th className="border p-2">Gas</th>
               <th className="border p-2">Before Calibration</th>
               <th className="border p-2">After Calibration</th>
-              <th className="border p-2">Remove</th>
+              <th className="border p-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -510,7 +506,7 @@ export default function GenerateCertificate() {
 
         <button
           type="submit"
-          className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md"
+          className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
           disabled={loading}
         >
           {loading ? "Generating..." : "Generate Certificate"}
