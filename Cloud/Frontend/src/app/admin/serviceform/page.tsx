@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import axios from "axios";
 import { toast } from "@heroui/react";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface EngineerRemarks {
     serviceSpares: string;
@@ -173,9 +174,9 @@ export default function GenerateService() {
             const generateReportNo = () => {
                 const date = new Date();
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
-                return `SRV-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
+                return `SRV-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
             };
-            
+
             setFormData(prev => ({
                 ...prev,
                 reportNo: generateReportNo()
@@ -309,9 +310,9 @@ export default function GenerateService() {
         const requiredFields = [
             'customerName', 'customerLocation', 'contactPerson', 'contactNumber',
             'serviceEngineer', 'date', 'place', 'placeOptions', 'natureOfJob',
-            'makeModelNumberoftheInstrumentQuantity','serialNumberoftheInstrumentCalibratedOK','serialNumberoftheFaultyNonWorkingInstruments',
-             'engineerRemarks','engineerName','engineerId', 'status',
-            
+            'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK', 'serialNumberoftheFaultyNonWorkingInstruments',
+            'engineerRemarks', 'engineerName', 'engineerId', 'status',
+
         ];
 
         const missingFields = requiredFields.filter(field => !submissionData[field as keyof typeof submissionData]?.toString().trim());
@@ -399,88 +400,83 @@ export default function GenerateService() {
 
     const handleDownload = async () => {
         if (!service?.serviceId) {
-          toast({
-            title: "Error",
-            description: "No service ID available",
-            variant: "destructive",
-          });
-          return;
+            toast({
+                title: "Error",
+                description: "No service ID available",
+                variant: "destructive",
+            });
+            return;
         }
-      
+
         try {
-          // Show loading state
-          setIsGeneratingPDF(true);
-          
-          // First ensure the PDF exists by calling the generate endpoint
-          await axios.get(`http://localhost:5000/api/v1/services/download/${service.serviceId}`, {
-            params: { ensure: true }, // Add this parameter to your backend
-            headers: {
-              'Cache-Control': 'no-cache'
+            // Show loading state
+            setIsGeneratingPDF(true);
+
+            // First ensure the PDF exists by calling the generate endpoint
+            await axios.get(`http://localhost:5000/api/v1/services/download/${service.serviceId}`, {
+                params: { ensure: true }, // Add this parameter to your backend
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            });
+
+            // Then download it
+            const timestamp = new Date().getTime();
+            const downloadUrl = `http://localhost:5000/api/v1/services/download/${service.serviceId}?t=${timestamp}`;
+
+            // Open in new tab to avoid issues with popup blockers
+            window.open(downloadUrl, '_blank');
+
+            // Send notification email
+            try {
+                await axios.post('http://localhost:5000/api/v1/services/sendMail', {
+                    serviceId: service.serviceId
+                });
+                toast({
+                    title: "Success",
+                    description: "Certificate downloaded and notification sent!",
+                    variant: "default",
+                });
+            } catch (emailError) {
+                console.error("Email error:", emailError);
+                toast({
+                    title: "Downloaded",
+                    description: "Certificate downloaded but notification failed",
+                    variant: "default",
+                });
             }
-          });
-      
-          // Then download it
-          const timestamp = new Date().getTime();
-          const downloadUrl = `http://localhost:5000/api/v1/services/download/${service.serviceId}?t=${timestamp}`;
-          
-          // Open in new tab to avoid issues with popup blockers
-          window.open(downloadUrl, '_blank');
-          
-          // Send notification email
-          try {
-            await axios.post('http://localhost:5000/api/v1/services/sendMail', {
-              serviceId: service.serviceId
-            });
-            toast({
-              title: "Success",
-              description: "Certificate downloaded and notification sent!",
-              variant: "default",
-            });
-          } catch (emailError) {
-            console.error("Email error:", emailError);
-            toast({
-              title: "Downloaded",
-              description: "Certificate downloaded but notification failed",
-              variant: "default",
-            });
-          }
         } catch (err) {
-          console.error("Download failed:", err);
-          toast({
-            title: "Error",
-            description: err.response?.data?.message || "Failed to download certificate",
-            variant: "destructive",
-          });
+            console.error("Download failed:", err);
+            toast({
+                title: "Error",
+                description: err.response?.data?.message || "Failed to download certificate",
+                variant: "destructive",
+            });
         } finally {
-          setIsGeneratingPDF(false);
+            setIsGeneratingPDF(false);
         }
-      };
+    };
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AdminSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
+                          <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="addmodel" >
-                                        Add Model
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block" />
-                                <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="adminservice" >
-                                        Admin Service
+                                    <BreadcrumbLink href="/admin/dashboard">
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="adminservicetable">
-                                        Admin Service Table
+                                    <BreadcrumbLink href="/admin/servicerecord">
+                                        Service Record
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -491,12 +487,12 @@ export default function GenerateService() {
                     <Card className="max-w-6xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">
-                                {isEditMode ? "Edit Service" : "Admin Service"}
+                                {isEditMode ? "Update Service" : "Create Service"}
                             </CardTitle>
                             <CardDescription className="text-center">
                                 {isEditMode
-                                    ? "Edit the service details below."
-                                    : "Please fill out the form below to generate a new Service."}
+                                    ? "Modify the service details below"
+                                    : "Fill out the form below to create a new service"}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -822,7 +818,7 @@ export default function GenerateService() {
                                     className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md"
                                     disabled={loading}
                                 >
-                                    {loading ? (isEditMode ? "Updating..." : "Generating...") : (isEditMode ? "Update Service" : "Generate Service")}
+                                    {loading ? (isEditMode ? "Updating..." : "Generating...") : (isEditMode ? "Update" : "Create")}
                                 </button>
                             </form>
 
@@ -833,8 +829,8 @@ export default function GenerateService() {
                                         onClick={handleDownload}
                                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
                                         disabled={isGeneratingPDF || loading}
-                                        >
-                                          {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
+                                    >
+                                        {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
                                     </button>
                                 </div>
                             )}

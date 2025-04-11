@@ -10,12 +10,12 @@ import axios from "axios";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/app/admin/adminComponents/page";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
+import { AdminSidebar } from "@/components/admin-sidebar";
 
 // Define the ContactPerson type
 interface ContactPerson {
@@ -26,8 +26,8 @@ interface ContactPerson {
     email: string;
     designation: string;
     _id: string;
-    key?: string; 
-    
+    key?: string;
+
 }
 
 const generateUniqueId = () => {
@@ -120,7 +120,7 @@ export default function ContactPersonDetailsTable() {
 
     const filteredItems = React.useMemo<ContactPerson[]>(() => {
         let filtered = [...contactPersons];
-    
+
         if (hasSearchFilter) {
             const searchLower = filterValue.toLowerCase();
             filtered = filtered.filter(contact =>
@@ -131,23 +131,23 @@ export default function ContactPersonDetailsTable() {
                 contact.email.toLowerCase().includes(searchLower)
             );
         }
-    
+
         return filtered;
     }, [contactPersons, filterValue, hasSearchFilter]);
-    
+
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof ContactPerson] || "";
             const second = b[sortDescriptor.column as keyof ContactPerson] || "";
-    
+
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-    
+
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
-    
+
 
     // Pagination logic
     const paginatedItems = React.useMemo(() => {
@@ -278,7 +278,7 @@ export default function ContactPersonDetailsTable() {
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AdminSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -287,13 +287,14 @@ export default function ContactPersonDetailsTable() {
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
+                                <BreadcrumbLink href="/admin/dashboard">
+                                    Dashboard
+                                </BreadcrumbLink>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="admincustomer">Admin Contact</BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block" />
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="admincontacttable">Contact Details Table</BreadcrumbLink>
+                                    <BreadcrumbLink href="/admin/contactform">
+                                        Create Contact
+                                    </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -302,7 +303,7 @@ export default function ContactPersonDetailsTable() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-6xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Contact Person Details Table</CardTitle>
+                            <CardTitle className="text-3xl font-bold text-center">Contact Record</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {topContent}

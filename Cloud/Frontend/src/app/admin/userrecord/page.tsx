@@ -10,16 +10,16 @@ import axios from "axios";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
+import { AdminSidebar } from "@/components/admin-sidebar";
 
 interface User {
   _id: string;
@@ -32,7 +32,7 @@ const columns = [
   { name: "NAME", uid: "name", sortable: true, width: "120px" },
   { name: "EMAIL", uid: "email", sortable: true, width: "120px" },
   { name: "CONTACT", uid: "contact", sortable: true, width: "120px" },
- 
+
   { name: "ACTIONS", uid: "actions", sortable: false, width: "100px" },
 ];
 
@@ -45,11 +45,11 @@ export default function UserTable() {
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [page, setPage] = useState(1);
   const router = useRouter();
-  
- const [sortDescriptor, setSortDescriptor] = useState({
-         column: "name",
-         direction: "ascending" as "ascending" | "descending",
-     });
+
+  const [sortDescriptor, setSortDescriptor] = useState({
+    column: "name",
+    direction: "ascending" as "ascending" | "descending",
+  });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -66,7 +66,7 @@ export default function UserTable() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-    
+
     try {
       const response = await fetch(`http://localhost:5000/api/v1/users/deleteuser/${id}`, {
         method: "DELETE",
@@ -85,10 +85,10 @@ export default function UserTable() {
 
   const filteredItems = React.useMemo(() => {
     let filtered = [...users];
-    
+
     if (filterValue) {
       const searchLower = filterValue.toLowerCase();
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter(user =>
         user.name.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower)
       );
@@ -101,11 +101,11 @@ export default function UserTable() {
     return [...filteredItems].sort((a, b) => {
       const first = a[sortDescriptor.column as keyof User] || "";
       const second = b[sortDescriptor.column as keyof User] || "";
-      
+
       let cmp = 0;
       if (first < second) cmp = -1;
       if (first > second) cmp = 1;
-      
+
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [filteredItems, sortDescriptor]);
@@ -207,7 +207,7 @@ export default function UserTable() {
     if (columnKey === "actions") {
       return (
         <div className="relative flex items-center gap-2">
-          
+
 
           <Tooltip>
             <span
@@ -228,7 +228,7 @@ export default function UserTable() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AdminSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -238,14 +238,14 @@ export default function UserTable() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="u">
-                    User Details
+                  <BreadcrumbLink href="/admin/dashboard">
+                    Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                <BreadcrumbLink href="admin-register">
-                  <BreadcrumbPage>User Register</BreadcrumbPage>
+                  <BreadcrumbLink href="/admin/userform">
+                    <BreadcrumbPage>Create User</BreadcrumbPage>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
@@ -255,7 +255,7 @@ export default function UserTable() {
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
           <Card className="max-w-6xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-3xl font-bold text-center">User Details Table</CardTitle>
+              <CardTitle className="text-3xl font-bold text-center">User Record</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-h-screen-xl max-w-screen-xl">

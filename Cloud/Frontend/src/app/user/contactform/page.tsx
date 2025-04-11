@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
-import { AdminSidebar } from "@/components/admin-sidebar";
 import { ModeToggle } from "@/components/ModeToggle";
+import { AppSidebar } from "@/components/app-sidebar";
 
 interface ContactPerson {
   firstName: string;
@@ -114,7 +114,7 @@ export default function Customer() {
 
   return (
     <SidebarProvider>
-      <AdminSidebar />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -123,12 +123,12 @@ export default function Customer() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbLink href="/admin/dashboard">
+                <BreadcrumbLink href="/user/dashboard">
                   Dashboard
                 </BreadcrumbLink>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/admin/contactrecord">
+                  <BreadcrumbLink href="/user/contactrecord">
                     Contact Record
                   </BreadcrumbLink>
                 </BreadcrumbItem>

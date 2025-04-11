@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button"
-import { CalendarIcon, Edit, Trash2, Loader2, SearchIcon, Edit2Icon, FileDown, DeleteIcon } from "lucide-react"
-import { Metadata } from "next"
+import { Loader2, SearchIcon, Edit2Icon, FileDown, DeleteIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import axios from "axios";
 
@@ -16,12 +15,12 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/app/admin/adminComponents/page"
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection } from "@heroui/react"
 import { ModeToggle } from "@/components/ModeToggle"
 import { Pagination, Tooltip, User } from "@heroui/react"
+import { AdminSidebar } from "@/components/admin-sidebar";
 
 
 interface Certificate {
@@ -228,70 +227,70 @@ export default function CertificateTable() {
 
     const handleDownload = async (certificateId: string) => {
         try {
-          setIsDownloading(certificateId);
-          console.log('Attempting to download certificate:', certificateId);
-    
-          const pdfResponse = await axios.get(
-            `http://localhost:5000/api/v1/certificates/download/${certificateId}`,
-            {
-              responseType: 'blob',
-              headers: {
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                "Accept": "application/pdf"
-              }
+            setIsDownloading(certificateId);
+            console.log('Attempting to download certificate:', certificateId);
+
+            const pdfResponse = await axios.get(
+                `http://localhost:5000/api/v1/certificates/download/${certificateId}`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                        "Accept": "application/pdf"
+                    }
+                }
+            );
+
+            const contentType = pdfResponse.headers['content-type'];
+            if (!contentType || !contentType.includes('application/pdf')) {
+                throw new Error('Received invalid content type from server');
             }
-          );
-    
-          const contentType = pdfResponse.headers['content-type'];
-          if (!contentType || !contentType.includes('application/pdf')) {
-            throw new Error('Received invalid content type from server');
-          }
-    
-          const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `certificate-${certificateId}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-    
-          toast({
-            title: "Success",
-            description: "Certificate downloaded successfully",
-            variant: "default",
-          });
-        } catch (err) {
-          console.error('Download error:', err);
-          let errorMessage = "Failed to download certificate. Please try again.";
-    
-          if (axios.isAxiosError(err)) {
-            console.error('Error details:', {
-              status: err.response?.status,
-              data: err.response?.data,
-              url: err.config?.url
+
+            const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `certificate-${certificateId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: "Success",
+                description: "Certificate downloaded successfully",
+                variant: "default",
             });
-    
-            if (err.response?.status === 401) {
-              errorMessage = "Please login again to download the certificate.";
-            } else if (err.response?.status === 404) {
-              errorMessage = "Certificate not found.";
-            } else if (!navigator.onLine) {
-              errorMessage = "No internet connection. Please check your network.";
+        } catch (err) {
+            console.error('Download error:', err);
+            let errorMessage = "Failed to download certificate. Please try again.";
+
+            if (axios.isAxiosError(err)) {
+                console.error('Error details:', {
+                    status: err.response?.status,
+                    data: err.response?.data,
+                    url: err.config?.url
+                });
+
+                if (err.response?.status === 401) {
+                    errorMessage = "Please login again to download the certificate.";
+                } else if (err.response?.status === 404) {
+                    errorMessage = "Certificate not found.";
+                } else if (!navigator.onLine) {
+                    errorMessage = "No internet connection. Please check your network.";
+                }
             }
-          }
-    
-          toast({
-            title: "Error",
-            description: errorMessage,
-            variant: "destructive",
-          });
+
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+            });
         } finally {
-          setIsDownloading(null);
+            setIsDownloading(null);
         }
-      };
-    
+    };
+
 
     const onNextPage = React.useCallback(() => {
         if (page < pages) {
@@ -441,7 +440,7 @@ export default function CertificateTable() {
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                handleDownload(certificate._id); 
+                                handleDownload(certificate._id);
                             }}
                         >
                             {isDownloading === certificate._id ? (
@@ -453,11 +452,11 @@ export default function CertificateTable() {
                     </Tooltip>
 
                     <Tooltip>
-                    <span
+                        <span
                             className="text-lg text-info cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                router.push(`addcategory?id=${certificate._id}`); 
+                                router.push(`addcategory?id=${certificate._id}`);
                             }}
                         >
                             <Edit2Icon className="h-6 w-6" />
@@ -489,7 +488,7 @@ export default function CertificateTable() {
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AdminSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -498,23 +497,15 @@ export default function CertificateTable() {
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
-                                <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="addmodel">
-                                        Add model
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink href="/admin/dashboard">
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
-
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="addcategory">
-                                        Admin Certificate
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block" />
-
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="admincertificatetable">
-                                        Admin Certificate Table
+                                    <BreadcrumbLink href="/admin/certificateform">
+                                        Create Certificate
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -525,7 +516,7 @@ export default function CertificateTable() {
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-7xl mx-auto">
                         <CardHeader>
-                            <CardTitle className="text-3xl font-bold text-center">Certificate Table</CardTitle>
+                            <CardTitle className="text-3xl font-bold text-center">Certificate Record</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-h-screen-xl max-w-screen-xl">

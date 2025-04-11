@@ -1,7 +1,6 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useState, useEffect } from "react";
@@ -9,6 +8,8 @@ import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { toast } from '@/hooks/use-toast'
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface Observation {
     gas: string;
@@ -79,7 +80,7 @@ export default function AddCategory() {
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
     const [engineerError, setEngineerError] = useState<string | null>(null);
-    
+
 
     // Fetch models and engineers
     useEffect(() => {
@@ -315,7 +316,7 @@ export default function AddCategory() {
             };
 
             const requiredFields = {
-            
+
                 customerName: "Customer Name",
                 siteLocation: "Site Location",
                 makeModel: "Make/Model",
@@ -327,28 +328,28 @@ export default function AddCategory() {
                 calibrationDueDate: "Calibration Due Date",
                 engineerName: "Engineer Name",
                 status: "Status"
-              };
-            
-              const emptyFields = Object.entries(requiredFields)
+            };
+
+            const emptyFields = Object.entries(requiredFields)
                 .filter(([key]) => !formData[key as keyof CertificateRequest]?.toString().trim())
                 .map(([_, label]) => label);
-            
-              if (emptyFields.length > 0) {
+
+            if (emptyFields.length > 0) {
                 setError(`Please fill in: ${emptyFields.join(", ")}`);
                 setLoading(false);
                 return;
-              }
-            
-              // Check observations
-              const hasEmptyObservations = formData.observations.some(obs => 
+            }
+
+            // Check observations
+            const hasEmptyObservations = formData.observations.some(obs =>
                 !obs.gas.trim() || !obs.before.trim() || !obs.after.trim()
-              );
-              
-              if (hasEmptyObservations) {
+            );
+
+            if (hasEmptyObservations) {
                 setError("Please fill in all observation fields");
                 setLoading(false);
                 return;
-              }
+            }
             const response = await axios[method](
                 url,
                 submissionData,
@@ -425,31 +426,24 @@ export default function AddCategory() {
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AdminSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
+                          <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
-
-                                <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="addmodel">
-                                        <BreadcrumbPage>Add  Model</BreadcrumbPage>
+                                    <BreadcrumbLink href="/admin/dashboard">
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="addcategory">
-                                        <BreadcrumbPage>Admin Certificate</BreadcrumbPage>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator className="hidden md:block" />
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="admincertificatetable">
-                                        Admin Certificate Table
+                                    <BreadcrumbLink href="/admin/certificaterecord">
+                                        Certificate Record
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -460,12 +454,12 @@ export default function AddCategory() {
                     <Card className="max-w-6xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">
-                                {certificateId ? "Edit Certificate" : "Create New Certificate"}
+                                {certificateId ? "Update Certificate" : "Create Certificate"}
                             </CardTitle>
                             <CardDescription className="text-center">
                                 {certificateId
                                     ? "Modify the certificate details below"
-                                    : "Fill out the form below to generate a new Certificate"}
+                                    : "Fill out the form below to create a new certificate"}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -729,11 +723,9 @@ export default function AddCategory() {
                                     className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? "Generating..." : "Generate Certificate"}
+                                    {loading ? "Generating..." : "Create"}
                                 </button>
                             </form>
-
-                           
 
                             {certificate && (
                                 <div className="mt-4 text-center">

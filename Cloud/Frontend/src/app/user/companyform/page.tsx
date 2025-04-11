@@ -7,8 +7,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { AdminSidebar } from "@/components/admin-sidebar";
 import { ModeToggle } from "@/components/ModeToggle";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export default function AddCategory() {
     const searchParams = useSearchParams();
@@ -107,7 +107,7 @@ export default function AddCategory() {
 
     return (
         <SidebarProvider>
-            <AdminSidebar />
+            <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -117,13 +117,13 @@ export default function AddCategory() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/admin/dashboard">
+                                    <BreadcrumbLink href="/user/dashboard">
                                         <BreadcrumbPage>Dashboard</BreadcrumbPage>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/admin/companyrecord">
+                                    <BreadcrumbLink href="/user/companyrecord">
                                         Company Record
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>

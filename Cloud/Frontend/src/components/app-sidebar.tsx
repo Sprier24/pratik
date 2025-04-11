@@ -3,7 +3,7 @@ import * as React from "react"
 import { usePathname } from "next/navigation"
 import { NavUser } from "@/components/nav-user"
 import { NavMain } from "@/components/nav-main"
-import { CirclePlay, File } from "lucide-react"
+import { CirclePlay, File, InfoIcon } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar"
 
 const data = {}
@@ -19,6 +19,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Dashboard",
             url: "/user/dashboard",
+          },
+        ],
+      },
+      {
+        title: "Company Details",
+        url: "#",
+        icon: InfoIcon,
+        items: [
+          {
+            title: "Create Company",
+            url: "/user/companyform",
+          },
+          {
+            title: "Company Record",
+            url: "/user/companyrecord",
+          },
+          {
+            title: "Create Contact",
+            url: "/user/contactform",
+          },
+          {
+            title: "Contact Record",
+            url: "/user/contactrecord",
           },
         ],
       },

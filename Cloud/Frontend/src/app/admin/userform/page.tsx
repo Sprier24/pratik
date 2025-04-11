@@ -1,11 +1,10 @@
 "use client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
@@ -15,19 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Eye, EyeOff } from "react-feather";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { ModeToggle } from "@/components/ModeToggle";
 
 
 export function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const[contact, setContact] = useState("");
+  const [contact, setContact] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -49,13 +50,13 @@ export function RegisterPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password, contact}),
+        body: JSON.stringify({ name, email, password, contact }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        
+
         if (data.message && data.message.includes("reached the limit")) {
           setError("You have reached the registration limit. Please try again later.");
         } else {
@@ -63,7 +64,7 @@ export function RegisterPage() {
         }
       } else {
         alert("Registration successful!");
-        
+
       }
     } catch (error) {
       setError("An error occurred during registration. Please try again.");
@@ -73,23 +74,24 @@ export function RegisterPage() {
   };
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AdminSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
+            <ModeToggle />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="u">
-                    User Details
+                  <BreadcrumbLink href="/admin/dashboard">
+                    Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                <BreadcrumbLink href="admin-register">
-                  <BreadcrumbPage>User Register</BreadcrumbPage>
+                  <BreadcrumbLink href="/admin/userrecord">
+                    <BreadcrumbPage>User Record</BreadcrumbPage>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
@@ -99,9 +101,9 @@ export function RegisterPage() {
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-3xl font-bold text-center">Register</CardTitle>
+              <CardTitle className="text-3xl font-bold text-center">Create User</CardTitle>
               <CardDescription className="text-center">
-                Please fill out the form below to generate a new User.
+                Fill out the form below to create a new user
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -184,7 +186,7 @@ export function RegisterPage() {
             </CardContent>
             <CardFooter>
               <Button className="w-full" onClick={handleRegister} disabled={loading}>
-                {loading ? "Registering..." : "Register"}
+                {loading ? "Registering..." : "Create"}
               </Button>
             </CardFooter>
 
