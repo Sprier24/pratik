@@ -10,20 +10,22 @@ interface Observation {
 }
 
 interface CertificateRequest {
-  certificateNo: String,
-  customerName: String,
-  siteLocation: String,
-  makeModel: String,
-  range: String,
-  serialNo: String,
-  calibrationGas: String,
-  gasCanisterDetails: String,
-  dateOfCalibration: Date,
-  calibrationDueDate: Date,
-  observations: Observation[],
-  engineerName: String,
-  status: string
+  certificateNo: string;
+  customerName: string;
+  siteLocation: string;
+  makeModel: string;
+  range: string;
+  serialNo: string;
+  calibrationGas: string;
+  gasCanisterDetails: string;
+  dateOfCalibration: Date;
+  calibrationDueDate: Date;
+  observations: Observation[];
+  engineerId: string;
+  engineerName: string;
+  status: string;
 }
+
 
 interface CertificateResponse {
   certificateId: string;
@@ -42,8 +44,9 @@ interface engineer {
   name: string;
 }
 
-export default function Certificateform() {
+export default function GenerateCertificate() {
   const [formData, setFormData] = useState<CertificateRequest>({
+    certificateNo: "", 
     customerName: "",
     siteLocation: "",
     makeModel: "",
@@ -51,12 +54,14 @@ export default function Certificateform() {
     serialNo: "",
     calibrationGas: "",
     gasCanisterDetails: "",
-    dateOfCalibration: new Date().toISOString().split('T')[0],
-    calibrationDueDate: new Date().toISOString().split('T')[0],
+    dateOfCalibration: new Date(),
+    calibrationDueDate: new Date(),
     observations: [{ gas: "", before: "", after: "" }],
+    engineerId: "", // ✅ added
     engineerName: "",
-    status: ""
+    status: "",
   });
+  
   const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +107,8 @@ export default function Certificateform() {
 
     fetchEngineers();
   }, []);
+
+  
 
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {

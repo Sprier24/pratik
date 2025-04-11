@@ -88,13 +88,13 @@ export function LoginForm() {
 
       if (userResponse.ok) {
         localStorage.setItem("userId", userData.user.id);
-        localStorage.setItem("authToken", userData.token);
+        localStorage.setItem("authToken", userData.accessToken);
         
         toast({
           title: "Login successful",
-          description: "You are on a dashboard",
+          description: "You have logged in successfully",
         });
-        router.push("/user/dashboard");
+        router.push("/dashboard");
         return;
       }
 
@@ -108,7 +108,7 @@ export function LoginForm() {
       const adminData = await adminResponse.json();
 
       if (adminResponse.ok) {
-        localStorage.setItem("authToken", adminData.token);
+        localStorage.setItem("authToken", adminData.accessToken);
         localStorage.setItem("adminId", adminData.adminId);
         localStorage.setItem("adminEmail", adminData.email);
 
@@ -173,7 +173,7 @@ export function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email address"
+                placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -208,13 +208,14 @@ export function LoginForm() {
           <Card className="w-[350px]">
             <CardHeader>
               <CardTitle>Login</CardTitle>
+              <CardDescription>Enter your credentials to access your account.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid w-full items-center gap-4">
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    placeholder="Enter your email address"
+                    placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}

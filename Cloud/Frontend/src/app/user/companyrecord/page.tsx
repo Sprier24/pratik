@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
+import { Loader2, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -44,10 +44,9 @@ const columns = [
     { name: "WEBSITE", uid: "website", sortable: true, width: "120px" },
     { name: "INDUSTRIES TYPE", uid: "industriesType", sortable: true, width: "120px" },
     { name: "FLAG", uid: "flag", sortable: true, width: "120px" },
-    { name: "ACTION", uid: "actions", sortable: false, width: "100px" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["companyName", "address", "gstNumber", "industries", "website", "industriesType", "flag", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["companyName", "address", "gstNumber", "industries", "website", "industriesType", "flag"];
 
 export default function CompanyDetailsTable() {
     const [companies, setCompanies] = useState<CompanyDetails[]>([]);
@@ -100,30 +99,6 @@ export default function CompanyDetailsTable() {
     useEffect(() => {
         fetchCompanies();
     }, []);
-
-    const handleDelete = async (companyId: string) => {
-        if (!window.confirm("Are you sure you want to delete this company?")) {
-            return;
-        }
-
-        try {
-            await axios.delete(
-                `http://localhost:5000/api/v1/company/deleteCompany/${companyId}`,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
-            );
-
-            setCompanies(prev => prev.filter(company => company._id !== companyId));
-            toast.success("Company deleted successfully");
-        } catch (error) {
-            console.error("Error deleting company:", error);
-            toast.error("Failed to delete company");
-        }
-    };
 
     const headerColumns = React.useMemo(() => {
         return columns.filter(column => visibleColumns.has(column.uid));
@@ -249,40 +224,6 @@ export default function CompanyDetailsTable() {
         );
     }, [page, pages, onPreviousPage, onNextPage]);
 
-    const renderCell = useCallback((company: CompanyDetails, columnKey: string) => {
-        if (columnKey === "actions") {
-            return (
-                <div className="relative flex items-center gap-2">
-                    
-                    <Tooltip>
-                        <span
-                            className="text-lg text-info cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`adminCompany?id=${company._id}`); 
-                            }}
-                        >
-                            <Edit2Icon className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <span
-                            className="text-lg text-danger cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleDelete(company._id);
-                            }}
-                        >
-                            <DeleteIcon className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                </div>
-            );
-        }
-        return company[columnKey as keyof CompanyDetails];
-    }, [isDownloading, router]);
-
     return (
         <SidebarProvider>
             <AppSidebar />
@@ -350,7 +291,7 @@ export default function CompanyDetailsTable() {
                                     <TableBody emptyContent={"No companies found"} items={paginatedItems}>
                                         {(item) => (
                                             <TableRow key={item._id}>
-                                                {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}
+                                                {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{(columnKey as string)}</TableCell>}
                                             </TableRow>
                                         )}
                                     </TableBody>

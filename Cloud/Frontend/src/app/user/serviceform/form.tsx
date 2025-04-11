@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "@heroui/react";
 
 interface EngineerRemarks {
     serviceSpares: string;
@@ -17,6 +18,7 @@ interface ServiceRequest {
     contactPerson: string;
     contactNumber: string;
     serviceEngineer: string;
+    serviceEngineerId?: string;
     date: string;
     place: string;
     placeOptions: string;
@@ -26,6 +28,7 @@ interface ServiceRequest {
     serialNumberoftheInstrumentCalibratedOK: string;
     serialNumberoftheFaultyNonWorkingInstruments: string;
     engineerRemarks: EngineerRemarks[];
+    engineerId?: string;
     engineerName: string;
     status: string;
 }
@@ -36,7 +39,17 @@ interface ServiceResponse {
     downloadUrl: string;
 }
 
-export default function Serviceform() {
+interface Engineer {
+    _id: string;
+    name: string;
+}
+
+interface ServiceEngineer {
+    _id: string;
+    name: string;
+}
+
+export default function GenerateService() {
     const [formData, setFormData] = useState<ServiceRequest>({
         customerName: "",
         customerLocation: "",
@@ -59,8 +72,10 @@ export default function Serviceform() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [engineers, setEngineers] = useState<{ name: string; id: string }[]>([]);
-    const [selectedServiceEngineer, setSelectedServiceEngineer] = useState("");
     const [selectedEngineer, setSelectedEngineer] = useState("");
+    const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
+    const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     useEffect(() => {
         const fetchEngineers = async () => {
@@ -74,25 +89,47 @@ export default function Serviceform() {
         fetchEngineers();
     }, []);
 
+    useEffect(() => {
+        const fetchServiceEngineers = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/v1/ServiceEngineer/getServiceEngineers");
+                const data = await response.json();
+                console.log("Service Engineers API Response:", data);
+                setServiceEngineers(data);
+            } catch (error) {
+                console.error("Error fetching service engineers:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load service engineers",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsLoadingEngineers(false);
+            }
+        };
+        fetchServiceEngineers();
+    }, []);
+    
+
     const handleServiceEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
-        setSelectedServiceEngineer(selectedId);
+        const selectedEngineer = serviceEngineers.find(engineer => engineer._id === selectedId);
 
-        const selectedEngineer = engineers.find(eng => eng.id === selectedId);
         setFormData(prev => ({
             ...prev,
+            serviceEngineerId: selectedId,
             serviceEngineer: selectedEngineer?.name || ""
         }));
     };
 
     const handleEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
-        setSelectedEngineer(selectedId);
-        const selectedEngineerObj = engineers.find(engineer => engineer.id === selectedId);
-        const selectedName = selectedEngineerObj ? selectedEngineerObj.name : '';
+        const selectedEngineer = engineers.find(engineer => engineer._id === selectedId);
+
         setFormData(prev => ({
             ...prev,
-            engineerName: selectedName
+            engineerId: selectedId,
+            engineerName: selectedEngineer?.name || ""
         }));
     };
 
@@ -131,30 +168,31 @@ export default function Serviceform() {
             'contactNumber', 'serviceEngineer', 'date', 'place',
             'placeOptions', 'natureOfJob', 'reportNo', 'engineerName', 'status'
         ];
-
+    
         for (const field of requiredFields) {
             if (!formData[field as keyof ServiceRequest]?.toString().trim()) {
                 return `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`;
             }
         }
-
+    
+        if (!formData.serviceEngineerId || !formData.serviceEngineer.trim()) {
+            return "Please select a service engineer";
+        }
+    
         if (formData.engineerRemarks.length === 0) {
             return "At least one engineer remark is required.";
         }
-
-        if (!selectedServiceEngineer || !formData.serviceEngineer.trim()) {
-            return "Please select a service engineer";
-        }
-
+    
         for (const remark of formData.engineerRemarks) {
             if (!remark.serviceSpares.trim() || !remark.partNo.trim() ||
                 !remark.rate.trim() || !remark.quantity.trim() || !remark.poNo.trim()) {
                 return "All fields in engineer remarks must be filled.";
             }
         }
-
+    
         return null;
     };
+    
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -169,7 +207,7 @@ export default function Serviceform() {
 
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/v1/services/generateService`,
+                `http://localhost:5000/api/v1/services/generateServices`,
                 formData,
                 {
                     headers: {
@@ -187,24 +225,69 @@ export default function Serviceform() {
     };
 
     const handleDownload = async () => {
-        if (!service?.downloadUrl) return;
-
+        const yourAccessToken = localStorage.getItem("authToken");
+    
+        if (!service?.serviceId) {
+            toast({
+                title: "Error",
+                description: "No service ID available",
+                variant: "destructive",
+            });
+            return;
+        }
+    
         try {
-            const response = await axios.get(
-                `http://localhost:5000${service.downloadUrl}`,
-                { responseType: 'blob' }
+            setIsGeneratingPDF(true);
+            
+            // First ensure the PDF exists
+            await axios.get(
+                `http://localhost:5000/api/v1/services/download/${service.serviceId}`,
+                {
+                    responseType: 'blob', // Important for file downloads
+                    headers: {
+                        'Authorization': `Bearer ${yourAccessToken}`
+                    }
+                }
+            ).then((response) => {
+                // Create blob link to download
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `service-${service.serviceId}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                
+                // Clean up
+                link.parentNode?.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            });
+    
+            // Then send the notification email
+            const response = await axios.post(
+                'http://localhost:5000/api/v1/services/sendMail',
+                { serviceId: service.serviceId },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${yourAccessToken}`
+                    }
+                }
             );
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `service-${service.serviceId}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+    
+            toast({
+                title: "Success",
+                description: "Certificate downloaded and email sent successfully",
+                variant: "default",
+            });
+    
         } catch (err) {
-            setError("Failed to download service. Please try again.");
+            console.error("Error:", err);
+            toast({
+                title: "Error",
+                description: err.response?.data?.error || "Failed to download certificate",
+                variant: "destructive",
+            });
+        } finally {
+            setIsGeneratingPDF(false);
         }
     };
 
@@ -271,16 +354,15 @@ export default function Serviceform() {
                     />
 
                     <select
-                        value={selectedServiceEngineer}
+                        name="serviceEngineerId"
+                        value={formData.serviceEngineerId || ""}
                         onChange={handleServiceEngineerChange}
                         className="p-2 border rounded"
+                        required
                     >
                         <option value="">Select Service Engineer</option>
-                        {engineers.map(engineer => (
-                            <option
-                                key={`service-engineer-${engineer.id}`}  // Fixed: Added unique key prefix
-                                value={engineer.id}
-                            >
+                        {serviceEngineers.map((engineer) => (
+                            <option key={engineer._id} value={engineer._id}>
                                 {engineer.name}
                             </option>
                         ))}
@@ -383,19 +465,23 @@ export default function Serviceform() {
                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <select
-                        value={selectedEngineer}
+                        name="engineerId"
+                        value={formData.engineerId || ""}
                         onChange={handleEngineerChange}
-                        className="p-2 border rounded"
+                        className="p-2 border rounded w-full"
+                        required
+                        disabled={isLoadingEngineers}
                     >
                         <option value="">Select Engineer</option>
-                        {engineers.map(engineer => (
-                            <option
-                                key={`engineer-${engineer.id}`}  // Different prefix than service engineer
-                                value={engineer.id}
-                            >
-                                {engineer.name}
-                            </option>
-                        ))}
+                        {isLoadingEngineers ? (
+                            <option>Loading engineers...</option>
+                        ) : (
+                            engineers.map((engineer) => (
+                                <option key={engineer._id} value={engineer._id}>
+                                    {engineer.name}
+                                </option>
+                            ))
+                        )}
                     </select>
                 </div>
                 <div className="flex flex-col gap-4">
@@ -533,16 +619,17 @@ export default function Serviceform() {
             </form>
 
             {service && (
-                <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-                    <p className="font-bold mb-2">{service.message}</p>
-                    <button
-                        onClick={handleDownload}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Download Service Report
-                    </button>
-                </div>
-            )}
+                                <div className="mt-4 text-center">
+                                    <p className="text-green-600 mb-2">Click here to download the certificate</p>
+                                    <button
+                                        onClick={handleDownload}
+                                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                                        disabled={isGeneratingPDF || loading}
+                                        >
+                                          {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
+                                    </button>
+                                </div>
+                            )}
         </div>
     );
 }

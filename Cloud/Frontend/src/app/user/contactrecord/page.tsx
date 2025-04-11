@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
+import { Loader2, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,11 +41,10 @@ const columns = [
     { name: "CONTACT NO", uid: "contactNo", sortable: true, width: "120px" },
     { name: "EMAIL", uid: "email", sortable: true, width: "120px" },
     { name: "DESIGNATION", uid: "designation", sortable: true, width: "120px" },
-    { name: "ACTION", uid: "actions", sortable: false, width: "100px" },
 ];
 
 // Define initial visible columns
-const INITIAL_VISIBLE_COLUMNS = ["firstName", "middleName", "lastName", "contactNo", "email", "designation", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["firstName", "middleName", "lastName", "contactNo", "email", "designation"];
 
 export default function ContactPersonDetailsTable() {
     const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
@@ -89,33 +88,6 @@ export default function ContactPersonDetailsTable() {
             setContactPersons([]);
         }
     };
-
-
-    // Delete contact person by ID
-    const handleDelete = async (contactPersonId: string) => {
-        if (!window.confirm("Are you sure you want to delete this contact person?")) {
-            return;
-        }
-
-        try {
-            await axios.delete(
-                `http://localhost:5000/api/v1/contactperson/deleteContactPerson/${contactPersonId}`,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
-
-            setContactPersons(prev => prev.filter(contact => contact._id !== contactPersonId));
-            toast.success("Contact person deleted successfully");
-        } catch (error) {
-            console.error("Error deleting contact person:", error);
-            toast.error("Failed to delete contact person");
-        }
-    };
-
 
     const filteredItems = React.useMemo<ContactPerson[]>(() => {
         let filtered = [...contactPersons];
@@ -241,36 +213,6 @@ export default function ContactPersonDetailsTable() {
         );
     }, [page, pages, onPreviousPage, onNextPage]);
 
-    const renderCell = useCallback((contact: ContactPerson, columnKey: string) => {
-        if (columnKey === "actions") {
-            return (
-                <div className="relative flex items-center gap-2">
-                    <Tooltip>
-                        <span
-                            className="text-lg text-danger cursor-pointer"
-                            onClick={() => handleDelete(contact._id)}
-                        >
-                            <DeleteIcon />
-                        </span>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <span
-                            className="text-lg text-info cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`admincustomer?id=${contact._id}`);
-                            }}
-                        >
-                            <Edit2Icon className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                </div>
-            );
-        }
-        return contact[columnKey as keyof ContactPerson];
-    }, []);
-
     useEffect(() => {
         fetchContactPersons();
     }, []);
@@ -317,7 +259,7 @@ export default function ContactPersonDetailsTable() {
                                         <TableRow key={contact.key}>
                                             {columns.map((column) => (
                                                 <TableCell key={column.uid}>
-                                                    {renderCell(contact, column.uid)}
+                                                    {(column.uid)}
                                                 </TableCell>
                                             ))}
                                         </TableRow>

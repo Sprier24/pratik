@@ -3,12 +3,11 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import axios from "axios";
 import { toast } from "@heroui/react";
-import { AdminSidebar } from "@/components/admin-sidebar";
-import { ModeToggle } from "@/components/ModeToggle";
 
 interface EngineerRemarks {
     serviceSpares: string;
@@ -174,9 +173,9 @@ export default function GenerateService() {
             const generateReportNo = () => {
                 const date = new Date();
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
-                return `SRV-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
+                return `SRV-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
             };
-
+            
             setFormData(prev => ({
                 ...prev,
                 reportNo: generateReportNo()
@@ -310,9 +309,9 @@ export default function GenerateService() {
         const requiredFields = [
             'customerName', 'customerLocation', 'contactPerson', 'contactNumber',
             'serviceEngineer', 'date', 'place', 'placeOptions', 'natureOfJob',
-            'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK', 'serialNumberoftheFaultyNonWorkingInstruments',
-            'engineerRemarks', 'engineerName', 'engineerId', 'status',
-
+            'makeModelNumberoftheInstrumentQuantity','serialNumberoftheInstrumentCalibratedOK','serialNumberoftheFaultyNonWorkingInstruments',
+             'engineerRemarks','engineerName','engineerId', 'status',
+            
         ];
 
         const missingFields = requiredFields.filter(field => !submissionData[field as keyof typeof submissionData]?.toString().trim());
@@ -399,6 +398,9 @@ export default function GenerateService() {
     };
 
     const handleDownload = async () => {
+        const yourAccessToken = localStorage.getItem("authToken");
+        const userRole = localStorage.getItem("authRole"); // <-- Make sure this is saved at login
+    
         if (!service?.serviceId) {
             toast({
                 title: "Error",
@@ -407,76 +409,93 @@ export default function GenerateService() {
             });
             return;
         }
-
+    
         try {
-            // Show loading state
             setIsGeneratingPDF(true);
-
-            // First ensure the PDF exists by calling the generate endpoint
-            await axios.get(`http://localhost:5000/api/v1/services/download/${service.serviceId}`, {
-                params: { ensure: true }, // Add this parameter to your backend
-                headers: {
-                    'Cache-Control': 'no-cache'
+    
+            // Step 1: Download the PDF
+            const response = await axios.get(
+                `http://localhost:5000/api/v1/services/download/${service.serviceId}`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        'Authorization': `Bearer ${yourAccessToken}`
+                    }
                 }
-            });
-
-            // Then download it
-            const timestamp = new Date().getTime();
-            const downloadUrl = `http://localhost:5000/api/v1/services/download/${service.serviceId}?t=${timestamp}`;
-
-            // Open in new tab to avoid issues with popup blockers
-            window.open(downloadUrl, '_blank');
-
-            // Send notification email
-            try {
-                await axios.post('http://localhost:5000/api/v1/services/sendMail', {
-                    serviceId: service.serviceId
-                });
+            );
+    
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `service-${service.serviceId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+    
+            // Step 2: Only admins send the email
+            if (userRole === 'admin') {
+                await axios.post(
+                    'http://localhost:5000/api/v1/services/sendMail',
+                    { serviceId: service.serviceId },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${yourAccessToken}`
+                        }
+                    }
+                );
+    
                 toast({
                     title: "Success",
-                    description: "Certificate downloaded and notification sent!",
+                    description: "Certificate downloaded and email sent successfully",
                     variant: "default",
                 });
-            } catch (emailError) {
-                console.error("Email error:", emailError);
+            } else {
                 toast({
                     title: "Downloaded",
-                    description: "Certificate downloaded but notification failed",
+                    description: "Certificate downloaded successfully",
                     variant: "default",
                 });
             }
+    
         } catch (err) {
-            console.error("Download failed:", err);
+            console.error("Error:", err);
             toast({
                 title: "Error",
-                description: err.response?.data?.message || "Failed to download certificate",
+                description: err.response?.data?.error || "Failed to download certificate",
                 variant: "destructive",
             });
         } finally {
             setIsGeneratingPDF(false);
         }
     };
+    
 
     return (
         <SidebarProvider>
-            <AdminSidebar />
+            <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                          <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/admin/dashboard">
-                                        Dashboard
+                                    <BreadcrumbLink href="addmodel" >
+                                        Add Model
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator className="hidden md:block" />
+                                <BreadcrumbItem className="hidden md:block">
+                                    <BreadcrumbLink href="adminservice" >
+                                        Admin Service
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/admin/servicerecord">
-                                        Service Record
+                                    <BreadcrumbLink href="adminservicetable">
+                                        Admin Service Table
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -487,12 +506,12 @@ export default function GenerateService() {
                     <Card className="max-w-6xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-3xl font-bold text-center">
-                                {isEditMode ? "Update Service" : "Create Service"}
+                                {isEditMode ? "Edit Service" : "Admin Service"}
                             </CardTitle>
                             <CardDescription className="text-center">
                                 {isEditMode
-                                    ? "Modify the service details below"
-                                    : "Fill out the form below to create a new service"}
+                                    ? "Edit the service details below."
+                                    : "Please fill out the form below to generate a new Service."}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -818,7 +837,7 @@ export default function GenerateService() {
                                     className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md"
                                     disabled={loading}
                                 >
-                                    {loading ? (isEditMode ? "Updating..." : "Generating...") : (isEditMode ? "Update" : "Create")}
+                                    {loading ? (isEditMode ? "Updating..." : "Generating...") : (isEditMode ? "Update Service" : "Generate Service")}
                                 </button>
                             </form>
 
@@ -829,8 +848,8 @@ export default function GenerateService() {
                                         onClick={handleDownload}
                                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
                                         disabled={isGeneratingPDF || loading}
-                                    >
-                                        {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
+                                        >
+                                          {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
                                     </button>
                                 </div>
                             )}
