@@ -21,7 +21,7 @@ router.get(
 );
 
 router.put(
-    "/update/:serviceId", 
+    "/updateService/:serviceId", 
     ServiceController.updateService
 );
 

@@ -260,7 +260,7 @@ export default function CompanyDetailsTable() {
                             className="text-lg text-info cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                router.push(`adminCompany?id=${company._id}`);
+                                router.push(`companyform?id=${company._id}`);
                             }}
                         >
                             <Edit2Icon className="h-6 w-6" />

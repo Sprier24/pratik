@@ -4,21 +4,18 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
+import { Loader2, SearchIcon, Edit2Icon, DeleteIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
+import { compareAsc } from "date-fns";
 import { AppSidebar } from "@/components/app-sidebar";
 
 interface CompanyDetails {
@@ -58,6 +55,8 @@ export default function CompanyDetailsTable() {
     const [filterValue, setFilterValue] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const [contactToDelete, setContactToDelete] = useState<CompanyDetails | null>(null); // To handle contact deletion
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // To toggle delete modal
 
     const [sortDescriptor, setSortDescriptor] = useState({
         column: "companyName",
@@ -100,28 +99,54 @@ export default function CompanyDetailsTable() {
         fetchCompanies();
     }, []);
 
-    const handleDelete = async (companyId: string) => {
-        if (!window.confirm("Are you sure you want to delete this company?")) {
-            return;
-        }
+    const handleDeleteClick = (company: CompanyDetails) => {
+        setContactToDelete(company); // Set the company to delete
+        setIsDeleteModalOpen(true); // Open the modal
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!contactToDelete) return;
 
         try {
             await axios.delete(
-                `http://localhost:5000/api/v1/company/deleteCompany/${companyId}`,
+                `http://localhost:5000/api/v1/company/deleteCompany/${contactToDelete._id}`,
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`
-                    }
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    },
                 }
             );
 
-            setCompanies(prev => prev.filter(company => company._id !== companyId));
+            setIsDeleteModalOpen(false);
+            setContactToDelete(null);
+            await fetchCompanies();
             toast.success("Company deleted successfully");
         } catch (error) {
             console.error("Error deleting company:", error);
             toast.error("Failed to delete company");
         }
+    };
+
+    const handleCancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setContactToDelete(null);
+    };
+
+    const ConfirmationDialog = ({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) => {
+        if (!isOpen) return null;
+
+        return (
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                <div className="bg-black p-6 rounded shadow-md max-w-sm w-full">
+                    <h3 className="text-lg font-semibold text-white">Are you sure you want to delete this company?</h3>
+                    <div className="mt-4 flex justify-end gap-4">
+                        <Button onClick={onClose} variant="outline" className="text-white border-white">Cancel</Button>
+                        <Button onClick={onConfirm} className="bg-red-500 text-white">Delete</Button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     const headerColumns = React.useMemo(() => {
@@ -135,7 +160,11 @@ export default function CompanyDetailsTable() {
             const searchLower = filterValue.toLowerCase();
             filtered = filtered.filter(company =>
                 company.companyName.toLowerCase().includes(searchLower) ||
-                company.gstNumber.toLowerCase().includes(searchLower)
+                company.gstNumber.toLowerCase().includes(searchLower) ||
+                company.address.toLowerCase().includes(searchLower) ||
+                company.industries.toLowerCase().includes(searchLower) ||
+                company.website.toLowerCase().includes(searchLower) ||
+                company.flag.toLowerCase().includes(searchLower)
             );
         }
 
@@ -212,7 +241,6 @@ export default function CompanyDetailsTable() {
     const bottomContent = React.useMemo(() => {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
-                <span className="w-[30%] text-small text-default-400"></span>
                 <Pagination
                     isCompact
                     showShadow
@@ -248,6 +276,12 @@ export default function CompanyDetailsTable() {
             </div>
         );
     }, [page, pages, onPreviousPage, onNextPage]);
+
+    const renderCell = useCallback((company: CompanyDetails, columnKey: string) => {
+        if (columnKey === "actions") {
+        }
+        return company[columnKey as keyof CompanyDetails];
+    }, [isDownloading, router]);
 
     return (
         <SidebarProvider>
@@ -302,7 +336,7 @@ export default function CompanyDetailsTable() {
                                         });
                                     }}
                                 >
-                                    <TableHeader columns={headerColumns}>
+                                    <TableHeader columns={columns}>
                                         {(column) => (
                                             <TableColumn
                                                 key={column.uid}
@@ -313,10 +347,10 @@ export default function CompanyDetailsTable() {
                                             </TableColumn>
                                         )}
                                     </TableHeader>
-                                    <TableBody emptyContent={"Create company and add data"} items={paginatedItems}>
+                                    <TableBody emptyContent={"No companies found"} items={paginatedItems}>
                                         {(item) => (
                                             <TableRow key={item._id}>
-                                                {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{(columnKey as string)}</TableCell>}
+                                                {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}
                                             </TableRow>
                                         )}
                                     </TableBody>
@@ -326,6 +360,13 @@ export default function CompanyDetailsTable() {
                     </Card>
                 </div>
             </SidebarInset>
+
+            {/* Delete confirmation dialog */}
+            <ConfirmationDialog
+                isOpen={isDeleteModalOpen}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+            />
         </SidebarProvider>
     );
 }

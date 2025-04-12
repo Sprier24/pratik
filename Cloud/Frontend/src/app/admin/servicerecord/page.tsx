@@ -507,7 +507,7 @@ export default function AdminServiceTable() {
                             className="text-lg text-info cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                router.push(`adminservice?id=${service._id}`);
+                                router.push(`serviceform?id=${service._id}`);
                             }}
                         >
                             <Edit2Icon className="h-6 w-6" />

@@ -51,20 +51,22 @@ const INITIAL_VISIBLE_COLUMNS = ["firstName", "middleName", "lastName", "contact
 export default function ContactPersonDetailsTable() {
     const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
-    const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
+    const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(new Set([]));
+    const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
+    const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [page, setPage] = useState(1);
-    const [filterValue, setFilterValue] = useState<string>("");
-
-    const [isDownloading, setIsDownloading] = useState<boolean | null>(null);
-    const [sortDescriptor, setSortDescriptor] = useState({
-        column: "firstName",
-        direction: "ascending",
+    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
+        column: "createdAt",
+        direction: "descending",
     });
-
+    const [page, setPage] = React.useState(1);
     const router = useRouter();
+    const [filterValue, setFilterValue] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [contactToDelete, setContactToDelete] = useState<ContactPerson | null>(null);
     const hasSearchFilter = Boolean(filterValue);
+
 
 
     const fetchContactPersons = async () => {
@@ -94,7 +96,7 @@ export default function ContactPersonDetailsTable() {
 
     // Delete contact person by ID
     const handleDelete = async (contactPersonId: string) => {
-        if (!window.confirm("Are you sure you want to delete this contact person?")) {
+        if (!window.confirm("Are you sure you want to delete this contact?")) {
             return;
         }
 
@@ -118,22 +120,26 @@ export default function ContactPersonDetailsTable() {
     };
 
 
-    const filteredItems = React.useMemo<ContactPerson[]>(() => {
-        let filtered = [...contactPersons];
+    const headerColumns = React.useMemo(() => {
+        if (visibleColumns === "all") return columns;
+        return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
+    }, [visibleColumns]);
+
+    const filteredItems = React.useMemo(() => {
+        let filteredContacts = [...contactPersons];
 
         if (hasSearchFilter) {
-            const searchLower = filterValue.toLowerCase();
-            filtered = filtered.filter(contact =>
-                contact.firstName.toLowerCase().includes(searchLower) ||
-                contact.middleName.toLowerCase().includes(searchLower) ||
-                contact.lastName.toLowerCase().includes(searchLower) ||
-                contact.contactNo.toLowerCase().includes(searchLower) ||
-                contact.email.toLowerCase().includes(searchLower)
+            filteredContacts = filteredContacts.filter((contact) =>
+                contact.firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.lastName.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.email.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.contactNo.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.designation.toLowerCase().includes(filterValue.toLowerCase())
             );
         }
 
-        return filtered;
-    }, [contactPersons, filterValue, hasSearchFilter]);
+        return filteredContacts;
+    }, [contactPersons, hasSearchFilter, filterValue]);
 
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
@@ -261,7 +267,7 @@ export default function ContactPersonDetailsTable() {
                             className="text-lg text-info cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                router.push(`admincustomer?id=${contact._id}`);
+                                router.push(`contactform?id=${contact._id}`);
                             }}
                         >
                             <Edit2Icon className="h-6 w-6" />
@@ -307,22 +313,46 @@ export default function ContactPersonDetailsTable() {
                             <CardTitle className="text-3xl font-bold text-center">Contact Record</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {topContent}
-                            <Table>
-                                <TableHeader>
-                                    {columns.map((column) => (
-                                        <TableColumn key={column.uid}>{column.name}</TableColumn>
-                                    ))}
-                                </TableHeader>
-                                <TableBody emptyContent={"Create contact and add data"} items={paginatedItems}>
-                                    {(item) => (
-                                        <TableRow key={item._id}>
-                                            {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{(columnKey as string)}</TableCell>}
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                            {bottomContent}
+                            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-h-screen-xl max-w-screen-xl">
+                                {error ? (
+                                    <div className="text-red-500 text-center py-4">{error}</div>
+                                ) : (
+                                    <Table
+                                        isHeaderSticky
+                                        aria-label="Contacts table with custom cells, pagination, and sorting"
+                                        bottomContent={bottomContent}
+                                        bottomContentPlacement="outside"
+                                        classNames={{
+                                            wrapper: "max-h-[382px] overflow-y-auto",
+                                        }}
+                                        selectedKeys={selectedKeys}
+                                        sortDescriptor={sortDescriptor}
+                                        topContent={topContent}
+                                        topContentPlacement="outside"
+                                        onSelectionChange={setSelectedKeys}
+                                        onSortChange={setSortDescriptor}
+                                    >
+                                        <TableHeader>
+                                            {headerColumns.map((column) => (
+                                                <TableColumn key={column.uid} width={column.width}>
+                                                    {column.name}
+                                                </TableColumn>
+                                            ))}
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sortedItems.map((contact) => (
+                                                <TableRow key={contact._id}>
+                                                    {headerColumns.map((column) => (
+                                                        <TableCell key={column.uid}>
+                                                            {renderCell(contact, column.uid)}
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

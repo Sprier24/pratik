@@ -260,7 +260,6 @@ export default function GenerateService() {
         setLoading(true);
         setError(null);
 
-        // Process engineer remarks and ensure they are structured correctly
         const processedRemarks = formData.engineerRemarks
             .filter(remark =>
                 remark.serviceSpares?.trim() &&
@@ -325,11 +324,10 @@ export default function GenerateService() {
 
         try {
             // Send the request
-            setIsGeneratingPDF(true);
             const response = await axios({
                 method: isEditMode ? 'put' : 'post',
                 url: isEditMode
-                    ? `http://localhost:5000/api/v1/services/updateServiceEngineer/${serviceId}`
+                    ? `http://localhost:5000/api/v1/services/updateService/${serviceId}`
                     : "http://localhost:5000/api/v1/services/generateServices",
                 data: submissionData,
                 headers: {
@@ -340,8 +338,6 @@ export default function GenerateService() {
             console.log('API Response:', response.data); // Log successful response
 
             setService(response.data);
-            setIsGeneratingPDF(false);
-
             toast({
                 title: "Success",
                 description: isEditMode
@@ -371,23 +367,21 @@ export default function GenerateService() {
                     status: ""
                 });
             } else {
-                router.push("/admincertificatetable");
+
             }
         } catch (err: any) {
-            setIsGeneratingPDF(false);
-            // Log error details to the console
+
             console.error("Error:", err);
 
-            // Determine specific error message from response or fallback
+
             const errorMessage = err.response?.data?.message ||
                 err.response?.data?.error ||
                 err.message ||
                 "Failed to process request";
 
-            // Log error response
             console.error("Error Response:", errorMessage);
 
-            setError(errorMessage); // Set error for UI
+            setError(errorMessage);
             toast({
                 title: "Error",
                 description: errorMessage,
