@@ -405,7 +405,7 @@ export default function GenerateService() {
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
 
-                    <label className="font-medium text-white">Place:</label>
+                    <label className="font-medium text-white">Place :</label>
                     <div className="flex gap-4">
                         <label className="flex items-center cursor-pointer">
                             <input
@@ -432,7 +432,7 @@ export default function GenerateService() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <label className="font-medium text-white">Nature of Job:</label>
+                    <label className="font-medium text-white">Nature of Job :</label>
                     <div className="flex gap-4">
                         <label className="flex items-center cursor-pointer">
                             <input
@@ -489,7 +489,7 @@ export default function GenerateService() {
                     >
                         <option value="">Select Engineer</option>
                         {isLoadingEngineers ? (
-                            <option>Loading engineers...</option>
+                            <option>Loading engineer...</option>
                         ) : (
                             engineers.map((engineer) => (
                                 <option key={engineer._id} value={engineer._id}>
@@ -502,10 +502,11 @@ export default function GenerateService() {
                 <div className="flex flex-col gap-4">
                     <textarea
                         name="makeModelNumberoftheInstrumentQuantity"
-                        placeholder="Make & Model Number of the Instrument Quantity"
+                        placeholder="Model Number of the Instrument Quantity"
                         value={formData.makeModelNumberoftheInstrumentQuantity}
                         onChange={handleChange}
-                        className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                        rows={3}
                     />
 
                     <textarea
@@ -513,19 +514,21 @@ export default function GenerateService() {
                         placeholder="Serial Number of the Instrument Calibrated & OK"
                         value={formData.serialNumberoftheInstrumentCalibratedOK}
                         onChange={handleChange}
-                        className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                        rows={3}
                     />
 
                     <textarea
                         name="serialNumberoftheFaultyNonWorkingInstruments"
-                        placeholder="Serial Number of Faulty/Non-Working Instruments"
+                        placeholder="Serial Number of Faulty / Non-Working Instruments"
                         value={formData.serialNumberoftheFaultyNonWorkingInstruments}
                         onChange={handleChange}
-                        className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                        rows={3}
                     />
                 </div>
 
-                <h2 className="text-lg font-bold mt-4">Engineer Remarks Table</h2>
+                <h2 className="text-lg font-bold mt-4 text-center">Engineer Remarks Table</h2>
 
                 <div className="flex justify-end mb-4">
                     <button
@@ -533,19 +536,19 @@ export default function GenerateService() {
                         className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900"
                         disabled={formData.engineerRemarks.length >= 10}
                     >
-                        Add Engineer Remark
+                        Create Engineer Remark
                     </button>
                 </div>
                 <table className="table-auto border-collapse border border-gray-500 rounded w-full">
                     <thead>
                         <tr>
                             <th className="border p-2">#</th>
-                            <th className="border p-2">Service/Spares</th>
-                            <th className="border p-2">Part No.</th>
+                            <th className="border p-2">Service / Spares</th>
+                            <th className="border p-2">Part Number</th>
                             <th className="border p-2">Rate</th>
                             <th className="border p-2">Quantity</th>
-                            <th className="border p-2">PO No.</th>
-                            <th className="border p-2">Remove</th>
+                            <th className="border p-2">PO Number</th>
+                            <th className="border p-2">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -626,7 +629,7 @@ export default function GenerateService() {
 
                 <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                     disabled={loading}
                 >
                     {loading ? "Generating..." : "Generate Service Report"}

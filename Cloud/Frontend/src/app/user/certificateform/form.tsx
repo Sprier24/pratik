@@ -426,11 +426,12 @@ export default function GenerateCertificate() {
           </select>
         </div>
 
-        <h2 className="text-lg font-bold mt-4">Observation Table</h2>
+        <h2 className="text-lg font-bold mt-4 text-center">Observation Table</h2>
+
         <div className="flex justify-end mb-4">
           <button
             onClick={addObservation}
-            className="bg-black-500 text-white px-4 py-2 border rounded hover:bg-gray-900"
+            className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900"
             disabled={formData.observations.length >= 5}
           >
             Create Observation
@@ -480,7 +481,7 @@ export default function GenerateCertificate() {
                 <td className="border p-2">
                   <button
                     onClick={() => removeObservation(index)}
-                    className="bg-black-500 text-white px-2 py-1 border rounded hover:bg-red-950"
+                    className="bg-red-900 text-white px-2 py-1 border rounded hover:bg-red-950"
                   >
                     Remove
                   </button>

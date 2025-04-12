@@ -49,11 +49,11 @@ const formatDate = (dateString: string): string => {
 
 const columns = [
     // { name: "NAME & LOCATION", uid: "nameAndLocation", sortable: true, width: "120px" },
-    { name: "CONTACT PERSON", uid: "contactPerson", sortable: true, width: "120px" },
-    { name: "CONTACT NUMBER", uid: "contactNumber", sortable: true, width: "120px" },
-    { name: "SERVICE ENGINEER", uid: "serviceEngineer", sortable: true, width: "120px" },
-    { name: "REPORT NO", uid: "reportNo", sortable: true, width: "120px" },
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
+    { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
+    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
 
 export const statusOptions = [
@@ -263,8 +263,8 @@ export default function Servicetable() {
             setIsDownloading(null);
         }
     };
-     
-    
+
+
     const onNextPage = React.useCallback(() => {
         if (page < pages) {
             setPage(page + 1);
@@ -303,7 +303,7 @@ export default function Servicetable() {
                     <Input
                         isClearable
                         className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
-                        placeholder="Search by name..."
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
@@ -312,25 +312,19 @@ export default function Servicetable() {
 
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {services.length} services</span>
-                    <Select
-                        className="w-full sm:max-w-[80%]"
-                        placeholder="Status"
-                        value={statusFilter}
-                        onChange={(value) => setStatusFilter(value)}
-                        options={statusOptions}
-                    />
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                            defaultValue="15"
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
+                    <span className="text-default-400 text-small">Total {services.length} service</span>
+                    <label className="flex items-center text-default-400 text-small gap-2">
+                        Rows per page
+                        <div className="relative">
+                            <select
+                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                onChange={onRowsPerPageChange}
+                            >
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
                     </label>
                 </div>
             </div>
@@ -466,7 +460,7 @@ export default function Servicetable() {
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody emptyContent={"No service found"} items={sortedItems}>
+                <TableBody emptyContent={"Create Service and add data"} items={sortedItems}>
                     {(item) => (
                         <TableRow key={item._id}>
                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Service, columnKey as string)}</TableCell>}
