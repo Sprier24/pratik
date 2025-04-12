@@ -29,10 +29,9 @@ interface User {
 }
 
 const columns = [
-  { name: "NAME", uid: "name", sortable: true, width: "120px" },
-  { name: "EMAIL", uid: "email", sortable: true, width: "120px" },
-  { name: "CONTACT", uid: "contact", sortable: true, width: "120px" },
-
+  { name: "User Name", uid: "name", sortable: true, width: "120px" },
+  { name: "Email Address", uid: "email", sortable: true, width: "120px" },
+  { name: "Contact Number", uid: "contact", sortable: true, width: "120px" },
   { name: "ACTIONS", uid: "actions", sortable: false, width: "100px" },
 ];
 
@@ -137,7 +136,7 @@ export default function UserTable() {
           <Input
             isClearable
             className="w-full sm:max-w-[80%]"
-            placeholder="Search by name..."
+            placeholder="Search"
             startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
@@ -145,18 +144,19 @@ export default function UserTable() {
           />
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">Total {users.length} users</span>
-          <label className="flex items-center text-default-400 text-small">
-            Rows per page:
-            <select
-              className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-              onChange={onRowsPerPageChange}
-              defaultValue="15"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
+          <span className="text-default-400 text-small">Total {users.length} user</span>
+          <label className="flex items-center text-default-400 text-small gap-2">
+            Rows per page
+            <div className="relative">
+              <select
+                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                onChange={onRowsPerPageChange}
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
+            </div>
           </label>
         </div>
       </div>

@@ -48,7 +48,6 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    // { name: "NAME & LOCATION", uid: "nameAndLocation", sortable: true, width: "120px" },
     { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },

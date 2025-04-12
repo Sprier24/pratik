@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon } from "lucide-react";
+import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -99,6 +99,30 @@ export default function CompanyDetailsTable() {
     useEffect(() => {
         fetchCompanies();
     }, []);
+
+    const handleDelete = async (companyId: string) => {
+        if (!window.confirm("Are you sure you want to delete this company?")) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `http://localhost:5000/api/v1/company/deleteCompany/${companyId}`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    }
+                }
+            );
+
+            setCompanies(prev => prev.filter(company => company._id !== companyId));
+            toast.success("Company deleted successfully");
+        } catch (error) {
+            console.error("Error deleting company:", error);
+            toast.error("Failed to delete company");
+        }
+    };
 
     const headerColumns = React.useMemo(() => {
         return columns.filter(column => visibleColumns.has(column.uid));

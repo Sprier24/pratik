@@ -216,7 +216,7 @@ export default function Customer() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="Email"
+                      placeholder="Email Address"
                       className="w-full p-2 border rounded"
                       required
                       disabled={loading}

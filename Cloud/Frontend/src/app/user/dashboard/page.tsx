@@ -97,11 +97,11 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "Certificate No.", uid: "certificateNo", sortable: true, width: "120px" },
+    { name: "Certificate Number", uid: "certificateNo", sortable: true, width: "120px" },
     { name: "Customer", uid: "customerName", sortable: true, width: "120px" },
     { name: "Site Location", uid: "siteLocation", sortable: true, width: "120px" },
     { name: "Make Model", uid: "makeModel", sortable: true, width: "120px" },
-    { name: "Serial No.", uid: "serialNo", sortable: true, width: "120px" },
+    { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
 ];
 
@@ -109,7 +109,7 @@ const columnsservice = [
     { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
-    { name: "Report No.", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
 ];
 
 export const statusOptions = [

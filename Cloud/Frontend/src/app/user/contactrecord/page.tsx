@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon } from "lucide-react";
+import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -89,6 +90,33 @@ export default function ContactPersonDetailsTable() {
         }
     };
 
+
+    // Delete contact person by ID
+    const handleDelete = async (contactPersonId: string) => {
+        if (!window.confirm("Are you sure you want to delete this contact person?")) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `http://localhost:5000/api/v1/contactperson/deleteContactPerson/${contactPersonId}`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+
+            setContactPersons(prev => prev.filter(contact => contact._id !== contactPersonId));
+            toast.success("Contact person deleted successfully");
+        } catch (error) {
+            console.error("Error deleting contact person:", error);
+            toast.error("Failed to delete contact person");
+        }
+    };
+
+
     const filteredItems = React.useMemo<ContactPerson[]>(() => {
         let filtered = [...contactPersons];
 
@@ -156,7 +184,7 @@ export default function ContactPersonDetailsTable() {
                     />
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {contactPersons.length} account</span>
+                    <span className="text-default-400 text-small">Total {contactPersons.length} contacts</span>
                     <label className="flex items-center text-default-400 text-small gap-2">
                         Rows per page
                         <div className="relative">

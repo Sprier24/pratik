@@ -431,7 +431,7 @@ export default function AddCategory() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                          <ModeToggle />
+                        <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -479,7 +479,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="customerName"
-                                        placeholder="Enter Name"
+                                        placeholder="Customer Name"
                                         value={formData.customerName}
                                         onChange={handleChange}
                                         className="p-2 border rounded"
@@ -488,7 +488,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="siteLocation"
-                                        placeholder="Enter Site Location"
+                                        placeholder="Site Location"
                                         value={formData.siteLocation}
                                         onChange={handleChange}
                                         className="p-2 border rounded"
@@ -504,7 +504,7 @@ export default function AddCategory() {
 
                                         disabled={isLoadingModels}
                                     >
-                                        <option value="">Select Make and Model</option>
+                                        <option value="">Select Model</option>
                                         {isLoadingModels ? (
                                             <option value="" disabled>Loading models...</option>
                                         ) : models.length > 0 ? (
@@ -515,9 +515,6 @@ export default function AddCategory() {
                                             ))
                                         ) : (
                                             <>
-                                                <option value="GMIleakSurveyor">GMI leak Surveyor</option>
-                                                <option value="GMIGT41Series">GMI GT 41 Series</option>
-                                                <option value="GMIGT44">GMI GT 44</option>
                                             </>
                                         )}
                                     </select>
@@ -535,7 +532,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="serialNo"
-                                        placeholder="Enter Serial Number"
+                                        placeholder="Serial Number"
                                         value={formData.serialNo}
                                         onChange={handleChange}
                                         className="p-2 border rounded"
@@ -544,7 +541,7 @@ export default function AddCategory() {
                                     <input
                                         type="text"
                                         name="calibrationGas"
-                                        placeholder="Enter Calibration Gas"
+                                        placeholder="Calibration Gas"
                                         value={formData.calibrationGas}
                                         onChange={handleChange}
                                         className="p-2 border rounded"
@@ -554,10 +551,10 @@ export default function AddCategory() {
                                 <div className="grid grid-cols-1 gap-6">
                                     <textarea
                                         name="gasCanisterDetails"
-                                        placeholder="Enter Gas Canister Details"
+                                        placeholder="Gas Canister Details"
                                         value={formData.gasCanisterDetails}
                                         onChange={handleChange}
-                                        className="p-2 border rounded"
+                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                                         rows={3}
                                     />
                                 </div>
@@ -565,10 +562,13 @@ export default function AddCategory() {
                                     <input
                                         type="date"
                                         name="dateOfCalibration"
+                                        placeholder="Enter Date of Calibration"
                                         value={startDate}
                                         onChange={handleStartDateChange}
                                         className="p-2 border rounded"
-
+                                        data-date-format="DD-MM-YYYY"
+                                        min="2000-01-01"
+                                        max="2100-12-31"
                                     />
                                     <select
                                         onChange={handleTimePeriodChange}
@@ -586,6 +586,7 @@ export default function AddCategory() {
                                     <input
                                         type="date"
                                         name="calibrationDueDate"
+                                        placeholder="Enter Calibration Due Date"
                                         value={endDate}
                                         onChange={(e) => {
                                             setEndDate(e.target.value);
@@ -596,14 +597,16 @@ export default function AddCategory() {
                                         }}
                                         className="p-2 border rounded"
                                         disabled={timePeriod !== null}
-
+                                        data-date-format="DD-MM-YYYY"
+                                        min="2000-01-01"
+                                        max="2100-12-31"
                                     />
                                     <select
                                         name="engineerName"
                                         value={formData.engineerName}
                                         onChange={handleChange}
                                         className="p-2 border rounded"
-
+                                        required
                                         disabled={isLoadingEngineers}
                                     >
                                         <option value="">Select Engineer Name</option>
@@ -635,15 +638,15 @@ export default function AddCategory() {
                                     </select>
                                 </div>
 
-                                <h2 className="text-lg font-bold mt-4">Observation Table</h2>
+                                <h2 className="text-lg font-bold mt-4 text-center">Observation Table</h2>
                                 <div className="flex justify-end mb-4">
                                     <button
                                         type="button"
                                         onClick={addObservation}
-                                        className="bg-black text-white px-4 py-2 border rounded hover:bg-gray-900"
+                                        className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900"
                                         disabled={formData.observations.length >= 5}
                                     >
-                                        Add Observation
+                                        Create Observation
                                     </button>
                                 </div>
                                 <table className="table-auto border-collapse border border-gray-500 rounded w-full">
@@ -653,7 +656,7 @@ export default function AddCategory() {
                                             <th className="border p-2">Gas</th>
                                             <th className="border p-2">Before Calibration</th>
                                             <th className="border p-2">After Calibration</th>
-                                            <th className="border p-2">Remove</th>
+                                            <th className="border p-2">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -667,7 +670,6 @@ export default function AddCategory() {
                                                         value={observation.gas}
                                                         onChange={(e) => handleObservationChange(index, 'gas', e.target.value)}
                                                         className="w-full p-1 border rounded"
-
                                                     />
                                                 </td>
                                                 <td className="border p-2">
@@ -677,7 +679,6 @@ export default function AddCategory() {
                                                         value={observation.before}
                                                         onChange={(e) => handleObservationChange(index, 'before', e.target.value)}
                                                         className="w-full p-1 border rounded"
-
                                                     />
                                                 </td>
                                                 <td className="border p-2">
@@ -687,14 +688,13 @@ export default function AddCategory() {
                                                         value={observation.after}
                                                         onChange={(e) => handleObservationChange(index, 'after', e.target.value)}
                                                         className="w-full p-1 border rounded"
-
                                                     />
                                                 </td>
                                                 <td className="border p-2">
                                                     <button
                                                         type="button"
                                                         onClick={() => removeObservation(index)}
-                                                        className="bg-black text-white px-2 py-1 border rounded hover:bg-red-950"
+                                                        className="bg-red-900 text-white px-2 py-1 border rounded hover:bg-red-950"
                                                     >
                                                         Remove
                                                     </button>
@@ -723,20 +723,19 @@ export default function AddCategory() {
                                     className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? "Generating..." : "Create"}
+                                    {loading ? "Generating..." : "Generate Certificate"}
                                 </button>
                             </form>
 
                             {certificate && (
                                 <div className="mt-4 text-center">
                                     <p className="text-green-600 mb-2">{certificate.message}</p>
-                                    <Button
-                                        className="w-5 h-10 text-sm"
+                                    <button
                                         onClick={handleDownload}
-                                        disabled={loading}
+                                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
                                     >
-                                        {loading ? "Downloading..." : "Download Certificate"}
-                                    </Button>
+                                        Download Certificate
+                                    </button>
                                 </div>
                             )}
                         </CardContent>

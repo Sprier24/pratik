@@ -303,7 +303,7 @@ export default function AddModel() {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <h2 className="text-lg font-bold mt-4">Add New Model and Range</h2>
+                                <h2 className="text-lg font-bold mt-4 text-center">Create New Model and Range</h2>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <div className="relative">
                                         <select
@@ -312,7 +312,7 @@ export default function AddModel() {
                                             onChange={handleChange}
                                             className="p-2 border rounded w-full"
                                         >
-                                            <option value="">Select Make and Model</option>
+                                            <option value="">Select Model</option>
                                             {models.map((model) => (
                                                 <option key={model.id} value={model.model_name}>
                                                     {model.model_name}
@@ -355,13 +355,13 @@ export default function AddModel() {
                                 <button
                                     type="button"
                                     onClick={handleNewModelAndRange}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                                    className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? 'Adding...' : 'Add New Model and Range'}
+                                    {loading ? 'Adding...' : 'Create New Model and Range'}
                                 </button>
 
-                                <h2 className="text-lg font-bold mt-4">Add New Engineer</h2>
+                                <h2 className="text-lg font-bold mt-4 text-center">Create New Engineer</h2>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <select
                                         name="selectedEngineer"
@@ -379,7 +379,7 @@ export default function AddModel() {
 
                                     <input
                                         type="text"
-                                        placeholder="New Engineer Name"
+                                        placeholder="Engineer Name"
                                         value={newEngineer}
                                         onChange={(e) => setNewEngineer(e.target.value)}
                                         className="p-2 border rounded"
@@ -389,13 +389,13 @@ export default function AddModel() {
                                 <button
                                     type="button"
                                     onClick={handleAddEngineer}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                                    className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? "Adding..." : "Add Engineer"}
+                                    {loading ? "Adding..." : "Create Engineer"}
                                 </button>
 
-                                <h2 className="text-lg font-bold mt-4">Add New Service Engineer</h2>
+                                <h2 className="text-lg font-bold mt-4 text-center">Create New Service Engineer</h2>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <select
                                         name="selectedServiceEngineer"
@@ -413,7 +413,7 @@ export default function AddModel() {
 
                                     <input
                                         type="text"
-                                        placeholder="New Service Engineer Name"
+                                        placeholder="Service Engineer Name"
                                         value={newServiceEngineer}
                                         onChange={(e) => setNewServiceEngineer(e.target.value)}
                                         className="p-2 border rounded"
@@ -423,10 +423,10 @@ export default function AddModel() {
                                 <button
                                     type="button"
                                     onClick={handleAddServiceEngineer}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                                    className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? "Adding..." : "Add Service Engineer"}
+                                    {loading ? "Adding..." : "Create Service Engineer"}
                                 </button>
 
                             </form>

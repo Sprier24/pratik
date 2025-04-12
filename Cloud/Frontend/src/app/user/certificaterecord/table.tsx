@@ -66,7 +66,6 @@ const columns = [
 ];
 const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "serialNo", "engineerName", "actions"];
 
-
 export default function Certificatetable() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [certificate, setCertificate] = useState<CertificateResponse | null>(null);
@@ -303,8 +302,6 @@ export default function Certificatetable() {
             onChange={(e) => setFilterValue(e.target.value)}
             onClear={() => setFilterValue("")}
           />
-
-
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">Total {certificates.length} certificates</span>

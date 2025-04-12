@@ -325,7 +325,6 @@ export default function GenerateService() {
                         onChange={handleChange}
                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-
                     <input
                         type="text"
                         name="customerLocation"
@@ -334,7 +333,8 @@ export default function GenerateService() {
                         onChange={handleChange}
                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <input
                         type="text"
                         name="contactPerson"
@@ -343,7 +343,6 @@ export default function GenerateService() {
                         onChange={handleChange}
                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-
                     <input
                         type="text"
                         name="contactNumber"
@@ -352,8 +351,6 @@ export default function GenerateService() {
                         onChange={handleChange}
                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-
-
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <select
@@ -366,7 +363,6 @@ export default function GenerateService() {
                         <option value="Checked">Checked</option>
                         <option value="Unchecked">Unchecked</option>
                     </select>
-
                     <select
                         name="serviceEngineerId"
                         value={formData.serviceEngineerId || ""}
@@ -393,7 +389,6 @@ export default function GenerateService() {
                         min="2000-01-01"
                         max="2100-12-31"
                     />
-
                     <input
                         type="text"
                         name="place"
@@ -404,7 +399,6 @@ export default function GenerateService() {
                     />
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-
                     <label className="font-medium text-white">Place :</label>
                     <div className="flex gap-4">
                         <label className="flex items-center cursor-pointer">
@@ -634,7 +628,7 @@ export default function GenerateService() {
                 >
                     {loading ? "Generating..." : "Generate Service Report"}
                 </button>
-            </form>
+            </form >
 
             {service && (
                 <div className="mt-4 text-center">
@@ -647,7 +641,8 @@ export default function GenerateService() {
                         {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
                     </button>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

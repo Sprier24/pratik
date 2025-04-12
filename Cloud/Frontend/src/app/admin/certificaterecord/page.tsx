@@ -60,17 +60,15 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "CERTIFICATE NO", uid: "certificateNo", sortable: true, width: "120px" },
-    { name: "CUSTOMER", uid: "customerName", sortable: true, width: "120px" },
-    { name: "SITE LOCATION", uid: "siteLocation", sortable: true, width: "120px" },
-    { name: "MAKE MODEL", uid: "makeModel", sortable: true, width: "120px" },
-    { name: "SERIAL NO", uid: "serialNo", sortable: true, width: "120px" },
-
-    { name: "ENGINEER NAME", uid: "engineerName", sortable: true, width: "120px" },
-
-    { name: "ACTION", uid: "actions", sortable: true, width: "100px" },
+    { name: "Certificate Number", uid: "certificateNo", sortable: true, width: "120px" },
+    { name: "Customer Name", uid: "customerName", sortable: true, width: "120px" },
+    { name: "Site Location", uid: "siteLocation", sortable: true, width: "120px" },
+    { name: "Model", uid: "makeModel", sortable: true, width: "120px" },
+    { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
+    { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
+    { name: "Download", uid: "actions", sortable: true, width: "100px" },
 ];
-const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "range", "serialNo", "calibrationGas", "gasCanisterDetails", "dateOfCalibration", "calibrationDueDate", "engineerName", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "serialNo", "engineerName", "actions"];
 
 
 export default function CertificateTable() {
@@ -329,29 +327,28 @@ export default function CertificateTable() {
                 <div className="flex justify-between gap-3 items-end">
                     <Input
                         isClearable
-                        className="w-full sm:max-w-[80%]"
-                        placeholder="Search by name..."
+                        className="w-full sm:max-w-[80%]" // Full width on small screens, 44% on larger screens
+                        placeholder="Search"
                         startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
                         value={filterValue}
                         onChange={(e) => setFilterValue(e.target.value)}
                         onClear={() => setFilterValue("")}
                     />
-
-
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-default-400 text-small">Total {certificates.length} certificates</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
-                            onChange={onRowsPerPageChange}
-                            defaultValue="15"
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
+                    <label className="flex items-center text-default-400 text-small gap-2">
+                        Rows per page
+                        <div className="relative">
+                            <select
+                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
+                                onChange={onRowsPerPageChange}
+                            >
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
                     </label>
                 </div>
             </div>
@@ -551,7 +548,7 @@ export default function CertificateTable() {
                                             </TableColumn>
                                         )}
                                     </TableHeader>
-                                    <TableBody emptyContent={"No certificate found"} items={sortedItems}>
+                                    <TableBody emptyContent={"Create certificate and add data"} items={sortedItems}>
                                         {(item) => (
                                             <TableRow key={item._id}>
                                                 {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

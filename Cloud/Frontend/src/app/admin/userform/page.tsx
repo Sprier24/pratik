@@ -110,9 +110,8 @@ export function RegisterPage() {
               <div className="grid w-full items-center gap-4">
                 {/* Name Input */}
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="name">Name</Label>
                   <Input
-                    placeholder="Enter your name"
+                    placeholder="User Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -120,20 +119,18 @@ export function RegisterPage() {
 
                 {/* Email Input */}
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
                   <Input
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="contact">Contact</Label>
                   <Input
                     type="number"
-                    placeholder="Enter your contact"
+                    placeholder="Contact Number"
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                   />
@@ -141,11 +138,10 @@ export function RegisterPage() {
 
                 {/* Password Input */}
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
@@ -161,11 +157,10 @@ export function RegisterPage() {
 
                 {/* Confirm Password Input */}
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
                   <div className="relative">
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
+                      placeholder="Confirm Password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />

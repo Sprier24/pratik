@@ -5,7 +5,10 @@ import {
   Settings,
   CircleUser,
   InfoIcon,
-  CirclePlay
+  CirclePlay,
+  LayoutDashboard,
+  Building2,
+  Files
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -25,7 +28,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       {
         title: "Dashboard",
         url: "#",
-        icon: CirclePlay,
+        icon: LayoutDashboard,
         items: [
           {
             title: "Dashboard",
@@ -34,9 +37,9 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         ],
       },
       {
-        title: "Company Details",
+        title: "Company Info",
         url: "#",
-        icon: InfoIcon,
+        icon: Building2,
         items: [
           {
             title: "Create Company",
@@ -75,7 +78,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       {
         title: "Documentation",
         url: "#",
-        icon: File,
+        icon: Files,
         items: [
           {
             title: "Create Certificate",
