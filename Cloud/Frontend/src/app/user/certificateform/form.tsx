@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { Trash2 } from "lucide-react";
 
 interface Observation {
   gas: string;
@@ -481,9 +482,8 @@ export default function GenerateCertificate() {
                 <td className="border p-2">
                   <button
                     onClick={() => removeObservation(index)}
-                    className="bg-red-900 text-white px-2 py-1 border rounded hover:bg-red-950"
                   >
-                    Remove
+                    <Trash2 className="h-6 w-6" />
                   </button>
                 </td>
               </tr>
@@ -491,7 +491,7 @@ export default function GenerateCertificate() {
             {formData.observations.length === 0 && (
               <tr>
                 <td colSpan={5} className="border p-2 text-center text-gray-500">
-                  No observations added yet. Click "Add Observation" to add one.
+                  Click "Create Observation" to add one
                 </td>
               </tr>
             )}

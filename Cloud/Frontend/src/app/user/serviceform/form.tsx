@@ -2,6 +2,7 @@
 
 import { toast } from "@heroui/react";
 import axios from "axios";
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EngineerRemarks {
@@ -597,9 +598,8 @@ export default function GenerateService() {
                                 <td className="border p-2">
                                     <button
                                         onClick={() => removeEngineerRemark(index)}
-                                        className="bg-red-900 text-white px-2 py-1 border rounded hover:bg-red-950"
                                     >
-                                        Remove
+                                        <Trash2 className="h-6 w-6" />
                                     </button>
                                 </td>
                             </tr>
@@ -607,7 +607,7 @@ export default function GenerateService() {
                         {formData.engineerRemarks.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="border p-2 text-center text-gray-500">
-                                    No engineer remarks added yet. Click "Add Engineer Remark" to add one.
+                                    Click "Create Engineer Remark" to add one
                                 </td>
                             </tr>
                         )}

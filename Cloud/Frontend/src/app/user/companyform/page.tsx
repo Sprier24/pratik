@@ -9,43 +9,59 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ModeToggle";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AxiosError } from 'axios';
+import { Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+const companySchema = z.object({
+    companyName: z.string().nonempty({ message: "Required" }),
+    address: z.string().nonempty({ message: "Required" }),
+    industries: z.string().nonempty({ message: "Required" }),
+    industriesType: z.string().nonempty({ message: "Required" }),
+    gstNumber: z.string().nonempty({ message: "Required" }),
+    website: z.preprocess((val) => (val === "" ? undefined : val),
+        z.string({
+            required_error: "Required",
+            invalid_type_error: "Invalid website URL"
+        }).url("Invalid website URL")
+    ),
+    flag: z.enum(["Red", "Yellow", "Green"], {
+        errorMap: () => ({ message: "Required" }),
+    }),
+});
 
 export default function AddCategory() {
     const searchParams = useSearchParams();
     const certificateId = searchParams.get('id');
-
-    // State for form fields
-    const [formData, setFormData] = useState({
-        companyName: "",
-        address: "",
-        gstNumber: "",
-        industries: "",
-        website: "",
-        industriesType: "",
-        flag: "",
-    });
-
-    // Loading and error states
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [certificate, setCertificate] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    // Function to handle input change
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    const form = useForm<z.infer<typeof companySchema>>({
+        resolver: zodResolver(companySchema),
+        defaultValues: {
+            companyName: "",
+            address: "",
+            gstNumber: "",
+            industries: "",
+            website: "",
+            industriesType: "",
+            flag: undefined,
+        },
+    });
 
-    // Fetch company details for editing
     useEffect(() => {
         if (certificateId) {
             const fetchCompany = async () => {
                 try {
-                    setLoading(true);
+                    setIsSubmitting(true);
                     const response = await axios.get(`http://localhost:5000/api/v1/company/getcompanyById/${certificateId}`);
                     if (response.data) {
-                        setFormData({
+                        form.reset({
                             companyName: response.data.companyName || "",
                             address: response.data.address || "",
                             gstNumber: response.data.gstNumber || "",
@@ -55,53 +71,56 @@ export default function AddCategory() {
                             flag: response.data.flag || "",
                         });
                     }
-                    setLoading(false);
                 } catch (error) {
-                    setLoading(false);
-                    setError("Failed to fetch company details");
+                    toast({
+                        title: "Error",
+                        description: "Failed to fetch company details",
+                        variant: "destructive",
+                    });
                     console.error("Fetch error:", error);
+                } finally {
+                    setIsSubmitting(false);
                 }
             };
             fetchCompany();
         }
-    }, [certificateId]);
+    }, [certificateId, form]);
 
-    // Handle form submission
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
+    const onSubmit = async (values: z.infer<typeof companySchema>) => {
+        setIsSubmitting(true);
         setSuccess(false);
 
         try {
             let response;
             if (certificateId) {
-                // Update company
-                response = await axios.put(`http://localhost:5000/api/v1/company/updatecompany/${certificateId}`, formData);
+                response = await axios.put(`http://localhost:5000/api/v1/company/updatecompany/${certificateId}`, values);
+                toast({
+                    title: "Company Updated",
+                    description: "The company has been successfully updated",
+                });
             } else {
-                // Create new company
-                response = await axios.post("http://localhost:5000/api/v1/company/createcompany", formData);
+                response = await axios.post("http://localhost:5000/api/v1/company/createcompany", values);
+                toast({
+                    title: "Company Submitted",
+                    description: "The company has been successfully created",
+                });
+                form.reset();
             }
 
-            setCertificate(response.data);
             setSuccess(true);
-            if (!certificateId) {
-                // Reset form if creating new company
-                setFormData({
-                    companyName: "",
-                    address: "",
-                    gstNumber: "",
-                    industries: "",
-                    website: "",
-                    industriesType: "",
-                    flag: "",
-                });
+        } catch (error: unknown) {
+            let errorMessage = "An unknown error occurred";
+            if (error instanceof AxiosError && error.response) {
+                errorMessage = error.response.data?.message || "Failed to process request";
             }
-        } catch (error) {
-            setError(error.response?.data?.message || "Failed to process request");
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+            });
             console.error("Submission error:", error);
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -144,107 +163,150 @@ export default function AddCategory() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="companyName"
-                                        placeholder="Company Name"
-                                        value={formData.companyName}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        required
-                                        disabled={loading}
-                                    />
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        placeholder="Company Address"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="industries"
-                                        placeholder="Industries"
-                                        value={formData.industries}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        required
-                                        disabled={loading}
-                                    />
-                                    <input
-                                        type="text"
-                                        name="industriesType"
-                                        placeholder="Industries Type"
-                                        value={formData.industriesType}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        disabled={loading}
-                                    />
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="companyName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Company Name"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Company Address"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
 
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="gstNumber"
-                                        placeholder="GST Number"
-                                        value={formData.gstNumber}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        disabled={loading}
-                                    />
-                                    <input
-                                        type="text"
-                                        name="website"
-                                        placeholder="Website"
-                                        value={formData.website}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <select
-                                        name="flag"
-                                        value={formData.flag}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded w-full"
-                                        disabled={loading}
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="industries"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Industries"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="industriesType"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Industries Type"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="gstNumber"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="GST Number"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="website"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Website"
+                                                            {...field}
+                                                            disabled={isSubmitting}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="flag"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <select
+                                                            {...field}
+                                                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            <option value="">Select Flag</option>
+                                                            <option value="Red">Red</option>
+                                                            <option value="Yellow">Yellow</option>
+                                                            <option value="Green">Green</option>
+                                                        </select>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        className="w-full"
+                                        disabled={isSubmitting}
                                     >
-                                        <option value="">Select Flag</option>
-                                        <option value="Red">Red</option>
-                                        <option value="Yellow">Yellow</option>
-                                        <option value="Green">Green</option>
-                                    </select>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Processing..." : certificateId ? "Update" : "Create"}
-                                </Button>
-                            </form>
-
-                            {error && (
-                                <p className="mt-4 text-center text-red-500">
-                                    {error}
-                                </p>
-                            )}
-
-                            {success && (
-                                <p className="mt-4 text-center text-green-500">
-                                    {certificateId ? "Company updated successfully!" : "Company added successfully!"}
-                                </p>
-                            )}
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="animate-spin mr-2" />
+                                                {certificateId ? "Updating..." : "Creating..."}
+                                            </>
+                                        ) : certificateId ? "Update" : "Create"}
+                                    </Button>
+                                </form>
+                            </Form>
                         </CardContent>
                     </Card>
                 </div>

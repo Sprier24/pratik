@@ -49,10 +49,11 @@ export default function AdminContactTable() {
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column: "createdAt",
-        direction: "descending",
+    const [sortDescriptor, setSortDescriptor] = useState({
+        column: "createdAt", // Change from "firstName" to "createdAt"
+        direction: "descending", // Newest first
     });
+
     const [page, setPage] = React.useState(1);
     const router = useRouter();
     const [filterValue, setFilterValue] = useState("");
@@ -62,7 +63,6 @@ export default function AdminContactTable() {
     const hasSearchFilter = Boolean(filterValue);
 
     const fetchContactPersons = async () => {
-        setIsLoading(true);
         try {
             const response = await axios.get(
                 `http://localhost:5000/api/v1/contactperson/getContactPersons`,
@@ -73,15 +73,22 @@ export default function AdminContactTable() {
                     },
                 }
             );
-            const contactPersonsData = response.data.data || [];
+
+            let contactPersonsData = response.data.data || [];
+
+            // Sort by createdAt descending (newest first)
+            contactPersonsData.sort((a: ContactPerson, b: ContactPerson) => {
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
+                return dateB - dateA;
+            });
+
             setContactPersons(contactPersonsData);
             setError(null);
         } catch (error) {
             console.error("Error fetching contact persons:", error);
             setError("Failed to fetch contact persons. Please try again.");
             setContactPersons([]);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -152,6 +159,7 @@ export default function AdminContactTable() {
         if (hasSearchFilter) {
             filteredContacts = filteredContacts.filter((contact) =>
                 contact.firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.middleName.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.lastName.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.email.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.contactNo.toLowerCase().includes(filterValue.toLowerCase()) ||
@@ -171,26 +179,16 @@ export default function AdminContactTable() {
     }, [page, filteredItems, rowsPerPage]);
 
     const sortedItems = React.useMemo(() => {
-        const itemsToSort = [...items];
-        if (sortDescriptor.column && itemsToSort.length > 0) {
-            return itemsToSort.sort((a, b) => {
-                const first = a[sortDescriptor.column as keyof ContactPerson] ?? "";
-                const second = b[sortDescriptor.column as keyof ContactPerson] ?? "";
+        return [...filteredItems].sort((a, b) => {
+            const first = a[sortDescriptor.column as keyof ContactPerson] || "";
+            const second = b[sortDescriptor.column as keyof ContactPerson] || "";
 
-                // Handle date comparison
-                if (sortDescriptor.column === 'createdAt' || sortDescriptor.column === 'updatedAt') {
-                    const dateA = new Date(first as string).getTime();
-                    const dateB = new Date(second as string).getTime();
-                    return sortDescriptor.direction === "descending" ? dateB - dateA : dateA - dateB;
-                }
+            // Case-insensitive string comparison
+            const cmp = String(first).localeCompare(String(second), undefined, { sensitivity: 'base' });
 
-                // Default to string comparison
-                const cmp = String(first).localeCompare(String(second));
-                return sortDescriptor.direction === "descending" ? -cmp : cmp;
-            });
-        }
-        return itemsToSort;
-    }, [sortDescriptor, items]);
+            return sortDescriptor.direction === "descending" ? -cmp : cmp;
+        });
+    }, [filteredItems, sortDescriptor]);
 
     const onNextPage = React.useCallback(() => {
         if (page < pages) {
@@ -216,57 +214,42 @@ export default function AdminContactTable() {
 
     const topContent = React.useMemo(() => {
         return (
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
-                        className="w-full sm:max-w-[80%]"
-                        placeholder="Search"
-                        startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
-                        value={filterValue}
-                        onChange={(e) => setFilterValue(e.target.value)}
-                        onClear={() => setFilterValue("")}
-                    />
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">
-                        {isLoading ? "Loading..." : `Total ${contactPersons.length} contacts`}
-                    </span>
-                    <label className="flex items-center text-default-400 text-small gap-2">
-                        Rows per page
-                        <div className="relative">
-                            <select
-                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
-                                onChange={onRowsPerPageChange}
-                            >
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="15">15</option>
-                            </select>
-                        </div>
-                    </label>
-                </div>
+            <div className="flex justify-between gap-3 items-end">
+                <Input
+                    isClearable
+                    className="w-full max-w-[300px]"
+                    placeholder="Search"
+                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                    value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                    onClear={() => setFilterValue("")}
+                />
+                <label className="flex items-center text-default-400 text-small">
+                    Rows per page:
+                    <select
+                        className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small"
+                        onChange={onRowsPerPageChange}
+                        defaultValue="5"
+                    >
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                    </select>
+                </label>
             </div>
         );
-    }, [
-        filterValue,
-        statusFilter,
-        visibleColumns,
-        onRowsPerPageChange,
-        contactPersons.length,
-        isLoading
-    ]);
+    }, [filterValue, onRowsPerPageChange, contactPersons.length]);
 
     const bottomContent = React.useMemo(() => {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
-                <span className="w-[30%] text-small text-default-400">
-                    {selectedKeys.size > 0 && `${selectedKeys.size} of ${filteredItems.length} selected`}
+                <span className="text-default-400 text-small">
+                    Total {contactPersons.length} contact
                 </span>
                 <Pagination
                     isCompact
                     showShadow
-                    color="primary"
+                    color="success"
                     page={page}
                     total={pages}
                     onChange={setPage}
@@ -280,7 +263,7 @@ export default function AdminContactTable() {
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
                         variant="default"
                         size="sm"
-                        disabled={pages === 1 || page === 1}
+                        disabled={page === 1}
                         onClick={onPreviousPage}
                     >
                         Previous
@@ -289,7 +272,7 @@ export default function AdminContactTable() {
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
                         variant="default"
                         size="sm"
-                        disabled={pages === 1 || page === pages}
+                        disabled={page === pages}
                         onClick={onNextPage}
                     >
                         Next
@@ -297,7 +280,7 @@ export default function AdminContactTable() {
                 </div>
             </div>
         );
-    }, [page, pages, filteredItems, selectedKeys, onNextPage, onPreviousPage]);
+    }, [page, pages, onPreviousPage, onNextPage]);
 
     const renderCell = React.useCallback((contact: ContactPerson, columnKey: string): React.ReactNode => {
         const cellValue = contact[columnKey as keyof ContactPerson];
@@ -341,46 +324,58 @@ export default function AdminContactTable() {
                             <CardTitle className="text-3xl font-bold text-center">Contact Record</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-h-screen-xl max-w-screen-xl">
-                                {error ? (
-                                    <div className="text-red-500 text-center py-4">{error}</div>
-                                ) : (
-                                    <Table
-                                        isHeaderSticky
-                                        aria-label="Contacts table with custom cells, pagination, and sorting"
-                                        bottomContent={bottomContent}
-                                        bottomContentPlacement="outside"
-                                        classNames={{
-                                            wrapper: "max-h-[382px] overflow-y-auto",
-                                        }}
-                                        selectedKeys={selectedKeys}
-                                        sortDescriptor={sortDescriptor}
-                                        topContent={topContent}
-                                        topContentPlacement="outside"
-                                        onSelectionChange={setSelectedKeys}
-                                        onSortChange={setSortDescriptor}
-                                    >
-                                        <TableHeader>
+                            <Table
+                                isHeaderSticky
+                                aria-label="Contacts table with custom cells, pagination, and sorting"
+                                bottomContent={bottomContent}
+                                bottomContentPlacement="outside"
+                                classNames={{
+                                    wrapper: "max-h-[382px] overflow-y-auto",
+                                }}
+                                selectedKeys={selectedKeys}
+                                sortDescriptor={sortDescriptor}
+                                topContent={topContent}
+                                topContentPlacement="outside"
+                                onSelectionChange={setSelectedKeys}
+                                onSortChange={setSortDescriptor}
+                            >
+                                <TableHeader>
+                                    {columns.map((column) => (
+                                        <TableColumn
+                                            key={column.uid}
+                                            onClick={() => {
+                                                setSortDescriptor(prev => ({
+                                                    column: column.uid,
+                                                    direction: prev.column === column.uid && prev.direction === "ascending"
+                                                        ? "descending"
+                                                        : "ascending"
+                                                }));
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            <div className="flex items-center">
+                                                {column.name}
+                                                {sortDescriptor.column === column.uid && (
+                                                    <span className="ml-1">
+                                                        {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableColumn>
+                                    ))}
+                                </TableHeader>
+                                <TableBody emptyContent={"Create contact and add data"}>
+                                    {sortedItems.map((contact) => (
+                                        <TableRow key={contact._id}>
                                             {headerColumns.map((column) => (
-                                                <TableColumn key={column.uid} width={column.width}>
-                                                    {column.name}
-                                                </TableColumn>
+                                                <TableCell key={column.uid}>
+                                                    {renderCell(contact, column.uid)}
+                                                </TableCell>
                                             ))}
-                                        </TableHeader>
-                                        <TableBody>
-                                            {sortedItems.map((contact) => (
-                                                <TableRow key={contact._id}>
-                                                    {headerColumns.map((column) => (
-                                                        <TableCell key={column.uid}>
-                                                            {renderCell(contact, column.uid)}
-                                                        </TableCell>
-                                                    ))}
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </div>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
                 </div>

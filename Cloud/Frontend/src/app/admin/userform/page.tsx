@@ -86,7 +86,7 @@ export default function RegisterPage() {
       if (!response.ok) {
         setServerError(data.message || "Something went wrong.");
       } else {
-        alert("Registration successful!");
+        alert("The user has been successfully created");
         form.reset();
       }
     } catch (error) {
@@ -111,7 +111,7 @@ export default function RegisterPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>User Record</BreadcrumbPage>
+                <BreadcrumbLink href="/admin/userrecord">User Record</BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

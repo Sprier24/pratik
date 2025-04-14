@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown } from "lucide-react";
+import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -55,9 +55,12 @@ export default function ContactPersonDetailsTable() {
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column: "createdAt",
-        direction: "descending",
+    const [sortDescriptor, setSortDescriptor] = useState<{
+        column: string | null;
+        direction: "ascending" | "descending";
+    }>({
+        column: "_id", // or "createdAt" if available
+        direction: "descending", // newest first
     });
     const [page, setPage] = React.useState(1);
     const router = useRouter();
@@ -81,9 +84,10 @@ export default function ContactPersonDetailsTable() {
                 }
             );
             let contactPersonsData = response.data.data || [];
+            contactPersonsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-            // Add newly fetched data at the top
-            setContactPersons(prev => [...contactPersonsData, ...prev]); // Prepend the data
+            // Replace the entire array with the new sorted data
+            setContactPersons(contactPersonsData);
 
             setError(null);
         } catch (error) {
@@ -131,9 +135,10 @@ export default function ContactPersonDetailsTable() {
         if (hasSearchFilter) {
             filteredContacts = filteredContacts.filter((contact) =>
                 contact.firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.middleName.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.lastName.toLowerCase().includes(filterValue.toLowerCase()) ||
-                contact.email.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.contactNo.toLowerCase().includes(filterValue.toLowerCase()) ||
+                contact.email.toLowerCase().includes(filterValue.toLowerCase()) ||
                 contact.designation.toLowerCase().includes(filterValue.toLowerCase())
             );
         }
@@ -142,6 +147,8 @@ export default function ContactPersonDetailsTable() {
     }, [contactPersons, hasSearchFilter, filterValue]);
 
     const sortedItems = React.useMemo(() => {
+        if (!sortDescriptor.column) return filteredItems;
+
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof ContactPerson] || "";
             const second = b[sortDescriptor.column as keyof ContactPerson] || "";
@@ -178,53 +185,56 @@ export default function ContactPersonDetailsTable() {
 
     const topContent = React.useMemo(() => {
         return (
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
-                        className="w-full sm:max-w-[80%]"
-                        placeholder="Search"
-                        startContent={<SearchIcon className="h-4 w-10 text-muted-foreground" />}
-                        value={filterValue}
-                        onChange={(e) => setFilterValue(e.target.value)}
-                        onClear={() => setFilterValue("")}
-                    />
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {contactPersons.length} contacts</span>
-                    <label className="flex items-center text-default-400 text-small gap-2">
-                        Rows per page
-                        <div className="relative">
-                            <select
-                                className="border border-gray-300 dark:border-gray-600 bg-transparent rounded-md px-3 py-1 text-default-400 text-sm cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all"
-                                onChange={onRowsPerPageChange}
-                            >
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="15">15</option>
-                            </select>
-                        </div>
-                    </label>
-                </div>
+            <div className="flex justify-between items-center gap-4">
+                <Input
+                    isClearable
+                    className="w-full max-w-[300px]"
+                    placeholder="Search"
+                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                    value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                    onClear={() => setFilterValue("")}
+                />
+                <label className="flex items-center text-default-400 text-small">
+                    Rows per page:
+                    <select
+                        className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
+                        onChange={onRowsPerPageChange}
+                        defaultValue="5"
+                    >
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                    </select>
+                </label>
             </div>
         );
     }, [filterValue, onRowsPerPageChange, contactPersons.length]);
 
     const bottomContent = React.useMemo(() => {
         return (
-            <div className="py-2 px-2 flex justify-between items-center">
-                <Pagination
-                    isCompact
-                    showShadow
-                    color="success"
-                    page={page}
-                    total={pages}
-                    onChange={setPage}
-                    classNames={{
-                        cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
-                        item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
-                    }}
-                />
+            <div className="py-2 px-2 relative flex justify-between items-center">
+                <span className="text-default-400 text-small">
+                    Total {contactPersons.length} contact
+                </span>
+
+                {/* Centered Pagination */}
+                <div className="absolute left-1/2 transform -translate-x-1/2">
+                    <Pagination
+                        isCompact
+                        showShadow
+                        color="success"
+                        page={page}
+                        total={pages}
+                        onChange={setPage}
+                        classNames={{
+                            cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
+                            item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
+                        }}
+                    />
+                </div>
+
+                {/* Navigation Buttons */}
                 <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
@@ -255,24 +265,24 @@ export default function ContactPersonDetailsTable() {
                 <div className="relative flex items-center gap-2">
                     <Tooltip>
                         <span
-                            className="text-lg text-danger cursor-pointer"
-                            onClick={() => handleDelete(contact._id)}
-                        >
-                            <DeleteIcon />
-                        </span>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <span
                             className="text-lg text-info cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
                                 router.push(`contactform?id=${contact._id}`);
                             }}
                         >
-                            <Edit2Icon className="h-6 w-6" />
+                            <Edit className="h-6 w-6" />
                         </span>
                     </Tooltip>
+                    <Tooltip>
+                        <span
+                            className="text-lg text-danger cursor-pointer"
+                            onClick={() => handleDelete(contact._id)}
+                        >
+                            <Trash2 />
+                        </span>
+                    </Tooltip>
+
                 </div>
             );
         }
@@ -313,46 +323,63 @@ export default function ContactPersonDetailsTable() {
                             <CardTitle className="text-3xl font-bold text-center">Contact Record</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15 max-h-screen-xl max-w-screen-xl">
-                                {error ? (
-                                    <div className="text-red-500 text-center py-4">{error}</div>
-                                ) : (
-                                    <Table
-                                        isHeaderSticky
-                                        aria-label="Contacts table with custom cells, pagination, and sorting"
-                                        bottomContent={bottomContent}
-                                        bottomContentPlacement="outside"
-                                        classNames={{
-                                            wrapper: "max-h-[382px] overflow-y-auto",
-                                        }}
-                                        selectedKeys={selectedKeys}
-                                        sortDescriptor={sortDescriptor}
-                                        topContent={topContent}
-                                        topContentPlacement="outside"
-                                        onSelectionChange={setSelectedKeys}
-                                        onSortChange={setSortDescriptor}
-                                    >
-                                        <TableHeader>
+                            <Table
+                                isHeaderSticky
+                                aria-label="Contacts table with custom cells, pagination, and sorting"
+                                bottomContent={bottomContent}
+                                bottomContentPlacement="outside"
+                                classNames={{
+                                    wrapper: "max-h-[382px] overflow-y-auto",
+                                }}
+                                selectedKeys={selectedKeys}
+                                sortDescriptor={sortDescriptor}
+                                topContent={topContent}
+                                topContentPlacement="outside"
+                                onSelectionChange={setSelectedKeys}
+                                onSortChange={setSortDescriptor}
+                            >
+                                <TableHeader>
+                                    {columns.map((column) => (
+                                        <TableColumn
+                                            key={column.uid}
+                                            allowsSorting={column.sortable}
+                                            onClick={() => {
+                                                setSortDescriptor((prev) => {
+                                                    if (prev.column === column.uid) {
+                                                        return {
+                                                            column: column.uid,
+                                                            direction: prev.direction === "ascending" ? "descending" : "ascending",
+                                                        };
+                                                    } else {
+                                                        return {
+                                                            column: column.uid,
+                                                            direction: "ascending",
+                                                        };
+                                                    }
+                                                });
+                                            }}
+                                        >
+                                            {column.name}
+                                            {sortDescriptor.column === column.uid && (
+                                                <span className="ml-1 text-xs">
+                                                    {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
+                                                </span>
+                                            )}
+                                        </TableColumn>
+                                    ))}
+                                </TableHeader>
+                                <TableBody emptyContent={"Create contact and add data"}>
+                                    {sortedItems.map((contact) => (
+                                        <TableRow key={contact._id}>
                                             {headerColumns.map((column) => (
-                                                <TableColumn key={column.uid} width={column.width}>
-                                                    {column.name}
-                                                </TableColumn>
+                                                <TableCell key={column.uid}>
+                                                    {renderCell(contact, column.uid)}
+                                                </TableCell>
                                             ))}
-                                        </TableHeader>
-                                        <TableBody>
-                                            {sortedItems.map((contact) => (
-                                                <TableRow key={contact._id}>
-                                                    {headerColumns.map((column) => (
-                                                        <TableCell key={column.uid}>
-                                                            {renderCell(contact, column.uid)}
-                                                        </TableCell>
-                                                    ))}
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </div>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
                 </div>

@@ -465,9 +465,6 @@ export default function Page() {
                         />
                     </div>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {certificates.length} certificates</span>
-                </div>
             </div>
         );
     }, [
@@ -494,9 +491,6 @@ export default function Page() {
                             onClear={() => setFilterValueservice("")}
                         />
                     </div>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {services.length} services</span>
                 </div>
             </div>
         );

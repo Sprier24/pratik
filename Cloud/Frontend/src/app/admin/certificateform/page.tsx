@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from '@/hooks/use-toast'
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ModeToggle } from "@/components/ModeToggle";
+import { Trash2 } from "lucide-react";
+import router from "next/router";
 
 interface Observation {
     gas: string;
@@ -359,13 +361,13 @@ export default function AddCategory() {
             setCertificate(response.data);
 
             toast({
-                title: "Success",
-                description: certificateId ? "Certificate updated successfully!" : "Certificate generated successfully!",
+                title: "Submitted",
+                description: certificateId ? "Certificate updated successfully" : "Certificate generated successfully",
                 variant: "default",
             });
 
             if (certificateId) {
-                router.push("/certificates");
+                router.push("/admin/certificaterecord");
             }
         } catch (err: any) {
             console.error("Submission error:", err);
@@ -694,9 +696,8 @@ export default function AddCategory() {
                                                     <button
                                                         type="button"
                                                         onClick={() => removeObservation(index)}
-                                                        className="bg-red-900 text-white px-2 py-1 border rounded hover:bg-red-950"
                                                     >
-                                                        Remove
+                                                        <Trash2 className="h-6 w-6" />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -704,7 +705,7 @@ export default function AddCategory() {
                                         {formData.observations.length === 0 && (
                                             <tr>
                                                 <td colSpan={5} className="border p-2 text-center text-gray-500">
-                                                    No observations added yet. Click "Add Observation" to add one.
+                                                    Click "Create Observation" to add one
                                                 </td>
                                             </tr>
                                         )}
