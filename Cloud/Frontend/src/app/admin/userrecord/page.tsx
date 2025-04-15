@@ -1,10 +1,9 @@
 'use client';
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown, Trash2 } from "lucide-react";
+import {  SearchIcon,  Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -163,8 +162,6 @@ export default function UserTable() {
         <span className="text-default-400 text-small">
           Total {users.length} users
         </span>
-
-        {/* Centered Pagination */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <Pagination
             isCompact
@@ -180,7 +177,6 @@ export default function UserTable() {
           />
         </div>
 
-        {/* Navigation Buttons */}
         <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
           <Button
             className="bg-[hsl(339.92deg_91.04%_52.35%)]"

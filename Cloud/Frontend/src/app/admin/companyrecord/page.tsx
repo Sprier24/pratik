@@ -1,10 +1,9 @@
 'use client';
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown, Edit, Trash2 } from "lucide-react";
+import {  SearchIcon, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -20,6 +19,7 @@ import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from 
 import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { AiOutlineInsertRowBelow } from "react-icons/ai";
 
 interface CompanyDetails {
     _id: string;
@@ -30,6 +30,11 @@ interface CompanyDetails {
     website: string;
     industriesType: string;
     flag: string;
+}
+
+interface SortDescriptor {
+    column: string;  
+    direction: "ascending" | "descending";
 }
 
 const generateUniqueId = () => {
@@ -60,12 +65,9 @@ export default function CompanyDetailsTable() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
-    const [sortDescriptor, setSortDescriptor] = useState<{
-        column: string | null;
-        direction: "ascending" | "descending";
-    }>({
-        column: null,
-        direction: "ascending",
+    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+        column: "createdAt", 
+        direction: "descending",
     });
     const router = useRouter();
     const hasSearchFilter = Boolean(filterValue);
@@ -89,7 +91,7 @@ export default function CompanyDetailsTable() {
                     : [];
 
             const companiesWithKeys = companiesData
-                .reverse() // 👈 Latest added data comes first
+                .reverse() 
                 .map((company: CompanyDetails) => ({
                     ...company,
                     key: company._id || generateUniqueId(),
@@ -125,11 +127,17 @@ export default function CompanyDetailsTable() {
             );
 
             setCompanies(prev => prev.filter(company => company._id !== companyId));
-            toast.success("Company deleted successfully");
+            toast({
+                title: "Delete Successful!",
+                description: "Company deleted successfully!",
+            });        
         } catch (error) {
             console.error("Error deleting company:", error);
-            toast.error("Failed to delete company");
-        }
+            toast({
+                title: "Delete Successful!",
+                description: "Company deleted successfully!",
+            });       
+         }
     };
 
     const headerColumns = React.useMemo(() => {
@@ -156,19 +164,14 @@ export default function CompanyDetailsTable() {
     }, [companies, filterValue, hasSearchFilter]);
 
     const sortedItems = React.useMemo(() => {
-        if (!sortDescriptor.column) {
-            // No sorting = just show as-is (which is reversed from fetch)
-            return filteredItems;
-        }
-
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof CompanyDetails] || "";
             const second = b[sortDescriptor.column as keyof CompanyDetails] || "";
-
+    
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-
+    
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
@@ -227,8 +230,6 @@ export default function CompanyDetailsTable() {
                 <span className="text-default-400 text-small">
                     Total {companies.length} company
                 </span>
-
-                {/* Centered Pagination */}
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
                         isCompact
@@ -243,8 +244,6 @@ export default function CompanyDetailsTable() {
                         }}
                     />
                 </div>
-
-                {/* Navigation Buttons */}
                 <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
@@ -273,7 +272,6 @@ export default function CompanyDetailsTable() {
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
-
                     <Tooltip>
                         <span
                             className="text-lg text-info cursor-pointer active:opacity-50"
@@ -285,7 +283,6 @@ export default function CompanyDetailsTable() {
                             <Edit className="h-6 w-6" />
                         </span>
                     </Tooltip>
-
                     <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"

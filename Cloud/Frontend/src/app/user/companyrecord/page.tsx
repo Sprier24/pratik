@@ -59,12 +59,13 @@ export default function CompanyDetailsTable() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // To toggle delete modal
 
     const [sortDescriptor, setSortDescriptor] = useState<{
-        column: string | null;
+        column: string;
         direction: "ascending" | "descending";
-    }>({
-        column: null,
+      }>({
+        column: "",
         direction: "ascending",
-    });
+      });
+      
 
     const router = useRouter();
     const hasSearchFilter = Boolean(filterValue);
@@ -386,8 +387,6 @@ export default function CompanyDetailsTable() {
                     </Card>
                 </div>
             </SidebarInset>
-
-            {/* Delete confirmation dialog */}
             <ConfirmationDialog
                 isOpen={isDeleteModalOpen}
                 onClose={handleCancelDelete}

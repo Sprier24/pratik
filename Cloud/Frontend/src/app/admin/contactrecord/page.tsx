@@ -1,10 +1,9 @@
 'use client';
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, SearchIcon, Edit2Icon, DeleteIcon, FileDown, Edit, Trash2 } from "lucide-react";
+import { SearchIcon, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -12,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import {SortDescriptor, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
@@ -27,7 +26,7 @@ interface ContactPerson {
     designation: string;
     _id: string;
     key?: string;
-
+    createdAt: string; // Add createdAt field if available from API
 }
 
 const generateUniqueId = () => {
@@ -52,15 +51,12 @@ export default function ContactPersonDetailsTable() {
     const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(new Set([]));
-    const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
-    const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
+    const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
+    const [statusFilter, setStatusFilter] = React.useState<string>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [sortDescriptor, setSortDescriptor] = useState<{
-        column: string | null;
-        direction: "ascending" | "descending";
-    }>({
-        column: "_id", // or "createdAt" if available
-        direction: "descending", // newest first
+    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+        column: "createdAt",
+        direction: "descending",
     });
     const [page, setPage] = React.useState(1);
     const router = useRouter();
@@ -84,7 +80,7 @@ export default function ContactPersonDetailsTable() {
                 }
             );
             let contactPersonsData = response.data.data || [];
-            contactPersonsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            contactPersonsData.sort((a: { createdAt: string | number | Date; }, b: { createdAt: string | number | Date; }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
             // Replace the entire array with the new sorted data
             setContactPersons(contactPersonsData);
@@ -116,19 +112,24 @@ export default function ContactPersonDetailsTable() {
             );
 
             setContactPersons(prev => prev.filter(contact => contact._id !== contactPersonId));
-            toast.success("Contact person deleted successfully");
+            toast({
+                title: "Delete Successful!",
+                description: "Contact person deleted successfully!",
+            });
         } catch (error) {
             console.error("Error deleting contact person:", error);
-            toast.error("Failed to delete contact person");
+            toast({
+                title: "Error",
+                description: "Failed to delete contact person.",
+                variant: "destructive",
+            });
         }
     };
 
 
     const headerColumns = React.useMemo(() => {
-        if (visibleColumns === "all") return columns;
-        return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
+        return columns.filter((column) => visibleColumns.has(column.uid));
     }, [visibleColumns]);
-
     const filteredItems = React.useMemo(() => {
         let filteredContacts = [...contactPersons];
 
@@ -209,16 +210,14 @@ export default function ContactPersonDetailsTable() {
                 </label>
             </div>
         );
-    }, [filterValue, onRowsPerPageChange, contactPersons.length]);
+    }, [filterValue, onRowsPerPageChange]);
 
     const bottomContent = React.useMemo(() => {
         return (
             <div className="py-2 px-2 relative flex justify-between items-center">
                 <span className="text-default-400 text-small">
-                    Total {contactPersons.length} contact
+                Total {filteredItems.length} contact{filteredItems.length !== 1 ? 's' : ''}
                 </span>
-
-                {/* Centered Pagination */}
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
                         isCompact
@@ -233,8 +232,6 @@ export default function ContactPersonDetailsTable() {
                         }}
                     />
                 </div>
-
-                {/* Navigation Buttons */}
                 <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
@@ -257,7 +254,7 @@ export default function ContactPersonDetailsTable() {
                 </div>
             </div>
         );
-    }, [page, pages, onPreviousPage, onNextPage]);
+    }, [page, pages, onPreviousPage, onNextPage, contactPersons.length]);
 
     const renderCell = useCallback((contact: ContactPerson, columnKey: string) => {
         if (columnKey === "actions") {
@@ -335,8 +332,13 @@ export default function ContactPersonDetailsTable() {
                                 sortDescriptor={sortDescriptor}
                                 topContent={topContent}
                                 topContentPlacement="outside"
-                                onSelectionChange={setSelectedKeys}
-                                onSortChange={setSortDescriptor}
+                                onSelectionChange={(keys) => setSelectedKeys(keys as Set<string>)}
+                                onSortChange={(descriptor) => {
+                                    setSortDescriptor({
+                                        column: descriptor.column as string,
+                                        direction: descriptor.direction as "ascending" | "descending",
+                                    });
+                                }}
                             >
                                 <TableHeader>
                                     {columns.map((column) => (
@@ -369,10 +371,10 @@ export default function ContactPersonDetailsTable() {
                                     ))}
                                 </TableHeader>
                                 <TableBody emptyContent={"Create contact and add data"}>
-                                    {sortedItems.map((contact) => (
+                                    {paginatedItems.map((contact) => (
                                         <TableRow key={contact._id}>
                                             {headerColumns.map((column) => (
-                                                <TableCell key={column.uid}>
+                                                <TableCell key={column.uid}  style={{ fontSize: "12px", padding: "8px" }}>
                                                     {renderCell(contact, column.uid)}
                                                 </TableCell>
                                             ))}

@@ -45,13 +45,13 @@ const INITIAL_VISIBLE_COLUMNS = ["firstName", "middleName", "lastName", "contact
 export default function AdminContactTable() {
     const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(new Set([]));
+    const [selectedKeys, setSelectedKeys] = React.useState<Selection>(new Set([]));
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [sortDescriptor, setSortDescriptor] = useState({
-        column: "createdAt", // Change from "firstName" to "createdAt"
-        direction: "descending", // Newest first
+    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+        column: "createdAt",
+        direction: "descending" as const, // Explicitly type as "descending"
     });
 
     const [page, setPage] = React.useState(1);
@@ -96,6 +96,13 @@ export default function AdminContactTable() {
         fetchContactPersons();
     }, []);
 
+    const handleSelectionChange = (keys: Selection) => {
+        setSelectedKeys(keys);
+    };
+    
+    const handleSortChange = (descriptor: SortDescriptor) => {
+        setSortDescriptor(descriptor);
+    };
     const handleDeleteClick = (contactPerson: ContactPerson) => {
         setContactToDelete(contactPerson);
         setIsDeleteModalOpen(true);
