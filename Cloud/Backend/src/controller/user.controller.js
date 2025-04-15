@@ -321,9 +321,9 @@ const generateResetEmailHtml = (name, resetLink) => {
                             display: inline-block;">Reset Password</a></p>
                         </div>
                         <p>If you didn’t request this, ignore this email, and your account will remain secure.</p>                       
-                        <p>Need help? Contact us at <a href="mailto:support@crmteam.com">support@crmteam.com</a>.</p>
+                        <p>Need help? Contact us at <a href="mailto:support@crmteam.com">info@spriertechnology.com</a></p>
                         <div class="footer">
-                            <p>Best regards,<br><strong>The CRM Team</strong></p>
+                            <p>Best regards,<br><strong>Spriers Private Limited</strong></p>
                         </div>
                     </div>
                 </body>

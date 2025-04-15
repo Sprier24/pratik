@@ -92,7 +92,7 @@ export function LoginForm() {
         
         toast({
           title: "Login successful",
-          description: "You have logged in successfully",
+          description: "You are now on a dashboard",
         });
         router.push("/user/dashboard");
         return;
@@ -208,7 +208,6 @@ export function LoginForm() {
           <Card className="w-[350px]">
             <CardHeader>
               <CardTitle>Login</CardTitle>
-              <CardDescription>Enter your credentials to access your account.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid w-full items-center gap-4">
@@ -264,7 +263,7 @@ export function LoginForm() {
               </Button>
               <Link href="/register">
                 <span className={`text-blue-600 hover:text-blue-800 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
-                  Don't have an account? Register here.
+                  Don't have an account? Register here
                 </span>
               </Link>
             </CardFooter>

@@ -45,22 +45,22 @@ export function RegisterForm() {
     
     switch (name) {
       case "name":
-        if (!value.trim()) error = "Name is required";
-        else if (value.length < 3) error = "Name must be at least 3 characters";
+        if (!value.trim()) error = "Required";
+        else if (value.length < 1) error = "Name must be at least 1 character";
         break;
         
       case "email":
-        if (!value) error = "Email is required";
+        if (!value) error = "Required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email format";
         break;
         
       case "contact":
-        if (!value) error = "Contact number is required";
-        else if (!/^\d{10,15}$/.test(value)) error = "Invalid contact number (10-15 digits)";
+        if (!value) error = "Required";
+        else if (!/^\d{10,15}$/.test(value)) error = "Invalid contact number (10-15 digits required)";
         break;
         
       case "password":
-        if (!value) error = "Password is required";
+        if (!value) error = "Required";
         else if (value.length < 8) error = "Password must be at least 8 characters";
         else if (!/[A-Z]/.test(value)) error = "Password must contain at least one uppercase letter";
         else if (!/[a-z]/.test(value)) error = "Password must contain at least one lowercase letter";
@@ -69,8 +69,8 @@ export function RegisterForm() {
         break;
         
       case "confirmPassword":
-        if (!value) error = "Please confirm your password";
-        else if (value !== formData.password) error = "Passwords do not match";
+        if (!value) error = "Required";
+        else if (value !== formData.password) error = "Password do not match";
         break;
     }
     
@@ -185,7 +185,7 @@ export function RegisterForm() {
           form: data.message || data.error || "An error occurred. Please try again."
         }));
       } else {
-        alert("Registration successful!");
+        alert("Registration successful! You can now log in.");
         router.push("/login");
       }
     } catch (error) {
