@@ -245,7 +245,7 @@ export default function GenerateService() {
 
     const handleDownload = async () => {
         const yourAccessToken = localStorage.getItem("authToken");
-    
+
         if (!service?.serviceId) {
             toast({
                 title: "Error",
@@ -254,41 +254,41 @@ export default function GenerateService() {
             });
             return;
         }
-    
+
         try {
             setIsGeneratingPDF(true);
-    
+
             // === Generate PDF Locally ===
             const logo = new Image();
             logo.src = "/img/rps.png";
-    
+
             logo.onload = () => {
                 const infoImage = new Image();
                 infoImage.src = "/img/handf.png";
-    
+
                 infoImage.onload = async () => {
                     const doc = new jsPDF();
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
-    
+
                     const leftMargin = 15;
                     const rightMargin = 15;
                     const topMargin = 20;
                     let y = topMargin;
-    
+
                     // Logo
                     doc.addImage(logo, "PNG", leftMargin, y, 50, 15);
                     y += 20;
-    
+
                     // Info Image
                     doc.addImage(infoImage, "PNG", leftMargin, y, 180, 20);
                     y += 30;
-    
+
                     // Title
                     doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
                     doc.text("SERVICE / CALIBRATION / INSTALLATION  JOBREPORT", pageWidth / 2, y, { align: "center" });
                     y += 10;
-    
+
                     // Info Rows
                     const addRow = (label: string, value: string) => {
                         const labelOffset = 65;
@@ -298,7 +298,7 @@ export default function GenerateService() {
                         doc.text(value || "N/A", leftMargin + labelOffset, y);
                         y += 7;
                     };
-    
+
                     // Assuming formData is available
                     addRow("Customer Name", formData.customerName);
                     addRow("Customer Location", formData.customerLocation);
@@ -316,33 +316,33 @@ export default function GenerateService() {
                     addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
                     addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
                     y += 10;
-    
+
                     // Separator line
                     doc.setDrawColor(0);
                     doc.setLineWidth(0.5);
                     doc.line(leftMargin, y, pageWidth - rightMargin, y);
-    
+
                     // === Page 2 ===
                     doc.addPage();
                     y = topMargin;
-    
+
                     doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
                     doc.text("ENGINEER REMARKS", leftMargin, y);
                     y += 8;
-    
+
                     const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "PO No."];
                     const colWidths = [20, 60, 25, 25, 25, 25];
                     let x = leftMargin;
-    
+
                     // Table headers
                     tableHeaders.forEach((header, i) => {
                         doc.rect(x, y, colWidths[i], 8);
                         doc.text(header, x + 2, y + 6);
                         x += colWidths[i];
                     });
-    
+
                     y += 8;
-    
+
                     formData.engineerRemarks.forEach((item, index) => {
                         x = leftMargin;
                         const values = [
@@ -359,18 +359,18 @@ export default function GenerateService() {
                             x += colWidths[i];
                         });
                         y += 8;
-    
+
                         if (y + 20 > pageHeight) {
                             doc.addPage();
                             y = topMargin;
                         }
                     });
-    
+
                     y += 10;
                     doc.setFont("times", "normal");
                     doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
                     doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
-    
+
                     // Generated time
                     const now = new Date();
                     const pad = (n: number) => n.toString().padStart(2, "0");
@@ -379,10 +379,10 @@ export default function GenerateService() {
                     const printDateTime = `${date} ${time}`;
                     doc.setFontSize(9).setTextColor(100);
                     doc.text(`Report Generated On: ${printDateTime}`, leftMargin, pageHeight - 10);
-    
+
                     // Save the PDF
                     doc.save(`service-${service.serviceId}.pdf`);
-    
+
                     // === Send Email Notification ===
                     await axios.post(
                         'http://localhost:5000/api/v1/services/sendMail',
@@ -393,25 +393,25 @@ export default function GenerateService() {
                             }
                         }
                     );
-    
+
                     toast({
                         title: "Success",
-                        description: "PDF generated and email sent successfully.",
+                        description: "Service created successfully",
                         variant: "default",
                     });
                 };
-    
+
                 infoImage.onerror = () => {
                     console.error("Failed to load info image.");
                     alert("Company info image not found. Please check the path.");
                 };
             };
-    
+
             logo.onerror = () => {
                 console.error("Failed to load logo.");
                 alert("Logo image not found. Please check the path.");
             };
-    
+
         } catch (err: unknown) {
             let errorMessage = "Failed to generate report";
             if (axios.isAxiosError(err)) {
@@ -419,7 +419,7 @@ export default function GenerateService() {
             } else if (err instanceof Error) {
                 errorMessage = err.message;
             }
-    
+
             console.error("Error:", err);
             toast({
                 title: "Error",
@@ -430,7 +430,7 @@ export default function GenerateService() {
             setIsGeneratingPDF(false);
         }
     };
-    
+
 
     return (
         <div className="container mx-auto p-4">
@@ -756,7 +756,7 @@ export default function GenerateService() {
 
             {service && (
                 <div className="mt-4 text-center">
-                    <p className="text-green-600 mb-2">Click here to download the certificate</p>
+                    <p className="text-green-600 mb-2">Click here to download the service report</p>
                     <button
                         onClick={handleDownload}
                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"

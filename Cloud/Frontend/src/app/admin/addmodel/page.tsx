@@ -165,7 +165,7 @@ export default function AddModel() {
         } else {
             toast({
                 title: "Warning",
-                description: "Please fill both the model and range",
+                description: "Fill both the model and range",
                 variant: "default",
             });
         }
@@ -208,7 +208,7 @@ export default function AddModel() {
         } else {
             toast({
                 title: "Warning",
-                description: "Please enter an engineer name",
+                description: "Enter an engineer name",
                 variant: "default",
             });
         }
@@ -251,7 +251,7 @@ export default function AddModel() {
         } else {
             toast({
                 title: "Warning",
-                description: "Please enter a service engineer name",
+                description: "Enter a service engineer name",
                 variant: "default",
             });
         }
@@ -292,7 +292,7 @@ export default function AddModel() {
             return;
         }
 
-        if (!window.confirm("Are you sure you want to delete this model?")) {
+        if (!window.confirm("Are you sure you want to delete this model and range?")) {
             return;
         }
 
@@ -475,7 +475,7 @@ export default function AddModel() {
                             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
                                 <>
                                     <h2 className="text-lg font-bold mt-4 text-center">Create New Model and Range</h2>
-                                    <div className="mt-2 space-y-2">
+                                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {models.length > 0 ? (
                                             models.map((model) => (
                                                 <div key={`model-${model.id}`} className="flex items-center justify-between p-2 border rounded">
@@ -484,15 +484,15 @@ export default function AddModel() {
                                                         type="button"
                                                         onClick={() => handleDeleteModel(model.id)}
                                                         className="text-red-500 hover:text-red-700"
-                                                        disabled={deleteLoading === model.id}
+                                                        disabled={deleteLoading.model === model.id}
                                                     >
-                                                        {deleteLoading === model.id ? "Deleting..." : <Trash2 size={18} />}
+                                                        {deleteLoading.model === model.id ? "Deleting..." : <Trash2 size={18} />}
                                                     </button>
                                                 </div>
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                Create a new model
+                                                Create New Model and Range
                                             </div>
                                         )}
                                     </div>
@@ -544,13 +544,13 @@ export default function AddModel() {
                                         className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Adding...' : 'Create New Model and Range'}
+                                        {loading ? 'Creating...' : 'Create New Model and Range'}
                                     </button>
                                 </>
 
                                 <>
                                     <h2 className="text-lg font-bold mt-4 text-center">Create New Engineer</h2>
-                                    <div className="mt-2 space-y-2">
+                                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {engineers.length > 0 ? (
                                             engineers.map((engineer) => (
                                                 <div key={`engineer-${engineer.id}`} className="flex items-center justify-between p-2 border rounded">
@@ -599,14 +599,14 @@ export default function AddModel() {
                                         className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                         disabled={loading}
                                     >
-                                        {loading ? "Adding..." : "Create Engineer"}
+                                        {loading ? "Creating..." : "Create Engineer"}
                                     </button>
                                 </>
 
                                 {/* Service Engineer Section */}
                                 <>
                                     <h2 className="text-lg font-bold mt-4 text-center">Create New Service Engineer</h2>
-                                    <div className="mt-2 space-y-2">
+                                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {serviceEngineers.length > 0 ? (
                                             serviceEngineers.map((engineer) => (
                                                 <div key={`service-engineer-${engineer.id}`} className="flex items-center justify-between p-2 border rounded">
@@ -655,10 +655,9 @@ export default function AddModel() {
                                         className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                         disabled={loading}
                                     >
-                                        {loading ? "Adding..." : "Create Service Engineer"}
+                                        {loading ? "Creating..." : "Create Service Engineer"}
                                     </button>
                                 </>
-
                             </form>
                         </CardContent>
                         <CardFooter></CardFooter>

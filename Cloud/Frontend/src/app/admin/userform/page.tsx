@@ -34,6 +34,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useState } from "react";
+import { useRouter } from "next/navigation"
 
 const registerSchema = z
   .object({
@@ -56,6 +57,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -71,7 +73,7 @@ export default function RegisterPage() {
   const handleRegister = async (values: z.infer<typeof registerSchema>) => {
     setLoading(true);
     setServerError(""); // you can still keep this if you want field-level error too
-  
+
     try {
       const response = await fetch("http://localhost:5000/api/v1/users/register", {
         method: "POST",
@@ -80,9 +82,9 @@ export default function RegisterPage() {
         },
         body: JSON.stringify(values),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         toast({
           title: "Registration failed",
@@ -96,6 +98,7 @@ export default function RegisterPage() {
           description: "The user has been successfully created",
         });
         form.reset();
+        router.push("/admin/userrecord");
       }
     } catch (error) {
       toast({
@@ -108,7 +111,7 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-  
+
 
   return (
     <SidebarProvider>
@@ -206,7 +209,7 @@ export default function RegisterPage() {
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                              {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                             </button>
                           </div>
                         </FormControl>
@@ -231,11 +234,7 @@ export default function RegisterPage() {
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             >
-                              {showConfirmPassword ? (
-                                <EyeOff size={20} />
-                              ) : (
-                                <Eye size={20} />
-                              )}
+                              {showConfirmPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                             </button>
                           </div>
                         </FormControl>

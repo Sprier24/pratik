@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
 const Engineer = require("../model/addengineer.model");
+const mongoose = require("mongoose");
 
 const getEngineers = async (req, res) => {
     try {
@@ -34,9 +34,8 @@ const deleteEngineer = async (req, res) => {
         res.status(500).json({ error: "Error deleting engineer" });
     }
 };
-
-module.exports = {
+ module.exports = {
     getEngineers,
     addEngineer,
     deleteEngineer,
-}
+ }

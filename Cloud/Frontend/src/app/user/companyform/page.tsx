@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation"
 
 const companySchema = z.object({
     companyName: z.string().nonempty({ message: "Required" }),
@@ -40,6 +41,7 @@ export default function AddCategory() {
     const certificateId = searchParams.get('id');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const router = useRouter();
 
     const form = useForm<z.infer<typeof companySchema>>({
         resolver: zodResolver(companySchema),
@@ -106,7 +108,7 @@ export default function AddCategory() {
                 });
                 form.reset();
             }
-
+            router.push("/user/companyrecord");
             setSuccess(true);
         } catch (error: unknown) {
             let errorMessage = "An unknown error occurred";

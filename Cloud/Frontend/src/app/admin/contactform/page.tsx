@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation"
 
 const contactSchema = z.object({
   firstName: z.string().nonempty({ message: "Required" }),
@@ -32,6 +33,7 @@ export default function Customer() {
   const searchParams = useSearchParams();
   const contactId = searchParams.get("id");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof contactSchema>>({
     resolver: zodResolver(contactSchema),
@@ -97,6 +99,7 @@ export default function Customer() {
         });
         form.reset();
       }
+      router.push("/admin/contactrecord");
     } catch (error: any) {
       toast({
         title: "Error",
