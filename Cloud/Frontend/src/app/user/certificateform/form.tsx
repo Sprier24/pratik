@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
+import { Trash2 } from "lucide-react";
 
 interface Observation {
   gas: string;
@@ -20,8 +21,8 @@ interface CertificateRequest {
   serialNo: string;
   calibrationGas: string;
   gasCanisterDetails: string;
-  dateOfCalibration: string;
-  calibrationDueDate: string;
+  dateOfCalibration: Date;
+  calibrationDueDate: Date;
   observations: Observation[];
   engineerId: string;
   engineerName: string;
@@ -44,18 +45,9 @@ interface engineer {
   name: string;
 }
 
-const generateCertificateNumber = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-  return `RPS/${year}${month}${day}/${randomNum}`;
-};
-
 export default function GenerateCertificate() {
   const [formData, setFormData] = useState<CertificateRequest>({
-    certificateNo: generateCertificateNumber(), // Auto-generated here
+    certificateNo: "",
     customerName: "",
     siteLocation: "",
     makeModel: "",
@@ -63,9 +55,8 @@ export default function GenerateCertificate() {
     serialNo: "",
     calibrationGas: "",
     gasCanisterDetails: "",
-    dateOfCalibration: new Date().toISOString(),
-    calibrationDueDate: new Date().toISOString(),
-
+    dateOfCalibration: new Date(),
+    calibrationDueDate: new Date(),
     observations: [{ gas: "", before: "", after: "" }],
     engineerId: "",
     engineerName: "",
@@ -83,6 +74,7 @@ export default function GenerateCertificate() {
   const [engineers, setEngineers] = useState<engineer[]>([]);
   const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
   const [engineerError, setEngineerError] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -113,6 +105,7 @@ export default function GenerateCertificate() {
         setIsLoadingEngineers(false);
       }
     };
+
     fetchEngineers();
   }, []);
 
@@ -121,7 +114,7 @@ export default function GenerateCertificate() {
     setStartDate(newStartDate);
     setFormData(prev => ({
       ...prev,
-      dateOfCalibration: new Date().toISOString(),
+      dateOfCalibration: new Date(newStartDate)
     }));
 
     if (timePeriod) {
@@ -131,8 +124,7 @@ export default function GenerateCertificate() {
       setEndDate(newEndDate);
       setFormData(prev => ({
         ...prev,
-        calibrationDueDate: new Date().toISOString(),
-
+        calibrationDueDate: startDateObj
       }));
     }
   };
@@ -148,20 +140,9 @@ export default function GenerateCertificate() {
       setEndDate(newEndDate);
       setFormData(prev => ({
         ...prev,
-        calibrationDueDate: new Date().toISOString(),
+        calibrationDueDate: startDateObj
       }));
     }
-  };
-
-  const updateEndDate = (start: string, months: number) => {
-    const startDateObj = new Date(start);
-    startDateObj.setMonth(startDateObj.getMonth() + months);
-    const newEndDate = startDateObj.toISOString().split("T")[0];
-    setEndDate(newEndDate);
-    setFormData(prev => ({
-      ...prev,
-      calibrationDueDate: new Date().toISOString(),
-    }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => {
@@ -217,6 +198,20 @@ export default function GenerateCertificate() {
     setFormData({ ...formData, observations: updatedObservations });
   };
 
+  useEffect(() => {
+    const certNo = generateCertificateNumber();
+    setFormData(prev => ({ ...prev, certificateNo: certNo }));
+  }, []);
+
+  const generateCertificateNumber = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `RPS/${year}${month}${day}/${randomNum}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -225,8 +220,8 @@ export default function GenerateCertificate() {
     try {
       const submissionData = {
         ...formData,
-        dateOfCalibration: startDate ? new Date(startDate).toISOString() : formData.dateOfCalibration,
-        calibrationDueDate: endDate ? new Date(endDate).toISOString() : formData.calibrationDueDate
+        dateOfCalibration: startDate ? new Date(startDate) : null,
+        calibrationDueDate: endDate ? new Date(endDate) : null
       };
 
       const response = await axios.post(
@@ -235,13 +230,12 @@ export default function GenerateCertificate() {
       );
       setCertificate(response.data);
     } catch (err: any) {
-      console.error("Error submitting form:", err);
+      console.error('Error submitting form:', err);
       setError(err.response?.data?.error || "Failed to generate certificate. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleDownload = () => {
     const logo = new Image();
@@ -283,6 +277,11 @@ export default function GenerateCertificate() {
         y += lineGap;
       };
 
+      // Helper function to format dates
+      const formatDate = (date: Date | null | undefined): string => {
+        return date ? date.toLocaleDateString() : "N/A";
+      };
+
       addRow("Certificate No.", formData.certificateNo);
       addRow("Customer Name", formData.customerName);
       addRow("Site Location", formData.siteLocation);
@@ -293,8 +292,8 @@ export default function GenerateCertificate() {
       addRow("Gas Canister Details", formData.gasCanisterDetails);
 
       y += 5;
-      addRow("Date of Calibration", formData.dateOfCalibration);
-      addRow("Calibration Due Date", formData.calibrationDueDate);
+      addRow("Date of Calibration", formatDate(formData.dateOfCalibration));
+      addRow("Calibration Due Date", formatDate(formData.calibrationDueDate));
       addRow("Status", formData.status);
 
       y += 5;
@@ -369,6 +368,7 @@ export default function GenerateCertificate() {
 
   return (
     <div>
+      {/* <h1 className="text-2xl font-bold mb-4">Generate Your Certificate</h1> */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <input
@@ -399,7 +399,7 @@ export default function GenerateCertificate() {
           >
             <option value="">Select Model</option>
             {isLoadingModels ? (
-              <option value="" disabled>Loading models...</option>
+              <option value="" disabled>Loading model...</option>
             ) : models.length > 0 ? (
               models.map((model) => (
                 <option key={model.model_name} value={model.model_name}>
@@ -456,7 +456,7 @@ export default function GenerateCertificate() {
           <input
             type="date"
             name="dateOfCalibration"
-            placeholder="Enter Date of Calibration"
+            placeholder="Date of Calibration"
             value={startDate}
             onChange={handleStartDateChange}
             className="p-2 border rounded"
@@ -464,6 +464,7 @@ export default function GenerateCertificate() {
             min="2000-01-01"
             max="2100-12-31"
           />
+
           <select
             onChange={handleTimePeriodChange}
             className="border p-2 rounded-md"
@@ -479,13 +480,13 @@ export default function GenerateCertificate() {
           <input
             type="date"
             name="calibrationDueDate"
-            placeholder="Enter Calibration Due Date"
+            placeholder="Calibration Due Date"
             value={endDate}
             onChange={(e) => {
               setEndDate(e.target.value);
               setFormData(prev => ({
                 ...prev,
-                calibrationDueDate: new Date().toISOString(),
+                calibrationDueDate: new Date(e.target.value)
               }));
             }}
             className="p-2 border rounded"
@@ -517,10 +518,11 @@ export default function GenerateCertificate() {
           </select>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
           <input
             type="text"
             name="certificateNo"
-            placeholder="Certificate No."
+            placeholder="Certificate Number"
             value={formData.certificateNo}
             onChange={handleChange}
             readOnly
@@ -539,7 +541,6 @@ export default function GenerateCertificate() {
         </div>
 
         <h2 className="text-lg font-bold mt-4 text-center">Observation Table</h2>
-
         <div className="flex justify-end mb-4">
           <button
             onClick={addObservation}

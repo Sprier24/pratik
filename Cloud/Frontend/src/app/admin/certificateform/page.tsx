@@ -51,21 +51,12 @@ interface Engineer {
     name: string;
 }
 
-const generateCertificateNumber = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-    return `RPS/${year}${month}${day}/${randomNum}`;
-};
-
 export default function AddCategory() {
     const searchParams = useSearchParams();
     const certificateId = searchParams.get('id');
 
     const [formData, setFormData] = useState<CertificateRequest>({
-        certificateNo: generateCertificateNumber(), // Auto-generated here
+        certificateNo: "",
         customerName: "",
         siteLocation: "",
         makeModel: "",
@@ -131,13 +122,13 @@ export default function AddCategory() {
     useEffect(() => {
         const fetchCertificateData = async () => {
             const today = new Date().toISOString().split('T')[0];
-
+    
             if (!certificateId) return;
-
+    
             try {
                 setLoading(true);
                 setError(null);
-
+    
                 const response = await axios.get(
                     `http://localhost:5000/api/v1/certificates/getCertificateById/${certificateId}`,
                     {
@@ -146,11 +137,11 @@ export default function AddCategory() {
                         }
                     }
                 );
-
+    
                 if (!response.data.success) {
                     throw new Error(response.data.message || "Failed to fetch certificate");
                 }
-
+    
                 const certificateData = response.data.data;
                 const transformedData = {
                     certificateNo: certificateData.certificateNo || "",
@@ -174,7 +165,7 @@ export default function AddCategory() {
                     engineerName: certificateData.engineerName || "",
                     status: certificateData.status || ""
                 };
-
+    
                 setFormData(transformedData);
                 setStartDate(transformedData.dateOfCalibration);
                 setEndDate(transformedData.calibrationDueDate);
@@ -186,10 +177,10 @@ export default function AddCategory() {
                 setLoading(false);
             }
         };
-
+    
         fetchCertificateData();
     }, [certificateId]);
-
+    
 
     const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newStartDate = e.target.value;
@@ -339,7 +330,7 @@ export default function AddCategory() {
             setCertificate(response.data);
 
             toast({
-                title: "Success",
+                title: "Submitted",
                 description: certificateId ? "Certificate updated successfully" : "Certificate generated successfully",
                 variant: "default",
             });
@@ -695,15 +686,6 @@ export default function AddCategory() {
 
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="certificateNo"
-                                        placeholder="Certificate No."
-                                        value={formData.certificateNo}
-                                        onChange={handleChange}
-                                        readOnly
-                                        className="p-2 border rounded flex-1"
-                                    />
                                     <select
                                         name="status"
                                         value={formData.status}

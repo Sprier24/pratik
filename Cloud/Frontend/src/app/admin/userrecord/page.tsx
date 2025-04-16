@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {  SearchIcon,  Trash2 } from "lucide-react";
+import { SearchIcon, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -71,9 +71,17 @@ export default function UserTable() {
       });
       if (response.ok) {
         setUsers(prev => prev.filter(user => user._id !== id));
+        toast({
+          title: "User Deleted",
+          description: "The user has been successfully deleted",
+        })
       }
     } catch (error) {
-      console.error("Failed to delete user", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user.",
+        variant: "destructive",
+      })
     }
   };
 
