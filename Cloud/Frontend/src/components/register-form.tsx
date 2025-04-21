@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Eye, EyeOff } from "react-feather";
-import { ReloadIcon } from "@radix-ui/react-icons";
+import { Eye, EyeOff, Loader } from "react-feather";
+import { toast } from "@/hooks/use-toast";
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -113,7 +113,7 @@ export function RegisterForm() {
     }
   };
 
-  // Handle blur events (mark fields as touched)
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name } = e.target;
 
@@ -146,7 +146,6 @@ export function RegisterForm() {
 
   // Handle form submission
   const handleRegister = async () => {
-    // Mark all fields as touched to show errors
     setTouched({
       name: true,
       email: true,
@@ -155,14 +154,15 @@ export function RegisterForm() {
       confirmPassword: true
     });
 
-    // Validate the entire form
     const isValid = validateForm();
-
-    if (!isValid) {
-      return;
-    }
+    if (!isValid) return;
 
     setLoading(true);
+
+    const toastId = toast({
+      title: "Registering...",
+      description: "Please wait while we create your account.",
+    });
 
     try {
       const response = await fetch("http://localhost:5000/api/v1/users/register", {
@@ -185,8 +185,18 @@ export function RegisterForm() {
           ...prev,
           form: data.message || data.error || "An error occurred. Please try again."
         }));
+
+        toast({
+          title: "Registration failed",
+          description: data.message || "An error occurred.",
+          variant: "destructive"
+        });
+
       } else {
-        alert("Registration successful! You can now log in.");
+        toast({
+          title: "Success!",
+          description: "Registration successful. Redirecting to login...",
+        });
         router.push("/login");
       }
     } catch (error) {
@@ -194,10 +204,17 @@ export function RegisterForm() {
         ...prev,
         form: "An error occurred during registration. Please try again."
       }));
+      toast({
+        title: "Something went wrong",
+        description: "Please check your internet or try again later.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <Card className="w-[400px]">
@@ -265,7 +282,7 @@ export function RegisterForm() {
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
             {touched.password && errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
@@ -288,7 +305,7 @@ export function RegisterForm() {
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center text-gray-500"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
             {touched.confirmPassword && errors.confirmPassword && (
@@ -306,14 +323,7 @@ export function RegisterForm() {
           onClick={handleRegister}
           disabled={loading || !isFormValid()}
         >
-          {loading ? (
-            <>
-              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-              Registering...
-            </>
-          ) : (
-            "Register"
-          )}
+          {loading ? "Registering..." : "Register"}
         </Button>
       </CardFooter>
     </Card>

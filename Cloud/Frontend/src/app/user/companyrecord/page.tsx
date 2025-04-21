@@ -109,8 +109,8 @@ export default function CompanyDetailsTable() {
     }, []);
 
     const handleDeleteClick = (company: CompanyDetails) => {
-        setContactToDelete(company); // Set the company to delete
-        setIsDeleteModalOpen(true); // Open the modal
+        setContactToDelete(company);
+        setIsDeleteModalOpen(true); 
     };
 
     const handleConfirmDelete = async () => {
@@ -251,7 +251,7 @@ export default function CompanyDetailsTable() {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
                 <span className="text-default-400 text-small">
-                    Total {companies.length} company
+                    Total {filteredItems.length} companies
                 </span>
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
@@ -289,7 +289,7 @@ export default function CompanyDetailsTable() {
                 </div>
             </div>
         );
-    }, [page, pages, onPreviousPage, onNextPage]);
+    }, [page, pages, onPreviousPage, onNextPage, filteredItems]);
 
     const renderCell = useCallback((company: CompanyDetails, columnKey: string) => {
         if (columnKey === "actions") {

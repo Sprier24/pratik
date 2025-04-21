@@ -135,7 +135,7 @@ export default function AddCategory() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink href="/admin/dashboard">
-                                        <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                                        Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />

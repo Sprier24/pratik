@@ -635,7 +635,7 @@ export default function GenerateService() {
                                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                     <input
-                                        type="text"
+                                        type="number"
                                         name="contactNumber"
                                         placeholder="Contact Number"
                                         value={formData.contactNumber}
@@ -937,13 +937,13 @@ export default function GenerateService() {
 
                             {service && (
                                 <div className="mt-4 text-center">
-                                    <p className="text-green-600 mb-2">Click here to download the certificate</p>
+                                    <p className="text-green-600 mb-2">Click here to download your service report</p>
                                     <button
                                         onClick={handleDownload}
                                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
                                         disabled={isGeneratingPDF || loading}
                                     >
-                                        {isGeneratingPDF ? "Generating PDF..." : "Download Certificate"}
+                                        {isGeneratingPDF ? "Generating PDF..." : "Download Service Report"}
                                     </button>
                                 </div>
                             )}

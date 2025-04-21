@@ -40,7 +40,7 @@ interface Model {
   range: string;
 }
 
-interface engineer {
+interface Engineer {
   id: string;
   name: string;
 }
@@ -71,7 +71,7 @@ export default function GenerateCertificate() {
   const [timePeriod, setTimePeriod] = useState<number | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
-  const [engineers, setEngineers] = useState<engineer[]>([]);
+  const [engineers, setEngineers] = useState<Engineer[]>([]);
   const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
   const [engineerError, setEngineerError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -505,12 +505,12 @@ export default function GenerateCertificate() {
           >
             <option value="">Select Engineer Name</option>
             {isLoadingEngineers ? (
-              <option value="" disabled>Loading engineers...</option>
+              <option>Loading engineers...</option>
             ) : engineerError ? (
-              <option value="" disabled>Error loading engineers</option>
+              <option>Error loading engineers</option>
             ) : (
-              engineers.map((engineer) => (
-                <option key={engineer.id} value={engineer.name}>
+              engineers.map((engineer, index) => (
+                <option key={engineer.id || index} value={engineer.name}>
                   {engineer.name}
                 </option>
               ))
@@ -543,6 +543,7 @@ export default function GenerateCertificate() {
         <h2 className="text-lg font-bold mt-4 text-center">Observation Table</h2>
         <div className="flex justify-end mb-4">
           <button
+            type="button"
             onClick={addObservation}
             className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900"
             disabled={formData.observations.length >= 5}

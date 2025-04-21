@@ -251,7 +251,7 @@ export default function UserTable() {
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/admin/userform">
-                    <BreadcrumbPage>Create User</BreadcrumbPage>
+                    Create User
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>

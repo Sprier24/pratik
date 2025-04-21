@@ -1,72 +1,118 @@
-"use client"
+"use client";
 
-import { ChevronsUpDown, LogOut, Edit, Loader2 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-import { useState, useEffect } from "react"
-import axios from "axios"
-import Link from "next/link"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
-
+import {
+  ChevronsUpDown,
+  LogOut,
+  Loader2
+} from "lucide-react";
+import {
+  Avatar,
+  AvatarFallback
+} from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar
+} from "@/components/ui/sidebar";
+import {
+  useState,
+  useEffect
+} from "react";
+import axios from "axios";
+import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  CardContent
+} from "@/components/ui/card";
+import {
+  Button
+} from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import {
+  Input
+} from "@/components/ui/input";
+import {
+  useForm
+} from "react-hook-form";
+import {
+  Toaster,
+  toast
+} from "sonner"; // ✅ toast + Toaster import
 
 interface User {
-  _id: string
-  name: string
-  email: string
-  contact: number
-  password: string
+  _id: string;
+  name: string;
+  email: string;
+  contact: number;
+  password: string;
 }
 
 export function NavUser() {
-  const { isMobile } = useSidebar()
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { isMobile } = useSidebar();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
 
   const form = useForm<User>({
     defaultValues: {
-      name: '',
-      email: '',
-      contact: '',
-      password: '',
-    }
-  })
+      name: "",
+      email: "",
+      contact: 0,
+      password: "",
+    },
+  });
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        setLoading(true)
-        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
+        setLoading(true);
+        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
         if (!userId) {
-          setError("User ID not found")
-          return
+          setError("User ID not found");
+          return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/v1/users/getuser/${userId}`)
-        setCurrentUser(response.data)
+        const response = await axios.get(`http://localhost:5000/api/v1/users/getuser/${userId}`);
+        setCurrentUser(response.data);
+        toast.success("User profile loaded");
       } catch (err) {
-        setError("Failed to fetch user data.")
-        console.error(err)
+        setError("Failed to fetch user data.");
+        toast.error("Failed to load user profile");
+        console.error(err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchUser()
-  }, [])
+    fetchUser();
+  }, []);
 
   const handleEditClick = (user: User) => {
     setEditUser(user);
@@ -84,15 +130,18 @@ export function NavUser() {
           name: data.name,
           email: data.email,
           contact: data.contact,
-          password: data.password
+          password: data.password,
         },
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
+
       setCurrentUser(response.data.user);
+      toast.success("Profile updated successfully!");
+
       setIsEditing(false);
       setEditUser(null);
 
@@ -104,15 +153,15 @@ export function NavUser() {
     } catch (error) {
       console.error("Failed to update user:", error);
       setError("Failed to update user. Please try again.");
+      toast.error("Failed to update profile.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
-  if (!currentUser) return <div>No user data</div>
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!currentUser) return <div>No user data</div>;
 
   return (
     <>
@@ -149,7 +198,6 @@ export function NavUser() {
                     setTimeout(() => setOpen(true), 100);
                   }}
                   className="w-full text-left"
-
                 >
                   <Dialog key={dialogKey} open={open} onOpenChange={setOpen}>
                     <DropdownMenuLabel className="p-0 font-normal">
@@ -178,33 +226,26 @@ export function NavUser() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-
-      <Dialog open={open} onOpenChange={(open) => {
-        if (!open) {
-          setOpen(false);
-        }
-      }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"
-          onInteractOutside={(e) => {
-            e.preventDefault();
-          }
-          } >
+      {/* Profile View Dialog */}
+      <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+        <DialogContent
+          className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="text-center">Profile Details</DialogTitle>
           </DialogHeader>
+
           {error ? (
             <div className="text-center text-red-500 py-4">{error}</div>
-          ) : currentUser ? (
+          ) : (
             <div className="space-y-6">
               <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                  <Avatar className="h-24 w-24 md:h-32 md:w-32 border-2 border-gray-200">
-
-                    <AvatarFallback className="text-xl">
-                      {currentUser.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
+                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-2 border-gray-200">
+                  <AvatarFallback className="text-xl">
+                    {currentUser.name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,28 +266,19 @@ export function NavUser() {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button onClick={() => handleEditClick(currentUser)}>
-                  Update
-                </Button>
+                <Button onClick={() => handleEditClick(currentUser)}>Update</Button>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No profile information available
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isEditing} onOpenChange={(open) => {
-        if (!open) {
-          setIsEditing(false);
-        }
-      }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"
-          onInteractOutside={(e) => {
-            e.preventDefault();
-          }}>
+      {/* Profile Edit Dialog */}
+      <Dialog open={isEditing} onOpenChange={(open) => setIsEditing(open)}>
+        <DialogContent
+          className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Update Profile</DialogTitle>
           </DialogHeader>
@@ -309,6 +341,8 @@ export function NavUser() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      <Toaster position="top-right" richColors />
     </>
-  )
+  );
 }

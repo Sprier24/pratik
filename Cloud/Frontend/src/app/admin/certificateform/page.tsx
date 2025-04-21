@@ -51,12 +51,21 @@ interface Engineer {
     name: string;
 }
 
-export default function AddCategory() {
+const generateCertificateNumber = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `RPS/${year}${month}${day}/${randomNum}`;
+};
+
+export default function CertificateForm() {
     const searchParams = useSearchParams();
     const certificateId = searchParams.get('id');
 
     const [formData, setFormData] = useState<CertificateRequest>({
-        certificateNo: "",
+        certificateNo: generateCertificateNumber(),
         customerName: "",
         siteLocation: "",
         makeModel: "",
@@ -82,6 +91,8 @@ export default function AddCategory() {
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
     const [engineerError, setEngineerError] = useState<string | null>(null);
+
+
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -122,26 +133,27 @@ export default function AddCategory() {
     useEffect(() => {
         const fetchCertificateData = async () => {
             const today = new Date().toISOString().split('T')[0];
-    
+
             if (!certificateId) return;
-    
+
             try {
                 setLoading(true);
                 setError(null);
-    
+
                 const response = await axios.get(
                     `http://localhost:5000/api/v1/certificates/getCertificateById/${certificateId}`,
                     {
                         headers: {
+                            
                             "Authorization": `Bearer ${localStorage.getItem("token")}`
                         }
                     }
                 );
-    
+
                 if (!response.data.success) {
                     throw new Error(response.data.message || "Failed to fetch certificate");
                 }
-    
+
                 const certificateData = response.data.data;
                 const transformedData = {
                     certificateNo: certificateData.certificateNo || "",
@@ -165,7 +177,7 @@ export default function AddCategory() {
                     engineerName: certificateData.engineerName || "",
                     status: certificateData.status || ""
                 };
-    
+
                 setFormData(transformedData);
                 setStartDate(transformedData.dateOfCalibration);
                 setEndDate(transformedData.calibrationDueDate);
@@ -177,10 +189,10 @@ export default function AddCategory() {
                 setLoading(false);
             }
         };
-    
+
         fetchCertificateData();
     }, [certificateId]);
-    
+
 
     const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newStartDate = e.target.value;
@@ -275,21 +287,10 @@ export default function AddCategory() {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
+    
         try {
-            const url = certificateId
-                ? `http://localhost:5000/api/v1/certificates/updateCertificate/${certificateId}`
-                : "http://localhost:5000/api/v1/certificates/generateCertificate";
-            const method = certificateId ? 'put' : 'post';
-            const submissionData = {
-                ...formData,
-                dateOfCalibration: startDate,
-                calibrationDueDate: endDate,
-                engineerName: formData.engineerName.trim(),
-            };
-
-            const requiredFields = {
-
+            // Validate required fields
+            const requiredFields: Record<string, string> = {
                 customerName: "Customer Name",
                 siteLocation: "Site Location",
                 makeModel: "Make/Model",
@@ -297,59 +298,93 @@ export default function AddCategory() {
                 serialNo: "Serial No",
                 calibrationGas: "Calibration Gas",
                 gasCanisterDetails: "Gas Canister Details",
-                dateOfCalibration: "Date of Calibration",
-                calibrationDueDate: "Calibration Due Date",
-                engineerName: "Engineer Name",
-                status: "Status"
+                status: "Status",
             };
-
+    
             const emptyFields = Object.entries(requiredFields)
                 .filter(([key]) => !formData[key as keyof CertificateRequest]?.toString().trim())
                 .map(([_, label]) => label);
-
+    
+            if (!startDate || !endDate) {
+                emptyFields.push("Date of Calibration", "Calibration Due Date");
+            }
+    
             if (emptyFields.length > 0) {
                 setError(`Please fill in: ${emptyFields.join(", ")}`);
                 setLoading(false);
                 return;
             }
+    
+            // Validate observations
             const hasEmptyObservations = formData.observations.some(obs =>
-                !obs.gas.trim() || !obs.before.trim() || !obs.after.trim()
+                !obs.gas?.trim() || !obs.before?.trim() || !obs.after?.trim()
             );
-
+    
             if (hasEmptyObservations) {
-                setError("Please fill in all observation fields");
+                setError("Please fill in all observation fields.");
                 setLoading(false);
                 return;
             }
-            const response = await axios[method](
+    
+            // Prepare the submission data
+            const submissionData = {
+                ...formData,
+                dateOfCalibration: startDate,
+                calibrationDueDate: endDate,
+                engineerName: formData.engineerName.trim(),
+                observations: formData.observations.map(obs => ({
+                    gas: obs.gas.trim(),
+                    before: obs.before.trim(),
+                    after: obs.after.trim()
+                }))
+            };
+    
+            // Determine API details
+            const isEditMode = !!certificateId;
+            const url = isEditMode
+                ? `http://localhost:5000/api/v1/certificates/updateCertificate/${certificateId}`
+                : "http://localhost:5000/api/v1/certificates/generateCertificate";
+    
+            const response = await axios({
+                method: isEditMode ? 'put' : 'post',
                 url,
-                submissionData,
-                { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }
-            );
-
+                data: submissionData,
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json"
+                }
+            });
+    
             setCertificate(response.data);
-
+    
             toast({
-                title: "Submitted",
-                description: certificateId ? "Certificate updated successfully" : "Certificate generated successfully",
+                title: "Success",
+                description: isEditMode
+                    ? "Certificate updated successfully"
+                    : "Certificate generated successfully",
                 variant: "default",
             });
-
-            if (certificateId) {
-                router.push("/admin/certificaterecord");
-            }
+    
+            
         } catch (err: any) {
             console.error("Submission error:", err);
-            setError(err.response?.data?.error || "An error occurred");
+            const errorMessage =
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                err.message ||
+                "An error occurred";
+    
+            setError(errorMessage);
             toast({
                 title: "Error",
-                description: err.response?.data?.error || "An error occurred",
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {
             setLoading(false);
         }
     };
+    
 
     const handleDownload = () => {
         const logo = new Image();
@@ -686,6 +721,17 @@ export default function AddCategory() {
 
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+                                    <input
+                                        type="text"
+                                        id="certificateNo"
+                                        name="certificateNo"
+                                        value={formData.certificateNo}
+                                        onChange={handleChange}
+                                        readOnly
+                                        className="p-2 border rounded"
+                                    />
+
                                     <select
                                         name="status"
                                         value={formData.status}

@@ -11,7 +11,6 @@ import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import "react-toastify/dist/ReactToastify.css"
 import { ReloadIcon } from "@radix-ui/react-icons"
-import { Eye, EyeOff } from "lucide-react"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -74,6 +73,28 @@ export function LoginForm() {
       });
       return;
     }
+
+
+    const passwordValidation = () => {
+      if (password.length < 8) return "Password must be at least 8 characters";
+      if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+      if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+      if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+      if (!/[^A-Za-z0-9]/.test(password)) return "Password must contain at least one special character";
+      return "";
+    };
+
+    const passwordError = passwordValidation();
+    if (passwordError) {
+      toast({
+        title: "Invalid password",
+        description: passwordError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+
 
     try {
       setLoading(true);
@@ -234,7 +255,11 @@ export function LoginForm() {
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
                     onClick={() => !loading && setPasswordVisible(!passwordVisible)}
                   >
-                    {passwordVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                    {passwordVisible ? (
+                      <AiOutlineEyeInvisible size={24} className={loading ? "opacity-50" : ""} />
+                    ) : (
+                      <AiOutlineEye size={24} className={loading ? "opacity-50" : ""} />
+                    )}
                   </div>
                 </div>
               </div>

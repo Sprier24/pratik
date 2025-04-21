@@ -15,7 +15,7 @@ router.use("/admin", adminRoutes);
 router.use("/users", userRoutes);
 router.use("/company", companyRoutes);
 router.use("/contactperson", contactPersonRoutes);
-router.use("/certificates", certificateRoutes);
+router.use("/certificates",certificateRoutes);
 router.use("/services", serviceRoutes);
 router.use("/addcategory", addCategoryRoutes);
 router.use("/engineers", addEngineerRoutes);

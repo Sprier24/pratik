@@ -46,6 +46,7 @@ export default function AddModel() {
         range: "",
         observations: [],
     });
+    const [selectedModel, setSelectedModel] = useState<string>("");
     const [newModel, setNewModel] = useState<string>("");
     const [newRange, setNewRange] = useState<string>("");
     const [models, setModels] = useState<Model[]>([]);
@@ -131,27 +132,31 @@ export default function AddModel() {
                 });
 
                 const result = await response.json();
-                if (response.ok) {
-                    const newId = result._id || result.id;
-                    if (!newId) {
-                        throw new Error("No ID returned from server");
-                    }
 
-                    setModels(prevModels => [...prevModels, {
-                        id: newId,
-                        model_name: newModel,
-                        range: newRange
-                    }]);
-
-                    setNewModel("");
-                    setNewRange("");
-                    toast({
-                        title: "Model and Range Submitted",
-                        description: "The model and range has been successfully created",
-                    });
-                } else {
-                    throw new Error(result.error || "Failed to add model");
+                if (!response.ok) {
+                    throw new Error(result.error || result.message || "Failed to add model");
                 }
+
+                // Try different ways to get the ID from the response
+                const newId = result._id || result.id || result.data?._id || result.data?.id;
+
+                if (!newId) {
+                    console.error("Server response:", result);
+                    throw new Error("Server didn't return a valid ID. Response: " + JSON.stringify(result));
+                }
+
+                setModels(prevModels => [...prevModels, {
+                    id: newId,
+                    model_name: newModel,
+                    range: newRange
+                }]);
+
+                setNewModel("");
+                setNewRange("");
+                toast({
+                    title: "Model and Range Submitted",
+                    description: "The model and range has been successfully created",
+                });
             } catch (error) {
                 console.error("Error adding category:", error);
                 toast({
@@ -257,31 +262,6 @@ export default function AddModel() {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        const { name, value } = e.target;
-
-        if (name === "makeModel") {
-            const selectedModel = models.find(model => model.model_name === value);
-
-            if (selectedModel) {
-                setFormData(prev => ({
-                    ...prev,
-                    makeModel: value,
-                    range: selectedModel.range,
-                }));
-            }
-        } else {
-            const updatedValue = e.target.type === "date"
-                ? new Date(e.target.value).toISOString().split("T")[0]
-                : value;
-
-            setFormData(prev => ({
-                ...prev,
-                [name]: updatedValue,
-            }));
-        }
-    };
-
     const handleDeleteModel = async (id: string) => {
         if (!id || typeof id !== 'string') {
             toast({
@@ -310,12 +290,10 @@ export default function AddModel() {
 
             setModels(prevModels => prevModels.filter(model => model.id !== id));
 
-            setFormData(prev => {
-                const deletedModel = models.find(m => m.id === id);
-                return deletedModel && prev.makeModel === deletedModel.model_name
-                    ? { ...prev, makeModel: "", range: "" }
-                    : prev;
-            });
+            if (selectedModel === id) {
+                setSelectedModel("");
+                setFormData(prev => ({ ...prev, makeModel: "", range: "" }));
+            }
 
             toast({
                 title: "Model and Range Deleted",
@@ -429,6 +407,18 @@ export default function AddModel() {
         }
     };
 
+    const handleModelSelect = (id: string) => {
+        const selected = models.find(model => model.id === id);
+        if (selected) {
+            setSelectedModel(id);
+            setFormData(prev => ({
+                ...prev,
+                makeModel: selected.model_name,
+                range: selected.range
+            }));
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         toast({
@@ -473,8 +463,9 @@ export default function AddModel() {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+                                {/* Model and Range Section - Updated to match engineer pattern */}
                                 <>
-                                    <h2 className="text-lg font-bold mt-4 text-center">Create New Model and Range</h2>
+                                    <h2 className="text-lg font-bold mt-4 text-center">Model and Range</h2>
                                     <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {models.length > 0 ? (
                                             models.map((model) => (
@@ -492,47 +483,43 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                Create New Model and Range
+                                                No models available. Create a new one below.
                                             </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <div className="relative">
-                                            <select
-                                                name="makeModel"
-                                                value={formData.makeModel}
-                                                onChange={handleChange}
-                                                className="p-2 border rounded w-full"
-                                            >
-                                                <option value="">Select Model</option>
-                                                {models.map((model) => (
-                                                    <option key={`option-${model.id}`} value={model.model_name}>
-                                                        {model.model_name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        <select
+                                            value={selectedModel}
+                                            onChange={(e) => handleModelSelect(e.target.value)}
+                                            className="p-2 border rounded"
+                                        >
+                                            <option value="">Select Model</option>
+                                            {models.map((model) => (
+                                                <option key={`model-opt-${model.id}`} value={model.id}>
+                                                    {model.model_name} - {model.range}
+                                                </option>
+                                            ))}
+                                        </select>
                                         <input
                                             type="text"
-                                            name="range"
                                             placeholder="Range"
                                             value={formData.range}
-                                            onChange={handleChange}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, range: e.target.value }))}
                                             className="p-2 border rounded"
-                                            disabled
+                                            disabled={!selectedModel}
                                         />
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <input
                                             type="text"
-                                            placeholder="Create Model"
+                                            placeholder="New Model Name"
                                             value={newModel}
                                             onChange={(e) => setNewModel(e.target.value)}
                                             className="p-2 border rounded"
                                         />
                                         <input
                                             type="text"
-                                            placeholder="Create Range"
+                                            placeholder="New Range"
                                             value={newRange}
                                             onChange={(e) => setNewRange(e.target.value)}
                                             className="p-2 border rounded"
@@ -548,8 +535,9 @@ export default function AddModel() {
                                     </button>
                                 </>
 
+                                {/* Engineer Section */}
                                 <>
-                                    <h2 className="text-lg font-bold mt-4 text-center">Create New Engineer</h2>
+                                    <h2 className="text-lg font-bold mt-4 text-center">Engineers</h2>
                                     <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {engineers.length > 0 ? (
                                             engineers.map((engineer) => (
@@ -567,13 +555,12 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                Create a new engineer
+                                                No engineers available. Create a new one below.
                                             </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <select
-                                            name="selectedEngineer"
                                             value={selectedEngineer}
                                             onChange={(e) => setSelectedEngineer(e.target.value)}
                                             className="p-2 border rounded"
@@ -605,7 +592,7 @@ export default function AddModel() {
 
                                 {/* Service Engineer Section */}
                                 <>
-                                    <h2 className="text-lg font-bold mt-4 text-center">Create New Service Engineer</h2>
+                                    <h2 className="text-lg font-bold mt-4 text-center">Service Engineers</h2>
                                     <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                                         {serviceEngineers.length > 0 ? (
                                             serviceEngineers.map((engineer) => (
@@ -623,13 +610,12 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                Create a new service engineer
+                                                No service engineers available. Create a new one below.
                                             </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <select
-                                            name="selectedServiceEngineer"
                                             value={selectedServiceEngineer}
                                             onChange={(e) => setSelectedServiceEngineer(e.target.value)}
                                             className="p-2 border rounded"

@@ -1,6 +1,5 @@
-const fs = require("fs");
+
 const path = require("path");
-const generatePDF = require("../utils/pdfGenerator");
 const Certificate = require("../model/certificateModel");
 
 const getCertificate = async (req, res) => {
@@ -59,12 +58,14 @@ const createCertificate = async (req, res) => {
             engineerName,
             status
         } = req.body;
+
         if (!customerName || !siteLocation || !makeModel || !range || !serialNo ||
             !calibrationGas || !gasCanisterDetails || !dateOfCalibration ||
             !calibrationDueDate || !observations || observations.length === 0 || !engineerName || !status) {
             console.error("Missing required fields");
             return res.status(400).json({ error: "All fields and at least one observation are required" });
         }
+
         const newCertificate = new Certificate({
             customerName,
             siteLocation,
@@ -79,31 +80,14 @@ const createCertificate = async (req, res) => {
             engineerName,
             status
         });
+
         console.log("Saving certificate to database...");
         await newCertificate.save();
         console.log("Certificate saved successfully");
-        console.log("Generating PDF...");
-        const pdfPath = await generatePDF(
-            newCertificate.certificateNo,
-            customerName,
-            siteLocation,
-            makeModel,
-            range,
-            serialNo,
-            calibrationGas,
-            gasCanisterDetails,
-            dateOfCalibration,
-            calibrationDueDate,
-            newCertificate.certificateId,
-            observations,
-            engineerName,
-            status
-        );
-        console.log("PDF generated successfully at:", pdfPath);
+
         res.status(201).json({
-            message: "Certificate generated successfully!",
-            certificateId: newCertificate.certificateId,
-            downloadUrl: `/api/v1/certificates/download/${newCertificate.certificateId}`
+            message: "Click here to download your certificate",
+            certificateId: newCertificate.certificateId
         });
     } catch (error) {
         console.error("Certificate generation error:", error);
@@ -111,6 +95,7 @@ const createCertificate = async (req, res) => {
         res.status(500).json({ error: "Failed to generate certificate: " + error.message });
     }
 };
+
 
 const downloadCertificate = async (req, res) => {
     try {

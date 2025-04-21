@@ -23,7 +23,7 @@ const register = async (req, res) => {
     const { name, email, password, contact } = req.body;
     const userCount = await Users.countDocuments();
     if (userCount >= MAX_LOGINS) {
-      return res.status(403).json({ message: 'Registration limit reached. Please delete some users first.' });
+      return res.status(403).json({ message: 'Registration limit reached. Please try again later.' });
     }
     const existingUser = await Users.findOne({ email });
     if (existingUser) {
