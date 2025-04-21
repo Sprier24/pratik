@@ -33,8 +33,8 @@ interface ContactPerson {
 
 const columns = [
     { name: "First Name", uid: "firstName", sortable: true, width: "120px" },
-    { name: "Middle Name", uid: "middleName", sortable: true, width: "120px" },
     { name: "Last Name", uid: "lastName", sortable: true, width: "120px" },
+    { name: "Company Name", uid: "middleName", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contactNo", sortable: true, width: "120px" },
     { name: "Email Address", uid: "email", sortable: true, width: "120px" },
     { name: "Designation", uid: "designation", sortable: true, width: "120px" },

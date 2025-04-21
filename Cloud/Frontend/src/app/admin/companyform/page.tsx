@@ -23,13 +23,8 @@ const companySchema = z.object({
     address: z.string().nonempty({ message: "Required" }),
     industries: z.string().nonempty({ message: "Required" }),
     industriesType: z.string().nonempty({ message: "Required" }),
-    gstNumber: z.string().nonempty({ message: "Required" }),
-    website: z.preprocess((val) => (val === "" ? undefined : val),
-        z.string({
-            required_error: "Required",
-            invalid_type_error: "Invalid website URL"
-        }).url("Invalid website URL")
-    ),
+    gstNumber: z.string().optional(),
+    website: z.string().optional(),
     flag: z.enum(["Red", "Yellow", "Green"], {
         errorMap: () => ({ message: "Required" }),
     }),
@@ -240,7 +235,7 @@ export default function AddCategory() {
                                                 <FormItem>
                                                     <FormControl>
                                                         <Input
-                                                            placeholder="GST Number"
+                                                            placeholder="GST Number (Optional)"
                                                             {...field}
                                                             disabled={isSubmitting}
                                                         />
@@ -256,7 +251,7 @@ export default function AddCategory() {
                                                 <FormItem>
                                                     <FormControl>
                                                         <Input
-                                                            placeholder="Website"
+                                                            placeholder="Website (Optional)"
                                                             {...field}
                                                             disabled={isSubmitting}
                                                         />

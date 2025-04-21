@@ -61,11 +61,11 @@ export default function CompanyDetailsTable() {
     const [sortDescriptor, setSortDescriptor] = useState<{
         column: string;
         direction: "ascending" | "descending";
-      }>({
+    }>({
         column: "",
         direction: "ascending",
-      });
-      
+    });
+
 
     const router = useRouter();
     const hasSearchFilter = Boolean(filterValue);
@@ -110,7 +110,7 @@ export default function CompanyDetailsTable() {
 
     const handleDeleteClick = (company: CompanyDetails) => {
         setContactToDelete(company);
-        setIsDeleteModalOpen(true); 
+        setIsDeleteModalOpen(true);
     };
 
     const handleConfirmDelete = async () => {
@@ -292,10 +292,12 @@ export default function CompanyDetailsTable() {
     }, [page, pages, onPreviousPage, onNextPage, filteredItems]);
 
     const renderCell = useCallback((company: CompanyDetails, columnKey: string) => {
-        if (columnKey === "actions") {
+        if (columnKey === "gstNumber" || columnKey === "website") {
+            return company[columnKey as keyof CompanyDetails] || "N/A";
         }
         return company[columnKey as keyof CompanyDetails];
     }, [isDownloading, router]);
+
 
     return (
         <SidebarProvider>

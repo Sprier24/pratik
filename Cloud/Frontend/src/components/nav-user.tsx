@@ -101,10 +101,8 @@ export function NavUser() {
 
         const response = await axios.get(`http://localhost:5000/api/v1/users/getuser/${userId}`);
         setCurrentUser(response.data);
-        toast.success("User profile loaded");
       } catch (err) {
         setError("Failed to fetch user data.");
-        toast.error("Failed to load user profile");
         console.error(err);
       } finally {
         setLoading(false);
@@ -113,6 +111,7 @@ export function NavUser() {
 
     fetchUser();
   }, []);
+
 
   const handleEditClick = (user: User) => {
     setEditUser(user);

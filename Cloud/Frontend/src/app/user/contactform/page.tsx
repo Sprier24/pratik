@@ -169,12 +169,12 @@ export default function Customer() {
                     />
                     <FormField
                       control={form.control}
-                      name="middleName"
+                      name="lastName"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
                             <Input
-                              placeholder="Middle Name"
+                              placeholder="Last Name"
                               {...field}
                               disabled={isSubmitting}
                             />
@@ -188,12 +188,12 @@ export default function Customer() {
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="lastName"
+                      name="middleName"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
                             <Input
-                              placeholder="Last Name"
+                              placeholder="Company Name"
                               {...field}
                               disabled={isSubmitting}
                             />

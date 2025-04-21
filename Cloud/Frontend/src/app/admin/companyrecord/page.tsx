@@ -3,10 +3,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {  SearchIcon, Edit, Trash2 } from "lucide-react";
+import { SearchIcon, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     SidebarInset,
@@ -33,7 +32,7 @@ interface CompanyDetails {
 }
 
 interface SortDescriptor {
-    column: string;  
+    column: string;
     direction: "ascending" | "descending";
 }
 
@@ -66,7 +65,7 @@ export default function CompanyDetailsTable() {
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-        column: "createdAt", 
+        column: "createdAt",
         direction: "descending",
     });
     const router = useRouter();
@@ -91,7 +90,7 @@ export default function CompanyDetailsTable() {
                     : [];
 
             const companiesWithKeys = companiesData
-                .reverse() 
+                .reverse()
                 .map((company: CompanyDetails) => ({
                     ...company,
                     key: company._id || generateUniqueId(),
@@ -130,14 +129,14 @@ export default function CompanyDetailsTable() {
             toast({
                 title: "Company Deleted",
                 description: "The company has been successfully deleted",
-            });        
+            });
         } catch (error) {
             console.error("Error deleting company:", error);
             toast({
                 title: "Error",
                 description: "Could not delete company. Please try again.",
-            });       
-         }
+            });
+        }
     };
 
     const headerColumns = React.useMemo(() => {
@@ -167,11 +166,11 @@ export default function CompanyDetailsTable() {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof CompanyDetails] || "";
             const second = b[sortDescriptor.column as keyof CompanyDetails] || "";
-    
+
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-    
+
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
@@ -297,6 +296,11 @@ export default function CompanyDetailsTable() {
                 </div>
             );
         }
+
+        if (columnKey === "gstNumber" || columnKey === "website") {
+            return company[columnKey as keyof CompanyDetails] || "N/A";
+        }
+
         return company[columnKey as keyof CompanyDetails];
     }, [isDownloading, router]);
 
