@@ -15,36 +15,70 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { AppSidebar } from "@/components/app-sidebar";
-import { useRouter } from "next/navigation"
+
+interface Company {
+  _id: string;
+  companyName: string;
+}
 
 const contactSchema = z.object({
   firstName: z.string().nonempty({ message: "Required" }),
-  middleName: z.string().nonempty({ message: "Required" }),
-  lastName: z.string().nonempty({ message: "Required" }),
   contactNo: z.string()
     .regex(/^\d*$/, { message: "Contact number must be numeric" })
     .nonempty({ message: "Required" }),
   email: z.string().email({ message: "Required" }),
   designation: z.string().nonempty({ message: "Required" }),
+  company: z.string().nonempty({ message: "Required" }),
 });
 
 export default function Customer() {
   const searchParams = useSearchParams();
   const contactId = searchParams.get("id");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companySearchTerm, setCompanySearchTerm] = useState("");
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
 
   const form = useForm<z.infer<typeof contactSchema>>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       firstName: "",
-      middleName: "",
-      lastName: "",
       contactNo: "",
       email: "",
       designation: "",
+      company: "",
     },
   });
+
+  const fetchCompanies = async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const response = await axios.get(
+        `http://localhost:5000/api/v1/company/getAllcompanies`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+      setCompanies(response.data.data || response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch companies",
+        variant: "destructive",
+      });
+      console.error("Error fetching companies:", error);
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
 
   useEffect(() => {
     if (contactId) {
@@ -58,17 +92,21 @@ export default function Customer() {
           if (contactData) {
             form.reset({
               firstName: contactData.firstName || "",
-              middleName: contactData.middleName || "",
-              lastName: contactData.lastName || "",
               contactNo: contactData.contactNo || contactData.phone || "",
               email: contactData.email || "",
-              designation: contactData.designation || contactData.position || ""
+              designation: contactData.designation || contactData.position || "",
+              company: contactData.companyName || contactData.company?.companyName || ""
             });
+
+
+            if (contactData.company) {
+              setCompanySearchTerm(contactData.company.companyName);
+            }
           }
         } catch (error: any) {
           toast({
             title: "Error",
-            description: error.response?.data?.message || "Failed to fetch contact details",
+            description: error.response?.data?.message || "Failed to fetch contact details.",
             variant: "destructive",
           });
           console.error("Fetch error:", error);
@@ -79,6 +117,10 @@ export default function Customer() {
       fetchContact();
     }
   }, [contactId, form]);
+
+  const filteredCompanies = companies.filter(company =>
+    company.companyName.toLowerCase().includes(companySearchTerm.toLowerCase())
+  );
 
   const onSubmit = async (values: z.infer<typeof contactSchema>) => {
     setIsSubmitting(true);
@@ -97,8 +139,8 @@ export default function Customer() {
           description: "The contact has been successfully created",
         });
         form.reset();
+        setCompanySearchTerm("");
       }
-      router.push("/user/contactrecord");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -121,9 +163,11 @@ export default function Customer() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbLink href="/user/dashboard">
-                  Dashboard
-                </BreadcrumbLink>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/user/dashboard">
+                    Dashboard
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/user/contactrecord">
@@ -156,7 +200,7 @@ export default function Customer() {
                         <FormItem>
                           <FormControl>
                             <Input
-                              placeholder="First Name"
+                              placeholder="Customer Name"
                               {...field}
                               disabled={isSubmitting}
                             />
@@ -167,15 +211,53 @@ export default function Customer() {
                     />
                     <FormField
                       control={form.control}
-                      name="lastName"
+                      name="company"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input
-                              placeholder="Last Name"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
+                            <div className="relative">
+                              <Input
+                                placeholder="Company Name"
+                                value={companySearchTerm}
+                                onChange={(e) => {
+                                  setCompanySearchTerm(e.target.value);
+                                  setShowCompanyDropdown(true);
+                                }}
+                                onFocus={() => setShowCompanyDropdown(true)}
+                                onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 150)}
+                                disabled={isSubmitting}
+                              />
+
+                              {showCompanyDropdown && (
+                                <ul className="absolute z-20 mt-1 w-full rounded-md border bg-background text-sm shadow-lg max-h-60 overflow-y-auto">
+                                  {isLoadingCompanies ? (
+                                    <li className="px-4 py-2 text-muted-foreground">Loading companies...</li>
+                                  ) : filteredCompanies.length > 0 ? (
+                                    filteredCompanies.map((company) => (
+                                      <li
+                                        key={company._id}
+                                        className={`px-4 py-2 cursor-pointer hover:bg-muted transition-colors ${field.value === company._id ? "bg-muted font-medium" : ""
+                                          }`}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => {
+                                          field.onChange(company.companyName);
+                                          setCompanySearchTerm(company.companyName);
+                                          setShowCompanyDropdown(false);
+                                        }}
+                                      >
+                                        {company.companyName}
+                                      </li>
+                                    ))
+                                  ) : (
+                                    <li className="px-4 py-2 text-muted-foreground">
+                                      {companySearchTerm
+                                        ? "No companies found"
+                                        : "Start typing to search companies"}
+                                    </li>
+                                  )}
+                                </ul>
+                              )}
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -184,22 +266,6 @@ export default function Customer() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="middleName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder="Company Name"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <FormField
                       control={form.control}
                       name="contactNo"
@@ -208,11 +274,11 @@ export default function Customer() {
                           <FormControl>
                             <Input
                               placeholder="Contact Number"
-                              type="tel"
                               {...field}
+                              disabled={isSubmitting}
                               onChange={(e) => {
-                                const value = e.target.value.replace(/[^0-9]/g, '');
-                                field.onChange(value);
+                                const numericValue = e.target.value.replace(/\D/g, '');
+                                field.onChange(numericValue);
                               }}
                             />
                           </FormControl>
@@ -220,9 +286,6 @@ export default function Customer() {
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="email"
@@ -239,23 +302,24 @@ export default function Customer() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="designation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder="Designation"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="designation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            placeholder="Designation"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <CardFooter className="px-0">
                     <Button

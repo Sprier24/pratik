@@ -134,8 +134,8 @@ export default function Customer() {
     setIsSubmitting(true);
 
     try {
-      const payload = { 
-        ...values, 
+      const payload = {
+        ...values,
         company: selectedCompanyName || ""  // Pass the company name here instead of the ID
       };
 
@@ -215,7 +215,7 @@ export default function Customer() {
                         <FormItem>
                           <FormControl>
                             <Input
-                              placeholder="First Name"
+                              placeholder="Customer Name"
                               {...field}
                               disabled={isSubmitting}
                             />
@@ -226,15 +226,53 @@ export default function Customer() {
                     />
                     <FormField
                       control={form.control}
-                      name="middleName"
+                      name="company"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input
-                              placeholder="Middle Name"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
+                            <div className="relative">
+                              <Input
+                                placeholder="Company Name"
+                                value={companySearchTerm}
+                                onChange={(e) => {
+                                  setCompanySearchTerm(e.target.value);
+                                  setShowCompanyDropdown(true);
+                                }}
+                                onFocus={() => setShowCompanyDropdown(true)}
+                                onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 150)}
+                                disabled={isSubmitting}
+                              />
+
+                              {showCompanyDropdown && (
+                                <ul className="absolute z-20 mt-1 w-full rounded-md border bg-background text-sm shadow-lg max-h-60 overflow-y-auto">
+                                  {isLoadingCompanies ? (
+                                    <li className="px-4 py-2 text-muted-foreground">Loading companies...</li>
+                                  ) : filteredCompanies.length > 0 ? (
+                                    filteredCompanies.map((company) => (
+                                      <li
+                                        key={company._id}
+                                        className={`px-4 py-2 cursor-pointer hover:bg-muted transition-colors ${field.value === company._id ? "bg-muted font-medium" : ""
+                                          }`}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => {
+                                          field.onChange(company.companyName);
+                                          setCompanySearchTerm(company.companyName);
+                                          setShowCompanyDropdown(false);
+                                        }}
+                                      >
+                                        {company.companyName}
+                                      </li>
+                                    ))
+                                  ) : (
+                                    <li className="px-4 py-2 text-muted-foreground">
+                                      {companySearchTerm
+                                        ? "No companies found"
+                                        : "Start typing to search companies"}
+                                    </li>
+                                  )}
+                                </ul>
+                              )}
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -243,22 +281,6 @@ export default function Customer() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder="Last Name"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <FormField
                       control={form.control}
                       name="contactNo"
@@ -279,9 +301,6 @@ export default function Customer() {
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="email"
@@ -289,23 +308,7 @@ export default function Customer() {
                         <FormItem>
                           <FormControl>
                             <Input
-                              placeholder="Email"
-                              {...field}
-                              disabled={isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="designation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder="Designation"
+                              placeholder="Email Address"
                               {...field}
                               disabled={isSubmitting}
                             />
@@ -317,63 +320,21 @@ export default function Customer() {
                   </div>
 
                   <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <FormControl>
-                        <div className="relative">
+                    control={form.control}
+                    name="designation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
                           <Input
-                            placeholder="Search company name..."
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              field.onChange(e.target.value);
-                              setCompanySearchTerm(e.target.value);
-                              setShowCompanyDropdown(true);
-                            }}
-                            onFocus={() => setShowCompanyDropdown(true)}
-                            onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 150)}
+                            placeholder="Designation"
+                            {...field}
                             disabled={isSubmitting}
                           />
-
-                          {showCompanyDropdown && (
-                            <ul className="absolute z-20 mt-1 w-full rounded-md border bg-background text-sm shadow-lg max-h-60 overflow-y-auto">
-                              {isLoadingCompanies ? (
-                                <li className="px-4 py-2 text-muted-foreground">Loading companies...</li>
-                              ) : filteredCompanies.length > 0 ? (
-                                filteredCompanies.map((company) => (
-                                  <li
-                                    key={company._id}
-                                    className={`px-4 py-2 cursor-pointer hover:bg-muted transition-colors ${
-                                      selectedCompanyName === company.companyName ? "bg-muted font-medium" : ""
-                                    }`}
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={() => {
-                                      field.onChange(company.companyName);
-                                      setCompanySearchTerm(company.companyName);
-                                      setSelectedCompanyName(company.companyName);  
-                                      setShowCompanyDropdown(false);
-                                    }}
-                                  >
-                                    {company.companyName}
-                                  </li>
-                                ))
-                              ) : (
-                                <li className="px-4 py-2 text-muted-foreground">
-                                  {companySearchTerm
-                                    ? "No companies found"
-                                    : "Start typing to search companies"}
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <CardFooter className="px-0">
                     <Button
