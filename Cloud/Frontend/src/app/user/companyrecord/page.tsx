@@ -13,7 +13,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { ModeToggle } from "@/components/ModeToggle";
 import { Pagination, Tooltip } from "@heroui/react";
 import { compareAsc } from "date-fns";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -56,7 +55,7 @@ export default function CompanyDetailsTable() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const [contactToDelete, setContactToDelete] = useState<CompanyDetails | null>(null); // To handle contact deletion
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // To toggle delete modal
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const [sortDescriptor, setSortDescriptor] = useState<{
         column: string;
@@ -306,7 +305,6 @@ export default function CompanyDetailsTable() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                        <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>

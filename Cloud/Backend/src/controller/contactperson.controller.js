@@ -46,9 +46,10 @@ const createContactPerson = async (req, res) => {
             lastName,
             contactNo,
             email,
-            designation
+            designation,
+            company
         } = req.body;
-        if (!firstName || !lastName || !contactNo || !email || !designation) {
+        if (!firstName || !lastName || !contactNo || !email || !designation || !company) {
             return res.status(400).json({
                 success: false,
                 message: "First name, last name, contact number, email and designation are required"
@@ -66,7 +67,8 @@ const createContactPerson = async (req, res) => {
             lastName,
             contactNo,
             email,
-            designation
+            designation,
+            company
         });
         await newContactPerson.save();
         res.status(201).json({

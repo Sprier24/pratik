@@ -24,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { ModeToggle } from "@/components/ModeToggle";
 import { Separator } from "@/components/ui/separator";
 
 import { Eye, EyeOff } from "react-feather";
@@ -119,7 +118,6 @@ export default function RegisterPage() {
       <SidebarInset>
         <header className="flex h-16 items-center gap-2 px-4">
           <SidebarTrigger />
-          <ModeToggle />
           <Separator orientation="vertical" className="mx-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>

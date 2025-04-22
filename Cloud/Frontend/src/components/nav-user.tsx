@@ -58,7 +58,7 @@ import {
 import {
   Toaster,
   toast
-} from "sonner"; // ✅ toast + Toaster import
+} from "sonner";
 
 interface User {
   _id: string;
@@ -225,7 +225,6 @@ export function NavUser() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      {/* Profile View Dialog */}
       <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
         <DialogContent
           className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"
@@ -272,7 +271,6 @@ export function NavUser() {
         </DialogContent>
       </Dialog>
 
-      {/* Profile Edit Dialog */}
       <Dialog open={isEditing} onOpenChange={(open) => setIsEditing(open)}>
         <DialogContent
           className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto hide-scrollbar"

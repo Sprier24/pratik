@@ -48,15 +48,13 @@ export function TeamSwitcher({
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                 <Image
-                  src={activeTeam.logoUrl || "/img/default-logo.png"} // Use a default image if logoUrl is empty
-                  alt={`${activeTeam.name} logo`}
+                  src={activeTeam.logoUrl || "/img/default-logo.png"}
                   width={48}
                   height={48}
                   className="object-cover w-full h-full"
                   priority
                   quality={100}
-                  unoptimized
-                />
+                  unoptimized alt={""}                />
 
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">

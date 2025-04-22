@@ -13,6 +13,12 @@ import { Trash2 } from "lucide-react";
 import router from "next/router";
 import { jsPDF } from "jspdf";
 
+
+interface Company {
+    _id: string;
+    companyName: string;
+}
+
 interface Observation {
     gas: string;
     before: string;
@@ -91,6 +97,42 @@ export default function CertificateForm() {
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
     const [engineerError, setEngineerError] = useState<string | null>(null);
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [companySearchTerm, setCompanySearchTerm] = useState("");
+    const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+    const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
+    const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
+
+    const fetchCompanies = async () => {
+        try {
+            setIsLoadingCompanies(true);
+            const response = await axios.get(
+                `http://localhost:5000/api/v1/company/getAllcompanies`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    }
+                }
+            );
+            setCompanies(response.data.data || response.data);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to fetch companies",
+                variant: "destructive",
+            });
+            console.error("Error fetching companies:", error);
+        } finally {
+            setIsLoadingCompanies(false);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchCompanies();
+
+    }, []);
 
 
 
@@ -144,7 +186,7 @@ export default function CertificateForm() {
                     `http://localhost:5000/api/v1/certificates/getCertificateById/${certificateId}`,
                     {
                         headers: {
-                            
+
                             "Authorization": `Bearer ${localStorage.getItem("token")}`
                         }
                     }
@@ -157,7 +199,7 @@ export default function CertificateForm() {
                 const certificateData = response.data.data;
                 const transformedData = {
                     certificateNo: certificateData.certificateNo || "",
-                    customerName: certificateData.customerName ||
+                    customerName: certificateData.customerName || certificateData.company?.companyName ||
                         (certificateData.customer?.customerName || ""),
                     siteLocation: certificateData.siteLocation || "",
                     makeModel: certificateData.makeModel || "",
@@ -287,7 +329,7 @@ export default function CertificateForm() {
         e.preventDefault();
         setLoading(true);
         setError(null);
-    
+
         try {
             // Validate required fields
             const requiredFields: Record<string, string> = {
@@ -300,32 +342,32 @@ export default function CertificateForm() {
                 gasCanisterDetails: "Gas Canister Details",
                 status: "Status",
             };
-    
+
             const emptyFields = Object.entries(requiredFields)
                 .filter(([key]) => !formData[key as keyof CertificateRequest]?.toString().trim())
                 .map(([_, label]) => label);
-    
+
             if (!startDate || !endDate) {
                 emptyFields.push("Date of Calibration", "Calibration Due Date");
             }
-    
+
             if (emptyFields.length > 0) {
                 setError(`Please fill in: ${emptyFields.join(", ")}`);
                 setLoading(false);
                 return;
             }
-    
-            // Validate observations
+
+
             const hasEmptyObservations = formData.observations.some(obs =>
                 !obs.gas?.trim() || !obs.before?.trim() || !obs.after?.trim()
             );
-    
+
             if (hasEmptyObservations) {
                 setError("Please fill in all observation fields.");
                 setLoading(false);
                 return;
             }
-    
+
             // Prepare the submission data
             const submissionData = {
                 ...formData,
@@ -338,13 +380,13 @@ export default function CertificateForm() {
                     after: obs.after.trim()
                 }))
             };
-    
+
             // Determine API details
             const isEditMode = !!certificateId;
             const url = isEditMode
                 ? `http://localhost:5000/api/v1/certificates/updateCertificate/${certificateId}`
                 : "http://localhost:5000/api/v1/certificates/generateCertificate";
-    
+
             const response = await axios({
                 method: isEditMode ? 'put' : 'post',
                 url,
@@ -354,9 +396,9 @@ export default function CertificateForm() {
                     "Content-Type": "application/json"
                 }
             });
-    
+
             setCertificate(response.data);
-    
+
             toast({
                 title: "Success",
                 description: isEditMode
@@ -364,8 +406,8 @@ export default function CertificateForm() {
                     : "Certificate generated successfully",
                 variant: "default",
             });
-    
-            
+
+
         } catch (err: any) {
             console.error("Submission error:", err);
             const errorMessage =
@@ -373,7 +415,7 @@ export default function CertificateForm() {
                 err.response?.data?.error ||
                 err.message ||
                 "An error occurred";
-    
+
             setError(errorMessage);
             toast({
                 title: "Error",
@@ -384,7 +426,10 @@ export default function CertificateForm() {
             setLoading(false);
         }
     };
-    
+
+    const filteredCompanies = companies.filter(company =>
+        company.companyName.toLowerCase().includes(companySearchTerm.toLowerCase())
+    );
 
     const handleDownload = () => {
         const logo = new Image();
@@ -571,15 +616,55 @@ export default function CertificateForm() {
                                     </div>
                                 )}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="customerName"
-                                        placeholder="Customer Name"
-                                        value={formData.customerName}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded"
+                                    <div className="relative w-full">
+                                        <input
+                                            type="text"
+                                            name="customerName"
+                                            placeholder="Customer Name"
+                                            value={formData.customerName}
+                                            onChange={(e) => {
+                                                setFormData(prev => ({ ...prev, customerName: e.target.value }));
+                                                setCompanySearchTerm(e.target.value);
+                                                setShowCompanyDropdown(true);
+                                            }}
+                                            onFocus={() => setShowCompanyDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 150)}
+                                            className="p-2 border rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                        />
 
-                                    />
+                                        {showCompanyDropdown && (
+                                            <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-black text-sm shadow-lg max-h-60 overflow-y-auto">
+                                                {isLoadingCompanies ? (
+                                                    <li className="px-4 py-2 text-gray-500">Loading companies...</li>
+                                                ) : filteredCompanies.length > 0 ? (
+                                                    filteredCompanies.map((company) => (
+                                                        <li
+                                                            key={company._id}
+                                                            className={`px-4 py-2 cursor-pointer transition-colors ${selectedCompanyName === company.companyName ? " font-medium" : ""
+                                                                }`}
+                                                            onMouseDown={(e) => e.preventDefault()}
+                                                            onClick={() => {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    customerName: company.companyName
+                                                                }));
+                                                                setCompanySearchTerm(company.companyName);
+                                                                setSelectedCompanyName(company.companyName);
+                                                                setShowCompanyDropdown(false);
+                                                            }}
+                                                        >
+                                                            {company.companyName}
+                                                        </li>
+                                                    ))
+                                                ) : (
+                                                    <li className="px-4 py-2 text-gray-500">
+                                                        {companySearchTerm ? "No companies found" : "Start typing to search companies"}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </div>
+
                                     <input
                                         type="text"
                                         name="siteLocation"

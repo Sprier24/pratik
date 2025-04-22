@@ -9,10 +9,7 @@ const client = createClient({
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-
     console.log("Received body:", body)
-
-    // Ensure all required fields are present
     const requiredFields = [
       "customerName",
       "siteLocation",
@@ -30,7 +27,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Convert date fields to ISO string format
     const dateOfCalibration = new Date(body.dateOfCalibration).toISOString()
     const calibrationDueDate = new Date(body.calibrationDueDate).toISOString()
 

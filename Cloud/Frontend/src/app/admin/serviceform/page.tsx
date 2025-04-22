@@ -12,6 +12,14 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { Trash2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
+
+interface ContactPerson {
+    _id: string;
+    firstName: string;
+    contactNo: string;
+    company: string;
+}
+
 interface EngineerRemarks {
     serviceSpares: string;
     partNo: string;
@@ -82,6 +90,7 @@ export default function GenerateService() {
         status: ""
     });
 
+    const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -89,6 +98,92 @@ export default function GenerateService() {
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
     const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+    const [filteredContacts, setFilteredContacts] = useState<ContactPerson[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+
+    useEffect(() => {
+        const fetchContactPersons = async () => {
+            setIsLoadingContacts(true);
+            try {
+                const response = await axios.get(
+                    "http://localhost:5000/api/v1/contactperson/getContactPersons",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                    }
+                );
+
+                // Check different possible response structures
+                const data = response.data?.data || response.data || [];
+
+                if (!Array.isArray(data)) {
+                    console.error("API response is not an array:", data);
+                    setContactPersons([]);
+                    setFilteredContacts([]);
+                    return;
+                }
+
+                setContactPersons(data);
+                setFilteredContacts(data);
+            } catch (error) {
+                console.error("Error fetching contact persons:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load contacts",
+                    variant: "destructive",
+                });
+                setContactPersons([]);
+                setFilteredContacts([]);
+            } finally {
+                setIsLoadingContacts(false);
+            }
+        };
+
+
+        fetchContactPersons();
+    }, []);
+
+    useEffect(() => {
+        if (!Array.isArray(contactPersons)) {
+            setFilteredContacts([]);
+            return;
+        }
+
+        const customerNameInput = formData.customerName.trim().toLowerCase();
+
+        if (customerNameInput.length > 0) {
+            const filtered = contactPersons.filter((person) =>
+                person.company?.toLowerCase().includes(customerNameInput)
+            );
+
+            setFilteredContacts(filtered);
+
+            const exactMatches = filtered.filter(
+                (person) => person.company?.toLowerCase() === customerNameInput
+            );
+
+            if (exactMatches.length > 0) {
+                const match = exactMatches[0];
+
+                setFormData((prev) => ({
+                    ...prev,
+                    customerName: match.company || customerNameInput, // normalize company name
+                    contactPerson: match.firstName || "",
+                    contactNumber: match.contactNo || "",
+                }));
+            }
+        } else {
+            setFilteredContacts(contactPersons);
+        }
+    }, [formData.customerName, contactPersons]);
+
+
+
+
+
 
     useEffect(() => {
         const fetchEngineers = async () => {
@@ -145,11 +240,7 @@ export default function GenerateService() {
                     });
 
                     if (serviceData.serviceId) {
-                        setService({
-                            serviceId: serviceData.serviceId,
-                            message: "Service loaded for editing",
-                            downloadUrl: `http://localhost:5000/api/v1/services/download/${serviceData.serviceId}`
-                        });
+
                     }
                 } catch (error) {
                     console.error("Error fetching service data:", error);
@@ -169,7 +260,7 @@ export default function GenerateService() {
     }, [serviceId, isEditMode, router]);
 
     useEffect(() => {
-        // Generate a report number when the form initializes
+
         if (!isEditMode && !formData.reportNo) {
             const generateReportNo = () => {
                 const date = new Date();
@@ -202,7 +293,7 @@ export default function GenerateService() {
         fetchServiceEngineers();
     }, []);
 
-    // Rest of your component code remains the same...
+
     const handleServiceEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
         const selectedEngineer = serviceEngineers.find(engineer => engineer._id === selectedId);
@@ -227,10 +318,7 @@ export default function GenerateService() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleengineerRemarksChange = (index: number, field: keyof EngineerRemarks, value: string) => {
@@ -259,61 +347,42 @@ export default function GenerateService() {
         setLoading(true);
         setError(null);
 
+        // Clean engineer remarks
         const processedRemarks = formData.engineerRemarks
             .filter(remark =>
                 remark.serviceSpares?.trim() &&
                 remark.partNo?.trim() &&
-                remark.rate?.trim() &&
-                remark.quantity?.trim() &&
+                remark.rate?.toString().trim() &&
+                remark.quantity?.toString().trim() &&
                 remark.poNo?.trim()
             )
             .map(remark => ({
                 serviceSpares: remark.serviceSpares.trim(),
                 partNo: remark.partNo.trim(),
-                rate: remark.rate.trim(),
+                rate: remark.rate.toString().trim(),
                 quantity: Number(remark.quantity),
                 poNo: remark.poNo.trim()
             }));
 
         if (processedRemarks.length === 0) {
-            setError("All fields in engineer remarks must be filled.");
+            setError("Please add at least one valid engineer remark.");
             setLoading(false);
             return;
         }
-        
 
-        // Prepare the submission data
-        const submissionData = {
-            customerName: formData.customerName.trim(),
-            customerLocation: formData.customerLocation.trim(),
-            contactPerson: formData.contactPerson.trim(),
-            contactNumber: formData.contactNumber.trim(),
-            serviceEngineer: formData.serviceEngineer.trim(),
-            serviceEngineerId: formData.serviceEngineerId?.trim(),
-            date: formData.date,
-            place: formData.place.trim(),
-            placeOptions: formData.placeOptions,
-            natureOfJob: formData.natureOfJob,
-            reportNo: formData.reportNo.trim(),
-            makeModelNumberoftheInstrumentQuantity: formData.makeModelNumberoftheInstrumentQuantity.trim(),
-            serialNumberoftheInstrumentCalibratedOK: formData.serialNumberoftheInstrumentCalibratedOK.trim(),
-            serialNumberoftheFaultyNonWorkingInstruments: formData.serialNumberoftheFaultyNonWorkingInstruments.trim(),
-            engineerRemarks: processedRemarks,
-            engineerName: formData.engineerName.trim(),
-            engineerId: formData.engineerId?.trim(),
-            status: formData.status
-        };
-
-        // Validate required fields
+        // Required fields
         const requiredFields = [
             'customerName', 'customerLocation', 'contactPerson', 'contactNumber',
             'serviceEngineer', 'date', 'place', 'placeOptions', 'natureOfJob',
-            'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK', 'serialNumberoftheFaultyNonWorkingInstruments',
-            'engineerRemarks', 'engineerName', 'engineerId', 'status',
-
+            'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK',
+            'serialNumberoftheFaultyNonWorkingInstruments', 'engineerName', 'status'
         ];
 
-        const missingFields = requiredFields.filter(field => !submissionData[field as keyof typeof submissionData]?.toString().trim());
+        // Validate required fields
+        const missingFields = requiredFields.filter(field => {
+            const value = formData[field as keyof typeof formData];
+            return typeof value === 'string' ? value.trim() === '' : !value;
+        });
 
         if (missingFields.length > 0) {
             setError(`Missing required fields: ${missingFields.join(', ')}`);
@@ -321,46 +390,58 @@ export default function GenerateService() {
             return;
         }
 
+        // Construct payload
+        const payload = {
+            ...formData,
+            engineerRemarks: processedRemarks,
+            ...(isEditMode && { serviceId }),
+        };
+
+        // Log payload for debugging
+        console.log("Submitting payload:", payload);
+
+        const apiUrl = isEditMode
+            ? `http://localhost:5000/api/v1/services/updateService/${serviceId}`
+            : 'http://localhost:5000/api/v1/services/generateServices';
+
+        const method = isEditMode ? 'put' : 'post';
+
         try {
             const response = await axios({
-                method: isEditMode ? 'put' : 'post',
-                url: isEditMode
-                    ? `http://localhost:5000/api/v1/services/updateService/${serviceId}`
-                    : "http://localhost:5000/api/v1/services/generateServices",
-                data: submissionData,
+                method,
+                url: apiUrl,
+                data: payload,
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                    'Content-Type': 'application/json',
                 }
             });
 
-            console.log('API Response:', response.data); // Log successful response
+            console.log("API Response:", response.data);
 
-            setService(response.data);
-            toast({
-                title: "Success",
-                description: isEditMode
-                    ? "Service updated successfully"
-                    : "Service created successfully",
-                variant: "default",
+            const serviceData = response.data;
+            const effectiveServiceId = serviceData.serviceId || serviceId;
+
+            setService({
+                serviceId: effectiveServiceId,
+                message: isEditMode ? "Service updated successfully" : "Service created successfully",
+                downloadUrl: `http://localhost:5000/api/v1/services/download/${effectiveServiceId}`,
             });
 
+            await handleDownload();
 
-        } catch (err: any) {
+            toast({
+                title: "Success",
+                description: isEditMode ? "Service updated successfully" : "Service created successfully",
+                variant: "default",
+            });
+        } catch (err) {
+            console.error("API Error:", err);
+            setError(isEditMode ? "Failed to update service" : "Failed to create service");
 
-            console.error("Error:", err);
-
-
-            const errorMessage = err.response?.data?.message ||
-                err.response?.data?.error ||
-                err.message ||
-                "Failed to process request";
-
-            console.error("Error Response:", errorMessage);
-
-            setError(errorMessage);
             toast({
                 title: "Error",
-                description: errorMessage,
+                description: isEditMode ? "Failed to update service" : "Failed to create service",
                 variant: "destructive",
             });
         } finally {
@@ -368,184 +449,195 @@ export default function GenerateService() {
         }
     };
 
+
+
     const handleDownload = async () => {
         const yourAccessToken = localStorage.getItem("authToken");
 
-        if (!service?.serviceId) {
-            toast({
-                title: "Error",
-                description: "No service ID available",
-                variant: "destructive",
-            });
+        // Use serviceId from state or from URL params
+        const effectiveServiceId = service?.serviceId || serviceId;
+        if (!effectiveServiceId) {
+
             return;
         }
 
         try {
             setIsGeneratingPDF(true);
 
-            // === Generate PDF Locally ===
-            const logo = new Image();
-            logo.src = "/img/rps.png";
+            // Create promise for image loading
+            const loadImage = (src: string): Promise<HTMLImageElement> => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+                    img.src = src;
+                });
+            };
 
-            logo.onload = () => {
-                const infoImage = new Image();
-                infoImage.src = "/img/handf.png";
+            // Load both images in parallel
+            const [logo, infoImage] = await Promise.all([
+                loadImage("/img/rps.png"),
+                loadImage("/img/handf.png")
+            ]);
 
-                infoImage.onload = async () => {
-                    const doc = new jsPDF();
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
+            // Create PDF document
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
 
-                    const leftMargin = 15;
-                    const rightMargin = 15;
-                    const topMargin = 20;
-                    let y = topMargin;
+            const leftMargin = 15;
+            const rightMargin = 15;
+            const topMargin = 20;
+            let y = topMargin;
 
-                    // Logo
-                    doc.addImage(logo, "PNG", leftMargin, y, 50, 15);
-                    y += 20;
+            // Add logo
+            doc.addImage(logo, "PNG", leftMargin, y, 50, 15);
+            y += 20;
 
-                    // Info Image
-                    doc.addImage(infoImage, "PNG", leftMargin, y, 180, 20);
-                    y += 30;
+            // Add info image
+            doc.addImage(infoImage, "PNG", leftMargin, y, 180, 20);
+            y += 30;
 
-                    // Title
-                    doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
-                    doc.text("SERVICE / CALIBRATION / INSTALLATION  JOBREPORT", pageWidth / 2, y, { align: "center" });
-                    y += 10;
+            // Title
+            doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
+            doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
+            y += 10;
 
-                    // Info Rows
-                    const addRow = (label: string, value: string) => {
-                        const labelOffset = 65;
-                        doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-                        doc.text(label + ":", leftMargin, y);
-                        doc.setFont("times", "normal").setTextColor(50);
-                        doc.text(value || "N/A", leftMargin + labelOffset, y);
-                        y += 7;
-                    };
+            // Helper function to add info rows
+            const addRow = (label: string, value: string) => {
+                const labelOffset = 65;
+                doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+                doc.text(`${label}:`, leftMargin, y);
+                doc.setFont("times", "normal").setTextColor(50);
+                doc.text(value || "N/A", leftMargin + labelOffset, y);
+                y += 7;
+            };
 
-                    // Assuming formData is available
-                    addRow("Customer Name", formData.customerName);
-                    addRow("Customer Location", formData.customerLocation);
-                    addRow("Contact Person", formData.contactPerson);
-                    addRow("Status", formData.status);
-                    addRow("Contact Number", formData.contactNumber);
-                    addRow("Service Engineer", formData.serviceEngineer);
-                    addRow("Date", formData.date);
-                    addRow("Place", formData.place);
-                    addRow("Place Options", formData.placeOptions);
-                    addRow("Nature of Job", formData.natureOfJob);
-                    addRow("Report No.", formData.reportNo);
-                    addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
-                    y += 5;
-                    addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
-                    addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
-                    y += 10;
+            // Add service details
+            addRow("Customer Name", formData.customerName);
+            addRow("Customer Location", formData.customerLocation);
+            addRow("Contact Person", formData.contactPerson);
+            addRow("Status", formData.status);
+            addRow("Contact Number", formData.contactNumber);
+            addRow("Service Engineer", formData.serviceEngineer);
+            addRow("Date", formData.date);
+            addRow("Place", formData.place);
+            addRow("Place Options", formData.placeOptions);
+            addRow("Nature of Job", formData.natureOfJob);
+            addRow("Report No.", formData.reportNo);
+            addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
+            y += 5;
+            addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
+            addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
+            y += 10;
 
-                    // Separator line
-                    doc.setDrawColor(0);
-                    doc.setLineWidth(0.5);
-                    doc.line(leftMargin, y, pageWidth - rightMargin, y);
+            // Separator line
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.5);
+            doc.line(leftMargin, y, pageWidth - rightMargin, y);
 
-                    // === Page 2 ===
+            // Page 2 - Engineer Remarks
+            doc.addPage();
+            y = topMargin;
+
+            // Table headers
+            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+            doc.text("ENGINEER REMARKS", leftMargin, y);
+            y += 8;
+
+            const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "PO No."];
+            const colWidths = [20, 60, 25, 25, 25, 25];
+            let x = leftMargin;
+
+            // Draw table headers
+            tableHeaders.forEach((header, i) => {
+                doc.rect(x, y, colWidths[i], 8);
+                doc.text(header, x + 2, y + 6);
+                x += colWidths[i];
+            });
+
+            y += 8;
+
+            // Add engineer remarks rows
+            formData.engineerRemarks.forEach((item, index) => {
+                x = leftMargin;
+                const values = [
+                    String(index + 1),
+                    item.serviceSpares || "",
+                    item.partNo || "",
+                    item.rate || "",
+                    item.quantity || "",
+                    item.poNo || ""
+                ];
+
+                values.forEach((val, i) => {
+                    doc.rect(x, y, colWidths[i], 8);
+                    doc.text(val, x + 2, y + 6);
+                    x += colWidths[i];
+                });
+                y += 8;
+
+                // Add new page if needed
+                if (y + 20 > pageHeight) {
                     doc.addPage();
                     y = topMargin;
+                }
+            });
 
-                    doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-                    doc.text("ENGINEER REMARKS", leftMargin, y);
-                    y += 8;
+            // Add signature and date
+            y += 10;
+            doc.setFont("times", "normal");
+            doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
+            doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
 
-                    const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "PO No."];
-                    const colWidths = [20, 60, 25, 25, 25, 25];
-                    let x = leftMargin;
+            // Generated timestamp
+            const now = new Date();
+            const pad = (n: number) => n.toString().padStart(2, "0");
+            const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
+            const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            const printDateTime = `${date} ${time}`;
+            doc.setFontSize(9).setTextColor(100);
+            doc.text(`Report Generated On: ${printDateTime}`, leftMargin, pageHeight - 10);
 
-                    // Table headers
-                    tableHeaders.forEach((header, i) => {
-                        doc.rect(x, y, colWidths[i], 8);
-                        doc.text(header, x + 2, y + 6);
-                        x += colWidths[i];
-                    });
+            // Save PDF
+            doc.save(`service-report-${effectiveServiceId}.pdf`);
 
-                    y += 8;
-
-                    formData.engineerRemarks.forEach((item, index) => {
-                        x = leftMargin;
-                        const values = [
-                            String(index + 1),
-                            item.serviceSpares || "",
-                            item.partNo || "",
-                            item.rate || "",
-                            item.quantity || "",
-                            item.poNo || ""
-                        ];
-                        values.forEach((val, i) => {
-                            doc.rect(x, y, colWidths[i], 8);
-                            doc.text(val, x + 2, y + 6);
-                            x += colWidths[i];
-                        });
-                        y += 8;
-
-                        if (y + 20 > pageHeight) {
-                            doc.addPage();
-                            y = topMargin;
+            // Send email notification (don't block on this)
+            try {
+                await axios.post(
+                    'http://localhost:5000/api/v1/services/sendMail',
+                    { serviceId: effectiveServiceId },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${yourAccessToken}`
                         }
-                    });
-
-                    y += 10;
-                    doc.setFont("times", "normal");
-                    doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
-                    doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
-
-                    // Generated time
-                    const now = new Date();
-                    const pad = (n: number) => n.toString().padStart(2, "0");
-                    const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-                    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-                    const printDateTime = `${date} ${time}`;
-                    doc.setFontSize(9).setTextColor(100);
-                    doc.text(`Report Generated On: ${printDateTime}`, leftMargin, pageHeight - 10);
-
-                    // Save the PDF
-                    doc.save(`service-${service.serviceId}.pdf`);
-
-                    // === Send Email Notification ===
-                    await axios.post(
-                        'http://localhost:5000/api/v1/services/sendMail',
-                        { serviceId: service.serviceId },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${yourAccessToken}`
-                            }
-                        }
-                    );
-
-                    toast({
-                        title: "Success",
-                        description: "PDF generated and email sent successfully.",
-                        variant: "default",
-                    });
-                };
-
-                infoImage.onerror = () => {
-                    console.error("Failed to load info image.");
-                    alert("Company info image not found. Please check the path.");
-                };
-            };
-
-            logo.onerror = () => {
-                console.error("Failed to load logo.");
-                alert("Logo image not found. Please check the path.");
-            };
-
-        } catch (err: unknown) {
-            let errorMessage = "Failed to generate report";
-            if (axios.isAxiosError(err)) {
-                errorMessage = err.response?.data?.error || errorMessage;
-            } else if (err instanceof Error) {
-                errorMessage = err.message;
+                    }
+                );
+            } catch (emailError) {
+                console.error("Email sending failed:", emailError);
+                toast({
+                    title: "Warning",
+                    description: "PDF generated but email notification failed",
+                    variant: "default",
+                });
             }
 
-            console.error("Error:", err);
+            toast({
+                title: "Success",
+                description: "Service report generated successfully",
+                variant: "default",
+            });
+
+        } catch (err: unknown) {
+            console.error("PDF generation error:", err);
+            let errorMessage = "Failed to generate PDF";
+
+            if (err instanceof Error) {
+                errorMessage = err.message;
+            } else if (typeof err === "string") {
+                errorMessage = err;
+            }
+
             toast({
                 title: "Error",
                 description: errorMessage,
@@ -608,14 +700,62 @@ export default function GenerateService() {
                                     </div>
                                 )}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                    <input
-                                        type="text"
-                                        name="customerName"
-                                        placeholder="Customer Name"
-                                        value={formData.customerName}
-                                        onChange={handleChange}
-                                        className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                                    <div className="relative w-full">
+                                        <input
+                                            type="text"
+                                            name="customerName"
+                                            placeholder="Customer Name"
+                                            value={formData.customerName}
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                setShowDropdown(true);
+                                            }}
+                                            onFocus={() => setShowDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                                        />
+
+
+                                        {showDropdown && (
+                                            <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-white dark:bg-gray-800 shadow-lg max-h-60 overflow-y-auto">
+                                                {isLoadingContacts ? (
+                                                    <li className="px-4 py-2 text-gray-500">Loading contacts...</li>
+                                                ) : filteredContacts.length > 0 ? (
+                                                    filteredContacts.map((contact) => (
+                                                        <li
+                                                            key={contact._id}
+                                                            className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${formData.customerName === contact.company
+                                                                ? "bg-blue-50 dark:bg-blue-900"
+                                                                : ""
+                                                                }`}
+                                                            onClick={() => {
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    customerName: contact.company || "",
+                                                                    contactPerson: contact.firstName || "",
+                                                                    contactNumber: contact.contactNo || "",
+                                                                }));
+                                                                setShowDropdown(false);
+                                                            }}
+                                                        >
+                                                            <div className="font-medium">{contact.company || "No company"}</div>
+                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                                {contact.firstName && `Contact: ${contact.firstName}`}
+                                                                {contact.contactNo && ` | Phone: ${contact.contactNo}`}
+                                                            </div>
+                                                        </li>
+                                                    ))
+                                                ) : (
+                                                    <li className="px-4 py-2 text-gray-500">
+                                                        {contactPersons.length === 0
+                                                            ? "No contacts available"
+                                                            : "No matching contacts found"}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        )}
+                                    </div>
+
                                     <input
                                         type="text"
                                         name="customerLocation"
@@ -626,6 +766,7 @@ export default function GenerateService() {
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
                                     <input
                                         type="text"
                                         name="contactPerson"
@@ -642,6 +783,7 @@ export default function GenerateService() {
                                         onChange={handleChange}
                                         className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+
 
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -857,10 +999,7 @@ export default function GenerateService() {
                                                         type="text"
                                                         name="partNo"
                                                         value={engineerRemark.partNo}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                                            handleengineerRemarksChange(index, 'partNo', value);
-                                                        }}                                                        
+                                                        onChange={(e) => handleengineerRemarksChange(index, 'partNo', e.target.value)}
                                                         className="w-full p-1 border rounded"
                                                     />
                                                 </td>
@@ -869,10 +1008,7 @@ export default function GenerateService() {
                                                         type="text"
                                                         name="rate"
                                                         value={engineerRemark.rate}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                                            handleengineerRemarksChange(index, 'rate', value);
-                                                        }}
+                                                        onChange={(e) => handleengineerRemarksChange(index, 'rate', e.target.value)}
                                                         className="w-full p-1 border rounded"
                                                     />
                                                 </td>
@@ -881,10 +1017,7 @@ export default function GenerateService() {
                                                         type="text"
                                                         name="quantity"
                                                         value={engineerRemark.quantity}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                                            handleengineerRemarksChange(index, 'quantity', value);
-                                                        }}
+                                                        onChange={(e) => handleengineerRemarksChange(index, 'quantity', e.target.value)}
                                                         className="w-full p-1 border rounded"
                                                     />
                                                 </td>
@@ -893,10 +1026,7 @@ export default function GenerateService() {
                                                         type="text"
                                                         name="poNo"
                                                         value={engineerRemark.poNo}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                                            handleengineerRemarksChange(index, 'poNo', value);
-                                                        }}
+                                                        onChange={(e) => handleengineerRemarksChange(index, 'poNo', e.target.value)}
                                                         className="w-full p-1 border rounded"
                                                     />
                                                 </td>
@@ -937,7 +1067,7 @@ export default function GenerateService() {
 
                             {service && (
                                 <div className="mt-4 text-center">
-                                    <p className="text-green-600 mb-2">Click here to download your service report</p>
+                                    <p className="text-green-600 mb-2">Click here to download the service report</p>
                                     <button
                                         onClick={handleDownload}
                                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
@@ -953,8 +1083,4 @@ export default function GenerateService() {
             </SidebarInset>
         </SidebarProvider>
     );
-}
-
-function setIsGeneratingPDF(arg0: boolean) {
-    throw new Error("Function not implemented.");
 }

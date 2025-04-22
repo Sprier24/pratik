@@ -123,7 +123,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
     email: "admin@example.com",
   });
 
-  // Load admin info from localStorage
   React.useEffect(() => {
     const name = localStorage.getItem("adminName") || "Admin";
     const email = localStorage.getItem("adminEmail") || "admin@example.com";
@@ -182,7 +181,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
             align="end"
             sideOffset={4}
           >
-            {/* Logout */}
             <DropdownMenuItem
               onClick={() => {
                 localStorage.removeItem("adminName");

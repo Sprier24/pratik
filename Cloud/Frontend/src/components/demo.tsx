@@ -30,7 +30,7 @@ export function TeamSwitcher({
     plan: string
   }[]
 }) {
-  const { isMobile, isOpen } = useSidebar()  // ✅ Get sidebar state
+  const { isMobile, isOpen } = useSidebar()
   const defaultTeams = [{
     name: "Your Company",
     logoUrl: "/img/karmen-loh.jpg",
@@ -40,7 +40,6 @@ export function TeamSwitcher({
 
   return (
     <div className="relative flex items-center">
-      {/* ✅ Always show the logo, even when the sidebar is hidden */}
       <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
         <Image 
           src={activeTeam.logoUrl}
@@ -54,7 +53,6 @@ export function TeamSwitcher({
         />
       </div>
 
-      {/* ✅ Sidebar hides visually instead of unmounting */}
       <SidebarMenu className={isOpen ? "opacity-100 visible" : "opacity-0 invisible transition-opacity duration-300"}>
         <SidebarMenuItem>
           <DropdownMenu>

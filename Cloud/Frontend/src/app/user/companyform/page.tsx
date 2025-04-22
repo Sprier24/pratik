@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/ModeToggle";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AxiosError } from 'axios';
 import { Loader2 } from "lucide-react";
@@ -128,7 +127,6 @@ export default function AddCategory() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                        <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>

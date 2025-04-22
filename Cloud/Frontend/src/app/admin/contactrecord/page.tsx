@@ -11,8 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import {SortDescriptor, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { ModeToggle } from "@/components/ModeToggle";
+import { SortDescriptor, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { Pagination, Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
@@ -23,6 +22,7 @@ interface ContactPerson {
     lastName: string;
     contactNo: string;
     email: string;
+    company: string;
     designation: string;
     _id: string;
     key?: string;
@@ -35,6 +35,7 @@ const generateUniqueId = () => {
 
 // Define columns for the table
 const columns = [
+    { name: "Company Name", uid: "company", sortable: true, width: "120px" },
     { name: "First Name", uid: "firstName", sortable: true, width: "120px" },
     { name: "Last Name", uid: "lastName", sortable: true, width: "120px" },
     { name: "Company Name", uid: "middleName", sortable: true, width: "120px" },
@@ -45,7 +46,7 @@ const columns = [
 ];
 
 // Define initial visible columns
-const INITIAL_VISIBLE_COLUMNS = ["firstName", "middleName", "lastName", "contactNo", "email", "designation", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["company", "firstName", "middleName", "lastName", "contactNo", "email", "designation", "actions"];
 
 export default function ContactPersonDetailsTable() {
     const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
@@ -216,7 +217,7 @@ export default function ContactPersonDetailsTable() {
         return (
             <div className="py-2 px-2 relative flex justify-between items-center">
                 <span className="text-default-400 text-small">
-                Total {filteredItems.length} contact{filteredItems.length !== 1 ? 's' : ''}
+                    Total {filteredItems.length} contact{filteredItems.length !== 1 ? 's' : ''}
                 </span>
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
@@ -297,7 +298,6 @@ export default function ContactPersonDetailsTable() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                        <ModeToggle />
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -374,7 +374,7 @@ export default function ContactPersonDetailsTable() {
                                     {paginatedItems.map((contact) => (
                                         <TableRow key={contact._id}>
                                             {headerColumns.map((column) => (
-                                                <TableCell key={column.uid}  style={{ fontSize: "12px", padding: "8px" }}>
+                                                <TableCell key={column.uid} style={{ fontSize: "12px", padding: "8px" }}>
                                                     {renderCell(contact, column.uid)}
                                                 </TableCell>
                                             ))}

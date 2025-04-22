@@ -5,6 +5,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface Observation {
   gas: string;
@@ -45,6 +46,12 @@ interface Engineer {
   name: string;
 }
 
+interface Company {
+  _id: string;
+  companyName: string;
+}
+
+
 export default function GenerateCertificate() {
   const [formData, setFormData] = useState<CertificateRequest>({
     certificateNo: "",
@@ -75,6 +82,41 @@ export default function GenerateCertificate() {
   const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
   const [engineerError, setEngineerError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companySearchTerm, setCompanySearchTerm] = useState("");
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
+
+  const fetchCompanies = async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const response = await axios.get(
+        `http://localhost:5000/api/v1/company/getAllcompanies`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+      setCompanies(response.data.data || response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch companies",
+        variant: "destructive",
+      });
+      console.error("Error fetching companies:", error);
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -237,6 +279,11 @@ export default function GenerateCertificate() {
     }
   };
 
+  const filteredCompanies = companies.filter(company =>
+    company.companyName.toLowerCase().includes(companySearchTerm.toLowerCase())
+  );
+
+
   const handleDownload = () => {
     const logo = new Image();
     logo.src = "/img/rps.png";
@@ -371,14 +418,54 @@ export default function GenerateCertificate() {
       {/* <h1 className="text-2xl font-bold mb-4">Generate Your Certificate</h1> */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <input
-            type="text"
-            name="customerName"
-            placeholder="Customer Name"
-            value={formData.customerName}
-            onChange={handleChange}
-            className="p-2 border rounded"
-          />
+          <div className="relative w-full">
+            <input
+              type="text"
+              name="customerName"
+              placeholder="Customer Name"
+              value={formData.customerName}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, customerName: e.target.value }));
+                setCompanySearchTerm(e.target.value);
+                setShowCompanyDropdown(true);
+              }}
+              onFocus={() => setShowCompanyDropdown(true)}
+              onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 150)}
+              className="p-2 border rounded-md w-full text-sm focus:ring-indigo-500 focus:border-indigo-500"
+            />
+
+            {showCompanyDropdown && (
+              <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-black text-sm shadow-lg max-h-60 overflow-y-auto">
+                {isLoadingCompanies ? (
+                  <li className="px-4 py-2 text-gray-500">Loading companies...</li>
+                ) : filteredCompanies.length > 0 ? (
+                  filteredCompanies.map((company) => (
+                    <li
+                      key={company._id}
+                      className={`px-4 py-2 cursor-pointer transition-colors ${selectedCompanyName === company.companyName ? " font-medium" : ""
+                        }`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          customerName: company.companyName
+                        }));
+                        setCompanySearchTerm(company.companyName);
+                        setSelectedCompanyName(company.companyName);
+                        setShowCompanyDropdown(false);
+                      }}
+                    >
+                      {company.companyName}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-2 text-gray-500">
+                    {companySearchTerm ? "No companies found" : "Start typing to search companies"}
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
           <input
             type="text"
             name="siteLocation"

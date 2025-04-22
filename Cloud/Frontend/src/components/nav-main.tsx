@@ -36,17 +36,22 @@ export function NavMain({
 }) {
   const [activePath, setActivePath] = React.useState<string>("");
 
-  // Update active path on client-side
   React.useEffect(() => {
-    setActivePath(window.location.pathname); // Get the current URL path
+    setActivePath(window.location.pathname);
   }, []);
 
-  // Determine if a specific item or sub-item is active
   const isItemActive = (itemUrl: string) => activePath === itemUrl;
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Sidebar</SidebarGroupLabel>
+      <SidebarMenuButton
+        size="lg"
+        className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mb-4"
+      >
+        <div className="flex aspect-square size-50 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+          <img src="/img/rps.png" className="w-full h-auto max-w-[150px]" />
+        </div>
+      </SidebarMenuButton>
       <SidebarMenu>
         {items.map((item) => {
           if (!item.items || item.items.length <= 1) {
@@ -62,48 +67,44 @@ export function NavMain({
               </SidebarMenuItem>
             );
           }
-          const { state, toggleSidebar } = useSidebar();
 
-return (
-  <Collapsible
-    key={item.title}
-    asChild
-    defaultOpen={item.isActive}
-    className="group/collapsible"
-  >
-    <SidebarMenuItem>
-      <CollapsibleTrigger asChild>
-        <SidebarMenuButton
-          tooltip={item.title}
-          onClick={(e) => {
-            if (state === "collapsed") {
-              e.preventDefault();
-              toggleSidebar();
-            }
-          }}
-        >
-          {item.icon && <item.icon />}
-          <span>{item.title}</span>
-          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-        </SidebarMenuButton>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <SidebarMenuSub>
-          {item.items.map((subItem) => (
-            <SidebarMenuSubItem key={subItem.title}>
-              <SidebarMenuSubButton asChild>
-                <a href={subItem.url}>
-                  <span>{subItem.title}</span>
-                </a>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
-        </SidebarMenuSub>
-      </CollapsibleContent>
-    </SidebarMenuItem>
-  </Collapsible>
-);          
-})}
+          function toggleSidebar() {
+            throw new Error("Function not implemented.");
+          }
+
+          return (
+            <Collapsible
+              key={item.title}
+              asChild
+              defaultOpen={item.isActive}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton asChild>
+                          <a href={subItem.url}>
+                            <span>{subItem.title}</span>
+                          </a>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

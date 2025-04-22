@@ -7,6 +7,7 @@ const contactPersonSchema = new mongoose.Schema({
     contactNo: { type: String, required: true },
     email: { type: String, required: true },
     designation: { type: String, required: true },
+    company: { type: String, required: true }
 }, {
     timestamps: true
 });

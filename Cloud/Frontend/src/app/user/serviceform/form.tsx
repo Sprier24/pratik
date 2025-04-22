@@ -6,6 +6,13 @@ import { Trash2, Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
 
+interface ContactPerson {
+    _id: string;
+    firstName: string;
+    contactNo: string;
+    company: string;
+}
+
 interface EngineerRemarks {
     serviceSpares: string;
     partNo: string;
@@ -78,6 +85,87 @@ export default function GenerateService() {
     const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
+    const [filteredContacts, setFilteredContacts] = useState<ContactPerson[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+
+    useEffect(() => {
+        const fetchContactPersons = async () => {
+            setIsLoadingContacts(true);
+            try {
+                const response = await axios.get(
+                    "http://localhost:5000/api/v1/contactperson/getContactPersons",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                    }
+                );
+
+                // Check different possible response structures
+                const data = response.data?.data || response.data || [];
+
+                if (!Array.isArray(data)) {
+                    console.error("API response is not an array:", data);
+                    setContactPersons([]);
+                    setFilteredContacts([]);
+                    return;
+                }
+
+                setContactPersons(data);
+                setFilteredContacts(data);
+            } catch (error) {
+                console.error("Error fetching contact persons:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load contacts",
+                    variant: "destructive",
+                });
+                setContactPersons([]);
+                setFilteredContacts([]);
+            } finally {
+                setIsLoadingContacts(false);
+            }
+        };
+
+
+        fetchContactPersons();
+    }, []);
+
+    useEffect(() => {
+        if (!Array.isArray(contactPersons)) {
+            setFilteredContacts([]);
+            return;
+        }
+
+        const customerNameInput = formData.customerName.trim().toLowerCase();
+
+        if (customerNameInput.length > 0) {
+            const filtered = contactPersons.filter((person) =>
+                person.company?.toLowerCase().includes(customerNameInput)
+            );
+
+            setFilteredContacts(filtered);
+
+            const exactMatches = filtered.filter(
+                (person) => person.company?.toLowerCase() === customerNameInput
+            );
+
+            if (exactMatches.length > 0) {
+                const match = exactMatches[0];
+
+                setFormData((prev) => ({
+                    ...prev,
+                    customerName: match.company || customerNameInput, // normalize company name
+                    contactPerson: match.firstName || "",
+                    contactNumber: match.contactNo || "",
+                }));
+            }
+        } else {
+            setFilteredContacts(contactPersons);
+        }
+    }, [formData.customerName, contactPersons]);
 
     useEffect(() => {
         const fetchEngineers = async () => {
@@ -430,14 +518,61 @@ export default function GenerateService() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <input
-                        type="text"
-                        name="customerName"
-                        placeholder="Customer Name "
-                        value={formData.customerName}
-                        onChange={handleChange}
-                        className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="relative w-full">
+                        <input
+                            type="text"
+                            name="customerName"
+                            placeholder="Customer Name"
+                            value={formData.customerName}
+                            onChange={(e) => {
+                                handleChange(e);
+                                setShowDropdown(true);
+                            }}
+                            onFocus={() => setShowDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                        />
+
+
+                        {showDropdown && (
+                            <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-white dark:bg-gray-800 shadow-lg max-h-60 overflow-y-auto">
+                                {isLoadingContacts ? (
+                                    <li className="px-4 py-2 text-gray-500">Loading contacts...</li>
+                                ) : filteredContacts.length > 0 ? (
+                                    filteredContacts.map((contact) => (
+                                        <li
+                                            key={contact._id}
+                                            className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${formData.customerName === contact.company
+                                                ? "bg-blue-50 dark:bg-blue-900"
+                                                : ""
+                                                }`}
+                                            onClick={() => {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    customerName: contact.company || "",
+                                                    contactPerson: contact.firstName || "",
+                                                    contactNumber: contact.contactNo || "",
+                                                }));
+                                                setShowDropdown(false);
+                                            }}
+                                        >
+                                            <div className="font-medium">{contact.company || "No company"}</div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                {contact.firstName && `Contact: ${contact.firstName}`}
+                                                {contact.contactNo && ` | Phone: ${contact.contactNo}`}
+                                            </div>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="px-4 py-2 text-gray-500">
+                                        {contactPersons.length === 0
+                                            ? "No contacts available"
+                                            : "No matching contacts found"}
+                                    </li>
+                                )}
+                            </ul>
+                        )}
+                    </div>
                     <input
                         type="text"
                         name="customerLocation"

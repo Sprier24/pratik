@@ -39,7 +39,6 @@ export function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
-  // Validate form fields
   const validateField = (name: string, value: string) => {
     let error = "";
     
@@ -77,7 +76,6 @@ export function RegisterForm() {
     return error;
   };
 
-  // Validate entire form
   const validateForm = () => {
     const newErrors = {
       name: validateField("name", formData.name),
@@ -93,7 +91,6 @@ export function RegisterForm() {
     return !Object.values(newErrors).some(error => error !== "");
   };
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -102,17 +99,15 @@ export function RegisterForm() {
       [name]: value
     }));
     
-    // Validate field if it's been touched
     if (touched[name as keyof typeof touched]) {
       setErrors(prev => ({
         ...prev,
         [name]: validateField(name, value),
-        form: "" // Clear form-level error when user makes changes
+        form: ""
       }));
     }
   };
 
-  // Handle blur events (mark fields as touched)
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name } = e.target;
     
@@ -122,16 +117,14 @@ export function RegisterForm() {
         [name]: true
       }));
       
-      // Validate the field
       setErrors(prev => ({
         ...prev,
         [name]: validateField(name, formData[name as keyof typeof formData]),
-        form: "" // Clear form-level error when user makes changes
+        form: ""
       }));
     }
   };
 
-  // Check if form is valid for submission
   const isFormValid = () => {
     return (
       formData.name &&
@@ -143,9 +136,7 @@ export function RegisterForm() {
     );
   };
 
-  // Handle form submission
   const handleRegister = async () => {
-    // Mark all fields as touched to show errors
     setTouched({
       name: true,
       email: true,
@@ -154,7 +145,6 @@ export function RegisterForm() {
       confirmPassword: true
     });
 
-    // Validate the entire form
     const isValid = validateForm();
     
     if (!isValid) {
@@ -206,7 +196,6 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent>
         <div className="grid w-full items-center gap-4">
-          {/* Name Input */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -219,7 +208,6 @@ export function RegisterForm() {
             {touched.name && errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
           </div>
 
-          {/* Email Input */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -233,7 +221,6 @@ export function RegisterForm() {
             {touched.email && errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
           </div>
 
-          {/* Contact Input */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="contact">Contact</Label>
             <Input
@@ -247,7 +234,6 @@ export function RegisterForm() {
             {touched.contact && errors.contact && <p className="text-red-500 text-xs">{errors.contact}</p>}
           </div>
 
-          {/* Password Input */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -270,7 +256,6 @@ export function RegisterForm() {
             {touched.password && errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
           </div>
 
-          {/* Confirm Password Input */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <div className="relative">
@@ -295,7 +280,6 @@ export function RegisterForm() {
             )}
           </div>
 
-          {/* Display form-level error */}
           {errors.form && <p className="text-red-500 text-sm mt-2">{errors.form}</p>}
         </div>
       </CardContent>
