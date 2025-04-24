@@ -1,16 +1,18 @@
-const express = require("express");
+const passport = require('passport')
+const express = require('express');
+const userController = require("../../../controller/user.controller")
 const router = express.Router();
-const userController = require("../../../controller/user.controller");
+require("../../../utils/provider"); 
+const authenticateUser = require('../../../middleware/auth');
+const {getUser} = require('../../../controller/user.controller')
 
 router.post('/register', userController.register);
 router.post('/login', userController.login);
-router.post('/token', userController.refreshToken);
-router.post('/logout', userController.logout);
+router.post('/verify-email', userController.verifyEmail);
 router.post('/forgot-password', userController.forgotPassword);
 router.post('/reset-password/:token', userController.resetPassword);
-router.get('/getusers', userController.getUsers);
-router.delete('/deleteuser/:id', userController.deleteUser);
-router.put('/updateuser/:id', userController.updateUser);
-router.get('/getuser/:id', userController.getUserById);
+router.post('/logout', userController.logout);
+router.delete('/delete-account', userController.deleteAccount);
+router.get('/getuser', authenticateUser , getUser);
 
 module.exports = router;

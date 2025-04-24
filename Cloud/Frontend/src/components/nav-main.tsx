@@ -1,46 +1,25 @@
-"use client";
+"use client"
 
-import React from "react";
-import { ChevronRight, type LucideIcon } from "lucide-react";
-
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  useSidebar
-} from "@/components/ui/sidebar";
+import Image from "next/image";
+import { ChevronRight, type LucideIcon } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar"
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
+    title: string
+    url: string
+    icon?: LucideIcon
+    isActive?: boolean
     items?: {
-      title: string;
-      url: string;
-    }[];
-  }[];
+      title: string
+      url: string
+    }[]
+  }[]
 }) {
-  const [activePath, setActivePath] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setActivePath(window.location.pathname);
-  }, []);
-
-  const isItemActive = (itemUrl: string) => activePath === itemUrl;
+  const { state, toggleSidebar } = useSidebar();
 
   return (
     <SidebarGroup>
@@ -48,9 +27,10 @@ export function NavMain({
         size="lg"
         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mb-4"
       >
-        <div className="flex aspect-square size-50 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-          <img src="/img/rps.png" className="w-full h-auto max-w-[150px]" />
+        <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+        <Image src="/logo.png" alt="" width={150} height={50} className="w-full h-auto max-w-[150px]" />        
         </div>
+        <SidebarGroupLabel className="text-amber-500 font-bold text-xl">S P R I E R S</SidebarGroupLabel>
       </SidebarMenuButton>
       <SidebarMenu>
         {items.map((item) => {
@@ -68,10 +48,6 @@ export function NavMain({
             );
           }
 
-          function toggleSidebar() {
-            throw new Error("Function not implemented.");
-          }
-
           return (
             <Collapsible
               key={item.title}
@@ -82,6 +58,13 @@ export function NavMain({
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
+                    tooltip={item.title}
+                    onClick={(e) => {
+                      if (state === "collapsed") {
+                        e.preventDefault();
+                        toggleSidebar();
+                      }
+                    }}
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
@@ -103,7 +86,7 @@ export function NavMain({
                 </CollapsibleContent>
               </SidebarMenuItem>
             </Collapsible>
-          );
+          );          
         })}
       </SidebarMenu>
     </SidebarGroup>

@@ -1,41 +1,32 @@
 const jwt = require('jsonwebtoken');
-const User = require('../model/user.model');
-const Admin = require('../model/admin.model');
+const User = require('../model/usersSchema.model'); // Adjust the path based on your project structure
 
-const authenticate = async (req, res, next) => {
-  const authHeader = req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization token required' });
+const authenticateUser = async (req, res, next) => {
+  const token = req.header("Authorization")?.split(" ")[1];
+
+  if (!token) {
+    console.log("No token provided");
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
-  const token = authHeader.split(' ')[1];
+
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "randome#certificate"
-    );
-    const role = decoded.role || 'user';
-    const Model = role === 'admin' ? Admin : User;
-    const user = await Model.findById(decoded.userId);
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("-password");
+
     if (!user) {
-      return res.status(401).json({ error: 'User not found or token revoked' });
+      console.log("User not found");
+      return res.status(401).json({ message: "Unauthorized: User not found" });
     }
-    req.user = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role,
-    };
+
+    req.user = user;
     next();
   } catch (error) {
-    console.error('Authentication error:', error.message);
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
-    }
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    res.status(401).json({ error: 'Authentication failed' });
+    console.error("JWT Verification Error:", error);
+    res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
 
-module.exports = authenticate;
+
+module.exports = authenticateUser;
