@@ -72,7 +72,7 @@ const columns = [
     { name: "Model", uid: "makeModel", sortable: true, width: "120px" },
     { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
-    { name: "Download", uid: "actions", sortable: true, width: "100px" },
+    { name: "Actions", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "serialNo", "engineerName", "actions"];
 

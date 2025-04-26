@@ -36,6 +36,8 @@ interface ServiceRequest {
     makeModelNumberoftheInstrumentQuantity: string;
     serialNumberoftheInstrumentCalibratedOK: string;
     serialNumberoftheFaultyNonWorkingInstruments: string;
+    engineerReport: string;
+    customerReport: string;
     engineerRemarks: EngineerRemarks[];
     engineerId?: string;
     engineerName: string;
@@ -73,6 +75,8 @@ export default function GenerateService() {
         makeModelNumberoftheInstrumentQuantity: "",
         serialNumberoftheInstrumentCalibratedOK: "",
         serialNumberoftheFaultyNonWorkingInstruments: "",
+        engineerReport: "",
+        customerReport: "",
         engineerRemarks: [{ serviceSpares: "", partNo: "", rate: "", quantity: "", poNo: "" }],
         engineerName: "",
         status: ""
@@ -264,9 +268,10 @@ export default function GenerateService() {
 
     const validateForm = () => {
         const requiredFields = [
-            'customerName', 'customerLocation', 'contactPerson',
-            'contactNumber', 'serviceEngineer', 'date', 'place',
-            'placeOptions', 'natureOfJob', 'reportNo', 'engineerName', 'status'
+            'customerName', 'customerLocation', 'contactPerson', 'contactNumber',
+            'serviceEngineer', 'date', 'place', 'placeOptions', 'natureOfJob',
+            'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK',
+            'serialNumberoftheFaultyNonWorkingInstruments', 'engineerReport', 'customerReport', 'engineerName', 'status'
         ];
 
         for (const field of requiredFields) {
@@ -342,12 +347,17 @@ export default function GenerateService() {
         setIsGeneratingPDF(true);
 
         try {
-            // Generate PDF
-            const doc = new jsPDF();
+            // Create PDF with A4 size
+            const doc = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4"
+            });
+
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
 
-            // Load logo and info image
+            // Load logo and footer image
             const logo = new Image();
             logo.src = "/img/rps.png";
             const infoImage = new Image();
@@ -357,31 +367,26 @@ export default function GenerateService() {
             await new Promise<void>((resolve, reject) => {
                 logo.onload = () => {
                     infoImage.onload = () => resolve();
-                    infoImage.onerror = () => reject("Failed to load info image");
+                    infoImage.onerror = () => reject("Failed to load footer image");
                 };
-                logo.onerror = () => reject("Failed to load logo");
+                logo.onerror = () => reject("Failed to load logo image");
             });
 
-            // Add content to PDF
             const leftMargin = 15;
             const rightMargin = 15;
             const topMargin = 20;
             let y = topMargin;
 
-            // Logo
-            doc.addImage(logo, "PNG", leftMargin, y, 50, 15);
-            y += 20;
+            // Add logo to top-left corner
+            doc.addImage(logo, "PNG", 5, 5, 50, 15);
+            y = 40; // Add spacing below the logo
 
-            // Info Image
-            doc.addImage(infoImage, "PNG", leftMargin, y, 180, 20);
-            y += 30;
-
-            // Title
+            // Add title
             doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
             doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
             y += 10;
 
-            // Add form data
+            // Add form data rows
             const addRow = (label: string, value: string) => {
                 const labelOffset = 65;
                 doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
@@ -391,6 +396,7 @@ export default function GenerateService() {
                 y += 7;
             };
 
+            addRow("Report No.", formData.reportNo);
             addRow("Customer Name", formData.customerName);
             addRow("Customer Location", formData.customerLocation);
             addRow("Contact Person", formData.contactPerson);
@@ -401,21 +407,37 @@ export default function GenerateService() {
             addRow("Place", formData.place);
             addRow("Place Options", formData.placeOptions);
             addRow("Nature of Job", formData.natureOfJob);
-            addRow("Report No.", formData.reportNo);
+
             addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
             y += 5;
             addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
             addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
             y += 10;
 
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.5);
-            doc.line(leftMargin, y, pageWidth - rightMargin, y);
+            // Add Engineer Report section
+            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+            doc.text("Engineer Report:", leftMargin, y);
+            y += 5;
 
-            // Page 2
+            // Draw box around engineer report
+            const engineerReportHeight = 30; // Adjust based on content
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.2);
+            doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
+
+            // Split text into lines that fit within the box
+            const engineerReportLines = doc.splitTextToSize(formData.engineerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
+            doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+            doc.text(engineerReportLines, leftMargin + 2, y + 5);
+            y += engineerReportHeight + 5;
+
+
+
+            // Page 2: Engineer Remarks Table and Customer Report
             doc.addPage();
             y = topMargin;
 
+            // Engineer Remarks Table
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             doc.text("ENGINEER REMARKS", leftMargin, y);
             y += 8;
@@ -449,18 +471,38 @@ export default function GenerateService() {
                 });
                 y += 8;
 
-                if (y + 20 > pageHeight) {
+                // Add new page if needed
+                if (y + 50 > pageHeight) { // Leave space for customer report
                     doc.addPage();
                     y = topMargin;
                 }
             });
 
             y += 10;
+
+            // Add Customer Report section in a box after the table
+            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+            doc.text("Customer Report:", leftMargin, y);
+            y += 5;
+
+            // Draw box around customer report
+            const customerReportHeight = 30; // Adjust based on content
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.2);
+            doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
+
+            // Split text into lines that fit within the box
+            const customerReportLines = doc.splitTextToSize(formData.customerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
+            doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+            doc.text(customerReportLines, leftMargin + 2, y + 5);
+            y += customerReportHeight + 5;
+
+            // Service Engineer signature
             doc.setFont("times", "normal");
             doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
             doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
 
-            // Generated time
+            // Timestamp
             const now = new Date();
             const pad = (n: number) => n.toString().padStart(2, "0");
             const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
@@ -468,43 +510,35 @@ export default function GenerateService() {
             doc.setFontSize(9).setTextColor(100);
             doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
 
-            // Get PDF as base64 string
-            const pdfBase64 = doc.output('datauristring').split(',')[1];
+            // Add footer image to all pages
+            const addFooterImage = () => {
+                const footerY = pageHeight - 25;
+                const footerWidth = 180;
+                const footerHeight = 20;
+                const footerX = (pageWidth - footerWidth) / 2;
 
-            // Save the PDF locally
+                const pageCount = doc.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.addImage(infoImage, "PNG", footerX, footerY, footerWidth, footerHeight);
+                }
+            };
+
+            addFooterImage();
+
+            // Save PDF locally
             doc.save(`service-${service.serviceId}.pdf`);
 
-            // Send email with PDF attachment
-            setIsSendingEmail(true);
-            const emailResponse = await axios.post(
-                'http://localhost:5000/api/v1/services/sendMail',
-                {
-                    serviceId: service.serviceId,
-                    pdfData: pdfBase64
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem("authToken")}`
-                    }
-                }
-            );
 
-            toast({
-                title: "Success",
-                description: "PDF generated and email sent successfully",
-                variant: "default",
-            });
         } catch (err: any) {
-            console.error("Error generating PDF or sending email:", err);
+            console.error("Error generating PDF:", err);
             toast({
                 title: "Error",
-                description: err.response?.data?.error || "Failed to generate PDF or send email",
+                description: err.response?.data?.error || "Failed to generate PDF",
                 variant: "destructive",
             });
         } finally {
             setIsGeneratingPDF(false);
-            setIsSendingEmail(false);
         }
     };
 
@@ -522,7 +556,7 @@ export default function GenerateService() {
                         <input
                             type="text"
                             name="customerName"
-                            placeholder="Customer Name"
+                            placeholder="Company Name"
                             value={formData.customerName}
                             onChange={(e) => {
                                 handleChange(e);
@@ -566,8 +600,8 @@ export default function GenerateService() {
                                 ) : (
                                     <li className="px-4 py-2 text-gray-500">
                                         {contactPersons.length === 0
-                                            ? "No contacts available"
-                                            : "No matching contacts found"}
+                                            ? "No records available"
+                                            : "No records available with this name"}
                                     </li>
                                 )}
                             </ul>
@@ -729,7 +763,7 @@ export default function GenerateService() {
                         required
                         disabled={isLoadingEngineers}
                     >
-                        <option value="">Select Engineer</option>
+                        <option value="">Created By</option>
                         {isLoadingEngineers ? (
                             <option>Loading engineer...</option>
                         ) : (
@@ -764,6 +798,15 @@ export default function GenerateService() {
                         name="serialNumberoftheFaultyNonWorkingInstruments"
                         placeholder="Serial Number of Faulty / Non-Working Instruments"
                         value={formData.serialNumberoftheFaultyNonWorkingInstruments}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                        rows={3}
+                    />
+
+                    <textarea
+                        name="engineerReport"
+                        placeholder="Engineer Remark"
+                        value={formData.engineerReport}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
                         rows={3}
@@ -811,10 +854,7 @@ export default function GenerateService() {
                                         type="text"
                                         name="partNo"
                                         value={engineerRemark.partNo}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                            handleEngineerRemarksChange(index, 'partNo', value);
-                                        }}
+                                        onChange={(e) => handleEngineerRemarksChange(index, 'partNo', e.target.value)}
                                         className="w-full p-1 border rounded"
                                     />
                                 </td>
@@ -823,10 +863,7 @@ export default function GenerateService() {
                                         type="text"
                                         name="rate"
                                         value={engineerRemark.rate}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                            handleEngineerRemarksChange(index, 'rate', value);
-                                        }}
+                                        onChange={(e) => handleEngineerRemarksChange(index, 'rate', e.target.value)}
                                         className="w-full p-1 border rounded"
                                     />
                                 </td>
@@ -835,10 +872,7 @@ export default function GenerateService() {
                                         type="text"
                                         name="quantity"
                                         value={engineerRemark.quantity}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                            handleEngineerRemarksChange(index, 'quantity', value);
-                                        }}
+                                        onChange={(e) => handleEngineerRemarksChange(index, 'quantity', e.target.value)}
                                         className="w-full p-1 border rounded"
                                     />
                                 </td>
@@ -847,10 +881,7 @@ export default function GenerateService() {
                                         type="text"
                                         name="poNo"
                                         value={engineerRemark.poNo}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/[^0-9]/g, '');
-                                            handleEngineerRemarksChange(index, 'poNo', value);
-                                        }}
+                                        onChange={(e) => handleEngineerRemarksChange(index, 'poNo', e.target.value)}
                                         className="w-full p-1 border rounded"
                                     />
                                 </td>
@@ -879,6 +910,17 @@ export default function GenerateService() {
                         )}
                     </tbody>
                 </table>
+
+                <div className="flex flex-col gap-4">
+                    <textarea
+                        name="customerReport"
+                        placeholder="Customer Report"
+                        value={formData.customerReport}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-black resize-none"
+                        rows={3}
+                    />
+                </div>
 
                 <button
                     type="submit"

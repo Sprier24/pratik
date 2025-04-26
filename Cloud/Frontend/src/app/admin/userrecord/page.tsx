@@ -30,7 +30,7 @@ const columns = [
   { name: "User Name", uid: "name", sortable: true, width: "120px" },
   { name: "Email Address", uid: "email", sortable: true, width: "120px" },
   { name: "Contact Number", uid: "contact", sortable: true, width: "120px" },
-  { name: "ACTIONS", uid: "actions", sortable: false, width: "100px" },
+  { name: "Delete", uid: "actions", sortable: false, width: "100px" },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "contact", "actions"];
@@ -95,7 +95,8 @@ export default function UserTable() {
       const searchLower = filterValue.toLowerCase();
       filtered = filtered.filter(user =>
         user.name.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower)
+        user.email.toLowerCase().includes(searchLower) ||
+        user.contact.toString().includes(searchLower)
       );
     }
 

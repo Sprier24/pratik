@@ -168,7 +168,7 @@ export default function AddModel() {
             }
         } else {
             toast({
-                title: "Warning",
+                title: "Error",
                 description: "Fill both the model and range",
                 variant: "default",
             });
@@ -211,7 +211,7 @@ export default function AddModel() {
             }
         } else {
             toast({
-                title: "Warning",
+                title: "Error",
                 description: "Enter an engineer name",
                 variant: "default",
             });
@@ -254,7 +254,7 @@ export default function AddModel() {
             }
         } else {
             toast({
-                title: "Warning",
+                title: "Error",
                 description: "Enter a service engineer name",
                 variant: "default",
             });
@@ -481,7 +481,7 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                No models available. Create a new one below.
+                                                Create New Model and Range
                                             </div>
                                         )}
                                     </div>
@@ -553,7 +553,7 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                No engineers available. Create a new one below.
+                                                Create New Engineer
                                             </div>
                                         )}
                                     </div>
@@ -608,7 +608,7 @@ export default function AddModel() {
                                             ))
                                         ) : (
                                             <div className="p-2 text-center text-gray-500">
-                                                No service engineers available. Create a new one below.
+                                                Create New Service Engineer
                                             </div>
                                         )}
                                     </div>

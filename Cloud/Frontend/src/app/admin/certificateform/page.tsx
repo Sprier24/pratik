@@ -620,7 +620,7 @@ export default function CertificateForm() {
                                         <input
                                             type="text"
                                             name="customerName"
-                                            placeholder="Customer Name"
+                                            placeholder="Company Name"
                                             value={formData.customerName}
                                             onChange={(e) => {
                                                 setFormData(prev => ({ ...prev, customerName: e.target.value }));
@@ -633,7 +633,7 @@ export default function CertificateForm() {
                                         />
 
                                         {showCompanyDropdown && (
-                                            <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-black text-sm shadow-lg max-h-60 overflow-y-auto">
+                                            <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-white text-sm shadow-lg max-h-60 overflow-y-auto">
                                                 {isLoadingCompanies ? (
                                                     <li className="px-4 py-2 text-gray-500">Loading companies...</li>
                                                 ) : filteredCompanies.length > 0 ? (
@@ -658,7 +658,7 @@ export default function CertificateForm() {
                                                     ))
                                                 ) : (
                                                     <li className="px-4 py-2 text-gray-500">
-                                                        {companySearchTerm ? "No companies found" : "Start typing to search companies"}
+                                                        {companySearchTerm ? "This name is not in the company records" : "Start typing to search companies"}
                                                     </li>
                                                 )}
                                             </ul>

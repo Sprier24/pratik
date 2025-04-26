@@ -266,7 +266,7 @@ export default function Customer() {
                                   ) : (
                                     <li className="px-4 py-2 text-muted-foreground">
                                       {companySearchTerm
-                                        ? "No companies found"
+                                        ? "This name is not in the company records"
                                         : "Start typing to search companies"}
                                     </li>
                                   )}

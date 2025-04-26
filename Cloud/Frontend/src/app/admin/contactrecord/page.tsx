@@ -42,7 +42,7 @@ const columns = [
     { name: "Contact Number", uid: "contactNo", sortable: true, width: "120px" },
     { name: "Email Address", uid: "email", sortable: true, width: "120px" },
     { name: "Designation", uid: "designation", sortable: true, width: "120px" },
-    { name: "Action", uid: "actions", sortable: false, width: "120px" },
+    { name: "Actions", uid: "actions", sortable: false, width: "120px" },
 ];
 
 // Define initial visible columns

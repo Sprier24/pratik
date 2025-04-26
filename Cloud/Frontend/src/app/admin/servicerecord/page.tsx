@@ -62,7 +62,7 @@ const columns = [
     { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
     { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
-    { name: "Action", uid: "actions", sortable: true, width: "100px" },
+    { name: "Actions", uid: "actions", sortable: true, width: "100px" },
 ];
 
 export const statusOptions = [
@@ -472,7 +472,7 @@ export default function AdminServiceTable() {
 
             toast({
                 title: "Success",
-                description: "Service deleted successfully",
+                description: "Service report deleted successfully",
                 variant: "default",
             });
             await fetchServices();
@@ -584,7 +584,7 @@ export default function AdminServiceTable() {
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
                                     <BreadcrumbLink href="/admin/serviceform">
-                                        Service Form
+                                        Create Service
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>

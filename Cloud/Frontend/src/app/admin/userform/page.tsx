@@ -86,7 +86,7 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         toast({
-          title: "Registration failed",
+          title: "Create user failed",
           description: data.message || "Something went wrong.",
           variant: "destructive",
         });

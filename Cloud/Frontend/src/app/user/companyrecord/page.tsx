@@ -250,7 +250,7 @@ export default function CompanyDetailsTable() {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
                 <span className="text-default-400 text-small">
-                    Total {filteredItems.length} companies
+                    Total {filteredItems.length} company
                 </span>
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
