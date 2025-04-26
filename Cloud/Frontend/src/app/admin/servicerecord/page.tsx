@@ -20,6 +20,12 @@ import { AdminSidebar } from "@/components/admin-sidebar";
 import { jsPDF } from "jspdf";
 
 interface Service {
+    customerReport: string;
+    engineerRemarks: never[];
+    engineerReport: string;
+    status: string;
+    customerLocation: string;
+    customerName: string;
     _id: string;
     nameAndLocation: string;
     contactPerson: string;
@@ -52,9 +58,13 @@ const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | Date): string => {
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0]; // Returns "YYYY-MM-DD"
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1);
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
 };
 
 const columns = [
@@ -210,7 +220,12 @@ export default function AdminServiceTable() {
             infoImage.src = "/img/handf.png";
 
             infoImage.onload = () => {
-                const doc = new jsPDF();
+                const doc = new jsPDF({
+                    orientation: "portrait",
+                    unit: "mm",
+                    format: "a4"
+                });
+
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -219,22 +234,16 @@ export default function AdminServiceTable() {
                 const topMargin = 20;
                 let y = topMargin;
 
-                const logoWidth = 50;
-                const logoHeight = 15;
-                doc.addImage(logo, "PNG", leftMargin, y, logoWidth, logoHeight);
-                y += logoHeight + 5;
+                // Add logo to top-left
+                doc.addImage(logo, "PNG", 5, 5, 50, 15);
+                y = 40;
 
-                const infoImageWidth = 180;
-                const infoImageHeight = 20;
-                doc.addImage(infoImage, "PNG", leftMargin, y, infoImageWidth, infoImageHeight);
-                y += infoImageHeight + 10;
-
-                y += 10;
-
+                // Title
                 doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
-                doc.text("SERVICE / CALIBRATION / INSTALLATION  JOBREPORT", pageWidth / 2, y, { align: "center" });
+                doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
                 y += 10;
 
+                // Form data rows
                 const addRow = (label: string, value: string) => {
                     const labelOffset = 65;
                     doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
@@ -244,25 +253,39 @@ export default function AdminServiceTable() {
                     y += 7;
                 };
 
+                addRow("Report No.", service.reportNo);
+                addRow("Customer Name", service.customerName);
+                addRow("Customer Location", service.customerLocation);
                 addRow("Contact Person", service.contactPerson);
+                addRow("Status", service.status);
                 addRow("Contact Number", service.contactNumber);
                 addRow("Service Engineer", service.serviceEngineer);
                 addRow("Date", formatDate(service.date));
-                addRow("Place", service.place);
+                addRow("Place of work", service.place);
                 addRow("Place Options", service.placeOptions);
                 addRow("Nature of Job", service.natureOfJob);
-                addRow("Report No.", service.reportNo);
                 addRow("Make & Model Number", service.makeModelNumberoftheInstrumentQuantity);
-
                 y += 5;
                 addRow("Calibrated & Tested OK", service.serialNumberoftheInstrumentCalibratedOK);
                 addRow("Sr.No Faulty/Non-Working", service.serialNumberoftheFaultyNonWorkingInstruments);
-
                 y += 10;
-                doc.setDrawColor(0);
-                doc.setLineWidth(0.5);
-                doc.line(leftMargin, y, pageWidth - rightMargin, y);
 
+                // Engineer Report section
+                doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+                doc.text("Engineer Report:", leftMargin, y);
+                y += 5;
+
+                const engineerReportHeight = 30;
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.2);
+                doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
+
+                const engineerReportLines = doc.splitTextToSize(service.engineerReport || "", pageWidth - leftMargin - rightMargin - 5);
+                doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+                doc.text(engineerReportLines, leftMargin + 2, y + 5);
+                y += engineerReportHeight + 5;
+
+                // Page 2
                 doc.addPage();
                 y = topMargin;
 
@@ -270,10 +293,13 @@ export default function AdminServiceTable() {
                 doc.text("ENGINEER REMARKS", leftMargin, y);
                 y += 8;
 
-                const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "PO No."];
-                const colWidths = [20, 60, 25, 25, 25, 25];
+                const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "Total", "PO No."];
+                const colWidths = [15, 50, 25, 20, 20, 25, 30]; // Adjusted for better spacing
                 let x = leftMargin;
 
+                doc.setFontSize(9);
+
+                // Table headers
                 tableHeaders.forEach((header, i) => {
                     doc.rect(x, y, colWidths[i], 8);
                     doc.text(header, x + 2, y + 6);
@@ -282,49 +308,95 @@ export default function AdminServiceTable() {
 
                 y += 8;
 
-                const engineerRemarks = (service as any).engineerRemarks || [];
+                const engineerRemarks = service.engineerRemarks || [];
 
                 engineerRemarks.forEach((item: any, index: number) => {
                     x = leftMargin;
+                    const rate = parseFloat(item.rate) || 0;
+                    const quantity = parseFloat(item.quantity) || 0;
+                    const total = rate * quantity;
+
                     const values = [
                         String(index + 1),
-                        item.serviceSpares || "",
-                        item.partNo || "",
-                        item.rate || "",
-                        item.quantity || "",
-                        item.poNo || ""
+                        item.serviceSpares ?? "",
+                        item.partNo ?? "",
+                        item.rate ?? "",
+                        item.quantity ?? "",
+                        total.toFixed(2), // Ensure total is displayed correctly
+                        item.poNo ?? ""
                     ];
+
                     values.forEach((val, i) => {
                         doc.rect(x, y, colWidths[i], 8);
-                        doc.text(val, x + 2, y + 6);
+                        doc.text(String(val), x + 2, y + 6);
                         x += colWidths[i];
                     });
                     y += 8;
 
-                    if (y + 20 > pageHeight) {
+                    if (y + 50 > pageHeight) {
                         doc.addPage();
                         y = topMargin;
                     }
                 });
 
                 y += 10;
-                doc.setFont("times", "normal");
-                doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
-                doc.text(service.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
 
-                const now = new Date();
-                const pad = (n: number) => n.toString().padStart(2, "0");
-                const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-                const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-                const printDateTime = `${date} ${time}`;
-                doc.setFontSize(9).setTextColor(100);
-                doc.text(`Report Generated On: ${printDateTime}`, leftMargin, pageHeight - 10);
+                // Customer Report section
+                doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+                doc.text("Customer Report:", leftMargin, y);
+                y += 5;
 
+                const customerReportHeight = 30;
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.2);
+                doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
+
+                const customerReportLines = doc.splitTextToSize(service.customerReport || "", pageWidth - leftMargin - rightMargin - 5);
+                doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+                doc.text(customerReportLines, leftMargin + 2, y + 5);
+                y += customerReportHeight + 5;
+
+                // Add space below customer report (approx. 10 rows)
+                y += 10 * 7; // Assuming approx 7mm per row
+
+                // Signature labels
+                doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+                doc.text("Customer Name, Seal & Sign", leftMargin, y);
+                doc.text("Engineer Name, Seal & Sign", pageWidth - rightMargin - 60, y);
+
+                y += 6; // thoda neeche name print karne ke liye space
+
+                // Actual names
+                doc.setFont("times", "normal").setFontSize(10).setTextColor(50);
+                doc.text(service.customerName || "N/A", leftMargin, y);
+                doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
+
+                // Timestamp
+                // const now = new Date();
+                // const pad = (n: number) => n.toString().padStart(2, "0");
+                // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
+                // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                // doc.setFontSize(9).setTextColor(100);
+                // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
+
+                // Footer image on all pages
+                const footerY = pageHeight - 25;
+                const footerWidth = 180;
+                const footerHeight = 20;
+                const footerX = (pageWidth - footerWidth) / 2;
+
+                const pageCount = doc.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.addImage(infoImage, "PNG", footerX, footerY, footerWidth, footerHeight);
+                }
+
+                // Save PDF
                 doc.save(`service-${service.reportNo || service._id}.pdf`);
             };
 
             infoImage.onerror = () => {
-                console.error("Failed to load company info image.");
+                console.error("Failed to load footer image.");
                 alert("Company info image not found. Please check the path.");
             };
         };
@@ -334,6 +406,7 @@ export default function AdminServiceTable() {
             alert("Logo image not found. Please check the path.");
         };
     };
+
 
     const onNextPage = React.useCallback(() => {
         if (page < pages) {

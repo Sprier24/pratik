@@ -45,6 +45,8 @@ interface ServiceRequest {
 }
 
 interface ServiceResponse {
+    serviceEngineer: string;
+    customerName: string;
     serviceId: string;
     message: string;
     downloadUrl: string;
@@ -497,18 +499,28 @@ export default function GenerateService() {
             doc.text(customerReportLines, leftMargin + 2, y + 5);
             y += customerReportHeight + 5;
 
-            // Service Engineer signature
-            doc.setFont("times", "normal");
-            doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
-            doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
+            // Add space below customer report (approx. 10 rows)
+            y += 10 * 7; // Assuming approx 7mm per row
 
-            // Timestamp
-            const now = new Date();
-            const pad = (n: number) => n.toString().padStart(2, "0");
-            const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-            const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            doc.setFontSize(9).setTextColor(100);
-            doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
+            // Signature labels
+            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+            doc.text("Customer Name, Seal & Sign", leftMargin, y);
+            doc.text("Engineer Name, Seal & Sign", pageWidth - rightMargin - 60, y);
+
+            y += 6; // thoda neeche name print karne ke liye space
+
+            // Actual names
+            doc.setFont("times", "normal").setFontSize(10).setTextColor(50);
+            doc.text(service.customerName || "N/A", leftMargin, y);
+            doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
+
+            // // Timestamp
+            // const now = new Date();
+            // const pad = (n: number) => n.toString().padStart(2, "0");
+            // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
+            // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            // doc.setFontSize(9).setTextColor(100);
+            // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
 
             // Add footer image to all pages
             const addFooterImage = () => {
@@ -832,6 +844,7 @@ export default function GenerateService() {
                             <th className="border p-2">Part Number</th>
                             <th className="border p-2">Rate</th>
                             <th className="border p-2">Quantity</th>
+                            <th className="border p-2">Total</th>
                             <th className="border p-2">PO Number</th>
                             <th className="border p-2">Action</th>
                         </tr>
@@ -879,6 +892,15 @@ export default function GenerateService() {
                                 <td className="border p-2">
                                     <input
                                         type="text"
+                                        name="total"
+                                        value={Number(engineerRemark.rate) * Number(engineerRemark.quantity) || 0}
+                                        readOnly
+                                        className="w-full p-1 border rounded"
+                                    />
+                                </td>
+                                <td className="border p-2">
+                                    <input
+                                        type="text"
                                         name="poNo"
                                         value={engineerRemark.poNo}
                                         onChange={(e) => handleEngineerRemarksChange(index, 'poNo', e.target.value)}
@@ -896,7 +918,7 @@ export default function GenerateService() {
                         ))}
                         {formData.engineerRemarks.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="border p-2 text-center text-gray-500">
+                                <td colSpan={8} className="border p-2 text-center text-gray-500">
                                     Click "Create Engineer Remark" to add one
                                 </td>
                             </tr>
