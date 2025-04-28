@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Alert,
     Modal,
+    Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -81,6 +82,21 @@ const MergedAuthScreen = () => {
 
     return (
         <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <Text style={styles.serviceText}>SERVICE</Text>
+                <Text style={styles.valeText}>WALE</Text>
+            </View>
+
+            {/* Image between header and form */}
+            <View style={styles.imageContainer}>
+                <Image
+                    source={require('../../assets/images/service24.png')}
+                    style={styles.image}
+                    resizeMode="contain"
+                />
+            </View>
+
             {/* Forgot Password Modal */}
             <Modal transparent animationType="slide" visible={forgotModalVisible}>
                 <View style={styles.modalOverlay}>
@@ -145,14 +161,15 @@ const MergedAuthScreen = () => {
                 </View>
             </Modal>
 
-            {/* Login/Register Frame */}
-            <View style={styles.frameContainer}>
+            {/* Login/Register Form */}
+            <View style={styles.formContainer}>
                 <Text style={styles.title}>{isLogin ? 'Login' : 'Register'}</Text>
 
                 {!isLogin && (
                     <TextInput
                         style={styles.input}
                         placeholder="Username"
+                        placeholderTextColor="#000000"
                         value={username}
                         onChangeText={setUsername}
                     />
@@ -161,7 +178,7 @@ const MergedAuthScreen = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor="#000000"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -172,7 +189,7 @@ const MergedAuthScreen = () => {
                     <TextInput
                         style={styles.passwordInput}
                         placeholder="Password"
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor="#000000"
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
@@ -186,6 +203,14 @@ const MergedAuthScreen = () => {
                     </TouchableOpacity>
                 </View>
 
+                {isLogin && (
+                    <View style={styles.forgotPasswordContainer}>
+                        <TouchableOpacity onPress={handleForgotPassword}>
+                            <Text style={styles.linkText}>Forgot Password?</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 <TouchableOpacity
                     style={styles.button}
                     onPress={isLogin ? handleLogin : handleRegister}
@@ -195,18 +220,12 @@ const MergedAuthScreen = () => {
                     </Text>
                 </TouchableOpacity>
 
-                {isLogin && (
-                    <TouchableOpacity onPress={handleForgotPassword}>
-                        <Text style={styles.linkText}>Forgot Password?</Text>
-                    </TouchableOpacity>
-                )}
-
                 <TouchableOpacity
                     style={styles.registerButton}
                     onPress={() => setIsLogin(!isLogin)}
                 >
                     <Text style={styles.registerButtonText}>
-                        {isLogin ? 'New Register' : 'Back to Login'}
+                        {isLogin ? 'Create an Account' : 'Back to Login'}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -219,34 +238,42 @@ export default MergedAuthScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
         padding: 24,
-        backgroundColor: '#f7f7f7',
+        backgroundColor: '#FFA500',
+    },
+    header: {
+        position: 'absolute',
+        top: 50,
+        width: '100%',
+        alignItems: 'center',
+    },
+    serviceText: {
+        fontSize: 80,
+        fontWeight: 'bold',
+        color: '#00008B',
+    },
+    valeText: {
+        fontSize: 40,
+        fontWeight: 'bold',
+        color: '#00008B',
+        marginTop: -8,
+    },
+    formContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#333',
+        color: '#000000',
         alignSelf: 'center',
         marginBottom: 32,
-    },
-    frameContainer: {
-        backgroundColor: '#fff',
-        padding: 24,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        width: '100%',
     },
     input: {
         height: 50,
         borderColor: '#ccc',
         borderWidth: 1,
-        borderRadius: 10,
+        borderRadius: 50,
         paddingHorizontal: 16,
         marginBottom: 16,
         fontSize: 16,
@@ -257,7 +284,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderColor: '#ccc',
         borderWidth: 1,
-        borderRadius: 10,
+        borderRadius: 50,
         paddingHorizontal: 16,
         backgroundColor: '#f9f9f9',
         marginBottom: 16,
@@ -272,7 +299,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1e90ff',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
+        borderRadius: 50,
         marginBottom: 16,
     },
     buttonText: {
@@ -280,17 +307,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     linkText: {
-        color: '#1e90ff',
+        color: '#000000',
         textAlign: 'center',
-        marginTop: 16,
-        fontSize: 16,
+        marginTop: 15,
+        fontSize: 18,
     },
     registerButton: {
         height: 50,
         backgroundColor: '#32CD32',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
+        borderRadius: 50,
         marginTop: 16,
     },
     registerButtonText: {
@@ -303,5 +330,29 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 24,
+    },
+    frameContainer: {
+        backgroundColor: '#fff',
+        padding: 24,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        width: '100%',
+    },
+    forgotPasswordContainer: {
+        marginBottom: 25,
+    },
+    imageContainer: {
+        marginTop: 130,
+        marginBottom: 30,
+        alignItems: 'center',
+    },
+    image: {
+        width: 400,
+        height: 400,
     },
 });
