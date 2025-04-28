@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, SearchIcon, FileDown, Trash, Edit2Icon, Download, Edit, Trash2 } from "lucide-react"
+import { Loader2, SearchIcon, FileDown, Trash, Edit2Icon, Download, Edit, Trash2, SortAsc, CircleX } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection, ChipProps, Select } from "@heroui/react"
@@ -18,16 +18,17 @@ import { Pagination, Tooltip } from "@heroui/react"
 import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { jsPDF } from "jspdf";
+import { width } from "pdfkit/js/page";
 
 interface Service {
-    customerReport: string;
-    engineerRemarks: never[];
     engineerReport: string;
+    engineerRemarks: never[];
+    customerReport: string;
     status: string;
     customerLocation: string;
     customerName: string;
     _id: string;
-    nameAndLocation: string;
+    // nameAndLocation: string;
     contactPerson: string;
     contactNumber: string;
     serviceEngineer: string;
@@ -40,6 +41,7 @@ interface Service {
     serialNumberoftheInstrumentCalibratedOK: string;
     serialNumberoftheFaultyNonWorkingInstruments: string;
     engineerName: string;
+    createdAt: string;
 }
 
 type SortDescriptor = {
@@ -53,26 +55,33 @@ interface ServiceResponse {
     downloadUrl: string;
 }
 
-
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
 const formatDate = (dateString: string | Date): string => {
+    if (!dateString) return "N/A";
+
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+
     const pad = (n: number) => n.toString().padStart(2, "0");
     const day = pad(date.getDate());
     const month = pad(date.getMonth() + 1);
     const year = date.getFullYear();
+
     return `${day}-${month}-${year}`;
 };
 
 const columns = [
+    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Customer Name", uid: "customerName", sortable: true, width: "120px" },
     { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
-    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
-    { name: "Actions", uid: "actions", sortable: true, width: "100px" },
+    { name: "Date", uid: "date", sortable: true, width: "120px" },
+    { name: "Action", uid: "actions", sortable: true, width: "100px" },
+
 ];
 
 export const statusOptions = [
@@ -89,7 +98,8 @@ const statusColorMap: Record<string, ChipProps["color"]> = {
 
 const INITIAL_VISIBLE_COLUMNS = ["nameAndLocation", "contactPerson", "contactNumber", "serviceEngineer", "reportNo", "actions"];
 
-export default function AdminServiceTable() {
+
+export default function Servicetable() {
     const [services, setServices] = useState<Service[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -98,13 +108,29 @@ export default function AdminServiceTable() {
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(15);
     const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column: "createdAt", // Default sort by creation date
-        direction: "descending", // Newest first by default
+        column: "createdAt", // This should match your date field name
+        direction: "descending", // Newest first
     });
     const [page, setPage] = React.useState(1);
     const router = useRouter();
 
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+
+    const formatDisplayDate = (dateString: string) => {
+        if (!dateString) return "";
+        const [year, month, day] = dateString.split('-');
+        return `${day}-${month}-${year}`;
+    };
+
+
+    const parseInputDate = (dateString: string) => {
+        if (!dateString) return "";
+        const [day, month, year] = dateString.split('-');
+        return `${year}-${month}-${day}`;
+    };
+
 
 
     const fetchServices = async () => {
@@ -165,6 +191,7 @@ export default function AdminServiceTable() {
 
         if (hasSearchFilter) {
             filteredServices = filteredServices.filter((service) =>
+                service.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.contactPerson.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.contactNumber.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.serviceEngineer.toLowerCase().includes(filterValue.toLowerCase()) ||
@@ -172,8 +199,26 @@ export default function AdminServiceTable() {
             );
         }
 
+        // Add date range filtering
+        if (startDate || endDate) {
+            filteredServices = filteredServices.filter((service) => {
+                const serviceDate = new Date(service.date);
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+
+                if (start && end) {
+                    return serviceDate >= start && serviceDate <= end;
+                } else if (start) {
+                    return serviceDate >= start;
+                } else if (end) {
+                    return serviceDate <= end;
+                }
+                return true;
+            });
+        }
+
         return filteredServices;
-    }, [services, hasSearchFilter, filterValue]);
+    }, [services, hasSearchFilter, filterValue, startDate, endDate]);
 
     const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -186,18 +231,15 @@ export default function AdminServiceTable() {
 
     const sortedItems = React.useMemo(() => {
         return [...items].sort((a, b) => {
-            if (sortDescriptor.column === "date" || sortDescriptor.column === "createdAt") {
-                const dateA = new Date(
-                    sortDescriptor.column === "date" ? a.date : (a as any).createdAt
-                ).getTime();
-                const dateB = new Date(
-                    sortDescriptor.column === "date" ? b.date : (b as any).createdAt
-                ).getTime();
-
+            // Handle date fields specially
+            if (sortDescriptor.column === 'date' || sortDescriptor.column === 'createdAt') {
+                const dateA = new Date(a[sortDescriptor.column]).getTime();
+                const dateB = new Date(b[sortDescriptor.column]).getTime();
                 const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
                 return sortDescriptor.direction === "descending" ? -cmp : cmp;
             }
 
+            // Default string comparison
             const first = a[sortDescriptor.column as keyof Service] || '';
             const second = b[sortDescriptor.column as keyof Service] || '';
             const cmp = String(first).localeCompare(String(second));
@@ -234,16 +276,15 @@ export default function AdminServiceTable() {
                 const topMargin = 20;
                 let y = topMargin;
 
-                // Add logo to top-left
+                // Logo and title
                 doc.addImage(logo, "PNG", 5, 5, 50, 15);
                 y = 40;
 
-                // Title
                 doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
                 doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
                 y += 10;
 
-                // Form data rows
+                // Info rows
                 const addRow = (label: string, value: string) => {
                     const labelOffset = 65;
                     doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
@@ -270,14 +311,13 @@ export default function AdminServiceTable() {
                 addRow("Sr.No Faulty/Non-Working", service.serialNumberoftheFaultyNonWorkingInstruments);
                 y += 10;
 
-                // Engineer Report section
+                // Engineer Report
                 doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
                 doc.text("Engineer Report:", leftMargin, y);
                 y += 5;
 
                 const engineerReportHeight = 30;
-                doc.setDrawColor(0);
-                doc.setLineWidth(0.2);
+                doc.setDrawColor(0).setLineWidth(0.2);
                 doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
 
                 const engineerReportLines = doc.splitTextToSize(service.engineerReport || "", pageWidth - leftMargin - rightMargin - 5);
@@ -285,7 +325,7 @@ export default function AdminServiceTable() {
                 doc.text(engineerReportLines, leftMargin + 2, y + 5);
                 y += engineerReportHeight + 5;
 
-                // Page 2
+                // Page 2 for engineer remarks
                 doc.addPage();
                 y = topMargin;
 
@@ -294,12 +334,10 @@ export default function AdminServiceTable() {
                 y += 8;
 
                 const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "Total", "PO No."];
-                const colWidths = [15, 50, 25, 20, 20, 25, 30]; // Adjusted for better spacing
+                const colWidths = [15, 50, 25, 20, 20, 25, 25];
                 let x = leftMargin;
 
                 doc.setFontSize(9);
-
-                // Table headers
                 tableHeaders.forEach((header, i) => {
                     doc.rect(x, y, colWidths[i], 8);
                     doc.text(header, x + 2, y + 6);
@@ -312,25 +350,27 @@ export default function AdminServiceTable() {
 
                 engineerRemarks.forEach((item: any, index: number) => {
                     x = leftMargin;
+
                     const rate = parseFloat(item.rate) || 0;
                     const quantity = parseFloat(item.quantity) || 0;
                     const total = rate * quantity;
 
                     const values = [
                         String(index + 1),
-                        item.serviceSpares ?? "",
-                        item.partNo ?? "",
-                        item.rate ?? "",
-                        item.quantity ?? "",
-                        total.toFixed(2), // Ensure total is displayed correctly
-                        item.poNo ?? ""
+                        item.serviceSpares || "",
+                        item.partNo || "",
+                        rate.toFixed(2),
+                        quantity.toString(),
+                        total.toFixed(2),
+                        item.poNo || ""
                     ];
 
                     values.forEach((val, i) => {
                         doc.rect(x, y, colWidths[i], 8);
-                        doc.text(String(val), x + 2, y + 6);
+                        doc.text(val, x + 2, y + 6);
                         x += colWidths[i];
                     });
+
                     y += 8;
 
                     if (y + 50 > pageHeight) {
@@ -341,14 +381,13 @@ export default function AdminServiceTable() {
 
                 y += 10;
 
-                // Customer Report section
+                // Customer Report
                 doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
                 doc.text("Customer Report:", leftMargin, y);
                 y += 5;
 
                 const customerReportHeight = 30;
-                doc.setDrawColor(0);
-                doc.setLineWidth(0.2);
+                doc.setDrawColor(0).setLineWidth(0.2);
                 doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
 
                 const customerReportLines = doc.splitTextToSize(service.customerReport || "", pageWidth - leftMargin - rightMargin - 5);
@@ -371,15 +410,9 @@ export default function AdminServiceTable() {
                 doc.text(service.customerName || "N/A", leftMargin, y);
                 doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
 
-                // Timestamp
-                // const now = new Date();
-                // const pad = (n: number) => n.toString().padStart(2, "0");
-                // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-                // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-                // doc.setFontSize(9).setTextColor(100);
-                // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
 
-                // Footer image on all pages
+
+                // Footer image
                 const footerY = pageHeight - 25;
                 const footerWidth = 180;
                 const footerHeight = 20;
@@ -391,7 +424,6 @@ export default function AdminServiceTable() {
                     doc.addImage(infoImage, "PNG", footerX, footerY, footerWidth, footerHeight);
                 }
 
-                // Save PDF
                 doc.save(`service-${service.reportNo || service._id}.pdf`);
             };
 
@@ -406,7 +438,6 @@ export default function AdminServiceTable() {
             alert("Logo image not found. Please check the path.");
         };
     };
-
 
     const onNextPage = React.useCallback(() => {
         if (page < pages) {
@@ -441,32 +472,68 @@ export default function AdminServiceTable() {
 
     const topContent = React.useMemo(() => {
         return (
-            <div className="flex justify-between items-center gap-4">
-                <Input
-                    isClearable
-                    className="w-full max-w-[300px]"
-                    placeholder="Search"
-                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-                    value={filterValue}
-                    onChange={(e) => setFilterValue(e.target.value)}
-                    onClear={() => setFilterValue("")}
-                />
-                <label className="flex items-center text-default-400 text-small">
-                    Rows per page:
-                    <select
-                        className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
-                        onChange={onRowsPerPageChange}
-                        defaultValue="5"
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                    </select>
-                </label>
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <Input
+                        isClearable
+                        className="w-full max-w-[300px]"
+                        placeholder="Search"
+                        startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                        value={filterValue}
+                        onChange={(e) => setFilterValue(e.target.value)}
+                        onClear={() => setFilterValue("")}
+                    />
+                    <label className="flex items-center text-default-400 text-small">
+                        Rows per page:
+                        <select
+                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
+                            onChange={onRowsPerPageChange}
+                            defaultValue="15"
+                        >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                        </select>
+                    </label>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-default-400">From :</span>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-default-400">To :</span>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            min={startDate}
+                            className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                        />
+                    </div>
+                    {(startDate || endDate) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setStartDate("");
+                                setEndDate("");
+                            }}
+                        >
+                            <CircleX />
+                        </Button>
+                    )}
+                </div>
             </div>
         );
-    }, [filterValue, onRowsPerPageChange, services.length, onSearchChange,]);
-
+    }, [filterValue, onRowsPerPageChange, services.length, onSearchChange, visibleColumns, startDate, endDate]);
 
     const bottomContent = React.useMemo(() => {
         return (
@@ -474,6 +541,8 @@ export default function AdminServiceTable() {
                 <span className="text-default-400 text-small">
                     Total {services.length} services
                 </span>
+
+                {/* Centered Pagination */}
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Pagination
                         isCompact
@@ -488,6 +557,8 @@ export default function AdminServiceTable() {
                         }}
                     />
                 </div>
+
+                {/* Navigation Buttons */}
                 <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
@@ -523,8 +594,6 @@ export default function AdminServiceTable() {
     const handleVisibleColumnsChange = (keys: Selection) => {
         setVisibleColumns(keys);
     };
-
-
     const handleDelete = async (serviceId: string) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this service report?");
         if (!confirmDelete) return;
@@ -591,7 +660,7 @@ export default function AdminServiceTable() {
     const renderCell = React.useCallback((service: Service, columnKey: string): React.ReactNode => {
         const cellValue = service[columnKey as keyof Service];
 
-        if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
+        if ((columnKey === "date" || columnKey === "createdAt") && cellValue) {
             return formatDate(cellValue);
         }
 

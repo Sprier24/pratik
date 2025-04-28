@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2, SearchIcon, FileDown, Trash2, Download } from "lucide-react"
+import { Loader2, SearchIcon, FileDown, Trash2, Download, CircleX } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection, ChipProps, Select } from "@heroui/react"
@@ -51,20 +51,28 @@ const generateUniqueId = () => {
 };
 
 const formatDate = (dateString: string | Date): string => {
+    if (!dateString) return "N/A";
+
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+
     const pad = (n: number) => n.toString().padStart(2, "0");
     const day = pad(date.getDate());
     const month = pad(date.getMonth() + 1);
     const year = date.getFullYear();
+
     return `${day}-${month}-${year}`;
 };
 
 const columns = [
+    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Customer Name", uid: "customerName", sortable: true, width: "120px" },
     { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
-    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Date", uid: "date", sortable: true, width: "120px" },
     { name: "Action", uid: "actions", sortable: true, width: "100px" },
+
 ];
 
 export const statusOptions = [
@@ -98,6 +106,8 @@ export default function Servicetable() {
     const router = useRouter();
 
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
 
 
     const fetchServices = async () => {
@@ -158,6 +168,7 @@ export default function Servicetable() {
 
         if (hasSearchFilter) {
             filteredServices = filteredServices.filter((service) =>
+                service.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.contactPerson.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.contactNumber.toLowerCase().includes(filterValue.toLowerCase()) ||
                 service.serviceEngineer.toLowerCase().includes(filterValue.toLowerCase()) ||
@@ -165,8 +176,26 @@ export default function Servicetable() {
             );
         }
 
+        // Add date range filtering
+        if (startDate || endDate) {
+            filteredServices = filteredServices.filter((service) => {
+                const serviceDate = new Date(service.date);
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+
+                if (start && end) {
+                    return serviceDate >= start && serviceDate <= end;
+                } else if (start) {
+                    return serviceDate >= start;
+                } else if (end) {
+                    return serviceDate <= end;
+                }
+                return true;
+            });
+        }
+
         return filteredServices;
-    }, [services, hasSearchFilter, filterValue]);
+    }, [services, hasSearchFilter, filterValue, startDate, endDate]);
 
     const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -358,13 +387,7 @@ export default function Servicetable() {
                 doc.text(service.customerName || "N/A", leftMargin, y);
                 doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
 
-                // Timestamp
-                // const now = new Date();
-                // const pad = (n: number) => n.toString().padStart(2, "0");
-                // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-                // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-                // doc.setFontSize(9).setTextColor(100);
-                // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
+
 
                 // Footer image
                 const footerY = pageHeight - 25;
@@ -426,31 +449,68 @@ export default function Servicetable() {
 
     const topContent = React.useMemo(() => {
         return (
-            <div className="flex justify-between items-center gap-4">
-                <Input
-                    isClearable
-                    className="w-full max-w-[300px]"
-                    placeholder="Search"
-                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-                    value={filterValue}
-                    onChange={(e) => setFilterValue(e.target.value)}
-                    onClear={() => setFilterValue("")}
-                />
-                <label className="flex items-center text-default-400 text-small">
-                    Rows per page:
-                    <select
-                        className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
-                        onChange={onRowsPerPageChange}
-                        defaultValue="5"
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                    </select>
-                </label>
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <Input
+                        isClearable
+                        className="w-full max-w-[300px]"
+                        placeholder="Search"
+                        startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                        value={filterValue}
+                        onChange={(e) => setFilterValue(e.target.value)}
+                        onClear={() => setFilterValue("")}
+                    />
+                    <label className="flex items-center text-default-400 text-small">
+                        Rows per page:
+                        <select
+                            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
+                            onChange={onRowsPerPageChange}
+                            defaultValue="15"
+                        >
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                        </select>
+                    </label>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-default-400">From :</span>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-default-400">To :</span>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            min={startDate}
+                            className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+                        />
+                    </div>
+                    {(startDate || endDate) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setStartDate("");
+                                setEndDate("");
+                            }}
+                        >
+                            <CircleX />
+                        </Button>
+                    )}
+                </div>
             </div>
         );
-    }, [filterValue, onRowsPerPageChange, services.length, onSearchChange, visibleColumns]);
+    }, [filterValue, onRowsPerPageChange, services.length, onSearchChange, visibleColumns, startDate, endDate]);
 
     const bottomContent = React.useMemo(() => {
         return (
@@ -515,7 +575,8 @@ export default function Servicetable() {
     const renderCell = React.useCallback((service: Service, columnKey: string): React.ReactNode => {
         const cellValue = service[columnKey as keyof Service];
 
-        if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
+        // Format any date fields
+        if ((columnKey === "date" || columnKey === "createdAt") && cellValue) {
             return formatDate(cellValue);
         }
 

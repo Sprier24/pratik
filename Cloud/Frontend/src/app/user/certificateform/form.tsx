@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -247,11 +246,12 @@ export default function GenerateCertificate() {
 
   const generateCertificateNumber = () => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const currentYear = now.getFullYear();
+    const shortStartYear = String(currentYear).slice(-2);
+    const shortEndYear = String(currentYear + 1).slice(-2);
+    const yearRange = `${shortStartYear}-${shortEndYear}`;
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `RPS/${year}${month}${day}/${randomNum}`;
+    return `RPS/CER/${yearRange}/${randomNum}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -300,12 +300,17 @@ export default function GenerateCertificate() {
       const contentWidth = pageWidth - leftMargin - rightMargin;
       let y = topMargin;
 
-      const logoWidth = 80;
+      // Set logo dimensions and position
+      const logoWidth = 60;
       const logoHeight = 20;
-      const logoX = leftMargin;
-      doc.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
+      const logoX = 2;
+      const logoY = 10;
 
-      y += logoHeight + 10;
+      // Add logo to the PDF
+      doc.addImage(logo, "PNG", logoX, logoY, logoWidth, logoHeight);
+
+      // Move the cursor below the logo
+      y = logoY + logoHeight + 10;
       doc.setFont("times", "bold").setFontSize(16).setTextColor(0, 51, 102);
       doc.text("CALIBRATION CERTIFICATE", pageWidth / 2, y, { align: "center" });
 

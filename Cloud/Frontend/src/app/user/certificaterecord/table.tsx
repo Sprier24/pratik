@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { CalendarIcon, Edit, Trash2, Loader2, PlusCircle, SearchIcon, ChevronDownIcon, Printer, FileDown, Download } from "lucide-react"
+import { CalendarIcon, Edit, Trash2, Loader2, PlusCircle, SearchIcon, ChevronDownIcon, Printer, FileDown, Download, CircleX } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "@/hooks/use-toast"
 import { z } from "zod"
@@ -69,6 +69,7 @@ const columns = [
   { name: "Model", uid: "makeModel", sortable: true, width: "120px" },
   { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
   { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
+  { name: "Date of Calibration", uid: "dateOfCalibration", sortable: true, width: "120px" },
   { name: "Download", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["certificateNo", "customerName", "siteLocation", "makeModel", "serialNo", "engineerName", "actions"];
@@ -89,6 +90,8 @@ export default function Certificatetable() {
   const router = useRouter();
 
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const fetchCertificates = async () => {
     try {
@@ -144,6 +147,22 @@ export default function Certificatetable() {
     return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
   }, [visibleColumns]);
 
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid Date";
+
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+
+      return `${day}-${month}-${year}`;
+    } catch {
+      return "Invalid Date";
+    }
+  };
+
   const filteredItems = React.useMemo(() => {
     let filteredCertificates = [...certificates];
 
@@ -158,8 +177,30 @@ export default function Certificatetable() {
       );
     }
 
+    if (startDate || endDate) {
+      filteredCertificates = filteredCertificates.filter((certificate) => {
+        const calibrationDate = new Date(certificate.dateOfCalibration);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        // Reset time components to compare only dates
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+        calibrationDate.setHours(0, 0, 0, 0);
+
+        if (start && end) {
+          return calibrationDate >= start && calibrationDate <= end;
+        } else if (start) {
+          return calibrationDate >= start;
+        } else if (end) {
+          return calibrationDate <= end;
+        }
+        return true;
+      });
+    }
+
     return filteredCertificates;
-  }, [certificates, hasSearchFilter, filterValue]);
+  }, [certificates, hasSearchFilter, filterValue, startDate, endDate]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -224,14 +265,16 @@ export default function Certificatetable() {
       const topMargin = 20;
       const bottomMargin = 20;
       const contentWidth = pageWidth - leftMargin - rightMargin;
-      let y = topMargin;
 
-      const logoWidth = 80;
+      // === Logo Position Update ===
+      const logoWidth = 60;
       const logoHeight = 20;
-      const logoX = leftMargin;
-      doc.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
+      const logoX = 2;
+      const logoY = 10;
+      doc.addImage(logo, "PNG", logoX, logoY, logoWidth, logoHeight);
 
-      y += logoHeight + 10;
+      let y = logoY + logoHeight + 10;
+
       doc.setFont("times", "bold").setFontSize(16).setTextColor(0, 51, 102);
       doc.text("CALIBRATION CERTIFICATE", pageWidth / 2, y, { align: "center" });
 
@@ -241,6 +284,16 @@ export default function Certificatetable() {
       const labelWidth = 55;
       const valueX = labelX + labelWidth + 2;
       const lineGap = 8;
+
+      const formatDate = (dateString: string | null | undefined): string => {
+        if (!dateString) return "N/A";
+        try {
+          const date = new Date(dateString);
+          return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString();
+        } catch {
+          return "Invalid Date";
+        }
+      };
 
       const addRow = (labelText: string, value: string) => {
         doc.setFont("times", "bold").setFontSize(11).setTextColor(0);
@@ -368,31 +421,68 @@ export default function Certificatetable() {
 
   const topContent = React.useMemo(() => {
     return (
-      <div className="flex justify-between items-center gap-4">
-        <Input
-          isClearable
-          className="w-full max-w-[300px]"
-          placeholder="Search"
-          startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-          onClear={() => setFilterValue("")}
-        />
-        <label className="flex items-center text-default-400 text-small">
-          Rows per page:
-          <select
-            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
-            onChange={onRowsPerPageChange}
-            defaultValue="5"
-          >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="15">15</option>
-          </select>
-        </label>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <Input
+            isClearable
+            className="w-full max-w-[300px]"
+            placeholder="Search"
+            startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+            value={filterValue}
+            onChange={(e) => setFilterValue(e.target.value)}
+            onClear={() => setFilterValue("")}
+          />
+          <label className="flex items-center text-default-400 text-small">
+            Rows per page:
+            <select
+              className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
+              onChange={onRowsPerPageChange}
+              defaultValue="15"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-default-400">From :</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-default-400">To :</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+              className="border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700"
+            />
+          </div>
+          {(startDate || endDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+            >
+              <CircleX />
+            </Button>
+          )}
+        </div>
       </div>
     );
-  }, [filterValue, onRowsPerPageChange, certificates.length, onSearchChange, visibleColumns]);
+  }, [filterValue, onRowsPerPageChange, certificates.length, onSearchChange, visibleColumns, startDate, endDate]);
 
   const bottomContent = React.useMemo(() => {
     return (
@@ -453,7 +543,7 @@ export default function Certificatetable() {
   const renderCell = React.useCallback((certificate: Certificate, columnKey: string): React.ReactNode => {
     const cellValue = certificate[columnKey];
 
-    if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
+    if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate")) {
       return formatDate(cellValue);
     }
 

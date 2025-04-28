@@ -271,8 +271,12 @@ export default function GenerateService() {
         if (!isEditMode && !formData.reportNo) {
             const generateReportNo = () => {
                 const date = new Date();
+                const currentYear = date.getFullYear();
+                const shortStartYear = String(currentYear).slice(-2);
+                const shortEndYear = String(currentYear + 1).slice(-2);
+                const yearRange = `${shortStartYear}-${shortEndYear}`;
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
-                return `SRV-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
+                return `RPS/SRV/${yearRange}/${randomNum}`;
             };
 
             setFormData(prev => ({
@@ -429,17 +433,13 @@ export default function GenerateService() {
             const serviceData = response.data;
             const effectiveServiceId = serviceData.serviceId || serviceId;
 
-            setService({
-                serviceId: effectiveServiceId,
-                message: isEditMode ? "Service report updated successfully" : "Service report generated successfully",
-                downloadUrl: `http://localhost:5000/api/v1/services/download/${effectiveServiceId}`,
-            });
+            
 
             await handleDownload();
 
             toast({
                 title: "Success",
-                description: isEditMode ? "Service report updated successfully" : "Service report generated successfully",
+                description: isEditMode ? "Service updated successfully" : "Service created successfully",
                 variant: "default",
             });
         } catch (err) {
@@ -633,19 +633,11 @@ export default function GenerateService() {
 
             // Actual names
             doc.setFont("times", "normal").setFontSize(10).setTextColor(50);
-            doc.text(service.customerName || "N/A", leftMargin, y);
-            doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
+            doc.text(formData.customerName || "N/A", leftMargin, y);
+            doc.text(formData.engineerName || "N/A", pageWidth - rightMargin - 60, y);
 
 
-            // Timestamp
-            // const now = new Date();
-            // const pad = (n: number) => n.toString().padStart(2, "0");
-            // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-            // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            // doc.setFontSize(9).setTextColor(100);
-            // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
-
-            // Add footer image to all pages
+        
             const addFooterImage = () => {
                 const footerY = pageHeight - 25;
                 const footerWidth = 180;
@@ -995,7 +987,7 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                <h2 className="text-lg font-bold mt-4 text-center">Engineer Remarks Table</h2>
+                            
 
                                 <div className="flex justify-end mb-4">
                                     <button

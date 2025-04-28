@@ -209,8 +209,12 @@ export default function GenerateService() {
         if (!formData.reportNo) {
             const generateReportNo = () => {
                 const date = new Date();
+                const currentYear = date.getFullYear();
+                const shortStartYear = String(currentYear).slice(-2);
+                const shortEndYear = String(currentYear + 1).slice(-2);
+                const yearRange = `${shortStartYear}-${shortEndYear}`;
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
-                return `SRV-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${randomNum}`;
+                return `RPS/SRV/${yearRange}/${randomNum}`;
             };
             setFormData(prev => ({
                 ...prev,
@@ -347,6 +351,7 @@ export default function GenerateService() {
         }
 
         setIsGeneratingPDF(true);
+        setIsSendingEmail(false);
 
         try {
             // Create PDF with A4 size
@@ -359,7 +364,7 @@ export default function GenerateService() {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
 
-            // Load logo and footer image
+            // Load logo and footer images
             const logo = new Image();
             logo.src = "/img/rps.png";
             const infoImage = new Image();
@@ -379,16 +384,15 @@ export default function GenerateService() {
             const topMargin = 20;
             let y = topMargin;
 
-            // Add logo to top-left corner
+            // Add logo
             doc.addImage(logo, "PNG", 5, 5, 50, 15);
-            y = 40; // Add spacing below the logo
+            y = 40;
 
-            // Add title
+            // Title
             doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
             doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
             y += 10;
 
-            // Add form data rows
             const addRow = (label: string, value: string) => {
                 const labelOffset = 65;
                 doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
@@ -409,37 +413,33 @@ export default function GenerateService() {
             addRow("Place", formData.place);
             addRow("Place Options", formData.placeOptions);
             addRow("Nature of Job", formData.natureOfJob);
-
             addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
+
             y += 5;
             addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
             addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
             y += 10;
 
-            // Add Engineer Report section
+            // Engineer Report Section
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             doc.text("Engineer Report:", leftMargin, y);
             y += 5;
 
-            // Draw box around engineer report
-            const engineerReportHeight = 30; // Adjust based on content
+            const engineerReportHeight = 30;
             doc.setDrawColor(0);
             doc.setLineWidth(0.2);
             doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
 
-            // Split text into lines that fit within the box
             const engineerReportLines = doc.splitTextToSize(formData.engineerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
             doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
             doc.text(engineerReportLines, leftMargin + 2, y + 5);
+
             y += engineerReportHeight + 5;
 
-
-
-            // Page 2: Engineer Remarks Table and Customer Report
+            // Page 2
             doc.addPage();
             y = topMargin;
 
-            // Engineer Remarks Table
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             doc.text("ENGINEER REMARKS", leftMargin, y);
             y += 8;
@@ -473,8 +473,7 @@ export default function GenerateService() {
                 });
                 y += 8;
 
-                // Add new page if needed
-                if (y + 50 > pageHeight) { // Leave space for customer report
+                if (y + 50 > pageHeight) {
                     doc.addPage();
                     y = topMargin;
                 }
@@ -482,47 +481,31 @@ export default function GenerateService() {
 
             y += 10;
 
-            // Add Customer Report section in a box after the table
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             doc.text("Customer Report:", leftMargin, y);
             y += 5;
 
-            // Draw box around customer report
-            const customerReportHeight = 30; // Adjust based on content
+            const customerReportHeight = 30;
             doc.setDrawColor(0);
             doc.setLineWidth(0.2);
             doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
 
-            // Split text into lines that fit within the box
             const customerReportLines = doc.splitTextToSize(formData.customerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
             doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
             doc.text(customerReportLines, leftMargin + 2, y + 5);
-            y += customerReportHeight + 5;
 
-            // Add space below customer report (approx. 10 rows)
-            y += 10 * 7; // Assuming approx 7mm per row
+            y += customerReportHeight + 5 + (10 * 7);
 
-            // Signature labels
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             doc.text("Customer Name, Seal & Sign", leftMargin, y);
             doc.text("Engineer Name, Seal & Sign", pageWidth - rightMargin - 60, y);
 
-            y += 6; // thoda neeche name print karne ke liye space
+            y += 6;
 
-            // Actual names
             doc.setFont("times", "normal").setFontSize(10).setTextColor(50);
-            doc.text(service.customerName || "N/A", leftMargin, y);
-            doc.text(service.serviceEngineer || "N/A", pageWidth - rightMargin - 60, y);
+            doc.text(formData.customerName || "N/A", leftMargin, y);
+            doc.text(formData.engineerName || "N/A", pageWidth - rightMargin - 60, y);
 
-            // // Timestamp
-            // const now = new Date();
-            // const pad = (n: number) => n.toString().padStart(2, "0");
-            // const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-            // const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            // doc.setFontSize(9).setTextColor(100);
-            // doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
-
-            // Add footer image to all pages
             const addFooterImage = () => {
                 const footerY = pageHeight - 25;
                 const footerWidth = 180;
@@ -538,9 +521,33 @@ export default function GenerateService() {
 
             addFooterImage();
 
-            // Save PDF locally
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+
             doc.save(`service-${service.serviceId}.pdf`);
 
+            // After saving, start email sending
+            setIsGeneratingPDF(false);
+            setIsSendingEmail(true);
+
+            const emailResponse = await axios.post(
+                'http://localhost:5000/api/v1/services/sendMail',
+                {
+                    serviceId: service.serviceId,
+                    pdfData: pdfBase64
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+                    }
+                }
+            );
+
+            toast({
+                title: "Success",
+                description: "PDF generated and email sent successfully",
+                variant: "default",
+            });
 
         } catch (err: any) {
             console.error("Error generating PDF:", err);
@@ -551,8 +558,10 @@ export default function GenerateService() {
             });
         } finally {
             setIsGeneratingPDF(false);
+            setIsSendingEmail(false); // 👈 VERY IMPORTANT
         }
     };
+
 
     return (
         <div className="container mx-auto p-4">
@@ -825,7 +834,6 @@ export default function GenerateService() {
                     />
                 </div>
 
-                <h2 className="text-lg font-bold mt-4 text-center">Engineer Remarks Table</h2>
 
                 <div className="flex justify-end mb-4">
                     <button
@@ -955,7 +963,7 @@ export default function GenerateService() {
 
             {service && (
                 <div className="mt-4 text-center">
-                    <p className="text-green-600 mb-2">Click here to download your service report</p>
+                    <p className="text-green-600 mb-2">Click here to download and email the service report</p>
                     <button
                         onClick={generateAndSendPDF}
                         className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 flex items-center justify-center gap-2 mx-auto"
@@ -968,12 +976,14 @@ export default function GenerateService() {
                             </>
                         ) : (
                             <>
-                                Download Service Report
+                                <Download className="h-4 w-4" />
+                                Download & Email Service  Report
                             </>
                         )}
                     </button>
                 </div>
             )
+
             }
         </div >
     );

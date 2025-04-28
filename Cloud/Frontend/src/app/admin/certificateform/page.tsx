@@ -1,15 +1,14 @@
 "use client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { toast } from '@/hooks/use-toast'
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Trash2 } from "lucide-react";
-import router from "next/router";
 import { jsPDF } from "jspdf";
 
 
@@ -58,11 +57,12 @@ interface Engineer {
 
 const generateCertificateNumber = () => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const currentYear = now.getFullYear();
+    const shortStartYear = String(currentYear).slice(-2);
+    const shortEndYear = String(currentYear + 1).slice(-2);
+    const yearRange = `${shortStartYear}-${shortEndYear}`;
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `RPS/${year}${month}${day}/${randomNum}`;
+    return `RPS/CER/${yearRange}/${randomNum}`;
 };
 
 export default function CertificateForm() {
@@ -446,12 +446,17 @@ export default function CertificateForm() {
             const contentWidth = pageWidth - leftMargin - rightMargin;
             let y = topMargin;
 
-            const logoWidth = 80;
+            // Set logo dimensions and position
+            const logoWidth = 60;
             const logoHeight = 20;
-            const logoX = leftMargin;
-            doc.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
+            const logoX = 2;
+            const logoY = 10;
 
-            y += logoHeight + 10;
+            // Add logo to the PDF
+            doc.addImage(logo, "PNG", logoX, logoY, logoWidth, logoHeight);
+
+            // Move the cursor below the logo
+            y = logoY + logoHeight + 10;
             doc.setFont("times", "bold").setFontSize(16).setTextColor(0, 51, 102);
             doc.text("CALIBRATION CERTIFICATE", pageWidth / 2, y, { align: "center" });
 
