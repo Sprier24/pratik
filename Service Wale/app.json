@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-appservice",
-    "slug": "my-appservice",
+    "name": "my-new-project",
+    "slug": "my-new-project",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const MergedAuthScreen = () => {
+const LoginScreen = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -91,7 +91,7 @@ const MergedAuthScreen = () => {
             {/* Image between header and form */}
             <View style={styles.imageContainer}>
                 <Image
-                    source={require('../../assets/images/service24.png')}
+                    source={require('../../assets/images/react-logo.png')}
                     style={styles.image}
                     resizeMode="contain"
                 />
@@ -233,7 +233,7 @@ const MergedAuthScreen = () => {
     );
 };
 
-export default MergedAuthScreen;
+export default LoginScreen;
 
 const styles = StyleSheet.create({
     container: {
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: 400,
+        width: 300,
         height: 400,
     },
 });
