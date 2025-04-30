@@ -64,15 +64,16 @@ const Chat = () => {
     const newChatId = Date.now().toString();
     const newChat = {
       id: newChatId,
-      title: `Chat ${chats.length + 1}`,
+      title: `New Chat`,
     };
-    
-    setChats([newChat, ...chats]);
+  
+    setChats([...chats, newChat]);
     setCurrentChatId(newChatId);
     setMessages([]);
     setUserInput('');
     setUploadedFiles([]);
   };
+  
 
   // Load chat history
   const loadChatHistory = async () => {
@@ -164,8 +165,17 @@ const loadChat = async (chatId: string) => {
       newMessages.push(userMessage);
       setScrollLockIndex(null);
     }    
-    
+  
     setMessages(newMessages);
+  
+    // 👇💬 [ADD THIS PART] Rename chat if title is still "New Chat"
+    setChats(prevChats =>
+      prevChats.map(chat =>
+        chat.id === currentChatId && chat.title === 'New Chat'
+          ? { ...chat, title: messageToSend.trim().slice(0, 20) + '...' }
+          : chat
+      )
+    );
   
     try {
       // Save user message to backend
@@ -408,6 +418,41 @@ const loadChat = async (chatId: string) => {
     setUploadedFiles([]);
   };
 
+  const deleteChat = async (chatId: string) => {
+    if (!window.confirm('Are you sure you want to delete this chat?')) {
+      return;
+    }
+    try {
+      await axios.delete(`http://localhost:8000/api/v1/chatMessages/${chatId}`);
+      
+      // Refresh chat list
+      loadChatHistory();
+      
+      // If we're currently viewing the deleted chat, create a new one
+      if (currentChatId === chatId) {
+        createNewChat();
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      // Optionally show error to user
+    }
+  };
+
+  const renameChat = async (chatId: string, newTitle: string) => {
+    try {
+      await axios.patch(`http://localhost:8000/api/v1/chatMessages/${chatId}`, {
+        chatTitle: newTitle
+      });
+      
+      // Update local state
+      setChats(chats.map(chat => 
+        chat.id === chatId ? { ...chat, title: newTitle } : chat
+      ));
+    } catch (error) {
+      console.error('Error renaming chat:', error);
+    }
+  };
+
   return (
     <>
     {/* Sidebar */}
@@ -419,6 +464,8 @@ const loadChat = async (chatId: string) => {
       onNewChat={createNewChat}
       onSelectChat={loadChat}
       isLoading={isLoading}
+      onDeleteChat={deleteChat}
+      onRenameChat={renameChat}
     />
 
     {/* Main content */}  
@@ -503,7 +550,7 @@ const loadChat = async (chatId: string) => {
         </div>
 
         {/* User input */}
-        <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="p-4 ">
           <div className="max-w-3xl mx-auto w-full">
             <div className="mb-2">
               {uploadedFiles.length > 0 && (
@@ -566,14 +613,14 @@ const loadChat = async (chatId: string) => {
 
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 relative"
+                className="p-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-200 relative"
                 title="Text extraction only. Upload files and more (Max 50, 100MB each)"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  <ArrowPathIcon className="w-5 h-5 animate-spin " />
                 ) : (
-                  <PlusIcon className="w-5 h-5" />
+                  <PlusIcon className="w-5 h-5 " />
                 )}
               </button>
               </div>
@@ -590,7 +637,7 @@ const loadChat = async (chatId: string) => {
                   className={`p-2 rounded-full ${
                     isVoiceInputActive 
                       ? 'bg-red-500 text-white hover:bg-red-600' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-200'
                   }`}
                   title={isVoiceInputActive ? 'Stop recording' : 'Start recording'}
                 >
@@ -601,7 +648,7 @@ const loadChat = async (chatId: string) => {
                   disabled={isLoading || (!userInput.trim() && uploadedFiles.length === 0)}
                   className={`p-2 rounded-full ${
                     isLoading || (!userInput.trim() && uploadedFiles.length === 0)
-                      ? 'bg-gray-100 text-gray-400'
+                      ? 'border border-gray-200 bg-white text-gray-400'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
                 >

@@ -11,10 +11,6 @@ const chatMessageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
   edited: {
     type: Boolean,
     default: false,
@@ -27,7 +23,7 @@ const chatMessageSchema = new mongoose.Schema({
   chatTitle: {
     type: String,
   },
-});
+}, { timestamps: true });
 
 const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
 
