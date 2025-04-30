@@ -8,6 +8,9 @@ import {
     Alert,
     Modal,
     Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,6 +18,7 @@ const LoginScreen = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [username, setUsername] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -22,31 +26,46 @@ const LoginScreen = () => {
     const [resetModalVisible, setResetModalVisible] = useState(false);
     const [forgotEmail, setForgotEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    const resetFields = () => {
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setUsername('');
+        setForgotEmail('');
+        setNewPassword('');
+        setResetConfirmPassword('');
+    };
 
     const handleLogin = () => {
         if (email === '' || password === '') {
             Alert.alert('Error', 'Please fill in all fields');
         } else if (!emailRegex.test(email)) {
-            Alert.alert('Error', 'Please enter a valid email (e.g., info@spriertechnology.com)');
+            Alert.alert('Error', 'Please enter a valid email');
         } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must have at least one uppercase letter, one number, and one special character');
+            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
         } else {
             Alert.alert('Success', `Logged in as ${email}`);
+            resetFields();
         }
     };
 
     const handleRegister = () => {
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !confirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
         } else if (!emailRegex.test(email)) {
-            Alert.alert('Error', 'Please enter a valid email (e.g., info@spriertechnology.com)');
+            Alert.alert('Error', 'Please enter a valid email');
         } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must have at least one uppercase letter, one number, and one special character');
+            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
+        } else if (password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match');
         } else {
             Alert.alert('Success', `Account created for ${username}`);
+            resetFields();
             setIsLogin(true);
         }
     };
@@ -59,7 +78,7 @@ const LoginScreen = () => {
         if (forgotEmail === '') {
             Alert.alert('Error', 'Please enter your email');
         } else if (!emailRegex.test(forgotEmail)) {
-            Alert.alert('Error', 'Please enter a valid email (e.g., info@spriertechnology.com)');
+            Alert.alert('Error', 'Invalid email address');
         } else {
             Alert.alert('OTP Sent', `An OTP has been sent to ${forgotEmail}`);
             setForgotModalVisible(false);
@@ -68,168 +87,189 @@ const LoginScreen = () => {
     };
 
     const handleResetPassword = () => {
-        if (!newPassword || !confirmPassword) {
+        if (!newPassword || !resetConfirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
-        } else if (newPassword !== confirmPassword) {
+        } else if (newPassword !== resetConfirmPassword) {
             Alert.alert('Error', 'Passwords do not match');
         } else if (!passwordRegex.test(newPassword)) {
-            Alert.alert('Error', 'New password must have at least one uppercase letter, one number, and one special character');
+            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
         } else {
             Alert.alert('Success', 'Your password has been reset');
+            resetFields();
             setResetModalVisible(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.serviceText}>SERVICE</Text>
-                <Text style={styles.valeText}>WALE</Text>
-            </View>
-
-            {/* Image between header and form */}
-            <View style={styles.imageContainer}>
-                <Image
-                    source={require('../../assets/images/react-logo.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                />
-            </View>
-
-            {/* Forgot Password Modal */}
-            <Modal transparent animationType="slide" visible={forgotModalVisible}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.frameContainer}>
-                        <Text style={styles.title}>Reset Password</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your email"
-                            placeholderTextColor="#aaa"
-                            value={forgotEmail}
-                            onChangeText={setForgotEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
-                        <TouchableOpacity style={styles.button} onPress={handleSendOTP}>
-                            <Text style={styles.buttonText}>Send OTP</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setForgotModalVisible(false)}>
-                            <Text style={styles.linkText}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+        >
+            <ScrollView contentContainerStyle={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.serviceText}>SERVICE</Text>
+                    <Text style={styles.valeText}>WALE</Text>
                 </View>
-            </Modal>
 
-            {/* Reset Password Modal */}
-            <Modal transparent animationType="slide" visible={resetModalVisible}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.frameContainer}>
-                        <Text style={styles.title}>Set New Password</Text>
-                        <View style={styles.passwordContainer}>
+                {/* Image */}
+                <View style={styles.imageContainer}>
+                    <Image
+                        source={require('../../assets/images/react-logo.png')}
+                        style={styles.image}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                {/* Forgot Password Modal */}
+                <Modal transparent animationType="slide" visible={forgotModalVisible}>
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.frameContainer}>
+                            <Text style={styles.title}>Reset Password</Text>
                             <TextInput
-                                style={styles.passwordInput}
-                                placeholder="New Password"
+                                style={styles.input}
+                                placeholder="Enter your email"
                                 placeholderTextColor="#aaa"
-                                value={newPassword}
-                                onChangeText={setNewPassword}
-                                secureTextEntry={!showNewPassword}
+                                value={forgotEmail}
+                                onChangeText={setForgotEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
                             />
-                            <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                                <Ionicons
-                                    name={showNewPassword ? 'eye' : 'eye-off'}
-                                    size={24}
-                                    color="#888"
-                                />
+                            <TouchableOpacity style={styles.button} onPress={handleSendOTP}>
+                                <Text style={styles.buttonText}>Send OTP</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setForgotModalVisible(false)}>
+                                <Text style={styles.linkText}>Cancel</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </Modal>
+
+                {/* Reset Password Modal */}
+                <Modal transparent animationType="slide" visible={resetModalVisible}>
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.frameContainer}>
+                            <Text style={styles.title}>Set New Password</Text>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="New Password"
+                                    placeholderTextColor="#aaa"
+                                    value={newPassword}
+                                    onChangeText={setNewPassword}
+                                    secureTextEntry={!showNewPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                                    <Ionicons
+                                        name={showNewPassword ? 'eye' : 'eye-off'}
+                                        size={24}
+                                        color="#888"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Confirm Password"
+                                placeholderTextColor="#aaa"
+                                value={resetConfirmPassword}
+                                onChangeText={setResetConfirmPassword}
+                                secureTextEntry={true}
+                            />
+                            <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+                                <Text style={styles.buttonText}>Submit</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setResetModalVisible(false)}>
+                                <Text style={styles.linkText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* Login/Register Form */}
+                <View style={styles.formContainer}>
+                    <Text style={styles.title}>{isLogin ? 'Login' : 'Register'}</Text>
+
+                    {!isLogin && (
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Username"
+                            placeholderTextColor="#000000"
+                            value={username}
+                            onChangeText={setUsername}
+                        />
+                    )}
+
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        placeholderTextColor="#000000"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
+
+                    <View style={styles.passwordContainer}>
+                        <TextInput
+                            style={styles.passwordInput}
+                            placeholder="Password"
+                            placeholderTextColor="#000000"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            <Ionicons
+                                name={showPassword ? 'eye' : 'eye-off'}
+                                size={24}
+                                color="#888"
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Confirm password for Register */}
+                    {!isLogin && (
                         <TextInput
                             style={styles.input}
                             placeholder="Confirm Password"
-                            placeholderTextColor="#aaa"
+                            placeholderTextColor="#000000"
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             secureTextEntry={true}
                         />
-                        <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-                            <Text style={styles.buttonText}>Submit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setResetModalVisible(false)}>
-                            <Text style={styles.linkText}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+                    )}
 
-            {/* Login/Register Form */}
-            <View style={styles.formContainer}>
-                <Text style={styles.title}>{isLogin ? 'Login' : 'Register'}</Text>
+                    {isLogin && (
+                        <View style={styles.forgotPasswordContainer}>
+                            <TouchableOpacity onPress={handleForgotPassword}>
+                                <Text style={styles.linkText}>Forgot Password?</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
-                {!isLogin && (
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Username"
-                        placeholderTextColor="#000000"
-                        value={username}
-                        onChangeText={setUsername}
-                    />
-                )}
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={isLogin ? handleLogin : handleRegister}
+                    >
+                        <Text style={styles.buttonText}>
+                            {isLogin ? 'Log In' : 'Register'}
+                        </Text>
+                    </TouchableOpacity>
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    placeholderTextColor="#000000"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-
-                <View style={styles.passwordContainer}>
-                    <TextInput
-                        style={styles.passwordInput}
-                        placeholder="Password"
-                        placeholderTextColor="#000000"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons
-                            name={showPassword ? 'eye' : 'eye-off'}
-                            size={24}
-                            color="#888"
-                        />
+                    <TouchableOpacity
+                        style={styles.registerButton}
+                        onPress={() => {
+                            setIsLogin(!isLogin);
+                            resetFields();
+                        }}
+                    >
+                        <Text style={styles.registerButtonText}>
+                            {isLogin ? 'Create an Account' : 'Back to Login'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
-
-                {isLogin && (
-                    <View style={styles.forgotPasswordContainer}>
-                        <TouchableOpacity onPress={handleForgotPassword}>
-                            <Text style={styles.linkText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={isLogin ? handleLogin : handleRegister}
-                >
-                    <Text style={styles.buttonText}>
-                        {isLogin ? 'Log In' : 'Register'}
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.registerButton}
-                    onPress={() => setIsLogin(!isLogin)}
-                >
-                    <Text style={styles.registerButtonText}>
-                        {isLogin ? 'Create an Account' : 'Back to Login'}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -237,15 +277,13 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         padding: 24,
         backgroundColor: '#FFA500',
     },
     header: {
-        position: 'absolute',
-        top: 50,
-        width: '100%',
         alignItems: 'center',
+        marginTop: 50,
     },
     serviceText: {
         fontSize: 80,
@@ -259,8 +297,8 @@ const styles = StyleSheet.create({
         marginTop: -8,
     },
     formContainer: {
-        flex: 1,
-        justifyContent: 'flex-end',
+        marginTop: 20,
+        marginBottom: 40,
     },
     title: {
         fontSize: 28,
@@ -347,12 +385,12 @@ const styles = StyleSheet.create({
         marginBottom: 25,
     },
     imageContainer: {
-        marginTop: 130,
-        marginBottom: 30,
+        marginTop: 30,
+        marginBottom: 20,
         alignItems: 'center',
     },
     image: {
         width: 300,
-        height: 400,
+        height: 200,
     },
 });
