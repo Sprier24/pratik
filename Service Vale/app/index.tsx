@@ -1,4 +1,3 @@
-// app/index.tsx
 import { useEffect } from 'react';
 import { router, useNavigationContainerRef } from 'expo-router';
 
@@ -10,7 +9,7 @@ export default function Index() {
             if (navigationRef.isReady()) {
                 router.replace('/login');
             }
-        }, 100); // Slight delay allows layout to mount
+        }, 100);
 
         return () => clearTimeout(timeout);
     }, []);
