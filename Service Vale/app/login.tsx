@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
     View,
@@ -51,6 +52,7 @@ const LoginScreen = () => {
         } else {
             Alert.alert('Success', `Logged in as ${email}`);
             resetFields();
+            router.replace('/home');
         }
     };
 
@@ -109,7 +111,7 @@ const LoginScreen = () => {
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.serviceText}>SERVICE</Text>
-                    <Text style={styles.valeText}>WALE</Text>
+                    <Text style={styles.valeText}>VALE</Text>
                 </View>
 
                 {/* Image */}
