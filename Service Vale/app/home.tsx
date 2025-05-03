@@ -43,33 +43,24 @@ const HomeScreen = () => {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
-                {/* Logout Button */}
+
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutButtonText}>Logout</Text>
                 </TouchableOpacity>
 
-                {/* Month/Year Label */}
                 <Text style={styles.monthYearText}>{monthYear}</Text>
-
-                {/* Revenue Box */}
                 <View style={styles.revenueBox}>
                     <Text style={styles.headerText}>Daily Revenue: ₹5,000</Text>
                     <Text style={styles.headerText}>Monthly Revenue: ₹1,50,000</Text>
                 </View>
 
-                {/* Month/Year Label before summary */}
                 <Text style={styles.monthYearText}>{monthYear}</Text>
-
-                {/* Service Summary Box */}
                 <View style={styles.serviceSummaryBox}>
                     <Text style={styles.subHeaderText}>Pending Services: {pendingServices.length}</Text>
                     <Text style={styles.subHeaderText}>Completed Services: {completedServices.length}</Text>
                 </View>
 
-                {/* Month/Year Label before tables */}
                 <Text style={styles.monthYearText}>{monthYear}</Text>
-
-                {/* Pending Services Table */}
                 <Text style={styles.tableHeader}>Pending Services</Text>
                 <FlatList
                     data={pendingServices}
@@ -81,10 +72,7 @@ const HomeScreen = () => {
                     )}
                 />
 
-                {/* Month/Year Label before completed table */}
                 <Text style={styles.monthYearText}>{monthYear}</Text>
-
-                {/* Completed Services Table */}
                 <Text style={styles.tableHeader}>Completed Services</Text>
                 <FlatList
                     data={completedServices}
@@ -95,6 +83,23 @@ const HomeScreen = () => {
                         </View>
                     )}
                 />
+
+                {/* Bottom Navigation Bar */}
+                <View style={styles.bottomBar}>
+                    <TouchableOpacity
+                        style={styles.bottomButton}
+                        onPress={() => router.push('/service')}
+                    >
+                        <Text style={styles.bottomButtonText}>Service</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.bottomButton}>
+                        <Text style={styles.bottomButtonText}>User</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.bottomButton}>
+                        <Text style={styles.bottomButtonText}>Bill</Text>
+                    </TouchableOpacity>
+                </View>
+
             </View>
         </SafeAreaView>
     );
@@ -159,6 +164,23 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         marginBottom: 5,
+    },
+    bottomBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 10,
+        backgroundColor: '#f1f1f1',
+        borderTopWidth: 1,
+        borderTopColor: '#ddd',
+    },
+    bottomButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bottomButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
     },
 });
 
