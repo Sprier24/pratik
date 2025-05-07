@@ -1,0 +1,395 @@
+'use client';
+
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter,
+} from "@/components/ui/card";
+import {
+  SidebarInset, SidebarProvider, SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import axios from "axios";
+
+interface companies {
+  id: string;
+  company_name?: string;
+  companyName?: string;
+}
+
+const contactPersonsSchema = z.object({
+  firstName: z.string().nonempty({ message: "Required" }),
+  middleName: z.string().nonempty({ message: "Required" }),
+  lastName: z.string().nonempty({ message: "Required" }),
+  contactNo: z.string().regex(/^\d*$/, { message: "Contact number must be numeric" }).nonempty({ message: "Required" }),
+  email: z.string().email({ message: "Required" }),
+  designation: z.string().nonempty({ message: "Required" }),
+  company: z.string().nonempty({ message: "Required" }),
+  companyId: z.string().nonempty({ message: "Missing company" }),
+});
+
+export default function ContactForm() {
+  const searchParams = useSearchParams();
+  const contactId = searchParams.get('id');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companies, setCompanies] = useState<companies[]>([]);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const form = useForm<z.infer<typeof contactPersonsSchema>>({
+    resolver: zodResolver(contactPersonsSchema),
+    defaultValues: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      contactNo: "",
+      email: "",
+      designation: "",
+      company: "",
+      companyId: "",
+    },
+  });
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await axios.get("/api/companies");
+        if (res.status === 200) {
+          setCompanies(res.data);
+        }
+      } catch (err) {
+        console.error("Error fetching companies:", err);
+        toast({
+          title: "Error",
+          description: "An error occurred while fetching companies. Please try again later.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    const fetchContact = async () => {
+      // Ensure both contactId and companies are available
+      if (!contactId || contactId === "undefined" || companies.length === 0) return;
+
+      try {
+        setIsSubmitting(true);
+        const res = await axios.get(`/api/contactPersons?id=${contactId}`);
+
+        if (res.data) {
+          // Find the company that matches the contact's company_id
+          const company = companies.find((c) => c.id === res.data.company_id);
+
+          if (company) {
+            // If company found, reset form values with the data
+            const companyName = company.company_name || company.companyName || "";
+
+            form.reset({
+              firstName: res.data.first_name,
+              middleName: res.data.middle_name,
+              lastName: res.data.last_name,
+              contactNo: res.data.contact_no,
+              email: res.data.email,
+              designation: res.data.designation,
+              company: companyName,
+              companyId: res.data.company_id,
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: "Company not found for the contact.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to load contact.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    // Fetch contact only if companies are available and contactId is valid
+    fetchContact();
+  }, [contactId, companies, form]);
+
+
+
+  useEffect(() => {
+    if (contactId === "undefined") {
+      toast({
+        title: "Invalid Contact ID",
+        description: "The contact ID in the URL is not valid.",
+        variant: "destructive",
+      });
+    }
+  }, [contactId]);
+
+
+  const onSubmit = async (values: z.infer<typeof contactPersonsSchema>) => {
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        ...values,
+        company: values.companyId, // Send ID to backend
+      };
+
+      if (contactId) {
+        const res = await axios.put(`/api/contactPersons?id=${contactId}`, payload);
+        if (res.status === 200) {
+          toast({ title: "Success", description: "Contact updated successfully" });
+        } else {
+          throw new Error("Update failed");
+        }
+      } else {
+        const res = await axios.post("/api/contactPersons", payload);
+        if (res.status === 201) {
+
+          toast({ title: "Success", description: "Contact created successfully" });
+          form.reset();
+        } else {
+          throw new Error("Create failed");
+        }
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <AdminSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/admin/dashboard">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/admin/contactrecord">Contact Record</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+
+        <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
+          <Card className="max-w-6xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-3xl font-bold text-center">
+                {contactId ? "Update Contact" : "Create Contact"}
+              </CardTitle>
+              <CardDescription className="text-center">
+                {contactId ? "Modify the contact details below" : "Fill out the form below to create a new contact"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter First Name" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="middleName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Middle Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter Middle Name" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter Last Name" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="contactNo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact Number</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter Contact Number"
+                              {...field}
+                              disabled={isSubmitting}
+                              onChange={(e) => {
+                                const numericValue = e.target.value.replace(/\D/g, '');
+                                field.onChange(numericValue);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter Email Address" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="designation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Designation</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter Designation" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="company"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="Enter Company Name"
+                              {...field}
+                              disabled={isSubmitting}
+                              autoComplete="off"
+                              onChange={(e) => {
+                                field.onChange(e);
+                                setShowCompanyDropdown(true);
+                              }}
+                            />
+                            {showCompanyDropdown && field.value && (
+                              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-auto">
+                                {companies
+                                  .filter((company) => {
+                                    const name = company.company_name || company.companyName || "";
+                                    return name.toLowerCase().includes(field.value.toLowerCase());
+                                  })
+                                  .map((company) => {
+                                    const name = company.company_name || company.companyName || "";
+                                    return (
+                                      <div
+                                        key={company.id}
+                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => {
+                                          form.setValue("company", name);
+                                          form.setValue("companyId", company.id);
+                                          setShowCompanyDropdown(false); // Close dropdown
+                                        }}
+                                      >
+                                        {name}
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="companyId"
+                    render={({ field }) => (
+                      <FormItem style={{ display: 'none' }}>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <CardFooter className="px-0">
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="animate-spin mr-2" />
+                          {contactId ? "Updating..." : "Creating..."}
+                        </>
+                      ) : contactId ? "Update" : "Create"}
+                    </Button>
+                  </CardFooter>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
