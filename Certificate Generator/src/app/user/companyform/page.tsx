@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -25,18 +25,19 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { AppSidebar } from "@/components/app-sidebar";
 
+// Schema with updated email validation
 const companiesSchema = z.object({
-  companyName: z.string().min(1, { message: "Company name is required" }),
-  address: z.string().min(1, { message: "Address is required" }),
-  industries: z.string().min(1, { message: "Industries is required" }),
-  industriesType: z.string().min(1, { message: "Industry type is required" }),
-  gstNumber: z.string().min(1, { message: "GST number is required" }),
+  companyName: z.string().nonempty({ message: "Required" }),
+  address: z.string().nonempty({ message: "Required" }),
+  industries: z.string().nonempty({ message: "Required" }),
+  industriesType: z.string().nonempty({ message: "Required" }),
+  gstNumber: z.string().optional(),
   website: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url({ message: "Invalid website URL" }).optional()
+    z.string().url({ message: "Invalid Website URL" }).optional()
   ),
   flag: z.enum(["Red", "Yellow", "Green"], {
-    required_error: "Please select a flag color",
+    required_error: "Required",
   }),
 });
 
@@ -92,24 +93,22 @@ export default function CompanyForm() {
 
   const onSubmit = async (values: z.infer<typeof companiesSchema>) => {
     setIsSubmitting(true);
-  
+
     try {
       if (companyId) {
-        // Update company
         const res = await axios.put(`/api/companies?id=${companyId}`, values);
         if (res.status === 200) {
-          toast({ title: "Success", description: "Company updated successfully" });
+          toast({ title: "Company updated successfully" });
         } else {
           throw new Error("Update failed");
         }
       } else {
-        // Create new company
         const res = await axios.post("/api/companies", {
           ...values,
-          id: crypto.randomUUID(), // Auto-generate ID for new company
+          id: crypto.randomUUID(),
         });
         if (res.status === 201) {
-          toast({ title: "Success", description: "Company created successfully" });
+          toast({ title: "Company created successfully" });
           form.reset();
         } else {
           throw new Error("Create failed");
@@ -125,7 +124,15 @@ export default function CompanyForm() {
       setIsSubmitting(false);
     }
   };
-  
+
+  const fieldLabels: Record<string, string> = {
+    companyName: "Company Name",
+    address: "Company Address",
+    industries: "Industries",
+    industriesType: "Industries Type",
+    gstNumber: "GST Number (Optional)",
+    website: "Website (Optional)",
+  };
 
   return (
     <SidebarProvider>
@@ -137,9 +144,7 @@ export default function CompanyForm() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/user/dashboard">
-                  <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                </BreadcrumbLink>
+                <BreadcrumbLink href="/user/dashboard">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -166,17 +171,17 @@ export default function CompanyForm() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {["companyName", "address", "industries", "industriesType", "gstNumber", "website"].map((name) => (
+                    {Object.entries(fieldLabels).map(([name, label]) => (
                       <FormField
                         key={name}
                         control={form.control}
                         name={name as keyof z.infer<typeof companiesSchema>}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{name.replace(/([A-Z])/g, " $1")}</FormLabel>
+                            <FormLabel>{label}</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder={`Enter ${name}`}
+                                placeholder={`Enter ${label}`}
                                 {...field}
                                 className="bg-white"
                                 disabled={isSubmitting}
@@ -199,7 +204,7 @@ export default function CompanyForm() {
                               className="bg-white border px-3 py-2 rounded-md w-full"
                               disabled={isSubmitting}
                             >
-                              <option value="">Select flag</option>
+                              <option value="">Select Flag</option>
                               <option value="Red">Red</option>
                               <option value="Yellow">Yellow</option>
                               <option value="Green">Green</option>
@@ -211,7 +216,11 @@ export default function CompanyForm() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="w-full bg-purple-950 text-white hover:bg-purple-900"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="animate-spin mr-2" />

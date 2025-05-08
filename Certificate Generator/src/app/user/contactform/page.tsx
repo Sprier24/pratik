@@ -33,13 +33,11 @@ interface companies {
 
 const contactPersonsSchema = z.object({
   firstName: z.string().nonempty({ message: "Required" }),
-  middleName: z.string().nonempty({ message: "Required" }),
-  lastName: z.string().nonempty({ message: "Required" }),
   contactNo: z.string().regex(/^\d*$/, { message: "Contact number must be numeric" }).nonempty({ message: "Required" }),
-  email: z.string().email({ message: "Required" }),
+  email: z.string().email({ message: "Invalid email id" }),
   designation: z.string().nonempty({ message: "Required" }),
-  company: z.string().nonempty({ message: "Please select a company" }), // Displayed name
-  companyId: z.string().nonempty({ message: "Missing company ID" }),    // Actual ID for backend
+  company: z.string().nonempty({ message: "Required" }),
+  companyId: z.string().nonempty({ message: "Missing company" }),
 });
 
 export default function ContactForm() {
@@ -47,13 +45,11 @@ export default function ContactForm() {
   const contactId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companies, setCompanies] = useState<companies[]>([]);
-
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
   const form = useForm<z.infer<typeof contactPersonsSchema>>({
     resolver: zodResolver(contactPersonsSchema),
     defaultValues: {
       firstName: "",
-      middleName: "",
-      lastName: "",
       contactNo: "",
       email: "",
       designation: "",
@@ -86,23 +82,21 @@ export default function ContactForm() {
     const fetchContact = async () => {
       // Ensure both contactId and companies are available
       if (!contactId || contactId === "undefined" || companies.length === 0) return;
-  
+
       try {
         setIsSubmitting(true);
         const res = await axios.get(`/api/contactPersons?id=${contactId}`);
-        
+
         if (res.data) {
           // Find the company that matches the contact's company_id
           const company = companies.find((c) => c.id === res.data.company_id);
-  
+
           if (company) {
             // If company found, reset form values with the data
             const companyName = company.company_name || company.companyName || "";
-  
+
             form.reset({
               firstName: res.data.first_name,
-              middleName: res.data.middle_name,
-              lastName: res.data.last_name,
               contactNo: res.data.contact_no,
               email: res.data.email,
               designation: res.data.designation,
@@ -127,13 +121,13 @@ export default function ContactForm() {
         setIsSubmitting(false);
       }
     };
-  
+
     // Fetch contact only if companies are available and contactId is valid
     fetchContact();
   }, [contactId, companies, form]);
-  
 
-  
+
+
   useEffect(() => {
     if (contactId === "undefined") {
       toast({
@@ -143,7 +137,7 @@ export default function ContactForm() {
       });
     }
   }, [contactId]);
-  
+
 
   const onSubmit = async (values: z.infer<typeof contactPersonsSchema>) => {
     setIsSubmitting(true);
@@ -157,15 +151,15 @@ export default function ContactForm() {
       if (contactId) {
         const res = await axios.put(`/api/contactPersons?id=${contactId}`, payload);
         if (res.status === 200) {
-          toast({ title: "Success", description: "Contact updated successfully" });
+          toast({ title: "Contact updated successfully" });
         } else {
           throw new Error("Update failed");
         }
       } else {
         const res = await axios.post("/api/contactPersons", payload);
         if (res.status === 201) {
-          
-          toast({ title: "Success", description: "Contact created successfully" });
+
+          toast({ title: "Contact created successfully" });
           form.reset();
         } else {
           throw new Error("Create failed");
@@ -223,8 +217,9 @@ export default function ContactForm() {
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Customer Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="First Name" {...field} disabled={isSubmitting} />
+                            <Input placeholder="Enter Customer Name" {...field} disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -232,39 +227,64 @@ export default function ContactForm() {
                     />
                     <FormField
                       control={form.control}
-                      name="middleName"
+                      name="company"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Company Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Middle Name" {...field} disabled={isSubmitting} />
+                            <div className="relative">
+                              <Input
+                                placeholder="Enter Company Name"
+                                {...field}
+                                disabled={isSubmitting}
+                                autoComplete="off"
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  setShowCompanyDropdown(true);
+                                }}
+                              />
+                              {showCompanyDropdown && field.value && (
+                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-auto">
+                                  {companies
+                                    .filter((company) => {
+                                      const name = company.company_name || company.companyName || "";
+                                      return name.toLowerCase().includes(field.value.toLowerCase());
+                                    })
+                                    .map((company) => {
+                                      const name = company.company_name || company.companyName || "";
+                                      return (
+                                        <div
+                                          key={company.id}
+                                          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                                          onClick={() => {
+                                            form.setValue("company", name);
+                                            form.setValue("companyId", company.id);
+                                            setShowCompanyDropdown(false); // Close dropdown
+                                          }}
+                                        >
+                                          {name}
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              )}
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input placeholder="Last Name" {...field} disabled={isSubmitting} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <FormField
                       control={form.control}
                       name="contactNo"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Contact Number</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Contact Number"
+                              placeholder="Enter Contact Number"
                               {...field}
                               disabled={isSubmitting}
                               onChange={(e) => {
@@ -277,28 +297,30 @@ export default function ContactForm() {
                         </FormItem>
                       )}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Email Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="Email" {...field} disabled={isSubmitting} />
+                            <Input placeholder="Enter Email Address" {...field} disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="designation"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Designation</FormLabel>
                           <FormControl>
-                            <Input placeholder="Designation" {...field} disabled={isSubmitting} />
+                            <Input placeholder="Enter Designation" {...field} disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -308,63 +330,18 @@ export default function ContactForm() {
 
                   <FormField
                     control={form.control}
-                    name="company"
+                    name="companyId"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company</FormLabel>
+                      <FormItem style={{ display: 'none' }}>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              placeholder="Type to search..."
-                              {...field}
-                              disabled={isSubmitting}
-                              autoComplete="off"
-                            />
-                            {field.value && (
-                              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-auto">
-                                {companies
-                                  .filter((company) => {
-                                    const name = company.company_name || company.companyName || "";
-                                    return name.toLowerCase().includes(field.value.toLowerCase());
-                                  })
-                                  .map((company) => {
-                                    const name = company.company_name || company.companyName || "";
-                                    return (
-                                      <div
-                                        key={company.id}
-                                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                        onClick={() => {
-                                          form.setValue("company", name);
-                                          form.setValue("companyId", company.id);
-                                        }}
-                                      >
-                                        {name}
-                                      </div>
-                                    );
-                                  })}
-                              </div>
-                            )}
-                          </div>
+                          <Input {...field} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                    <FormField
-                      control={form.control}
-                      name="companyId"
-                      render={({ field }) => (
-                        <FormItem style={{ display: 'none' }}>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
                   <CardFooter className="px-0">
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full bg-purple-950 text-white hover:bg-purple-900" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <Loader2 className="animate-spin mr-2" />

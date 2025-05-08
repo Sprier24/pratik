@@ -73,8 +73,6 @@ export default function CompanyDetailsTable() {
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
-    const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [page, setPage] = useState(1);
     const [filterValue, setFilterValue] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
@@ -182,93 +180,24 @@ export default function CompanyDetailsTable() {
         });
     }, [filteredItems, sortDescriptor]);
 
-    const paginatedItems = React.useMemo(() => {
-        const start = (page - 1) * rowsPerPage;
-        return sortedItems.slice(start, start + rowsPerPage);
-    }, [sortedItems, page, rowsPerPage]);
+    const paginatedItems = sortedItems;
 
-    const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
-    const onNextPage = useCallback(() => {
-        if (page < pages) setPage(page + 1);
-    }, [page, pages]);
-
-    const onPreviousPage = useCallback(() => {
-        if (page > 1) setPage(page - 1);
-    }, [page]);
-
-    const onRowsPerPageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        setRowsPerPage(Number(e.target.value));
-        setPage(1);
-    }, []);
-
-    const topContent = React.useMemo(() => {
-        return (
-            <div className="flex justify-between items-center gap-4">
-                <Input
-                    isClearable
-                    className="w-full max-w-[300px]"
-                    placeholder="Search"
-                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-                    value={filterValue}
-                    onChange={(e) => setFilterValue(e.target.value)}
-                    onClear={() => setFilterValue("")}
-                />
-                <label className="flex items-center text-default-400 text-small">
-                    Rows per page :
-                    <select
-                        className="bg-transparent  outline-none text-default-400 text-small ml-2"
-                        onChange={onRowsPerPageChange}
-                        defaultValue="5"
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                    </select>
-                </label>
-            </div>
-        );
-    }, [filterValue, onRowsPerPageChange]);
-
-    const bottomContent = React.useMemo(() => {
-        return (
-            <div className="py-2 px-2 relative flex justify-between items-center">
-                <span className="text-default-400 text-small">
-                    Total {companies.length} company
-                </span>
-                <div className="absolute left-1/2 transform -translate-x-1/2">
-                    <Pagination
-                        isCompact
-                        showShadow
-                        color="success"
-                        page={page}
-                        total={pages}
-                        onChange={setPage}
-                    />
-                </div>
-                <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
-                    <Button
-                        className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-                        variant="default"
-                        size="sm"
-                        disabled={page === 1}
-                        onClick={onPreviousPage}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-                        variant="default"
-                        size="sm"
-                        disabled={page === pages}
-                        onClick={onNextPage}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        );
-    }, [page, pages, onPreviousPage, onNextPage]);
+    const topContent = (
+        <div className="flex justify-between items-center gap-4 w-full">
+            <Input
+                isClearable
+                className="w-full max-w-[300px]"
+                placeholder="Search"
+                startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                onClear={() => setFilterValue("")}
+            />
+            <span className="text-default-400 text-sm whitespace-nowrap">
+                Total {filteredItems.length} {filteredItems.length === 1 ? "y" : "Company"}
+            </span>
+        </div>
+    );
 
     const renderCell = useCallback((company: companies, columnKey: string) => {
         if (columnKey === "actions") {
@@ -346,8 +275,6 @@ export default function CompanyDetailsTable() {
                             <Table
                                 isHeaderSticky
                                 aria-label="Companies table with custom cells, pagination and sorting"
-                                bottomContent={bottomContent}
-                                bottomContentPlacement="outside"
                                 classNames={{
                                     wrapper: "max-h-[382px] overflow-y-auto",
                                 }}
@@ -385,13 +312,23 @@ export default function CompanyDetailsTable() {
                                     ))}
                                 </TableHeader>
                                 <TableBody>
-                                    {paginatedItems.map((company) => (
-                                        <TableRow key={company.id}>
-                                            {columns.map((column) => (
-                                                <TableCell key={column.uid}>{renderCell(company, column.uid)}</TableCell>
-                                            ))}
+                                    {paginatedItems.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
+                                                Go to create company and add data
+                                            </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : (
+                                        paginatedItems.map((companies) => (
+                                            <TableRow key={companies.id}>
+                                                {columns.map((column) => (
+                                                    <TableCell key={column.uid}>
+                                                        {renderCell(companies, column.uid)}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>

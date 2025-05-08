@@ -27,10 +27,10 @@ import axios from "axios";
 
 // Schema with updated email validation
 const companiesSchema = z.object({
-  companyName: z.string().min(1, { message: "Required" }),
-  address: z.string().email({ message: "Invalid Email Address" }),
-  industries: z.string().min(1, { message: "Required" }),
-  industriesType: z.string().min(1, { message: "Required" }),
+  companyName: z.string().nonempty({ message: "Required" }),
+  address: z.string().nonempty({ message: "Required" }),
+  industries: z.string().nonempty({ message: "Required" }),
+  industriesType: z.string().nonempty({ message: "Required" }),
   gstNumber: z.string().optional(),
   website: z.preprocess(
     (val) => (val === "" ? undefined : val),
@@ -127,7 +127,7 @@ export default function CompanyForm() {
 
   const fieldLabels: Record<string, string> = {
     companyName: "Company Name",
-    address: "Email Address",
+    address: "Company Address",
     industries: "Industries",
     industriesType: "Industries Type",
     gstNumber: "GST Number (Optional)",

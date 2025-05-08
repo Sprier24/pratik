@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {  SearchIcon,  Trash2 } from "lucide-react";
+import { SearchIcon, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
@@ -30,7 +30,7 @@ const columns = [
   { name: "User Name", uid: "name", sortable: true, width: "120px" },
   { name: "Email Address", uid: "email", sortable: true, width: "120px" },
   { name: "Contact Number", uid: "contact", sortable: true, width: "120px" },
-  { name: "ACTIONS", uid: "actions", sortable: false, width: "100px" },
+  { name: "Delete", uid: "actions", sortable: false, width: "100px" },
 ];
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "contact", "actions"];
@@ -39,8 +39,6 @@ export default function UserTable() {
   const [users, setUsers] = useState<User[]>([]);
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
-  const [rowsPerPage, setRowsPerPage] = useState(15);
-  const [page, setPage] = useState(1);
   const router = useRouter();
 
   const [sortDescriptor, setSortDescriptor] = useState({
@@ -107,105 +105,29 @@ export default function UserTable() {
     });
   }, [filteredItems, sortDescriptor]);
 
-  const paginatedItems = React.useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    return sortedItems.slice(start, start + rowsPerPage);
-  }, [sortedItems, page, rowsPerPage]);
+  const paginatedItems = sortedItems;
 
-  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
-  const onNextPage = useCallback(() => {
-    if (page < pages) setPage(page + 1);
-  }, [page, pages]);
-
-  const onPreviousPage = useCallback(() => {
-    if (page > 1) setPage(page - 1);
-  }, [page]);
-
-  const onRowsPerPageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRowsPerPage(Number(e.target.value));
-    setPage(1);
-  }, []);
-
-  const topContent = React.useMemo(() => {
-    return (
-      <div className="flex justify-between items-center gap-4">
-        <Input
-          isClearable
-          className="w-full max-w-[300px]"
-          placeholder="Search"
-          startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-          onClear={() => setFilterValue("")}
-        />
-        <label className="flex items-center text-default-400 text-small">
-          Rows per page:
-          <select
-            className="bg-transparent dark:bg-gray-800 outline-none text-default-400 text-small ml-2"
-            onChange={onRowsPerPageChange}
-            defaultValue="5"
-          >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="15">15</option>
-          </select>
-        </label>
-      </div>
-    );
-  }, [filterValue, onRowsPerPageChange, users.length]);
-
-  const bottomContent = React.useMemo(() => {
-    return (
-      <div className="py-2 px-2 relative flex justify-between items-center">
-        <span className="text-default-400 text-small">
-          Total {users.length} users
-        </span>
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <Pagination
-            isCompact
-            showShadow
-            color="success"
-            page={page}
-            total={pages}
-            onChange={setPage}
-            classNames={{
-              cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
-              item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
-            }}
-          />
-        </div>
-
-        <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
-          <Button
-            className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-            variant="default"
-            size="sm"
-            disabled={page === 1}
-            onClick={onPreviousPage}
-          >
-            Previous
-          </Button>
-          <Button
-            className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-            variant="default"
-            size="sm"
-            disabled={page === pages}
-            onClick={onNextPage}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    );
-  }, [page, pages, onPreviousPage, onNextPage, users.length]);
+  const topContent = (
+    <div className="flex justify-between items-center gap-4 w-full">
+      <Input
+        isClearable
+        className="w-full max-w-[300px]"
+        placeholder="Search"
+        startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+        value={filterValue}
+        onChange={(e) => setFilterValue(e.target.value)}
+        onClear={() => setFilterValue("")}
+      />
+      <span className="text-default-400 text-sm whitespace-nowrap">
+        Total {filteredItems.length} {filteredItems.length === 1 ? "y" : "User"}
+      </span>
+    </div>
+  );
 
   const renderCell = useCallback((user: User, columnKey: string) => {
     if (columnKey === "actions") {
       return (
         <div className="relative flex items-center gap-2">
-
-
           <Tooltip>
             <span
               className="text-lg text-danger cursor-pointer active:opacity-50"
@@ -230,7 +152,7 @@ export default function UserTable() {
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-          
+
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
@@ -242,7 +164,7 @@ export default function UserTable() {
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/admin/userform">
-                    <BreadcrumbPage>Create User</BreadcrumbPage>
+                    <BreadcrumbLink>Create User</BreadcrumbLink>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
@@ -258,7 +180,6 @@ export default function UserTable() {
               <Table
                 isHeaderSticky
                 aria-label="Users table with custom cells, pagination and sorting"
-                bottomContent={bottomContent}
                 bottomContentPlacement="outside"
                 classNames={{
                   wrapper: "max-h-[382px] overflow-y-auto",
@@ -284,11 +205,23 @@ export default function UserTable() {
                     </TableColumn>
                   )}
                 </TableHeader>
-                <TableBody emptyContent={"Create user and add data"} items={paginatedItems}>
-                  {(item) => (
-                    <TableRow key={item._id}>
-                      {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item, columnKey as string)}</TableCell>}
+                <TableBody>
+                  {paginatedItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
+                        Go to create user and add data
+                      </TableCell>
                     </TableRow>
+                  ) : (
+                    paginatedItems.map((User) => (
+                      <TableRow key={User.id}>
+                        {columns.map((column) => (
+                          <TableCell key={column.uid}>
+                            {renderCell(User, column.uid)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>

@@ -10,9 +10,9 @@ import * as z from "zod";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
+    SidebarInset,
+    SidebarProvider,
+    SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -50,21 +50,21 @@ const columns = [
     { name: "Flag", uid: "flag", sortable: true, width: "120px" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["company_name", "address", "gst_number", "industries", "website", "industries_type", "flag", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["company_name", "address", "gst_number", "industries", "website", "industries_type", "flag"];
 
 const companiesSchema = z.object({
-  companyName: z.string().min(1, { message: "Company name is required" }),
-  address: z.string().min(1, { message: "Address is required" }),
-  industries: z.string().min(1, { message: "Industries is required" }),
-  industriesType: z.string().min(1, { message: "Industry type is required" }),
-  gstNumber: z.string().min(1, { message: "GST number is required" }),
-  website: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().url({ message: "Invalid website URL" }).optional()
-  ),
-  flag: z.enum(["Red", "Yellow", "Green"], {
-    required_error: "Please select a flag color",
-  }),
+    companyName: z.string().min(1, { message: "Company name is required" }),
+    address: z.string().min(1, { message: "Address is required" }),
+    industries: z.string().min(1, { message: "Industries is required" }),
+    industriesType: z.string().min(1, { message: "Industry type is required" }),
+    gstNumber: z.string().min(1, { message: "GST number is required" }),
+    website: z.preprocess(
+        (val) => (val === "" ? undefined : val),
+        z.string().url({ message: "Invalid website URL" }).optional()
+    ),
+    flag: z.enum(["Red", "Yellow", "Green"], {
+        required_error: "Please select a flag color",
+    }),
 });
 
 export default function CompanyDetailsTable() {
@@ -72,14 +72,12 @@ export default function CompanyDetailsTable() {
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
-    const [rowsPerPage, setRowsPerPage] = useState(15);
-    const [page, setPage] = useState(1);
     const [filterValue, setFilterValue] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-        column: "createdAt", 
+        column: "createdAt",
         direction: "descending",
     });
     const router = useRouter();
@@ -87,52 +85,68 @@ export default function CompanyDetailsTable() {
 
     useEffect(() => {
         const fetchCompanies = async () => {
-          setIsSubmitting(true);
-          try {
-            const res = await axios.get('/api/companies'); 
-            setCompanies(res.data); 
-          } catch (err: any) {
-            console.error("Error fetching companies:", err);
-            toast({
-              title: 'Error',
-              description: err.response?.data?.error || 'Failed to fetch companies.',
-              variant: 'destructive',
-            });
-          } finally {
-            setIsSubmitting(false);
-          }
-        };
-      
-        fetchCompanies(); 
-      }, []);
-      
-
-      const handleDelete = useCallback((companyId: string) => {
-        if (!companyId) {
-          console.error("No company ID provided for deletion");
-          return;
-        }
-      
-        console.log("Attempting to delete company with ID:", companyId);
-      
-        fetch(`/api/companies?id=${companyId}`, {
-          method: "DELETE",
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.message === "Company deleted successfully") {
-              alert("Company deleted successfully");
-              // Optionally, refresh the list of companies or remove the deleted company from the state
-            } else {
-              alert("Failed to delete company");
+            setIsSubmitting(true);
+            try {
+                const res = await axios.get('/api/companies');
+                setCompanies(res.data);
+            } catch (err: any) {
+                console.error("Error fetching companies:", err);
+                toast({
+                    title: 'Error',
+                    description: err.response?.data?.error || 'Failed to fetch companies.',
+                    variant: 'destructive',
+                });
+            } finally {
+                setIsSubmitting(false);
             }
-          })
-          .catch((error) => {
-            console.error("Error deleting company:", error);
-            alert("Error deleting company");
-          });
-      }, []);   
-      
+        };
+
+        fetchCompanies();
+    }, []);
+
+    const handleDelete = useCallback((companyId: string) => {
+        if (!companyId) {
+            console.error("No company ID provided for deletion");
+            return;
+        }
+
+        const confirmed = window.confirm("Are you sure you want to delete this company?");
+        if (!confirmed) return;
+
+        setIsSubmitting(true);
+
+        fetch(`/api/companies?id=${companyId}`, {
+            method: "DELETE",
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.message === "Company deleted successfully") {
+                    setCompanies(prev => prev.filter(company => company.id !== companyId));
+                    toast({
+                        title: "Company deleted successfully",
+                        variant: "default",
+                    });
+                } else {
+                    toast({
+                        title: "Error",
+                        description: data.message || "Delete Failed",
+                        variant: "destructive",
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error("Error deleting company:", error);
+                toast({
+                    title: "Error",
+                    description: "An error occurred while deleting the company.",
+                    variant: "destructive",
+                });
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
+    }, []);
+
     const filteredItems = React.useMemo(() => {
         let filtered = [...companies];
 
@@ -156,142 +170,42 @@ export default function CompanyDetailsTable() {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof companies] || "";
             const second = b[sortDescriptor.column as keyof companies] || "";
-    
+
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-    
+
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
 
-    const paginatedItems = React.useMemo(() => {
-        const start = (page - 1) * rowsPerPage;
-        return sortedItems.slice(start, start + rowsPerPage);
-    }, [sortedItems, page, rowsPerPage]);
+    const paginatedItems = sortedItems;
 
-    const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
-    const onNextPage = useCallback(() => {
-        if (page < pages) setPage(page + 1);
-    }, [page, pages]);
-
-    const onPreviousPage = useCallback(() => {
-        if (page > 1) setPage(page - 1);
-    }, [page]);
-
-    const onRowsPerPageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        setRowsPerPage(Number(e.target.value));
-        setPage(1);
-    }, []);
-
-    const topContent = React.useMemo(() => {
-        return (
-            <div className="flex justify-between items-center gap-4">
-                <Input
-                    isClearable
-                    className="w-full max-w-[300px]"
-                    placeholder="Search"
-                    startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
-                    value={filterValue}
-                    onChange={(e) => setFilterValue(e.target.value)}
-                    onClear={() => setFilterValue("")}
-                />
-                <label className="flex items-center text-default-400 text-small">
-                    Rows per page:
-                    <select
-                        className="bg-transparent  outline-none text-default-400 text-small ml-2"
-                        onChange={onRowsPerPageChange}
-                        defaultValue="5"
-                    >
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                    </select>
-                </label>
-            </div>
-        );
-    }, [filterValue, onRowsPerPageChange]);
-
-    const bottomContent = React.useMemo(() => {
-        return (
-            <div className="py-2 px-2 relative flex justify-between items-center">
-                <span className="text-default-400 text-small">
-                    Total {companies.length} company
-                </span>
-                <div className="absolute left-1/2 transform -translate-x-1/2">
-                    <Pagination
-                        isCompact
-                        showShadow
-                        color="success"
-                        page={page}
-                        total={pages}
-                        onChange={setPage}
-                    />
-                </div>
-                <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
-                    <Button
-                        className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-                        variant="default"
-                        size="sm"
-                        disabled={page === 1}
-                        onClick={onPreviousPage}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        className="bg-[hsl(339.92deg_91.04%_52.35%)]"
-                        variant="default"
-                        size="sm"
-                        disabled={page === pages}
-                        onClick={onNextPage}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        );
-    }, [page, pages, onPreviousPage, onNextPage]);
+    const topContent = (
+        <div className="flex justify-between items-center gap-4 w-full">
+            <Input
+                isClearable
+                className="w-full max-w-[300px]"
+                placeholder="Search"
+                startContent={<SearchIcon className="h-4 w-5 text-muted-foreground" />}
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                onClear={() => setFilterValue("")}
+            />
+            <span className="text-default-400 text-sm whitespace-nowrap">
+                Total {filteredItems.length} {filteredItems.length === 1 ? "y" : "Company"}
+            </span>
+        </div>
+    );
 
     const renderCell = useCallback((company: companies, columnKey: string) => {
-        if (columnKey === "actions") {
-            console.log("Company object:", company); // Check if company._id exists
-    
-            return (
-                <div className="relative flex items-center gap-2">
-                    <Tooltip>
-                        <span
-                            className="text-lg text-info cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`/admin/companyform?id=${company.id}`);
-                            }}
-                        >
-                            <Edit className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                    <Tooltip>
-                        <span
-                            className="text-lg text-danger cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                if (company.id) {
-                                    handleDelete(company.id); // Ensure company._id is passed here
-                                } else {
-                                    console.error("No company ID available"); // Log the error if company ID is missing
-                                }
-                            }}
-                        >
-                            <Trash2 className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                </div>
-            );
+        if (columnKey === "gst_number" || columnKey === "website") {
+            const value = company[columnKey as keyof companies];
+            return value && value.trim() !== "" ? value : "N/A";
         }
+
         return company[columnKey as keyof companies];
     }, [router, handleDelete]);
-    
-    
 
     return (
         <SidebarProvider>
@@ -327,8 +241,6 @@ export default function CompanyDetailsTable() {
                             <Table
                                 isHeaderSticky
                                 aria-label="Companies table with custom cells, pagination and sorting"
-                                bottomContent={bottomContent}
-                                bottomContentPlacement="outside"
                                 classNames={{
                                     wrapper: "max-h-[382px] overflow-y-auto",
                                 }}
@@ -366,13 +278,23 @@ export default function CompanyDetailsTable() {
                                     ))}
                                 </TableHeader>
                                 <TableBody>
-                                    {paginatedItems.map((company) => (
-                                        <TableRow key={company.id}>
-                                            {columns.map((column) => (
-                                                <TableCell key={column.uid}>{renderCell(company, column.uid)}</TableCell>
-                                            ))}
+                                    {paginatedItems.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
+                                                Go to create company and add data
+                                            </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : (
+                                        paginatedItems.map((companies) => (
+                                            <TableRow key={companies.id}>
+                                                {columns.map((column) => (
+                                                    <TableCell key={column.uid}>
+                                                        {renderCell(companies, column.uid)}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>
