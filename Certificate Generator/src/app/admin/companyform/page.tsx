@@ -79,8 +79,7 @@ export default function CompanyForm() {
         } catch (err) {
           console.error(err);
           toast({
-            title: "Error",
-            description: "Failed to load company",
+            title: "Failed to load company",
             variant: "destructive",
           });
         } finally {
@@ -100,7 +99,7 @@ export default function CompanyForm() {
         if (res.status === 200) {
           toast({ title: "Company updated successfully" });
         } else {
-          throw new Error("Update failed");
+          throw new Error("Failed to update company");
         }
       } else {
         const res = await axios.post("/api/companies", {
@@ -111,7 +110,7 @@ export default function CompanyForm() {
           toast({ title: "Company created successfully"});
           form.reset();
         } else {
-          throw new Error("Create failed");
+          throw new Error("Failed to create company");
         }
       }
     } catch (err) {

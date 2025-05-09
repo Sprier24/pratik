@@ -79,10 +79,9 @@ export default function ContactRecordTable() {
         setContactPersons(contactsRes.data);
         setCompanies(companiesRes.data);
       } catch (err: any) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching data", err);
         toast({
-          title: 'Error',
-          description: err.response?.data?.error || 'Failed to fetch data.',
+          title: 'Failed to fetch data',
           variant: 'destructive',
         });
       } finally {
@@ -109,11 +108,11 @@ export default function ContactRecordTable() {
           alert("Contact deleted successfully");
           setContactPersons(prev => prev.filter(c => c.id !== contactId));
         } else {
-          alert("Delete Failed");
+          alert("Failed to delete contact");
         }
       })
       .catch((error) => {
-        console.error("Error deleting contact:", error);
+        console.error("Error deleting contact", error);
         alert("Error deleting contact");
       });
   }, []);

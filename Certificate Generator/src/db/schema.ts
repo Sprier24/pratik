@@ -20,7 +20,7 @@ export const companies = sqliteTable('companies', {
   });
 
   export const contactPersons = sqliteTable('contact_persons', {
-    id: text('id').primaryKey(), // assuming UUID or some unique ID
+    id: text('id').primaryKey(),
     firstName: text('first_name').notNull(),
     middleName: text('middle_name').notNull(),
     lastName: text('last_name').notNull(),
@@ -31,7 +31,6 @@ export const companies = sqliteTable('companies', {
       .notNull()
       .references(() => companies.id, { onDelete: 'cascade' }),
   });
-
 
   export const certificates = sqliteTable('certificates', {
     id: text('id').primaryKey().notNull(),
@@ -76,14 +75,14 @@ export const companies = sqliteTable('companies', {
   });
 
   export const services = sqliteTable('services', {
-    id: text('id').primaryKey().notNull(), // could be UUID
-    serviceId: text('service_id').unique().notNull(), // e.g., SERV-...
+    id: text('id').primaryKey().notNull(),
+    serviceId: text('service_id').unique().notNull(),
     customerName: text('customer_name').notNull(),
     customerLocation: text('customer_location').notNull(),
     contactPerson: text('contact_person').notNull(),
     contactNumber: text('contact_number').notNull(),
     serviceEngineer: text('service_engineer').notNull(),
-    date: text('date').notNull(), // ISO string format
+    date: text('date').notNull(),
     place: text('place').notNull(),
     placeOptions: text('place_options').notNull(),
     natureOfJob: text('nature_of_job').notNull(),
@@ -93,7 +92,6 @@ export const companies = sqliteTable('companies', {
     serialNumberoftheFaultyNonWorkingInstruments: text('serial_number_of_the_faulty_non_working_instruments').notNull(),
     engineerReport: text('engineer_report').notNull(),
     customerReport: text('customer_report').notNull(),
-  
     engineerRemarks: text('engineer_remarks', { mode: 'json' }).$type<Array<{
       serviceSpares: string;
       partNo: string;
@@ -102,14 +100,10 @@ export const companies = sqliteTable('companies', {
       total: string;
       poNo: string;
     }>>().notNull(),
-  
     engineerName: text('engineer_name').notNull(),
     status: text('status', { enum: ['checked', 'unchecked'] }).default('checked').notNull(),
   
   });
-
-
-
 
 export type InsertUser = typeof usersTable.$inferInsert;
 export type SelectUser = typeof usersTable.$inferSelect;

@@ -90,10 +90,9 @@ export default function CompanyDetailsTable() {
                 const res = await axios.get('/api/companies');
                 setCompanies(res.data);
             } catch (err: any) {
-                console.error("Error fetching companies:", err);
+                console.error("Error fetching company", err);
                 toast({
-                    title: 'Error',
-                    description: err.response?.data?.error || 'Failed to fetch companies.',
+                    title: 'Failed to fetch company',
                     variant: 'destructive',
                 });
             } finally {
@@ -128,17 +127,15 @@ export default function CompanyDetailsTable() {
                     });
                 } else {
                     toast({
-                        title: "Error",
-                        description: data.message || "Delete Failed",
+                        title: "Failed to delete company",
                         variant: "destructive",
                     });
                 }
             })
             .catch((error) => {
-                console.error("Error deleting company:", error);
+                console.error("Error deleting company", error);
                 toast({
-                    title: "Error",
-                    description: "An error occurred while deleting the company.",
+                    title: "Failed to delete company",
                     variant: "destructive",
                 });
             })

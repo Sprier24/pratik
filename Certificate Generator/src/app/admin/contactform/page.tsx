@@ -66,10 +66,9 @@ export default function ContactForm() {
           setCompanies(res.data);
         }
       } catch (err) {
-        console.error("Error fetching companies:", err);
+        console.error("Error fetching company", err);
         toast({
-          title: "Error",
-          description: "An error occurred while fetching companies. Please try again later.",
+          title: "Failed to load company",
           variant: "destructive",
         });
       }
@@ -105,16 +104,14 @@ export default function ContactForm() {
             });
           } else {
             toast({
-              title: "Error",
-              description: "Company not found for the contact.",
+              title: "Company not found for the contact",
               variant: "destructive",
             });
           }
         }
       } catch (err) {
         toast({
-          title: "Error",
-          description: "Failed to load contact.",
+          title: "Failed to load contact",
           variant: "destructive",
         });
       } finally {
@@ -131,8 +128,7 @@ export default function ContactForm() {
   useEffect(() => {
     if (contactId === "undefined") {
       toast({
-        title: "Invalid Contact ID",
-        description: "The contact ID in the URL is not valid.",
+        title: "The contact ID in the URL is not valid",
         variant: "destructive",
       });
     }
@@ -153,7 +149,7 @@ export default function ContactForm() {
         if (res.status === 200) {
           toast({ title: "Contact updated successfully" });
         } else {
-          throw new Error("Update failed");
+          throw new Error("Failed to update contact");
         }
       } else {
         const res = await axios.post("/api/contactPersons", payload);
@@ -162,7 +158,7 @@ export default function ContactForm() {
           toast({ title: "Contact created successfully" });
           form.reset();
         } else {
-          throw new Error("Create failed");
+          throw new Error("Failed to create contact");
         }
       }
     } catch (err) {
@@ -205,7 +201,7 @@ export default function ContactForm() {
                 {contactId ? "Update Contact" : "Create Contact"}
               </CardTitle>
               <CardDescription className="text-center">
-                {contactId ? "Modify the contact details below" : "Fill out the form below to create a new contact"}
+                {contactId ? "Edit existing contact details" : "Fill out the form below to create a new contact"}
               </CardDescription>
             </CardHeader>
             <CardContent>

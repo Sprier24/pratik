@@ -31,7 +31,7 @@ import { Eye, EyeOff } from "react-feather";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useState } from "react";
 
 const registerSchema = z
@@ -40,12 +40,12 @@ const registerSchema = z
     contact: z.string()
       .regex(/^\d*$/, { message: "Contact number must be numeric" })
       .nonempty({ message: "Required" }),
-    email: z.string().email({ message: "Required" }),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm your password"),
+    email: z.string().email({ message: "Invalid email id" }),
+    password: z.string().nonempty({ message: "Required" }),
+    confirmPassword: z.string().nonempty({ message: "Required" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Password do not match",
     path: ["confirmPassword"],
   });
 
@@ -69,45 +69,43 @@ export default function RegisterPage() {
 
   const handleRegister = async (values: z.infer<typeof registerSchema>) => {
     setLoading(true);
-    setServerError(""); // you can still keep this if you want field-level error too
-  
+    setServerError('');
+
     try {
-      const response = await fetch("http://localhost:5000/api/v1/users/register", {
-        method: "POST",
+      const response = await fetch('/api/users', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(values),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         toast({
-          title: "Registration failed",
-          description: data.message || "Something went wrong.",
-          variant: "destructive",
+          title: 'Registration failed',
+          variant: 'destructive',
         });
-        setServerError(data.message || "Something went wrong.");
+        setServerError(data.message || 'Something went wrong');
       } else {
         toast({
-          title: "User Submitted",
-          description: "The user has been successfully created",
+          title: 'User created successfully',
         });
         form.reset();
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An error occurred during registration.",
-        variant: "destructive",
+        title: 'Registration failed',
+        variant: 'destructive',
       });
-      setServerError("An error occurred during registration.");
+      setServerError('An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
-  
+
+
 
   return (
     <SidebarProvider>
@@ -115,7 +113,7 @@ export default function RegisterPage() {
       <SidebarInset>
         <header className="flex h-16 items-center gap-2 px-4">
           <SidebarTrigger />
-          
+
           <Separator orientation="vertical" className="mx-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
@@ -143,14 +141,16 @@ export default function RegisterPage() {
                 <form
                   onSubmit={form.handleSubmit(handleRegister)}
                   className="grid gap-4"
+
                 >
                   <FormField
                     name="name"
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>User Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="User Name" {...field} />
+                          <Input placeholder="Enter User Name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -161,9 +161,10 @@ export default function RegisterPage() {
                     name="contact"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Contact Number"
+                            placeholder="Enter Contact Number"
                             {...field}
                             disabled={isSubmitting}
                             onChange={(e) => {
@@ -181,8 +182,9 @@ export default function RegisterPage() {
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Email Address" {...field} />
+                          <Input type="email" placeholder="Enter Email Address" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -193,11 +195,12 @@ export default function RegisterPage() {
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Password</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? "text" : "password"}
-                              placeholder="Password"
+                              placeholder="Enter Password"
                               {...field}
                             />
                             <button
@@ -218,11 +221,12 @@ export default function RegisterPage() {
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirm Password"
+                              placeholder="Enter Confirm Password"
                               {...field}
                             />
                             <button
@@ -248,7 +252,7 @@ export default function RegisterPage() {
                   )}
 
                   <CardFooter className="px-0">
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full bg-purple-950 text-white hover:bg-purple-900" disabled={loading}>
                       {loading ? "Registering..." : "Create"}
                     </Button>
                   </CardFooter>

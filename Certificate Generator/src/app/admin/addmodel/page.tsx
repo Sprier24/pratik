@@ -75,7 +75,7 @@ export default function AddModel() {
             const data = await res.json();
             setModels(data);
         } catch {
-            toast({ title: "Error", description: "Failed to load models", variant: "destructive" });
+            toast({ title: "Failed to load models", variant: "destructive" });
         }
     };
 
@@ -85,7 +85,7 @@ export default function AddModel() {
             const data = await res.json();
             setEngineers(data);
         } catch {
-            toast({ title: "Error", description: "Failed to load engineers", variant: "destructive" });
+            toast({ title: "Failed to load engineers", variant: "destructive" });
         }
     };
 
@@ -95,13 +95,13 @@ export default function AddModel() {
             const data = await res.json();
             setServiceEngineers(data);
         } catch {
-            toast({ title: "Error", description: "Failed to load service engineers", variant: "destructive" });
+            toast({ title: "Failed to load service engineers", variant: "destructive" });
         }
     };
 
     const handleCreateModel = async () => {
         if (!newModel || !newRange) {
-            toast({ title: "Warning", description: "Please fill both model and range" });
+            toast({ title: "Please fill both model and range" });
             return;
         }
         setModelLoading(true);
@@ -112,12 +112,12 @@ export default function AddModel() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: newId, model_name: newModel, range: newRange }),
             });
-            toast({ title: "Success", description: "Model created successfully" });
+            toast({ title: "Model created successfully" });
             setNewModel("");
             setNewRange("");
             fetchModels();
         } catch {
-            toast({ title: "Error", description: "Failed to create model", variant: "destructive" });
+            toast({ title: "Failed to create model", variant: "destructive" });
         } finally {
             setModelLoading(false);
         }
@@ -125,7 +125,7 @@ export default function AddModel() {
 
     const handleCreateEngineer = async () => {
         if (!newEngineer) {
-            toast({ title: "Warning", description: "Please enter engineer name" });
+            toast({ title: "Please enter engineer name" });
             return;
         }
         setEngineerLoading(true);
@@ -136,11 +136,11 @@ export default function AddModel() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: newId, name: newEngineer }),
             });
-            toast({ title: "Success", description: "Engineer created successfully" });
+            toast({ title: "Engineer created successfully" });
             setNewEngineer("");
             fetchEngineers();
         } catch {
-            toast({ title: "Error", description: "Failed to create engineer", variant: "destructive" });
+            toast({ title: "Failed to create engineer", variant: "destructive" });
         } finally {
             setEngineerLoading(false);
         }
@@ -148,7 +148,7 @@ export default function AddModel() {
 
     const handleCreateServiceEngineer = async () => {
         if (!newServiceEngineer) {
-            toast({ title: "Warning", description: "Please enter service engineer name" });
+            toast({ title: "Please enter service engineer name" });
             return;
         }
         setServiceEngineerLoading(true);
@@ -159,11 +159,11 @@ export default function AddModel() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: newId, name: newServiceEngineer }),
             });
-            toast({ title: "Success", description: "Service engineer created successfully" });
+            toast({ title: "Service engineer created successfully" });
             setNewServiceEngineer("");
             fetchServiceEngineers();
         } catch {
-            toast({ title: "Error", description: "Failed to create service engineer", variant: "destructive" });
+            toast({ title: "Failed to create service engineer", variant: "destructive" });
         } finally {
             setServiceEngineerLoading(false);
         }
@@ -171,30 +171,29 @@ export default function AddModel() {
 
     const handleDelete = async (
         id: string,
-        type: "model" | "engineer" | "serviceEngineer"
+        type: "Model" | "Engineer" | "Service Engineer"
     ) => {
         if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
 
         setDeleteLoadingId(id);
         try {
             const endpoint =
-                type === "model"
+                type === "Model"
                     ? `/api/models?id=${id}`
-                    : type === "engineer"
+                    : type === "Engineer"
                         ? `/api/engineers?id=${id}`
                         : `/api/service-engineers?id=${id}`;
 
             await fetch(endpoint, { method: "DELETE" });
 
-            toast({ title: "Deleted", description: `${type} deleted successfully` });
+            toast({ title: `${type} deleted successfully` });
 
-            if (type === "model") fetchModels();
-            else if (type === "engineer") fetchEngineers();
+            if (type === "Model") fetchModels();
+            else if (type === "Engineer") fetchEngineers();
             else fetchServiceEngineers();
         } catch {
             toast({
-                title: "Error",
-                description: `Failed to delete ${type}`,
+                title: `Failed to delete ${type}`,
                 variant: "destructive",
             });
         } finally {
@@ -212,13 +211,11 @@ export default function AddModel() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/admin/dashboard">
-                                    <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                                </BreadcrumbLink>
+                                <BreadcrumbLink href="/admin/dashboard">Dashboard</BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Manage Resources</BreadcrumbPage>
+                                <BreadcrumbPage>Create Model</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -229,10 +226,10 @@ export default function AddModel() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-center">
-                                Models
+                                Create Model
                             </CardTitle>
                             <CardDescription className="text-center">
-                                Manage your vehicle models
+                                Fill out the form below to create a new model
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -247,7 +244,7 @@ export default function AddModel() {
                                                 {model.model_name} - {model.range}
                                             </span>
                                             <button
-                                                onClick={() => handleDelete(model.id, "model")}
+                                                onClick={() => handleDelete(model.id, "Model")}
                                                 className="text-red-500 hover:text-red-700 transition"
                                                 disabled={deleteLoadingId === model.id}
                                             >
@@ -256,57 +253,28 @@ export default function AddModel() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-center text-gray-500">No models available</p>
+                                    <p className="text-center text-gray-500">Create model & range and add data</p>
                                 )}
                             </div>
-
-                           
-                            <div className="flex gap-4 items-center">
-                                <select
-                                    className="w-full sm:w-1/2 bg-white border px-3 py-2 rounded-md text-black"
-                                    value={selectedModelId}
-                                    onChange={(e) => {
-                                        const modelId = e.target.value;
-                                        setSelectedModelId(modelId);
-                                        const selectedModel = models.find((model) => model.id === modelId);
-                                        setSelectedRange(selectedModel?.range || "");
-                                    }}
-                                >
-                                    <option value="">Select Model</option>
-                                    {models.map((model) => (
-                                        <option key={model.id} value={model.id}>
-                                            {model.model_name}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <input
-                                    value={selectedRange}
-                                    readOnly
-                                    className="w-full sm:w-1/2 bg-gray-100 border px-3 py-2 rounded-md text-black"
-                                    placeholder="Model Range"
-                                />
-                            </div>
-
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input
                                     value={newModel}
                                     onChange={(e) => setNewModel(e.target.value)}
-                                    placeholder="New Model Name"
+                                    placeholder="Create Model Name"
                                     className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-black focus:ring-1 px-3 py-2 rounded-md"
                                 />
                                 <input
                                     value={newRange}
                                     onChange={(e) => setNewRange(e.target.value)}
-                                    placeholder="New Range"
+                                    placeholder="Create Range"
                                     className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-black focus:ring-1 px-3 py-2 rounded-md"
                                 />
                             </div>
                             <button
                                 onClick={handleCreateModel}
                                 disabled={modelLoading}
-                                className="bg-blue-950 hover:bg-blue-900 text-white font-semibold py-2 px-4 rounded-md w-full transition"
+                                className="bg-purple-950 hover:bg-purple-900 text-white font-semibold py-2 px-4 rounded-md w-full transition"
                             >
                                 {modelLoading ? "Creating..." : "Create New Model"}
                             </button>
@@ -318,10 +286,10 @@ export default function AddModel() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-center">
-                                Engineers
+                                Create Engineer
                             </CardTitle>
                             <CardDescription className="text-center">
-                                Manage your engineers
+                                Fill out the form below to create a new engineer
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -336,7 +304,7 @@ export default function AddModel() {
                                                 {eng.name}
                                             </span>
                                             <button
-                                                onClick={() => handleDelete(eng.id, "engineer")}
+                                                onClick={() => handleDelete(eng.id, "Engineer")}
                                                 className="text-red-500 hover:text-red-700 transition"
                                                 disabled={deleteLoadingId === eng.id}
                                             >
@@ -345,20 +313,8 @@ export default function AddModel() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-center text-gray-500">No engineers available</p>
+                                    <p className="text-center text-gray-500">Create engineer and add data</p>
                                 )}
-                            </div>
-
-                            {/* Dropdown alone on first line */}
-                            <div>
-                                <select className="w-full sm:w-1/3 bg-white border px-3 py-2 rounded-md text-black">
-                                    <option>Select Engineer</option>
-                                    {engineers.map((eng) => (
-                                        <option key={eng.id} value={eng.id}>
-                                            {eng.name}
-                                        </option>
-                                    ))}
-                                </select>
                             </div>
 
                             {/* Input and Button below */}
@@ -369,14 +325,15 @@ export default function AddModel() {
                                     placeholder="New Engineer Name"
                                     className="flex-1 bg-white border border-gray-300 px-3 py-2 rounded-md text-black"
                                 />
-                                <button
-                                    onClick={handleCreateEngineer}
-                                    disabled={engineerLoading}
-                                    className="bg-blue-950 hover:bg-blue-900 text-white px-4 py-2 rounded-md w-full sm:w-40 transition"
-                                >
-                                    {engineerLoading ? "Creating..." : "Add Engineer"}
-                                </button>
+
                             </div>
+                            <button
+                                onClick={handleCreateEngineer}
+                                disabled={engineerLoading}
+                                className="bg-purple-950 hover:bg-purple-900 text-white font-semibold py-2 px-4 rounded-md w-full transition"
+                            >
+                                {engineerLoading ? "Creating..." : "Create Engineer"}
+                            </button>
                         </CardContent>
                     </Card>
 
@@ -385,10 +342,10 @@ export default function AddModel() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-center">
-                                Service Engineers
+                                Create Service Engineer
                             </CardTitle>
                             <CardDescription className="text-center">
-                                Manage your service engineers
+                                Fill out the form below to create a new service engineer
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -404,7 +361,7 @@ export default function AddModel() {
                                                 {eng.name}
                                             </span>
                                             <button
-                                                onClick={() => handleDelete(eng.id, "serviceEngineer")}
+                                                onClick={() => handleDelete(eng.id, "Service Engineer")}
                                                 className="text-red-500 hover:text-red-700 transition"
                                                 disabled={deleteLoadingId === eng.id}
                                             >
@@ -413,21 +370,9 @@ export default function AddModel() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-center text-gray-500">No service engineers available</p>
+                                    <p className="text-center text-gray-500">Create service engineer and add data</p>
                                 )}
                             </div>
-
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <select className="w-full sm:w-1/3 bg-white border px-3 py-2 rounded-md text-black">
-                                    <option>Select Service Engineer</option>
-                                    {serviceEngineers.map((eng) => (
-                                        <option key={eng.id} value={eng.id}>
-                                            {eng.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
 
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <input
@@ -436,14 +381,15 @@ export default function AddModel() {
                                     placeholder="New Service Engineer Name"
                                     className="flex-1 bg-white border border-gray-300 px-3 py-2 rounded-md text-black"
                                 />
-                                <button
-                                    onClick={handleCreateServiceEngineer}
-                                    disabled={serviceEngineerLoading}
-                                    className="bg-blue-950 hover:bg-blue-900 text-white px-4 py-2 rounded-md w-full sm:w-40 transition"
-                                >
-                                    {serviceEngineerLoading ? "Creating..." : "Add Service Engineer"}
-                                </button>
+
                             </div>
+                            <button
+                                onClick={handleCreateServiceEngineer}
+                                disabled={serviceEngineerLoading}
+                                className="bg-purple-950 hover:bg-purple-900 text-white font-semibold py-2 px-4 rounded-md w-full transition"
+                            >
+                                {serviceEngineerLoading ? "Creating..." : "Create Service Engineer"}
+                            </button>
                         </CardContent>
                     </Card>
                 </div>

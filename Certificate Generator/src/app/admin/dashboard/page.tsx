@@ -37,6 +37,7 @@ interface Certificate {
 }
 
 interface Service {
+    [x: string]: any;
     _id: string;
     nameAndLocation: string;
     contactPerson: string;
@@ -96,19 +97,19 @@ const formatDate = (dateString: string): string => {
 };
 
 const columns = [
-    { name: "Certificate Number", uid: "certificateNo", sortable: true, width: "120px" },
-    { name: "Customer", uid: "customerName", sortable: true, width: "120px" },
-    { name: "Site Location", uid: "siteLocation", sortable: true, width: "120px" },
-    { name: "Make Model", uid: "makeModel", sortable: true, width: "120px" },
-    { name: "Serial Number", uid: "serialNo", sortable: true, width: "120px" },
-    { name: "Engineer Name", uid: "engineerName", sortable: true, width: "120px" },
+    { name: "Certificate Number", uid: "certificate_no", sortable: true, width: "120px" },
+    { name: "Customer", uid: "customer_name", sortable: true, width: "120px" },
+    { name: "Site Location", uid: "site_location", sortable: true, width: "120px" },
+    { name: "Model", uid: "make_model", sortable: true, width: "120px" },
+    { name: "Serial Number", uid: "serial_no", sortable: true, width: "120px" },
+    { name: "Engineer Name", uid: "engineer_name", sortable: true, width: "120px" },
 ];
 
 const columnsservice = [
-    { name: "Contact Person", uid: "contactPerson", sortable: true, width: "120px" },
-    { name: "Contact Number", uid: "contactNumber", sortable: true, width: "120px" },
-    { name: "Service Engineer", uid: "serviceEngineer", sortable: true, width: "120px" },
-    { name: "Report Number", uid: "reportNo", sortable: true, width: "120px" },
+    { name: "Contact Person", uid: "contact_person", sortable: true, width: "120px" },
+    { name: "Contact Number", uid: "contact_number", sortable: true, width: "120px" },
+    { name: "Service Engineer", uid: "service_engineer", sortable: true, width: "120px" },
+    { name: "Report Number", uid: "report_no", sortable: true, width: "120px" },
 ];
 
 export const statusOptions = [
@@ -157,7 +158,7 @@ export default function Page() {
     const fetchCertificates = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:5000/api/v1/certificates/getCertificate",
+                "/api/certificates",
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -215,7 +216,7 @@ export default function Page() {
     const fetchServices = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:5000/api/v1/services/getServices",
+                "/api/services",
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -330,12 +331,12 @@ export default function Page() {
 
         if (hasSearchFilter) {
             filteredCertificates = filteredCertificates.filter((certificate) =>
-                certificate.certificateNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.siteLocation.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.makeModel.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.serialNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.engineerName.toLowerCase().includes(filterValue.toLowerCase())
+                certificate.certificate_no.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.customer_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.site_location.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.make_model.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.serial_no.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.engineer_name.toLowerCase().includes(filterValue.toLowerCase())
             );
         }
 
@@ -347,10 +348,10 @@ export default function Page() {
 
         if (hasSearchFilterservice) {
             filteredServices = filteredServices.filter((service) =>
-                service.contactPerson.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.contactNumber.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.serviceEngineer.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.reportNo.toLowerCase().includes(filterValueservice.toLowerCase())
+                service.contact_person.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.contact_number.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.service_engineer.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.report_no.toLowerCase().includes(filterValueservice.toLowerCase())
             );
         }
 
@@ -637,7 +638,7 @@ export default function Page() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-                        
+
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -721,7 +722,7 @@ export default function Page() {
                                                 </TableColumn>
                                             )}
                                         </TableHeader>
-                                        <TableBody emptyContent={"No certificate available"} items={sortedItems}>
+                                        <TableBody emptyContent={"Go to create certificate and add data"} items={sortedItems}>
                                             {(item) => (
                                                 <TableRow key={item._id}>
                                                     {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}
@@ -769,7 +770,7 @@ export default function Page() {
                                                 </TableColumn>
                                             )}
                                         </TableHeader>
-                                        <TableBody emptyContent={"No service available"} items={sortedItemsservice}>
+                                        <TableBody emptyContent={"Go to create service and add data"} items={sortedItemsservice}>
                                             {(item) => (
                                                 <TableRow key={item._id}>
                                                     {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCellservice(item as Service, columnKey as string)}</TableCell>}

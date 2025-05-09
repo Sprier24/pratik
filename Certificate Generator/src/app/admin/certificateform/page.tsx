@@ -72,7 +72,7 @@ export default function CertificateForm() {
         makeModel: "",
         range: "",
         serialNo: "",
-        calibrationGas: "", 
+        calibrationGas: "",
         gasCanisterDetails: "",
         dateOfCalibration: new Date().toISOString().split('T')[0],
         calibrationDueDate: new Date().toISOString().split('T')[0],
@@ -98,13 +98,12 @@ export default function CertificateForm() {
 
     const fetchCompanies = async () => {
         try {
-            const res = await axios.get('/api/companies'); 
-            setCompanies(res.data); 
+            const res = await axios.get('/api/companies');
+            setCompanies(res.data);
         } catch (err: any) {
-            console.error("Error fetching companies:", err);
+            console.error("Error fetching company", err);
             toast({
-                title: 'Error',
-                description: err.response?.data?.error || 'Failed to fetch companies.',
+                title: 'Failed to fetch company',
                 variant: 'destructive',
             });
         }
@@ -121,7 +120,7 @@ export default function CertificateForm() {
                 const data = await res.json();
                 setModels(data);
             } catch {
-                toast({ title: "Error", description: "Failed to load models", variant: "destructive" });
+                toast({ title: "Failed to load models", variant: "destructive" });
             }
         };
 
@@ -131,7 +130,7 @@ export default function CertificateForm() {
                 const data = await res.json();
                 setEngineers(data);
             } catch {
-                toast({ title: "Error", description: "Failed to load engineers", variant: "destructive" });
+                toast({ title: "Failed to load engineers", variant: "destructive" });
             }
         };
 
@@ -142,13 +141,13 @@ export default function CertificateForm() {
     useEffect(() => {
         const fetchCertificateData = async () => {
             const today = new Date().toISOString().split('T')[0];
-    
+
             if (!certificateId) return;
-    
+
             try {
                 setLoading(true);
                 setError(null);
-    
+
                 const response = await axios.get(
                     `/api/certificates?id=${certificateId}`,
                     {
@@ -157,16 +156,16 @@ export default function CertificateForm() {
                         }
                     }
                 );
-    
+
                 // Check if response.data exists and has the expected structure
                 if (!response.data) {
                     throw new Error("No data received from server");
                 }
-    
+
                 // Assuming your API returns the certificate directly in response.data
                 // (not nested in success/data structure as your error check suggests)
                 const certificateData = response.data;
-    
+
                 const transformedData = {
                     certificateNo: certificateData.certificate_no || generateCertificateNumber(),
                     customerName: certificateData.customer_name || "",
@@ -178,15 +177,15 @@ export default function CertificateForm() {
                     gasCanisterDetails: certificateData.gas_canister_details || "",
                     dateOfCalibration: certificateData.date_of_calibration?.split('T')[0] || today,
                     calibrationDueDate: certificateData.calibration_due_date?.split('T')[0] || today,
-                    observations: Array.isArray(certificateData.observations) 
-                        ? certificateData.observations 
+                    observations: Array.isArray(certificateData.observations)
+                        ? certificateData.observations
                         : typeof certificateData.observations === 'string'
                             ? JSON.parse(certificateData.observations)
                             : [{ gas: "", before: "", after: "" }],
                     engineerName: certificateData.engineer_name || "",
                     status: certificateData.status || ""
                 };
-    
+
                 // Update all your state variables
                 setFormData(prev => ({
                     ...prev,
@@ -202,22 +201,22 @@ export default function CertificateForm() {
                     engineerName: transformedData.engineerName,
                     status: transformedData.status
                 }));
-                
+
                 setStartDate(transformedData.dateOfCalibration);
                 setEndDate(transformedData.calibrationDueDate);
                 setSelectedModelId(transformedData.makeModel);
                 setSelectedRange(transformedData.range);
-    
+
             } catch (error) {
                 const err = error as Error;
-                console.error("Error fetching certificate:", err);
-                setError(err.message || "Failed to load certificate data");
+                console.error("Error fetching certificate", err);
+                setError(err.message || "Failed to load certificate");
                 // Consider showing a user-friendly error message
             } finally {
                 setLoading(false);
             }
         };
-    
+
         fetchCertificateData();
     }, [certificateId]);
 
@@ -274,7 +273,7 @@ export default function CertificateForm() {
         const modelName = selectedModel?.model_name || "";
 
         let updatedObservations = [{ gas: "", before: "", after: "" }];
-        
+
         if (modelName === "GMIleakSurveyor") {
             updatedObservations = Array(3).fill({ gas: "", before: "", after: "" });
         } else if (modelName === "GMIGT41Series") {
@@ -313,122 +312,121 @@ export default function CertificateForm() {
         setFormData({ ...formData, observations: updatedObservations });
     };
 
- const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
 
-    try {
-        // Define required fields with their display names
-        const requiredFields: Record<string, string> = {
-            customerName: "Customer Name",
-            siteLocation: "Site Location",
-            makeModel: "Make/Model",
-            range: "Range",
-            serialNo: "Serial No",
-            calibrationGas: "Calibration Gas",
-            gasCanisterDetails: "Gas Canister Details",
-            status: "Status",
-            engineerName: "Engineer Name"
-        };
+        try {
+            // Define required fields with their display names
+            const requiredFields: Record<string, string> = {
+                customerName: "Customer Name",
+                siteLocation: "Site Location",
+                makeModel: "Make/Model",
+                range: "Range",
+                serialNo: "Serial No",
+                calibrationGas: "Calibration Gas",
+                gasCanisterDetails: "Gas Canister Details",
+                status: "Status",
+                engineerName: "Engineer Name"
+            };
 
-        // Validate required fields
-        const missingFields = Object.entries(requiredFields)
-            .filter(([field]) => !formData[field as keyof typeof formData]?.toString().trim())
-            .map(([_, label]) => label);
+            // Validate required fields
+            const missingFields = Object.entries(requiredFields)
+                .filter(([field]) => !formData[field as keyof typeof formData]?.toString().trim())
+                .map(([_, label]) => label);
 
-        // Validate dates
-        if (!startDate) missingFields.push("Date of Calibration");
-        if (!endDate) missingFields.push("Calibration Due Date");
+            // Validate dates
+            if (!startDate) missingFields.push("Date of Calibration");
+            if (!endDate) missingFields.push("Calibration Due Date");
 
-        // Validate observations
-        const invalidObservations = formData.observations
-            .map((obs, index) => {
-                const missing: string[] = [];
-                if (!obs.gas?.trim()) missing.push(`Observation ${index + 1} - Gas`);
-                if (!obs.before?.trim()) missing.push(`Observation ${index + 1} - Before`);
-                if (!obs.after?.trim()) missing.push(`Observation ${index + 1} - After`);
-                return missing;
-            })
-            .flat();
+            // Validate observations
+            const invalidObservations = formData.observations
+                .map((obs, index) => {
+                    const missing: string[] = [];
+                    if (!obs.gas?.trim()) missing.push(`Observation ${index + 1} - Gas`);
+                    if (!obs.before?.trim()) missing.push(`Observation ${index + 1} - Before`);
+                    if (!obs.after?.trim()) missing.push(`Observation ${index + 1} - After`);
+                    return missing;
+                })
+                .flat();
 
-        // Combine all validation errors
-        const validationErrors = [...missingFields, ...invalidObservations];
-        if (validationErrors.length > 0) {
-            setError(`Please fill in: ${validationErrors.join(", ")}`);
-            setLoading(false);
-            return;
-        }
-
-        // Prepare submission data
-        const submissionData = {
-            ...formData,
-            id: certificateId || undefined, // Only include ID in edit mode
-            dateOfCalibration: startDate,
-            calibrationDueDate: endDate,
-            observations: formData.observations.map(obs => ({
-                gas: obs.gas.trim(),
-                before: obs.before.trim(),
-                after: obs.after.trim()
-            }))
-        };
-
-        // Determine API endpoint and method
-        const isEditMode = !!certificateId;
-        const method = isEditMode ? 'put' : 'post';
-        const url = `/api/certificates${isEditMode ? `?id=${certificateId}` : ''}`;
-
-        // Make API request
-        const response = await axios({
-            method,
-            url,
-            data: submissionData,
-            headers: {
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json"
+            // Combine all validation errors
+            const validationErrors = [...missingFields, ...invalidObservations];
+            if (validationErrors.length > 0) {
+                setError(`Please fill in: ${validationErrors.join(", ")}`);
+                setLoading(false);
+                return;
             }
-        });
 
-        // Handle success
-        setCertificate(response.data);
-        toast({
-            title: "Success",
-            description: isEditMode 
-                ? "Certificate updated successfully" 
-                : "Certificate created successfully",
-            variant: "default",
-        });
+            // Prepare submission data
+            const submissionData = {
+                ...formData,
+                id: certificateId || undefined, // Only include ID in edit mode
+                dateOfCalibration: startDate,
+                calibrationDueDate: endDate,
+                observations: formData.observations.map(obs => ({
+                    gas: obs.gas.trim(),
+                    before: obs.before.trim(),
+                    after: obs.after.trim()
+                }))
+            };
 
-        // Optionally redirect or reset form
-        if (!isEditMode) {
-            // Reset form or redirect to edit page
-            // router.push(`/certificates/${response.data.id}`);
+            // Determine API endpoint and method
+            const isEditMode = !!certificateId;
+            const method = isEditMode ? 'put' : 'post';
+            const url = `/api/certificates${isEditMode ? `?id=${certificateId}` : ''}`;
+
+            // Make API request
+            const response = await axios({
+                method,
+                url,
+                data: submissionData,
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            // Handle success
+            setCertificate(response.data);
+            toast({
+                title: isEditMode
+                    ? "Certificate updated successfully"
+                    : "Certificate created successfully",
+                variant: "default",
+            });
+
+            // Optionally redirect or reset form
+            if (!isEditMode) {
+                // Reset form or redirect to edit page
+                // router.push(`/certificates/${response.data.id}`);
+            }
+
+        } catch (err: unknown) {
+            // Enhanced error handling
+            let errorMessage = "An unexpected error occurred";
+
+            if (axios.isAxiosError(err)) {
+                errorMessage = err.response?.data?.message ||
+                    err.response?.data?.error ||
+                    err.message;
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+
+            console.error("Submission error", errorMessage);
+            setError(errorMessage);
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
         }
+    };
 
-    } catch (err: unknown) {
-        // Enhanced error handling
-        let errorMessage = "An unexpected error occurred";
-        
-        if (axios.isAxiosError(err)) {
-            errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          err.message;
-        } else if (err instanceof Error) {
-            errorMessage = err.message;
-        }
-
-        console.error("Submission error:", errorMessage);
-        setError(errorMessage);
-        toast({
-            title: "Error",
-            description: errorMessage,
-            variant: "destructive",
-        });
-    } finally {
-        setLoading(false);
-    }
-};
-    
 
     const filteredCompanies = companies.filter(company =>
         company.company_name.toLowerCase().includes(companySearchTerm.toLowerCase())
@@ -563,7 +561,7 @@ export default function CertificateForm() {
         };
 
         logo.onerror = () => {
-            console.error("Failed to load logo image.");
+            console.error("Failed to load logo image");
             alert("Logo image not found. Please check the path.");
         };
     };
@@ -668,7 +666,7 @@ export default function CertificateForm() {
                                                     ))
                                                 ) : (
                                                     <li className="px-4 py-2 text-gray-500">
-                                                        {companySearchTerm ? "No companies found" : "Start typing to search companies"}
+                                                        {companySearchTerm ? "Go to create company and add data" : "Start typing to search company"}
                                                     </li>
                                                 )}
                                             </ul>
@@ -796,7 +794,7 @@ export default function CertificateForm() {
                                         value={formData.certificateNo}
                                         onChange={handleChange}
                                         readOnly
-                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        className="bg-gray-100 text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
                                     />
                                     <select
                                         name="status"
@@ -815,7 +813,7 @@ export default function CertificateForm() {
                                     <button
                                         type="button"
                                         onClick={addObservation}
-                                        className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900"
+                                        className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-purple-900"
                                         disabled={formData.observations.length >= 5}
                                     >
                                         Create Observation
@@ -841,7 +839,7 @@ export default function CertificateForm() {
                                                         name="gas"
                                                         value={observation.gas}
                                                         onChange={(e) => handleObservationChange(index, 'gas', e.target.value)}
-                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md"
+                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md w-full"
                                                     />
                                                 </td>
                                                 <td className="border p-2">
@@ -850,7 +848,7 @@ export default function CertificateForm() {
                                                         name="before"
                                                         value={observation.before}
                                                         onChange={(e) => handleObservationChange(index, 'before', e.target.value)}
-                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md"
+                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md w-full"
                                                     />
                                                 </td>
                                                 <td className="border p-2">
@@ -859,7 +857,7 @@ export default function CertificateForm() {
                                                         name="after"
                                                         value={observation.after}
                                                         onChange={(e) => handleObservationChange(index, 'after', e.target.value)}
-                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md"
+                                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-1 rounded-md w-full"
                                                     />
                                                 </td>
                                                 <td className="border p-2">
@@ -891,7 +889,7 @@ export default function CertificateForm() {
 
                                 <button
                                     type="submit"
-                                    className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
+                                    className="bg-purple-950 hover:bg-purple-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
                                     {loading ? "Generating..." : "Generate Certificate"}
