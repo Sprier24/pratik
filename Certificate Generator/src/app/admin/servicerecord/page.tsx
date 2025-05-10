@@ -144,7 +144,7 @@ export default function AdminServiceTable() {
                 throw new Error('Invalid response format');
             }
 
-            // Sort by createdAt in descending order (newest first)
+
             servicesData.sort((a: { createdAt: string | number | Date; }, b: { createdAt: string | number | Date; }) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
@@ -182,19 +182,25 @@ export default function AdminServiceTable() {
 
         if (hasSearchFilter) {
             filteredServices = filteredServices.filter((service) =>
-                service.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
-                service.contactPerson.toLowerCase().includes(filterValue.toLowerCase()) ||
-                service.contactNumber.toLowerCase().includes(filterValue.toLowerCase()) ||
-                service.serviceEngineer.toLowerCase().includes(filterValue.toLowerCase()) ||
-                service.reportNo.toLowerCase().includes(filterValue.toLowerCase())
+                service.customer_name?.toLowerCase().includes(filterValue.toLowerCase()) ||
+                service.contact_person?.toLowerCase().includes(filterValue.toLowerCase()) ||
+                service.contact_number?.toLowerCase().includes(filterValue.toLowerCase()) ||
+                service.service_engineer?.toLowerCase().includes(filterValue.toLowerCase()) ||
+                service.report_no?.toLowerCase().includes(filterValue.toLowerCase())
             );
         }
+
 
         if (startDate || endDate) {
             filteredServices = filteredServices.filter((service) => {
                 const serviceDate = new Date(service.date);
+                serviceDate.setHours(0, 0, 0, 0);
+
                 const start = startDate ? new Date(startDate) : null;
                 const end = endDate ? new Date(endDate) : null;
+
+                if (start) start.setHours(0, 0, 0, 0);
+                if (end) end.setHours(23, 59, 59, 999);
 
                 if (start && end) {
                     return serviceDate >= start && serviceDate <= end;
@@ -206,6 +212,7 @@ export default function AdminServiceTable() {
                 return true;
             });
         }
+
 
         return filteredServices;
     }, [services, filterValue, hasSearchFilter, startDate, endDate]);
@@ -491,7 +498,7 @@ export default function AdminServiceTable() {
             console.log("Attempting to delete service ID:", serviceId);
 
             const response = await axios.delete(
-                `/api/services?id=${serviceId}`, // Use service ID in the URL path
+                `/api/services?id=${serviceId}`,
                 {
                     headers: {
                         "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -502,11 +509,11 @@ export default function AdminServiceTable() {
             console.log("Delete response:", response.data);
 
             toast({
-                title: "Service successfully deleted",
+                title: "Service deleted successfully",
                 variant: "default",
             });
 
-            await fetchServices(); // Ensure you refresh the services list after deletion
+            await fetchServices();
 
         } catch (error) {
             console.error("Full delete error", error);
@@ -562,7 +569,7 @@ export default function AdminServiceTable() {
                             <Edit className="h-6 w-6" />
                         </span>
                     </Tooltip>
-                    <Tooltip content="Delete" color="danger">
+                    <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleDelete(service.id)}

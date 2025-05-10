@@ -4,14 +4,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai"
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import "react-toastify/dist/ReactToastify.css"
 import { ReloadIcon } from "@radix-ui/react-icons"
-import { AlignCenter } from "lucide-react"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -29,8 +27,7 @@ export function LoginForm() {
 
     if (!email) {
       toast({
-        title: "Error",
-        description: "Please enter your email address",
+        title: "Please enter your email address",
         variant: "destructive",
       });
       return;
@@ -40,7 +37,7 @@ export function LoginForm() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/v1/users/forgot-password",
+        "/api/forgot-password",
         { email },
         {
           headers: { "Content-Type": "application/json" },
@@ -54,11 +51,10 @@ export function LoginForm() {
       });
 
     } catch (error: any) {
-      console.error("Forgot password error:", error);
+      console.error("Forgot password error", error);
       setEmailSent(true);
       toast({
-        title: "Success",
-        description: "If an account exists with this email, you'll receive a password reset link.",
+        title: "If an account exists with this email, you'll receive a password reset link.",
       });
     } finally {
       setIsSubmitting(false);
@@ -68,15 +64,14 @@ export function LoginForm() {
   const handleLogin = async () => {
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Email and password are required",
+        title: "Email and password are required",
         variant: "destructive",
       });
       return;
     }
 
-
     const passwordValidation = () => {
+      // Optional password validation
       if (password.length < 8) return "Password must be at least 8 characters";
       if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
       if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
@@ -95,13 +90,11 @@ export function LoginForm() {
       return;
     }
 
-
-
     try {
       setLoading(true);
 
       // User Login Attempt
-      const userResponse = await fetch("http://localhost:5000/api/v1/users/login", {
+      const userResponse = await fetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -110,19 +103,19 @@ export function LoginForm() {
       const userData = await userResponse.json();
 
       if (userResponse.ok) {
+        // Successfully logged in as user
         localStorage.setItem("userId", userData.user.id);
         localStorage.setItem("authToken", userData.accessToken);
 
         toast({
           title: "Login successful",
-          description: "You are now on a dashboard",
         });
         router.push("/user/dashboard");
         return;
       }
 
-      // Admin Login Attempt (Only if user login fails)
-      const adminResponse = await fetch("http://localhost:5000/api/v1/admin/login", {
+      // Admin Login Attempt (only if user login fails)
+      const adminResponse = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -131,29 +124,29 @@ export function LoginForm() {
       const adminData = await adminResponse.json();
 
       if (adminResponse.ok) {
+        // Successfully logged in as admin
         localStorage.setItem("authToken", adminData.accessToken);
-        localStorage.setItem("adminId", adminData.adminId);
-        localStorage.setItem("adminEmail", adminData.email);
+        localStorage.setItem("adminId", adminData.admin.id);  // Corrected the key name
+        localStorage.setItem("adminEmail", adminData.admin.email);
 
         toast({
           title: "Admin login successful",
-          description: "You have logged in as admin",
         });
         router.push("/admin/dashboard");
         return;
       }
 
-      // If both logins fail
+      // If both logins fail, show the error
+      const errorMessage = userData.error || adminData.error || "Invalid credentials";
       toast({
         title: "Login failed",
-        description: userData.message || adminData.message || "Invalid credentials",
+        description: errorMessage,
         variant: "destructive",
       });
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to process request",
+        title: "Failed to process request",
         variant: "destructive",
       });
     } finally {
@@ -161,22 +154,24 @@ export function LoginForm() {
     }
   };
 
+
+
   return (
     <div className="flex flex-col items-center gap-4">
-      
-      
-  
+
+
+
       {isForgotPassword ? (
         emailSent ? (
-          <div className="border border-neutral-300 dark:border-neutral-700 rounded-xl p-6 shadow-sm">
-            <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">
+          <div className="border border-black dark:border-black rounded-xl p-6 shadow-sm">
+            <h2 className="font-bold text-xl text-black dark:text-black">
               Check your email
             </h2>
-            <p className="text-neutral-600 text-sm mt-2 dark:text-neutral-300">
+            <p className="text-black text-sm mt-2 dark:text-black">
               If an account exists with this email, you'll receive a password reset link.
             </p>
             <p
-              className="flex items-center justify-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer mt-4"
+              className="flex items-center justify-center gap-1 text-sm text-blue-600 dark:text-blue-600 hover:underline cursor-pointer mt-4"
               onClick={() => {
                 setIsForgotPassword(false);
                 setEmailSent(false);
@@ -186,11 +181,11 @@ export function LoginForm() {
             </p>
           </div>
         ) : (
-          <div className="border border-neutral-300 dark:border-neutral-700 rounded-xl p-6 shadow-sm">
-            <h2 className="font-bold text-xl text-neutral-800 dark:text-neutral-200">
+          <div className="border border-black dark:border-black rounded-xl p-6 shadow-sm">
+            <h2 className="font-bold text-xl text-black dark:text-black">
               Forgot Password
             </h2>
-            <p className="text-neutral-600 text-sm mt-2 dark:text-neutral-300">
+            <p className="text-black text-sm mt-2 dark:text-black">
               Enter your email address to receive a password reset link
             </p>
             <form onSubmit={handleForgotPasswordSubmit} className="my-8">
@@ -218,7 +213,7 @@ export function LoginForm() {
               </Button>
             </form>
             <p
-              className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-600 hover:underline cursor-pointer"
               onClick={() => setIsForgotPassword(false)}
             >
               Back to Login
@@ -228,7 +223,7 @@ export function LoginForm() {
       ) : (
         <Card className="w-[350px]">
           <CardHeader>
-        <img src="/img/rps.png" className="w-full h-auto max-w-[450px]" alt="Logo" />
+            <img src="/img/rps.png" className="w-full h-auto max-w-[450px]" alt="Logo" />
             <CardTitle className=" text-2xl text-center">Login</CardTitle>
           </CardHeader>
           <CardContent>
@@ -267,7 +262,7 @@ export function LoginForm() {
           <CardFooter className="flex flex-col gap-4">
             <div className="flex justify-end mb-8">
               <p
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                className="text-sm text-blue-700 dark:text-blue-700 hover:underline cursor-pointer"
                 onClick={() => setIsForgotPassword(true)}
               >
                 Forgot Password?
@@ -288,5 +283,5 @@ export function LoginForm() {
       )}
     </div>
   );
-  
+
 }

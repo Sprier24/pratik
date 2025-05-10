@@ -87,7 +87,7 @@ export default function CertificateTable() {
             const certificatesWithKeys = certificatesData.map((certificate: Certificate) => ({
                 ...certificate,
                 key: certificate.id || generateUniqueId(),
-                _id: certificate.id, // Map id to _id if needed
+                _id: certificate.id,
             }));
             setCertificates(certificatesWithKeys);
             setError(null);
@@ -135,23 +135,29 @@ export default function CertificateTable() {
     const filteredItems = React.useMemo(() => {
         let filteredCertificates = [...certificates];
         if (hasSearchFilter) {
+            const searchLower = filterValue.toLowerCase();
             filteredCertificates = filteredCertificates.filter((certificate) =>
-                certificate.certificateNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.siteLocation.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.makeModel.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.serialNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.engineerName.toLowerCase().includes(filterValue.toLowerCase())
+                (certificate.certificate_no?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.customer_name?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.site_location?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.make_model?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.serial_no?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.engineer_name?.toLowerCase() ?? "").includes(searchLower)
             );
         }
         if (startDate || endDate) {
             filteredCertificates = filteredCertificates.filter((certificate) => {
-                const calibrationDate = new Date(certificate.dateOfCalibration);
+                const dateStr = certificate.dateOfCalibration || certificate.date_of_calibration;
+                if (!dateStr) return false;
+
+                const calibrationDate = new Date(dateStr);
                 const start = startDate ? new Date(startDate) : null;
                 const end = endDate ? new Date(endDate) : null;
+
                 if (start) start.setHours(0, 0, 0, 0);
                 if (end) end.setHours(23, 59, 59, 999);
                 calibrationDate.setHours(0, 0, 0, 0);
+
                 if (start && end) {
                     return calibrationDate >= start && calibrationDate <= end;
                 } else if (start) {
@@ -508,7 +514,7 @@ export default function CertificateTable() {
                                         </TableColumn>
                                     )}
                                 </TableHeader>
-                                <TableBody emptyContent={"Create certificate and add data"} items={sortedItems}>
+                                <TableBody emptyContent={"Go to create certificate and add data"} items={sortedItems}>
                                     {(item) => (
                                         <TableRow key={item._id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

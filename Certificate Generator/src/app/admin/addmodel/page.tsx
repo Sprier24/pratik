@@ -1,26 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { toast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
@@ -30,12 +13,10 @@ interface Model {
     model_name: string;
     range: string;
 }
-
 interface Engineer {
     id: string;
     name: string;
 }
-
 interface ServiceEngineer {
     id: string;
     name: string;
@@ -46,22 +27,15 @@ export default function AddModel() {
     const [newModel, setNewModel] = useState("");
     const [newRange, setNewRange] = useState("");
     const [modelLoading, setModelLoading] = useState(false);
-
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [newEngineer, setNewEngineer] = useState("");
     const [engineerLoading, setEngineerLoading] = useState(false);
-
-    const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>(
-        []
-    );
+    const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
     const [newServiceEngineer, setNewServiceEngineer] = useState("");
     const [serviceEngineerLoading, setServiceEngineerLoading] = useState(false);
-
     const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
-
     const [selectedModelId, setSelectedModelId] = useState<string>("");
     const [selectedRange, setSelectedRange] = useState<string>("");
-
 
     useEffect(() => {
         fetchModels();
@@ -174,7 +148,6 @@ export default function AddModel() {
         type: "Model" | "Engineer" | "Service Engineer"
     ) => {
         if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
-
         setDeleteLoadingId(id);
         try {
             const endpoint =
@@ -183,11 +156,8 @@ export default function AddModel() {
                     : type === "Engineer"
                         ? `/api/engineers?id=${id}`
                         : `/api/service-engineers?id=${id}`;
-
             await fetch(endpoint, { method: "DELETE" });
-
             toast({ title: `${type} deleted successfully` });
-
             if (type === "Model") fetchModels();
             else if (type === "Engineer") fetchEngineers();
             else fetchServiceEngineers();
@@ -220,9 +190,7 @@ export default function AddModel() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </header>
-
                 <div className="container mx-auto py-10 px-4 space-y-10 max-w-5xl">
-                    {/* === MODELS === */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-center">
@@ -256,7 +224,6 @@ export default function AddModel() {
                                     <p className="text-center text-gray-500">Create model & range and add data</p>
                                 )}
                             </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input
                                     value={newModel}
@@ -280,8 +247,6 @@ export default function AddModel() {
                             </button>
                         </CardContent>
                     </Card>
-
-
 
                     <Card>
                         <CardHeader>
@@ -316,8 +281,6 @@ export default function AddModel() {
                                     <p className="text-center text-gray-500">Create engineer and add data</p>
                                 )}
                             </div>
-
-                            {/* Input and Button below */}
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <input
                                     value={newEngineer}
@@ -337,8 +300,6 @@ export default function AddModel() {
                         </CardContent>
                     </Card>
 
-
-                    {/* === SERVICE ENGINEERS === */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-center">
@@ -349,7 +310,6 @@ export default function AddModel() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-
                             <div className="space-y-2 max-h-60 overflow-y-auto">
                                 {serviceEngineers.length ? (
                                     serviceEngineers.map((eng) => (
@@ -373,7 +333,6 @@ export default function AddModel() {
                                     <p className="text-center text-gray-500">Create service engineer and add data</p>
                                 )}
                             </div>
-
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <input
                                     value={newServiceEngineer}

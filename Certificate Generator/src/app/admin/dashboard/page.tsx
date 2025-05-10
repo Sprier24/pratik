@@ -1,13 +1,7 @@
 'use client';
-
-import { Breadcrumb, BreadcrumbSeparator, BreadcrumbPage, BreadcrumbList, BreadcrumbLink, BreadcrumbItem } from "@/components/ui/breadcrumb"
+import { Breadcrumb, BreadcrumbPage, BreadcrumbList, BreadcrumbItem } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar"
-
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import React, { useEffect, useState } from "react"
 import { useRouter } from 'next/navigation';
 import 'react-toastify/dist/ReactToastify.css';
@@ -35,7 +29,6 @@ interface Certificate {
     engineerName: string;
     [key: string]: string;
 }
-
 interface Service {
     [x: string]: any;
     _id: string;
@@ -53,7 +46,6 @@ interface Service {
     serialNumberoftheFaultyNonWorkingInstruments: string;
     engineerName: string;
 }
-
 interface User {
     _id: string;
     name: string;
@@ -65,7 +57,6 @@ type SortDescriptor = {
     column: string;
     direction: 'ascending' | 'descending';
 }
-
 type sortDescriptorService = {
     column: string;
     direction: 'ascending' | 'descending';
@@ -76,7 +67,6 @@ interface CertificateResponse {
     message: string;
     downloadUrl: string;
 }
-
 interface ServiceResponse {
     serviceId: string;
     message: string;
@@ -86,11 +76,9 @@ interface ServiceResponse {
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
-
 const generateUniqueIdService = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
-
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
@@ -104,19 +92,16 @@ const columns = [
     { name: "Serial Number", uid: "serial_no", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineer_name", sortable: true, width: "120px" },
 ];
-
 const columnsservice = [
     { name: "Contact Person", uid: "contact_person", sortable: true, width: "120px" },
     { name: "Contact Number", uid: "contact_number", sortable: true, width: "120px" },
     { name: "Service Engineer", uid: "service_engineer", sortable: true, width: "120px" },
     { name: "Report Number", uid: "report_no", sortable: true, width: "120px" },
 ];
-
 export const statusOptions = [
     { name: "Paused", uid: "paused" },
     { name: "Vacation", uid: "vacation" },
 ];
-
 const statusColorMap: Record<string, ChipProps["color"]> = {
     active: "success",
     paused: "danger",
@@ -131,14 +116,10 @@ export default function Page() {
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(columns.map(column => column.uid)));
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column: "certificateNo",
-        direction: "ascending",
-    });
+    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({ column: "certificateNo", direction: "ascending" });
     const [page, setPage] = React.useState(1);
     const router = useRouter();
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
-
     const [services, setServices] = useState<Service[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
     const [errorService, setErrorService] = useState<string | null>(null);
@@ -146,10 +127,7 @@ export default function Page() {
     const [visibleColumnsService, setVisibleColumnsService] = React.useState<Selection>(new Set(columnsservice.map(column => column.uid)));
     const [statusFilterService, setStatusFilterService] = React.useState<Selection>("all");
     const [rowsPerPageService, setRowsPerPageService] = useState(10);
-    const [sortDescriptorService, setSortDescriptorService] = React.useState<sortDescriptorService>({
-        column: "nameAndLocation",
-        direction: "ascending",
-    });
+    const [sortDescriptorService, setSortDescriptorService] = React.useState<sortDescriptorService>({ column: "nameAndLocation", direction: "ascending" });
     const [pageService, setPageService] = React.useState(1);
     const routerService = useRouter();
     const [isDownloadingService, setIsDownloadingService] = useState<string | null>(null);
@@ -166,39 +144,30 @@ export default function Page() {
                     }
                 }
             );
-
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
                 type: typeof response.data,
                 hasData: 'data' in response.data
             });
-
-            // Handle the response based on its structure
             let certificatesData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...certificates] }
                 certificatesData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...certificates]
                 certificatesData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
-
             if (!Array.isArray(certificatesData)) {
                 certificatesData = [];
             }
-
             const certificatesWithKeys = certificatesData.map((certificate: Certificate) => ({
                 ...certificate,
                 key: certificate._id || generateUniqueId()
             }));
-
             setCertificates(certificatesWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching leads:", error);
             if (axios.isAxiosError(error)) {
@@ -206,7 +175,7 @@ export default function Page() {
             } else {
                 setError("Failed to fetch leads.");
             }
-            setCertificates([]); // Set empty array on error
+            setCertificates([]);
         }
     };
     useEffect(() => {
@@ -224,41 +193,30 @@ export default function Page() {
                     }
                 }
             );
-
-            // Log the response structure
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
                 type: typeof response.data,
                 hasData: 'data' in response.data
             });
-
-            // Handle the response based on its structure
             let servicesData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...services] }
                 servicesData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...services]
                 servicesData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
-
-            // Ensure servicesData is an array
             if (!Array.isArray(servicesData)) {
                 servicesData = [];
             }
-
-            // Map the data with safe key generation
             const servicesWithKeys = servicesData.map((service: Service) => ({
                 ...service,
                 key: service._id || generateUniqueIdService()
             }));
-
             setServices(servicesWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching leads:", error);
             if (axios.isAxiosError(error)) {
@@ -266,7 +224,7 @@ export default function Page() {
             } else {
                 setError("Failed to fetch leads.");
             }
-            setServices([]); // Set empty array on error
+            setServices([]);
         }
     };
     useEffect(() => {
@@ -284,7 +242,6 @@ export default function Page() {
                     }
                 }
             );
-
             let usersData;
             if (typeof response.data === 'object' && 'data' in response.data) {
                 usersData = response.data.data;
@@ -294,11 +251,9 @@ export default function Page() {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
-
             if (!Array.isArray(usersData)) {
                 usersData = [];
             }
-
             setUsers(usersData);
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -313,30 +268,25 @@ export default function Page() {
     const [filterValueservice, setFilterValueservice] = useState("");
     const hasSearchFilter = Boolean(filterValue);
     const hasSearchFilterservice = Boolean(filterValueservice);
-
     const headerColumns = React.useMemo(() => {
         if (visibleColumns === "all") return columns;
-
         return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
     }, [visibleColumns]);
-
     const headerColumnsservice = React.useMemo(() => {
         if (visibleColumnsService === "all") return columnsservice;
-
         return columnsservice.filter((column) => Array.from(visibleColumnsService).includes(column.uid));
     }, [visibleColumnsService]);
-
     const filteredItems = React.useMemo(() => {
         let filteredCertificates = [...certificates];
-
         if (hasSearchFilter) {
+            const searchLower = filterValue.toLowerCase();
             filteredCertificates = filteredCertificates.filter((certificate) =>
-                certificate.certificate_no.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.customer_name.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.site_location.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.make_model.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.serial_no.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.engineer_name.toLowerCase().includes(filterValue.toLowerCase())
+                (certificate.certificateNo?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.customerName?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.siteLocation?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.makeModel?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.serialNo?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.engineerName?.toLowerCase() ?? "").includes(searchLower)
             );
         }
 
@@ -346,12 +296,14 @@ export default function Page() {
     const filteredItemsservice = React.useMemo(() => {
         let filteredServices = [...services];
 
-        if (hasSearchFilterservice) {
+        if (hasSearchFilter) {
+            const searchLower = filterValue.toLowerCase();
             filteredServices = filteredServices.filter((service) =>
-                service.contact_person.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.contact_number.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.service_engineer.toLowerCase().includes(filterValueservice.toLowerCase()) ||
-                service.report_no.toLowerCase().includes(filterValueservice.toLowerCase())
+                (service.customerName?.toLowerCase() ?? "").includes(searchLower) ||
+                (service.contactPerson?.toLowerCase() ?? "").includes(searchLower) ||
+                (service.contactNumber?.toLowerCase() ?? "").includes(searchLower) ||
+                (service.serviceEngineer?.toLowerCase() ?? "").includes(searchLower) ||
+                (service.reportNo?.toLowerCase() ?? "").includes(searchLower)
             );
         }
 
@@ -510,14 +462,14 @@ export default function Page() {
                 </span>
                 <Pagination
                     isCompact
-                    // showControlsf
+
                     showShadow
                     color="success"
                     page={page}
                     total={pages}
                     onChange={setPage}
                     classNames={{
-                        // base: "gap-2 rounded-2xl shadow-lg p-2 dark:bg-default-100",
+
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}
@@ -558,14 +510,14 @@ export default function Page() {
                 </span>
                 <Pagination
                     isCompact
-                    // showControlsf
+
                     showShadow
                     color="success"
                     page={pageService}
                     total={pageservices}
                     onChange={setPageService}
                     classNames={{
-                        // base: "gap-2 rounded-2xl shadow-lg p-2 dark:bg-default-100",
+
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}

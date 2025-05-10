@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { AppSidebar } from "@/components/app-sidebar";
 
-// Schema with updated email validation
+
 const companiesSchema = z.object({
   companyName: z.string().nonempty({ message: "Required" }),
   address: z.string().nonempty({ message: "Required" }),

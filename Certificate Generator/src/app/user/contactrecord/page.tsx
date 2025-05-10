@@ -74,7 +74,7 @@ export default function ContactRecordTable() {
           axios.get('/api/companies')
         ]);
 
-        console.log(contactsRes.data);  // Log the data to check if IDs are present
+        console.log(contactsRes.data);
         setContactPersons(contactsRes.data);
         setCompanies(companiesRes.data);
       } catch (err: any) {

@@ -109,7 +109,7 @@ export default function GenerateService() {
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
 
-    // Generate report number if not in edit mode
+
     const generateReportNo = useCallback(() => {
         const date = new Date();
         const currentYear = date.getFullYear();
@@ -120,7 +120,7 @@ export default function GenerateService() {
         return `RPS/SRV/${yearRange}/${randomNum}`;
     }, []);
 
-    // Fetch contact persons
+
     const fetchContactPersons = useCallback(async () => {
         setIsLoadingContacts(true);
         try {
@@ -151,7 +151,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch engineers
+
     const fetchEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/engineers");
@@ -165,7 +165,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch service engineers
+
     const fetchServiceEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/service-engineers");
@@ -181,7 +181,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch service data if in edit mode
+
     const fetchServiceData = useCallback(async () => {
         if (!isEditMode) return;
 
@@ -245,7 +245,7 @@ export default function GenerateService() {
         }
     }, [isEditMode, serviceId, generateReportNo]);
 
-    // Initialize form data
+
     useEffect(() => {
         if (!isEditMode) {
             setFormData(prev => ({
@@ -255,7 +255,7 @@ export default function GenerateService() {
         }
     }, [isEditMode, generateReportNo]);
 
-    // Fetch all required data
+
     useEffect(() => {
         fetchContactPersons();
         fetchEngineers();
@@ -265,7 +265,7 @@ export default function GenerateService() {
         }
     }, [fetchContactPersons, fetchEngineers, fetchServiceEngineers, fetchServiceData, isEditMode]);
 
-    // Filter contacts based on customer name
+
     useEffect(() => {
         if (!Array.isArray(contactPersons)) {
             setFilteredContacts([]);
@@ -516,7 +516,7 @@ export default function GenerateService() {
                                                             onClick={() => {
                                                                 setFormData(prev => ({
                                                                     ...prev,
-                                                                    customerName: contact.companyName || "",     // ✅ set proper name
+                                                                    customerName: contact.companyName || "",
                                                                     contactPerson: contact.firstName || "",
                                                                     contactNumber: contact.contactNo || "",
                                                                 }));
@@ -645,7 +645,7 @@ export default function GenerateService() {
                     `}
                                                     style={{
                                                         backgroundColor:
-                                                            formData.placeOptions === option ? "#2563EB" : "#ffffff", // blue if selected, white if not
+                                                            formData.placeOptions === option ? "#2563EB" : "#ffffff",
                                                     }}
                                                 />
                                                 <span className="text-black">{option}</span>
@@ -836,7 +836,7 @@ export default function GenerateService() {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeEngineerRemark(index)}
-                                                            className="text-red-600 hover:text-red-800"
+                                                            className="text-black-600 hover:text-black-800"
                                                             aria-label="Remove remark"
                                                         >
                                                             <Trash2 className="h-5 w-5" />

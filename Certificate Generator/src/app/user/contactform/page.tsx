@@ -79,7 +79,7 @@ export default function ContactForm() {
 
   useEffect(() => {
     const fetchContact = async () => {
-      // Ensure both contactId and companies are available
+
       if (!contactId || contactId === "undefined" || companies.length === 0) return;
 
       try {
@@ -87,11 +87,11 @@ export default function ContactForm() {
         const res = await axios.get(`/api/contactPersons?id=${contactId}`);
 
         if (res.data) {
-          // Find the company that matches the contact's company_id
+
           const company = companies.find((c) => c.id === res.data.company_id);
 
           if (company) {
-            // If company found, reset form values with the data
+
             const companyName = company.company_name || company.companyName || "";
 
             form.reset({
@@ -119,7 +119,7 @@ export default function ContactForm() {
       }
     };
 
-    // Fetch contact only if companies are available and contactId is valid
+
     fetchContact();
   }, [contactId, companies, form]);
 
@@ -141,7 +141,7 @@ export default function ContactForm() {
     try {
       const payload = {
         ...values,
-        company: values.companyId, // Send ID to backend
+        company: values.companyId,
       };
 
       if (contactId) {
@@ -255,7 +255,7 @@ export default function ContactForm() {
                                           onClick={() => {
                                             form.setValue("company", name);
                                             form.setValue("companyId", company.id);
-                                            setShowCompanyDropdown(false); // Close dropdown
+                                            setShowCompanyDropdown(false);
                                           }}
                                         >
                                           {name}
@@ -343,7 +343,7 @@ export default function ContactForm() {
                           <Loader2 className="animate-spin mr-2" />
                           {contactId ? "Updating..." : "Creating..."}
                         </>
-                      ) : contactId ? "Update" : "Create"}
+                      ) : contactId ? "Update Contact" : "Create Contact"}
                     </Button>
                   </CardFooter>
                 </form>

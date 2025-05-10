@@ -150,13 +150,13 @@ export default function CompanyDetailsTable() {
         if (hasSearchFilter) {
             const searchLower = filterValue.toLowerCase();
             filtered = filtered.filter(company =>
-                company.company_name.toLowerCase().includes(searchLower) ||
-                company.address.toLowerCase().includes(searchLower) ||
-                company.industries.toLowerCase().includes(searchLower) ||
-                company.industries_type.toLowerCase().includes(searchLower) ||
-                company.gst_number.toLowerCase().includes(searchLower) ||
-                company.website.toLowerCase().includes(searchLower) ||
-                company.flag.toLowerCase().includes(searchLower)
+                (company.company_name?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.address?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.industries?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.industries_type?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.gst_number?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.website?.toLowerCase() ?? "").includes(searchLower) ||
+                (company.flag?.toLowerCase() ?? "").includes(searchLower)
             );
         }
 

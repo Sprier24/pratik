@@ -109,7 +109,7 @@ export default function GenerateService() {
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
 
-    // Generate report number if not in edit mode
+
     const generateReportNo = useCallback(() => {
         const date = new Date();
         const currentYear = date.getFullYear();
@@ -120,7 +120,7 @@ export default function GenerateService() {
         return `RPS/SRV/${yearRange}/${randomNum}`;
     }, []);
 
-    // Fetch contact persons
+
     const fetchContactPersons = useCallback(async () => {
         setIsLoadingContacts(true);
         try {
@@ -151,7 +151,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch engineers
+
     const fetchEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/engineers");
@@ -165,7 +165,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch service engineers
+
     const fetchServiceEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/service-engineers");
@@ -181,7 +181,7 @@ export default function GenerateService() {
         }
     }, []);
 
-    // Fetch service data if in edit mode
+
     const fetchServiceData = useCallback(async () => {
         if (!isEditMode) return;
 
@@ -245,7 +245,7 @@ export default function GenerateService() {
         }
     }, [isEditMode, serviceId, generateReportNo]);
 
-    // Initialize form data
+
     useEffect(() => {
         if (!isEditMode) {
             setFormData(prev => ({
@@ -255,7 +255,7 @@ export default function GenerateService() {
         }
     }, [isEditMode, generateReportNo]);
 
-    // Fetch all required data
+
     useEffect(() => {
         fetchContactPersons();
         fetchEngineers();
@@ -265,7 +265,7 @@ export default function GenerateService() {
         }
     }, [fetchContactPersons, fetchEngineers, fetchServiceEngineers, fetchServiceData, isEditMode]);
 
-    // Filter contacts based on customer name
+
     useEffect(() => {
         if (!Array.isArray(contactPersons)) {
             setFilteredContacts([]);
@@ -507,7 +507,7 @@ export default function GenerateService() {
                                         {showDropdown && (
                                             <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-white shadow-lg max-h-60 overflow-y-auto">
                                                 {isLoadingContacts ? (
-                                                    <li className="px-4 py-2 text-gray-500">Loading contacts...</li>
+                                                    <li className="px-4 py-2 text-gray-500">Start typing to search company</li>
                                                 ) : filteredContacts.length > 0 ? (
                                                     filteredContacts.map((contact) => (
                                                         <li
@@ -516,7 +516,7 @@ export default function GenerateService() {
                                                             onClick={() => {
                                                                 setFormData(prev => ({
                                                                     ...prev,
-                                                                    customerName: contact.companyName || "",     // ✅ set proper name
+                                                                    customerName: contact.companyName || "",
                                                                     contactPerson: contact.firstName || "",
                                                                     contactNumber: contact.contactNo || "",
                                                                 }));
@@ -532,8 +532,8 @@ export default function GenerateService() {
                                                 ) : (
                                                     <li className="px-4 py-2 text-gray-500">
                                                         {contactPersons.length === 0
-                                                            ? "Go to create contact and add data"
-                                                            : "No matching contacts found"}
+                                                            ? "Create customer and add data"
+                                                            : "No matching contact found"}
                                                     </li>
                                                 )}
                                             </ul>
@@ -645,7 +645,7 @@ export default function GenerateService() {
                     `}
                                                     style={{
                                                         backgroundColor:
-                                                            formData.placeOptions === option ? "#2563EB" : "#ffffff", // blue if selected, white if not
+                                                            formData.placeOptions === option ? "#2563EB" : "#ffffff",
                                                     }}
                                                 />
                                                 <span className="text-black">{option}</span>
@@ -701,7 +701,7 @@ export default function GenerateService() {
                                         className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
                                         required
                                     >
-                                        <option value="">Select Engineer</option>
+                                        <option value="">Created By</option>
                                         {engineers.map((eng) => (
                                             <option key={eng.id} value={eng.name}>
                                                 {eng.name}
@@ -738,7 +738,7 @@ export default function GenerateService() {
                                     />
                                     <input
                                         name="engineerReport"
-                                        placeholder="Engineer Report"
+                                        placeholder="Engineer Remark"
                                         value={formData.engineerReport}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
@@ -836,7 +836,7 @@ export default function GenerateService() {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeEngineerRemark(index)}
-                                                            className="text-red-600 hover:text-red-800"
+                                                            className="text-black-600 hover:text-black-800"
                                                             aria-label="Remove remark"
                                                         >
                                                             <Trash2 className="h-5 w-5" />

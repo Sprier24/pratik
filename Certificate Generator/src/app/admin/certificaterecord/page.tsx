@@ -6,14 +6,8 @@ import { Button } from "@/components/ui/button"
 import { SearchIcon, Trash2, Download, ArrowUpIcon, ArrowDownIcon, Edit } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import axios from "axios";
-
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection } from "@heroui/react"
@@ -21,13 +15,11 @@ import { Pagination, Tooltip, User } from "@heroui/react"
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { jsPDF } from "jspdf";
 
-
 interface Observation {
     gas: string;
     before: string;
     after: string;
 }
-
 interface Certificate {
     _id: string;
     certificateNo: string;
@@ -50,13 +42,9 @@ type SortDescriptor = {
     column: string;
     direction: 'ascending' | 'descending';
 }
-
-
-
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
-
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
@@ -73,19 +61,14 @@ const columns = [
 ];
 const INITIAL_VISIBLE_COLUMNS = ["certificate_no", "customer_name", "site_location", "make_model", "serial_no", "engineer_name", "actions"];
 
-
 export default function CertificateTable() {
     const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(new Set([]));
     const [visibleColumns, setVisibleColumns] = React.useState<Selection>(new Set(columns.map(column => column.uid)));
     const [statusFilter, setStatusFilter] = React.useState<Selection>("all");
-    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
-        column: "createdAt",
-        direction: "descending",
-    });
+    const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({ column: "createdAt", direction: "descending" });
     const router = useRouter();
-
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
@@ -99,20 +82,16 @@ export default function CertificateTable() {
                     "Content-Type": "application/json",
                 },
             });
-
             if (!response.ok) {
                 throw new Error("Failed to fetch certificates");
             }
-
             const data = await response.json();
             const certificatesData = Array.isArray(data) ? data : [];
-
             const certificatesWithKeys = certificatesData.map((certificate: Certificate) => ({
                 ...certificate,
                 key: certificate.id || generateUniqueId(),
-                _id: certificate.id, // Map id to _id if needed
+                _id: certificate.id,
             }));
-
             setCertificates(certificatesWithKeys);
             setError(null);
         } catch (error) {
@@ -121,17 +100,14 @@ export default function CertificateTable() {
             setCertificates([]);
         }
     };
-
     useEffect(() => {
         fetchCertificates();
     }, []);
-
 
     const handleDelete = async (certificateId: string) => {
         if (!window.confirm("Are you sure you want to delete this certificate?")) {
             return;
         }
-
         try {
             await axios.delete(`/api/certificates?id=${certificateId}`, {
                 headers: {
@@ -139,11 +115,9 @@ export default function CertificateTable() {
                     "Authorization": `Bearer ${localStorage.getItem("token")}`,
                 }
             });
-
             setCertificates((prevCertificates) =>
                 prevCertificates.filter(cert => cert._id !== certificateId)
             );
-
             toast({
                 title: "Certificate deleted successfully",
             });
@@ -158,37 +132,33 @@ export default function CertificateTable() {
 
     const [filterValue, setFilterValue] = useState("");
     const hasSearchFilter = Boolean(filterValue);
-
     const headerColumns = React.useMemo(() => {
         if (visibleColumns === "all") return columns;
-
         return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
     }, [visibleColumns]);
-
     const filteredItems = React.useMemo(() => {
         let filteredCertificates = [...certificates];
-
         if (hasSearchFilter) {
+            const searchLower = filterValue.toLowerCase();
             filteredCertificates = filteredCertificates.filter((certificate) =>
-                certificate.certificateNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.customerName.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.siteLocation.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.makeModel.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.serialNo.toLowerCase().includes(filterValue.toLowerCase()) ||
-                certificate.engineerName.toLowerCase().includes(filterValue.toLowerCase())
+                (certificate.certificate_no?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.customer_name?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.site_location?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.make_model?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.serial_no?.toLowerCase() ?? "").includes(searchLower) ||
+                (certificate.engineer_name?.toLowerCase() ?? "").includes(searchLower)
             );
         }
-
         if (startDate || endDate) {
             filteredCertificates = filteredCertificates.filter((certificate) => {
-                const calibrationDate = new Date(certificate.dateOfCalibration);
+                const dateStr = certificate.dateOfCalibration || certificate.date_of_calibration;
+                if (!dateStr) return false;
+                const calibrationDate = new Date(dateStr);
                 const start = startDate ? new Date(startDate) : null;
                 const end = endDate ? new Date(endDate) : null;
-
                 if (start) start.setHours(0, 0, 0, 0);
                 if (end) end.setHours(23, 59, 59, 999);
                 calibrationDate.setHours(0, 0, 0, 0);
-
                 if (start && end) {
                     return calibrationDate >= start && calibrationDate <= end;
                 } else if (start) {
@@ -199,7 +169,6 @@ export default function CertificateTable() {
                 return true;
             });
         }
-
         return filteredCertificates;
     }, [certificates, hasSearchFilter, filterValue, startDate, endDate]);
 
@@ -215,7 +184,6 @@ export default function CertificateTable() {
                 const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
                 return sortDescriptor.direction === "descending" ? -cmp : cmp;
             }
-
             const first = a[sortDescriptor.column as keyof Certificate] || '';
             const second = b[sortDescriptor.column as keyof Certificate] || '';
             const cmp = String(first).localeCompare(String(second));
@@ -224,31 +192,22 @@ export default function CertificateTable() {
         });
     }, [sortDescriptor, items]);
 
-
-
-
-
     const handleDownload = async (certificateId: string) => {
         try {
             setIsDownloading(certificateId);
-
             const certificateToDownload = certificates.find(cert => cert._id === certificateId);
             if (!certificateToDownload) throw new Error("Certificate data not found");
-
             const logo = new Image();
             logo.src = "/img/rps.png";
-
             await new Promise<void>((resolve, reject) => {
                 logo.onload = () => resolve();
                 logo.onerror = () => reject(new Error("Failed to load logo image"));
             });
-
             const doc = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
                 format: "a4"
             });
-
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const leftMargin = 15;
@@ -256,7 +215,6 @@ export default function CertificateTable() {
             const topMargin = 20;
             const bottomMargin = 20;
             const contentWidth = pageWidth - leftMargin - rightMargin;
-
             const checkPageBreak = (y: number, buffer = 20): number => {
                 if (y + buffer > pageHeight - bottomMargin) {
                     doc.addPage();
@@ -264,7 +222,6 @@ export default function CertificateTable() {
                 }
                 return y;
             };
-
             const formatDate = (dateString: string | null | undefined): string => {
                 if (!dateString) return "N/A";
                 try {
@@ -274,7 +231,6 @@ export default function CertificateTable() {
                     return "Invalid Date";
                 }
             };
-
             const addRow = (label: string, value: string | undefined, y: number): number => {
                 y = checkPageBreak(y, 10);
                 doc.setFont("times", "bold").setFontSize(11).setTextColor(0);
@@ -283,21 +239,15 @@ export default function CertificateTable() {
                 doc.text(value || "N/A", leftMargin + 40, y);
                 return y + 8;
             };
-
-            // Logo
             const logoWidth = 60;
             const logoHeight = 20;
             const logoX = 2;
             const logoY = 10;
             doc.addImage(logo, "PNG", logoX, logoY, logoWidth, logoHeight);
-
             let y = logoY + logoHeight + 10;
-
-            // Title
             doc.setFont("times", "bold").setFontSize(16).setTextColor(0, 51, 102);
             doc.text("CALIBRATION CERTIFICATE", pageWidth / 2, y, { align: "center" });
             y += 10;
-
             y = addRow("Certificate No.", certificateToDownload.certificate_no, y);
             y = addRow("Customer Name", certificateToDownload.customer_name, y);
             y = addRow("Site Location", certificateToDownload.site_location, y);
@@ -310,24 +260,18 @@ export default function CertificateTable() {
             y = addRow("Date of Calibration", formatDate(certificateToDownload.date_of_calibration), y);
             y = addRow("Calibration Due Date", formatDate(certificateToDownload.calibration_due_date), y);
             y = addRow("Status", certificateToDownload.status, y);
-
             y += 5;
             doc.setDrawColor(180);
             doc.setLineWidth(0.3);
             doc.line(leftMargin, y, pageWidth - rightMargin, y);
             y += 10;
-
-            // Observations Header
             y = checkPageBreak(y, 20);
             doc.setFont("times", "bold").setFontSize(12).setTextColor(0, 51, 102);
             doc.text("OBSERVATIONS", leftMargin, y);
             y += 10;
-
             const colWidths = [20, 70, 40, 40];
             const headers = ["Sr. No.", "Concentration of Gas", "Reading Before", "Reading After"];
             let x = leftMargin;
-
-            // Table Header
             doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
             headers.forEach((header, i) => {
                 doc.rect(x, y - 5, colWidths[i], 8, 'S');
@@ -335,58 +279,43 @@ export default function CertificateTable() {
                 x += colWidths[i];
             });
             y += 8;
-
-            // Table Rows
             doc.setFont("times", "normal").setFontSize(10);
             certificateToDownload.observations.forEach((obs, index) => {
                 y = checkPageBreak(y, 15);
                 x = leftMargin;
                 const rowY = y;
-
                 const rowData = [
                     `${index + 1}`,
                     obs.gas || "-",
                     obs.before || "-",
                     obs.after || "-"
                 ];
-
                 rowData.forEach((text, colIndex) => {
                     doc.rect(x, rowY - 6, colWidths[colIndex], 8, 'S');
                     doc.text(text, x + colWidths[colIndex] / 2, rowY, { align: "center" });
                     x += colWidths[colIndex];
                 });
-
                 y += 8;
             });
-
             y += 10;
-
-            // Conclusion
             const conclusion = "The above-mentioned Gas Detector was calibrated successfully, and the result confirms that the performance of the instrument is within acceptable limits.";
             doc.setFont("times", "italic").setFontSize(10).setTextColor(0);
             const conclusionLines = doc.splitTextToSize(conclusion, contentWidth);
             y = checkPageBreak(y, conclusionLines.length * 6 + 15);
             doc.text(conclusionLines, leftMargin, y);
             y += conclusionLines.length * 6 + 15;
-
-            // Calibrated By
             y = checkPageBreak(y, 20);
             doc.setFont("times", "bold");
             doc.text("Tested & Calibrated By", pageWidth - rightMargin, y, { align: "right" });
             doc.setFont("times", "normal");
             doc.text(certificateToDownload.engineer_name || "________________", pageWidth - rightMargin, y + 10, { align: "right" });
-
-            // Footer
             y = checkPageBreak(y, 20);
             doc.setDrawColor(180);
             doc.line(leftMargin, pageHeight - bottomMargin - 10, pageWidth - rightMargin, pageHeight - bottomMargin - 10);
-
             doc.setFontSize(8).setTextColor(100);
             doc.text("This certificate is electronically generated and does not require a physical signature.", leftMargin, pageHeight - bottomMargin - 5);
             doc.text(`Generated on: ${new Date().toLocaleString()}`, leftMargin, pageHeight - bottomMargin);
-
             doc.save(`calibration-certificate-${certificateToDownload.certificate_no}.pdf`);
-
         } catch (error) {
             console.error("Error generating PDF", error);
             toast({
@@ -402,7 +331,6 @@ export default function CertificateTable() {
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap justify-between items-center w-full gap-4">
-                    {/* Search Input (Left) */}
                     <div className="flex-1 min-w-[200px]">
                         <Input
                             isClearable
@@ -414,8 +342,6 @@ export default function CertificateTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-
-                    {/* Date Filter (Center) */}
                     <div className="flex items-center gap-3 mx-auto">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-default-400">From:</span>
@@ -451,8 +377,6 @@ export default function CertificateTable() {
                             </Button>
                         )}
                     </div>
-
-                    {/* Total Certificates (Right) */}
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
                         Total: <strong>{filteredItems.length}</strong> certificate{filteredItems.length !== 1 ? "s" : ""}
                     </div>
@@ -483,11 +407,9 @@ export default function CertificateTable() {
 
     const renderCell = React.useCallback((certificate: Certificate, columnKey: string): React.ReactNode => {
         const cellValue = certificate[columnKey];
-
         if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
             return formatDate(cellValue);
         }
-
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
@@ -499,7 +421,6 @@ export default function CertificateTable() {
                             <Download className="h-6 w-6" />
                         </span>
                     </Tooltip>
-
                     <Tooltip>
                         <span
                             className="text-lg text-info cursor-pointer active:opacity-50"
@@ -511,14 +432,12 @@ export default function CertificateTable() {
                             <Edit className="h-6 w-6" />
                         </span>
                     </Tooltip>
-
-                    {/* Delete Certificate Icon */}
                     <Tooltip>
                         <span
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={(e) => {
                                 e.preventDefault();
-                                handleDelete(certificate._id); // Use _id for deletion
+                                handleDelete(certificate._id);
                             }}
                         >
                             <Trash2 className="h-6 w-6" />
@@ -527,7 +446,6 @@ export default function CertificateTable() {
                 </div>
             );
         }
-
         return cellValue;
     }, [isDownloading, handleDownload, handleDelete]);
 
@@ -538,7 +456,6 @@ export default function CertificateTable() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -614,7 +531,7 @@ export default function CertificateTable() {
                                         </TableColumn>
                                     )}
                                 </TableHeader>
-                                <TableBody emptyContent={"Create certificate and add data"} items={sortedItems}>
+                                <TableBody emptyContent={"Go to Create certificate and add data"} items={sortedItems}>
                                     {(item) => (
                                         <TableRow key={item._id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

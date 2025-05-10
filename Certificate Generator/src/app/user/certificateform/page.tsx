@@ -157,13 +157,13 @@ export default function CertificateForm() {
                     }
                 );
 
-                // Check if response.data exists and has the expected structure
+
                 if (!response.data) {
                     throw new Error("No data received from server");
                 }
 
-                // Assuming your API returns the certificate directly in response.data
-                // (not nested in success/data structure as your error check suggests)
+
+
                 const certificateData = response.data;
 
                 const transformedData = {
@@ -186,7 +186,7 @@ export default function CertificateForm() {
                     status: certificateData.status || ""
                 };
 
-                // Update all your state variables
+
                 setFormData(prev => ({
                     ...prev,
                     certificateNo: transformedData.certificateNo,
@@ -211,7 +211,7 @@ export default function CertificateForm() {
                 const err = error as Error;
                 console.error("Error fetching certificate", err);
                 setError(err.message || "Failed to load certificate");
-                // Consider showing a user-friendly error message
+
             } finally {
                 setLoading(false);
             }
@@ -318,7 +318,7 @@ export default function CertificateForm() {
         setError(null);
 
         try {
-            // Define required fields with their display names
+
             const requiredFields: Record<string, string> = {
                 customerName: "Customer Name",
                 siteLocation: "Site Location",
@@ -331,16 +331,16 @@ export default function CertificateForm() {
                 engineerName: "Engineer Name"
             };
 
-            // Validate required fields
+
             const missingFields = Object.entries(requiredFields)
                 .filter(([field]) => !formData[field as keyof typeof formData]?.toString().trim())
                 .map(([_, label]) => label);
 
-            // Validate dates
+
             if (!startDate) missingFields.push("Date of Calibration");
             if (!endDate) missingFields.push("Calibration Due Date");
 
-            // Validate observations
+
             const invalidObservations = formData.observations
                 .map((obs, index) => {
                     const missing: string[] = [];
@@ -351,7 +351,7 @@ export default function CertificateForm() {
                 })
                 .flat();
 
-            // Combine all validation errors
+
             const validationErrors = [...missingFields, ...invalidObservations];
             if (validationErrors.length > 0) {
                 setError(`Please fill in: ${validationErrors.join(", ")}`);
@@ -359,10 +359,10 @@ export default function CertificateForm() {
                 return;
             }
 
-            // Prepare submission data
+
             const submissionData = {
                 ...formData,
-                id: certificateId || undefined, // Only include ID in edit mode
+                id: certificateId || undefined,
                 dateOfCalibration: startDate,
                 calibrationDueDate: endDate,
                 observations: formData.observations.map(obs => ({
@@ -372,12 +372,12 @@ export default function CertificateForm() {
                 }))
             };
 
-            // Determine API endpoint and method
+
             const isEditMode = !!certificateId;
             const method = isEditMode ? 'put' : 'post';
             const url = `/api/certificates${isEditMode ? `?id=${certificateId}` : ''}`;
 
-            // Make API request
+
             const response = await axios({
                 method,
                 url,
@@ -388,7 +388,7 @@ export default function CertificateForm() {
                 }
             });
 
-            // Handle success
+
             setCertificate(response.data);
             toast({
                 title: isEditMode
@@ -397,14 +397,14 @@ export default function CertificateForm() {
                 variant: "default",
             });
 
-            // Optionally redirect or reset form
+
             if (!isEditMode) {
-                // Reset form or redirect to edit page
-                // router.push(`/certificates/${response.data.id}`);
+
+
             }
 
         } catch (err: unknown) {
-            // Enhanced error handling
+
             let errorMessage = "An unexpected error occurred";
 
             if (axios.isAxiosError(err)) {

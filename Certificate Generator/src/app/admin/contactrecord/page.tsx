@@ -2,22 +2,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { SearchIcon, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
-import * as z from "zod";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { Pagination, Tooltip } from "@heroui/react";
+import { Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 interface ContactPerson {
@@ -30,13 +23,11 @@ interface ContactPerson {
   key?: string;
   createdAt: string;
 }
-
 interface companies {
   id: string;
   company_name?: string;
   companyName?: string;
 }
-
 interface SortDescriptor {
   column: string;
   direction: "ascending" | "descending";
@@ -50,7 +41,6 @@ const columns = [
   { name: "Designation", uid: "designation", sortable: true, width: "120px" },
   { name: "Actions", uid: "actions", sortable: false, width: "120px" },
 ];
-
 const INITIAL_VISIBLE_COLUMNS = ["first_name", "contact_no", "email", "designation", "company_id", "actions"];
 
 export default function ContactRecordTable() {
@@ -62,7 +52,6 @@ export default function ContactRecordTable() {
   const [filterValue, setFilterValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({ column: "createdAt", direction: "descending" });
-
   const router = useRouter();
   const hasSearchFilter = Boolean(filterValue);
 
@@ -74,8 +63,7 @@ export default function ContactRecordTable() {
           axios.get('/api/contactPersons'),
           axios.get('/api/companies')
         ]);
-
-        console.log(contactsRes.data);  // Log the data to check if IDs are present
+        console.log(contactsRes.data);
         setContactPersons(contactsRes.data);
         setCompanies(companiesRes.data);
       } catch (err: any) {
@@ -88,10 +76,8 @@ export default function ContactRecordTable() {
         setIsSubmitting(false);
       }
     };
-
     fetchData();
   }, []);
-
 
   const getCompanyName = (companyId: string): string => {
     const company = companies.find(c => c.id === companyId);
@@ -100,7 +86,6 @@ export default function ContactRecordTable() {
 
   const handleDelete = useCallback((contactId: string) => {
     if (!contactId) return;
-
     fetch(`/api/contactpersons?id=${contactId}`, { method: "DELETE" })
       .then((response) => response.json())
       .then((data) => {
@@ -119,7 +104,6 @@ export default function ContactRecordTable() {
 
   const filteredItems = React.useMemo(() => {
     let filtered = [...contactPersons];
-
     if (hasSearchFilter) {
       const searchLower = filterValue.toLowerCase();
       filtered = filtered.filter(contact =>
@@ -130,7 +114,6 @@ export default function ContactRecordTable() {
         getCompanyName(contact.company_id).toLowerCase().includes(searchLower)
       );
     }
-
     return filtered;
   }, [contactPersons, filterValue, hasSearchFilter, companies]);
 
@@ -138,11 +121,9 @@ export default function ContactRecordTable() {
     return [...filteredItems].sort((a, b) => {
       const first = a[sortDescriptor.column as keyof ContactPerson] || "";
       const second = b[sortDescriptor.column as keyof ContactPerson] || "";
-
       let cmp = 0;
       if (first < second) cmp = -1;
       if (first > second) cmp = 1;
-
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [filteredItems, sortDescriptor]);
@@ -175,19 +156,15 @@ export default function ContactRecordTable() {
               className="text-lg text-info cursor-pointer active:opacity-50"
               onClick={() => {
                 if (!contactPerson.id) {
-                  // Show a toast message if the ID is missing
                   toast({
                     title: 'Error',
                     description: 'Contact ID is missing. Unable to edit contact.',
-                    variant: 'destructive', // Customize to your design
+                    variant: 'destructive',
                   });
-                  return; // Prevent the redirect if the ID is missing
+                  return;
                 }
-
-                // Redirect to contact form with the ID if it's available
                 router.push(`/admin/contactform?id=${contactPerson.id}`);
               }}
-
             >
               <Edit className="h-6 w-6" />
             </span>
@@ -203,11 +180,9 @@ export default function ContactRecordTable() {
         </div>
       );
     }
-
     if (columnKey === "company_id") {
       return getCompanyName(contactPerson.company_id);
     }
-
     return contactPerson[columnKey as keyof ContactPerson];
   }, [router, handleDelete, companies]);
 

@@ -167,7 +167,7 @@ export default function Page() {
                 }
             );
 
-            // Log the response structure
+
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
@@ -175,13 +175,13 @@ export default function Page() {
                 hasData: 'data' in response.data
             });
 
-            // Handle the response based on its structure
+
             let certificatesData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...certificates] }
+
                 certificatesData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...certificates]
+
                 certificatesData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
@@ -198,7 +198,7 @@ export default function Page() {
             }));
 
             setCertificates(certificatesWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching leads:", error);
             if (axios.isAxiosError(error)) {
@@ -206,7 +206,7 @@ export default function Page() {
             } else {
                 setError("Failed to fetch leads.");
             }
-            setCertificates([]); // Set empty array on error
+            setCertificates([]);
         }
     };
     useEffect(() => {
@@ -225,7 +225,7 @@ export default function Page() {
                 }
             );
 
-            // Log the response structure
+
             console.log('Full API Response:', {
                 status: response.status,
                 data: response.data,
@@ -233,32 +233,32 @@ export default function Page() {
                 hasData: 'data' in response.data
             });
 
-            // Handle the response based on its structure
+
             let servicesData;
             if (typeof response.data === 'object' && 'data' in response.data) {
-                // Response format: { data: [...services] }
+
                 servicesData = response.data.data;
             } else if (Array.isArray(response.data)) {
-                // Response format: [...services]
+
                 servicesData = response.data;
             } else {
                 console.error('Unexpected response format:', response.data);
                 throw new Error('Invalid response format');
             }
 
-            // Ensure servicesData is an array
+
             if (!Array.isArray(servicesData)) {
                 servicesData = [];
             }
 
-            // Map the data with safe key generation
+
             const servicesWithKeys = servicesData.map((service: Service) => ({
                 ...service,
                 key: service._id || generateUniqueIdService()
             }));
 
             setServices(servicesWithKeys);
-            setError(null); // Clear any previous errors
+            setError(null);
         } catch (error) {
             console.error("Error fetching leads:", error);
             if (axios.isAxiosError(error)) {
@@ -266,7 +266,7 @@ export default function Page() {
             } else {
                 setError("Failed to fetch leads.");
             }
-            setServices([]); // Set empty array on error
+            setServices([]);
         }
     };
     useEffect(() => {
@@ -510,14 +510,14 @@ export default function Page() {
                 </span>
                 <Pagination
                     isCompact
-                    // showControlsf
+
                     showShadow
                     color="success"
                     page={page}
                     total={pages}
                     onChange={setPage}
                     classNames={{
-                        // base: "gap-2 rounded-2xl shadow-lg p-2 dark:bg-default-100",
+
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}
@@ -558,14 +558,14 @@ export default function Page() {
                 </span>
                 <Pagination
                     isCompact
-                    // showControlsf
+
                     showShadow
                     color="success"
                     page={pageService}
                     total={pageservices}
                     onChange={setPageService}
                     classNames={{
-                        // base: "gap-2 rounded-2xl shadow-lg p-2 dark:bg-default-100",
+
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}
