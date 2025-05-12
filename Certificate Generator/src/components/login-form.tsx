@@ -21,10 +21,8 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter()
 
-
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!email) {
       toast({
         title: "Please enter your email address",
@@ -32,9 +30,7 @@ export function LoginForm() {
       });
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       const response = await axios.post(
         "/api/forgot-password",
@@ -43,13 +39,11 @@ export function LoginForm() {
           headers: { "Content-Type": "application/json" },
         }
       );
-
       setEmailSent(true);
       toast({
         title: "Success",
         description: response.data.message,
       });
-
     } catch (error: any) {
       console.error("Forgot password error", error);
       setEmailSent(true);
@@ -71,7 +65,6 @@ export function LoginForm() {
     }
 
     const passwordValidation = () => {
-      // Optional password validation
       if (password.length < 8) return "Password must be at least 8 characters";
       if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
       if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
@@ -92,51 +85,37 @@ export function LoginForm() {
 
     try {
       setLoading(true);
-
-      // User Login Attempt
       const userResponse = await fetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const userData = await userResponse.json();
-
       if (userResponse.ok) {
-        // Successfully logged in as user
         localStorage.setItem("userId", userData.user.id);
         localStorage.setItem("authToken", userData.accessToken);
-
         toast({
           title: "Login successful",
         });
         router.push("/user/dashboard");
         return;
       }
-
-      // Admin Login Attempt (only if user login fails)
       const adminResponse = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const adminData = await adminResponse.json();
-
       if (adminResponse.ok) {
-        // Successfully logged in as admin
         localStorage.setItem("authToken", adminData.accessToken);
-        localStorage.setItem("adminId", adminData.admin.id);  // Corrected the key name
+        localStorage.setItem("adminId", adminData.admin.id);
         localStorage.setItem("adminEmail", adminData.admin.email);
-
         toast({
           title: "Admin login successful",
         });
         router.push("/admin/dashboard");
         return;
       }
-
-      // If both logins fail, show the error
       const errorMessage = userData.error || adminData.error || "Invalid credentials";
       toast({
         title: "Login failed",
@@ -154,13 +133,8 @@ export function LoginForm() {
     }
   };
 
-
-
   return (
     <div className="flex flex-col items-center gap-4">
-
-
-
       {isForgotPassword ? (
         emailSent ? (
           <div className="border border-black dark:border-black rounded-xl p-6 shadow-sm">

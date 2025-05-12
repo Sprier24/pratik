@@ -58,10 +58,10 @@ import {
 import {
   Toaster,
   toast
-} from "sonner"; 
+} from "sonner";
 
 interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   contact: number;
@@ -99,7 +99,7 @@ export function NavUser() {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/v1/users/getuser/${userId}`);
+        const response = await axios.get(`/api/users?id=${userId}`);
         setCurrentUser(response.data);
         toast.success("User profile loaded");
       } catch (err) {
@@ -125,8 +125,9 @@ export function NavUser() {
     setIsSubmitting(true);
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/v1/users/updateuser/${editUser?._id}`,
+        `/api/users`,  // no query parameters here
         {
+          id: editUser?.id,  // include the id in the request body
           name: data.name,
           email: data.email,
           contact: data.contact,
@@ -147,17 +148,24 @@ export function NavUser() {
 
       const userId = localStorage.getItem("userId");
       if (userId) {
-        const userResponse = await axios.get(`http://localhost:5000/api/v1/users/getuser/${userId}`);
+        const userResponse = await axios.get(`/api/users?id=${userId}`);
         setCurrentUser(userResponse.data);
       }
     } catch (error) {
       console.error("Failed to update user:", error);
-      setError("Failed to update user. Please try again.");
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Error response data:", error.response.data);
+        setError(`Failed to update user: ${error.response.data.error || 'Unknown error'}`);
+      } else {
+        setError("Failed to update user. Please try again.");
+      }
       toast.error("Failed to update profile.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
