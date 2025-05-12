@@ -30,17 +30,16 @@ interface Certificate {
     [key: string]: string;
 }
 interface Service {
-    [x: string]: any;
     _id: string;
     nameAndLocation: string;
-    contactPerson: string;
-    contactNumber: string;
-    serviceEngineer: string;
+    contact_person: string;
+    contact_number: string;
+    service_engineer: string;
     date: string;
     place: string;
     placeOptions: string;
     natureOfJob: string;
-    reportNo: string;
+    report_no: string;
     makeModelNumberoftheInstrumentQuantity: string;
     serialNumberoftheInstrumentCalibratedOK: string;
     serialNumberoftheFaultyNonWorkingInstruments: string;
@@ -88,7 +87,7 @@ const columns = [
     { name: "Certificate Number", uid: "certificate_no", sortable: true, width: "120px" },
     { name: "Customer", uid: "customer_name", sortable: true, width: "120px" },
     { name: "Site Location", uid: "site_location", sortable: true, width: "120px" },
-    { name: "Model", uid: "make_model", sortable: true, width: "120px" },
+    { name: "Make Model", uid: "make_model", sortable: true, width: "120px" },
     { name: "Serial Number", uid: "serial_no", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineer_name", sortable: true, width: "120px" },
 ];
@@ -98,10 +97,7 @@ const columnsservice = [
     { name: "Service Engineer", uid: "service_engineer", sortable: true, width: "120px" },
     { name: "Report Number", uid: "report_no", sortable: true, width: "120px" },
 ];
-export const statusOptions = [
-    { name: "Paused", uid: "paused" },
-    { name: "Vacation", uid: "vacation" },
-];
+
 const statusColorMap: Record<string, ChipProps["color"]> = {
     active: "success",
     paused: "danger",
@@ -234,7 +230,7 @@ export default function Page() {
     const fetchUsers = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:5000/api/v1/users/getusers",
+                "/api/users",
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -279,34 +275,28 @@ export default function Page() {
     const filteredItems = React.useMemo(() => {
         let filteredCertificates = [...certificates];
         if (hasSearchFilter) {
-            const searchLower = filterValue.toLowerCase();
             filteredCertificates = filteredCertificates.filter((certificate) =>
-                (certificate.certificateNo?.toLowerCase() ?? "").includes(searchLower) ||
-                (certificate.customerName?.toLowerCase() ?? "").includes(searchLower) ||
-                (certificate.siteLocation?.toLowerCase() ?? "").includes(searchLower) ||
-                (certificate.makeModel?.toLowerCase() ?? "").includes(searchLower) ||
-                (certificate.serialNo?.toLowerCase() ?? "").includes(searchLower) ||
-                (certificate.engineerName?.toLowerCase() ?? "").includes(searchLower)
+                certificate.certificate_no.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.customer_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.site_location.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.make_model.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.serial_no.toLowerCase().includes(filterValue.toLowerCase()) ||
+                certificate.engineer_name.toLowerCase().includes(filterValue.toLowerCase())
             );
         }
-
         return filteredCertificates;
     }, [certificates, hasSearchFilter, filterValue]);
 
     const filteredItemsservice = React.useMemo(() => {
         let filteredServices = [...services];
-
-        if (hasSearchFilter) {
-            const searchLower = filterValue.toLowerCase();
+        if (hasSearchFilterservice) {
             filteredServices = filteredServices.filter((service) =>
-                (service.customerName?.toLowerCase() ?? "").includes(searchLower) ||
-                (service.contactPerson?.toLowerCase() ?? "").includes(searchLower) ||
-                (service.contactNumber?.toLowerCase() ?? "").includes(searchLower) ||
-                (service.serviceEngineer?.toLowerCase() ?? "").includes(searchLower) ||
-                (service.reportNo?.toLowerCase() ?? "").includes(searchLower)
+                service.contact_person.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.contact_number.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.service_engineer.toLowerCase().includes(filterValueservice.toLowerCase()) ||
+                service.report_no.toLowerCase().includes(filterValueservice.toLowerCase())
             );
         }
-
         return filteredServices;
     }, [services, hasSearchFilterservice, filterValueservice]);
 
@@ -317,14 +307,12 @@ export default function Page() {
     const items = React.useMemo(() => {
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
-
         return filteredItems.slice(start, end);
     }, [page, filteredItems, rowsPerPage]);
 
     const itemsservice = React.useMemo(() => {
         const start = (pageService - 1) * rowsPerPageService;
         const end = start + rowsPerPageService;
-
         return filteredItemsservice.slice(start, end);
     }, [pageService, filteredItemsservice, rowsPerPageService]);
 
@@ -333,7 +321,6 @@ export default function Page() {
             const first = a[sortDescriptor.column as keyof Certificate];
             const second = b[sortDescriptor.column as keyof Certificate];
             const cmp = first < second ? -1 : first > second ? 1 : 0;
-
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [sortDescriptor, items]);
@@ -343,7 +330,6 @@ export default function Page() {
             const first = a[sortDescriptorService.column as keyof Service];
             const second = b[sortDescriptorService.column as keyof Service];
             const cmp = first < second ? -1 : first > second ? 1 : 0;
-
             return sortDescriptorService.direction === "descending" ? -cmp : cmp;
         });
     }, [sortDescriptorService, itemsservice]);
@@ -458,23 +444,19 @@ export default function Page() {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
                 <span className="w-[30%] text-small text-default-400">
-
                 </span>
                 <Pagination
                     isCompact
-
                     showShadow
                     color="success"
                     page={page}
                     total={pages}
                     onChange={setPage}
                     classNames={{
-
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}
                 />
-
                 <div className="rounded-lg bg-default-100 hover:bg-default-200 hidden sm:flex w-[30%] justify-end gap-2">
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
@@ -485,7 +467,6 @@ export default function Page() {
                     >
                         Previous
                     </Button>
-
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
                         variant="default"
@@ -495,8 +476,6 @@ export default function Page() {
                     >
                         Next
                     </Button>
-
-
                 </div>
             </div>
         );
@@ -506,18 +485,15 @@ export default function Page() {
         return (
             <div className="py-2 px-2 flex justify-between items-center">
                 <span className="w-[30%] text-small text-default-400">
-
                 </span>
                 <Pagination
                     isCompact
-
                     showShadow
                     color="success"
                     page={pageService}
                     total={pageservices}
                     onChange={setPageService}
                     classNames={{
-
                         cursor: "bg-[hsl(339.92deg_91.04%_52.35%)] shadow-md",
                         item: "data-[active=true]:bg-[hsl(339.92deg_91.04%_52.35%)] data-[active=true]:text-white rounded-lg",
                     }}
@@ -532,7 +508,6 @@ export default function Page() {
                     >
                         Previous
                     </Button>
-
                     <Button
                         className="bg-[hsl(339.92deg_91.04%_52.35%)]"
                         variant="default"
@@ -569,17 +544,14 @@ export default function Page() {
         if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
             return formatDate(cellValue);
         }
-
         return cellValue;
     }, [isDownloading]);
 
     const renderCellservice = React.useCallback((service: Service, columnKey: string): React.ReactNode => {
         const cellValue = service[columnKey as keyof Service];
-
         if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
             return formatDate(cellValue);
         }
-
         return cellValue;
     }, [isDownloadingService]);
 
@@ -590,7 +562,6 @@ export default function Page() {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
-
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -722,7 +693,7 @@ export default function Page() {
                                                 </TableColumn>
                                             )}
                                         </TableHeader>
-                                        <TableBody emptyContent={"Go to create service and add data"} items={sortedItemsservice}>
+                                        <TableBody emptyContent={"Go to create certificate and add data"} items={sortedItemsservice}>
                                             {(item) => (
                                                 <TableRow key={item._id}>
                                                     {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCellservice(item as Service, columnKey as string)}</TableCell>}
@@ -738,4 +709,4 @@ export default function Page() {
             </SidebarInset>
         </SidebarProvider>
     )
-}
+} 

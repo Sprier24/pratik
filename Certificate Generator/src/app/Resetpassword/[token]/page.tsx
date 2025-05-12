@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from "react";
 import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
@@ -7,7 +6,7 @@ import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useRouter, useParams } from "next/navigation";
-import {  IoEye, IoEyeOff  } from "react-icons/io5";
+import { IoEye, IoEyeOff } from "react-icons/io5";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState<string>("");
@@ -22,44 +21,41 @@ export default function ResetPassword() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (password !== confirmPassword) {
-        toast({
-            title: "Error",
-            description: "Passwords do not match.",
-            variant: "destructive",
-        });       return;
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      }); return;
     }
-
     if (!isPasswordStrong(password)) {
-        toast({
-            title: "Error",
-            description: "Passwords do not match.",
-            variant: "destructive",
-        });       return;
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      }); return;
     }
-
     setIsSubmitting(true);
     try {
       const response = await axios.post(
         `http://localhost:5000/api/v1/users/reset-password/${token}`,
         { password }
       );
-
       if (response.data.success) {
         setPasswordReset(true);
       } else {
         toast({
-            title: "Error",
-            description: "Passwords do not match.",
-            variant: "destructive",
-        });       }
+          title: "Error",
+          description: "Passwords do not match.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
-        toast({
-            title: "Error",
-            description: "Passwords do not match.",
-            variant: "destructive",
-        }); 
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +67,6 @@ export default function ResetPassword() {
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecialChar = /[\W_]/.test(password);
-
     return hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
   };
 
@@ -145,7 +140,6 @@ export default function ResetPassword() {
                   <p className="text-sm text-red-500 mt-1">{passwordMessage}</p>
                 )}
               </LabelInputContainer>
-
               <LabelInputContainer className="mb-8">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
@@ -168,7 +162,6 @@ export default function ResetPassword() {
                   </button>
                 </div>
               </LabelInputContainer>
-
               <button
                 className="bg-gradient-to-br from-black to-neutral-600 block w-full text-white rounded-md h-10 font-medium shadow-lg"
                 type="submit"

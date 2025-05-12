@@ -1,15 +1,8 @@
 'use client';
-
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter,
-} from "@/components/ui/card";
-import {
-  SidebarInset, SidebarProvider, SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,9 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -73,27 +64,19 @@ export default function ContactForm() {
         });
       }
     };
-
     fetchCompanies();
   }, []);
 
   useEffect(() => {
     const fetchContact = async () => {
-
       if (!contactId || contactId === "undefined" || companies.length === 0) return;
-
       try {
         setIsSubmitting(true);
         const res = await axios.get(`/api/contactPersons?id=${contactId}`);
-
         if (res.data) {
-
           const company = companies.find((c) => c.id === res.data.company_id);
-
           if (company) {
-
             const companyName = company.company_name || company.companyName || "";
-
             form.reset({
               firstName: res.data.first_name,
               contactNo: res.data.contact_no,
@@ -118,12 +101,8 @@ export default function ContactForm() {
         setIsSubmitting(false);
       }
     };
-
-
     fetchContact();
   }, [contactId, companies, form]);
-
-
 
   useEffect(() => {
     if (contactId === "undefined") {
@@ -134,16 +113,13 @@ export default function ContactForm() {
     }
   }, [contactId]);
 
-
   const onSubmit = async (values: z.infer<typeof contactPersonsSchema>) => {
     setIsSubmitting(true);
-
     try {
       const payload = {
         ...values,
         company: values.companyId,
       };
-
       if (contactId) {
         const res = await axios.put(`/api/contactPersons?id=${contactId}`, payload);
         if (res.status === 200) {
@@ -193,7 +169,6 @@ export default function ContactForm() {
             </Breadcrumb>
           </div>
         </header>
-
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
           <Card className="max-w-6xl mx-auto">
             <CardHeader>
@@ -307,7 +282,6 @@ export default function ContactForm() {
                       )}
                     />
                   </div>
-
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -323,7 +297,6 @@ export default function ContactForm() {
                       )}
                     />
                   </div>
-
                   <FormField
                     control={form.control}
                     name="companyId"
@@ -335,7 +308,6 @@ export default function ContactForm() {
                       </FormItem>
                     )}
                   />
-
                   <CardFooter className="px-0">
                     <Button type="submit" className="w-full bg-purple-950 text-white hover:bg-purple-900" disabled={isSubmitting}>
                       {isSubmitting ? (

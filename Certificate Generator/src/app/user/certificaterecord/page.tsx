@@ -7,11 +7,11 @@ import { SearchIcon, Trash2, Download, ArrowUpIcon, ArrowDownIcon, Edit } from "
 import { Input } from "@/components/ui/input"
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection } from "@heroui/react"
-import { Pagination, Tooltip } from "@heroui/react"
+import { Pagination, Tooltip, User } from "@heroui/react"
 import { jsPDF } from "jspdf";
 import { AppSidebar } from "@/components/app-sidebar";
 
@@ -37,6 +37,7 @@ interface Certificate {
     status: string;
     [key: string]: string;
 }
+
 type SortDescriptor = {
     column: string;
     direction: 'ascending' | 'descending';
@@ -48,6 +49,7 @@ const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
 };
+
 const columns = [
     { name: "Certificate Number", uid: "certificate_no", sortable: true, width: "120px" },
     { name: "Customer Name", uid: "customer_name", sortable: true, width: "120px" },
@@ -55,8 +57,9 @@ const columns = [
     { name: "Model", uid: "make_model", sortable: true, width: "120px" },
     { name: "Serial Number", uid: "serial_no", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineer_name", sortable: true, width: "120px" },
-    { name: "Actions", uid: "actions", sortable: true, width: "120px" },
+    { name: "Download", uid: "actions", sortable: true, width: "100px" },
 ];
+const INITIAL_VISIBLE_COLUMNS = ["certificate_no", "customer_name", "site_location", "make_model", "serial_no", "engineer_name", "actions"];
 
 export default function CertificateTable() {
     const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -126,6 +129,7 @@ export default function CertificateTable() {
             });
         }
     };
+
     const [filterValue, setFilterValue] = useState("");
     const hasSearchFilter = Boolean(filterValue);
     const headerColumns = React.useMemo(() => {
@@ -149,15 +153,12 @@ export default function CertificateTable() {
             filteredCertificates = filteredCertificates.filter((certificate) => {
                 const dateStr = certificate.dateOfCalibration || certificate.date_of_calibration;
                 if (!dateStr) return false;
-
                 const calibrationDate = new Date(dateStr);
                 const start = startDate ? new Date(startDate) : null;
                 const end = endDate ? new Date(endDate) : null;
-
                 if (start) start.setHours(0, 0, 0, 0);
                 if (end) end.setHours(23, 59, 59, 999);
                 calibrationDate.setHours(0, 0, 0, 0);
-
                 if (start && end) {
                     return calibrationDate >= start && calibrationDate <= end;
                 } else if (start) {
@@ -170,7 +171,9 @@ export default function CertificateTable() {
         }
         return filteredCertificates;
     }, [certificates, hasSearchFilter, filterValue, startDate, endDate]);
+
     const items = filteredItems;
+
     const sortedItems = React.useMemo(() => {
         return [...items].sort((a, b) => {
             if (sortDescriptor.column === 'dateOfCalibration' ||
@@ -184,6 +187,7 @@ export default function CertificateTable() {
             const first = a[sortDescriptor.column as keyof Certificate] || '';
             const second = b[sortDescriptor.column as keyof Certificate] || '';
             const cmp = String(first).localeCompare(String(second));
+
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [sortDescriptor, items]);
@@ -244,17 +248,17 @@ export default function CertificateTable() {
             doc.setFont("times", "bold").setFontSize(16).setTextColor(0, 51, 102);
             doc.text("CALIBRATION CERTIFICATE", pageWidth / 2, y, { align: "center" });
             y += 10;
-            y = addRow("Certificate No.", certificateToDownload.certificateNo, y);
-            y = addRow("Customer Name", certificateToDownload.customerName, y);
-            y = addRow("Site Location", certificateToDownload.siteLocation, y);
-            y = addRow("Make & Model", certificateToDownload.makeModel, y);
+            y = addRow("Certificate No.", certificateToDownload.certificate_no, y);
+            y = addRow("Customer Name", certificateToDownload.customer_name, y);
+            y = addRow("Site Location", certificateToDownload.site_location, y);
+            y = addRow("Make & Model", certificateToDownload.make_model, y);
             y = addRow("Range", certificateToDownload.range, y);
-            y = addRow("Serial No.", certificateToDownload.serialNo, y);
-            y = addRow("Calibration Gas", certificateToDownload.calibrationGas, y);
-            y = addRow("Gas Canister Details", certificateToDownload.gasCanisterDetails, y);
+            y = addRow("Serial No.", certificateToDownload.serial_no, y);
+            y = addRow("Calibration Gas", certificateToDownload.calibration_gas, y);
+            y = addRow("Gas Canister Details", certificateToDownload.gas_canister_details, y);
             y += 5;
-            y = addRow("Date of Calibration", formatDate(certificateToDownload.dateOfCalibration), y);
-            y = addRow("Calibration Due Date", formatDate(certificateToDownload.calibrationDueDate), y);
+            y = addRow("Date of Calibration", formatDate(certificateToDownload.date_of_calibration), y);
+            y = addRow("Calibration Due Date", formatDate(certificateToDownload.calibration_due_date), y);
             y = addRow("Status", certificateToDownload.status, y);
             y += 5;
             doc.setDrawColor(180);
@@ -304,7 +308,7 @@ export default function CertificateTable() {
             doc.setFont("times", "bold");
             doc.text("Tested & Calibrated By", pageWidth - rightMargin, y, { align: "right" });
             doc.setFont("times", "normal");
-            doc.text(certificateToDownload.engineerName || "________________", pageWidth - rightMargin, y + 10, { align: "right" });
+            doc.text(certificateToDownload.engineer_name || "________________", pageWidth - rightMargin, y + 10, { align: "right" });
             y = checkPageBreak(y, 20);
             doc.setDrawColor(180);
             doc.line(leftMargin, pageHeight - bottomMargin - 10, pageWidth - rightMargin, pageHeight - bottomMargin - 10);
@@ -322,23 +326,11 @@ export default function CertificateTable() {
             setIsDownloading(null);
         }
     };
-    const onSearchChange = React.useCallback((value: string) => {
-        if (value) {
-            setFilterValue(value);
-            setPage(1);
-        } else {
-            setFilterValue("");
-        }
-    }, []);
-    const onClear = React.useCallback(() => {
-        setFilterValue("");
-        setPage(1);
-    }, []);
+
     const topContent = React.useMemo(() => {
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap justify-between items-center w-full gap-4">
-                    {/* Search Input (Left) */}
                     <div className="flex-1 min-w-[200px]">
                         <Input
                             isClearable
@@ -350,8 +342,6 @@ export default function CertificateTable() {
                             onClear={() => setFilterValue("")}
                         />
                     </div>
-
-                    {/* Date Filter (Center) */}
                     <div className="flex items-center gap-3 mx-auto">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-default-400">From:</span>
@@ -360,7 +350,7 @@ export default function CertificateTable() {
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                                 className="border border-gray-300 rounded p-2 text-sm bg-white text-black 
-                               dark:bg-white dark:border-gray-700 dark:text-black"
+                            dark:bg-white dark:border-gray-700 dark:text-black"
                             />
                         </div>
                         <div className="flex items-center gap-2">
@@ -371,7 +361,7 @@ export default function CertificateTable() {
                                 onChange={(e) => setEndDate(e.target.value)}
                                 min={startDate}
                                 className="border border-gray-300 rounded p-2 text-sm bg-white text-black 
-                               dark:bg-white dark:border-gray-700 dark:text-black"
+                            dark:bg-white dark:border-gray-700 dark:text-black"
                             />
                         </div>
                         {(startDate || endDate) && (
@@ -387,8 +377,6 @@ export default function CertificateTable() {
                             </Button>
                         )}
                     </div>
-
-                    {/* Total Certificates (Right) */}
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
                         Total: <strong>{filteredItems.length}</strong> certificate{filteredItems.length !== 1 ? "s" : ""}
                     </div>
@@ -396,6 +384,7 @@ export default function CertificateTable() {
             </div>
         );
     }, [filterValue, startDate, endDate, filteredItems.length]);
+
     const bottomContent = (
         <div className="py-2 px-2">
             <span className="text-default-400 text-small">
@@ -403,12 +392,17 @@ export default function CertificateTable() {
             </span>
         </div>
     );
+
     const handleSelectionChange = (keys: Selection) => {
         if (keys === "all") {
             setSelectedKeys(new Set(certificates.map(cert => cert._id)));
         } else {
             setSelectedKeys(keys as Set<string>);
         }
+    };
+
+    const handleVisibleColumnsChange = (keys: Selection) => {
+        setVisibleColumns(keys);
     };
 
     const renderCell = React.useCallback((certificate: Certificate, columnKey: string): React.ReactNode => {
@@ -456,6 +450,7 @@ export default function CertificateTable() {
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
+
                     </div>
                 </header>
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
@@ -514,7 +509,7 @@ export default function CertificateTable() {
                                         </TableColumn>
                                     )}
                                 </TableHeader>
-                                <TableBody emptyContent={"Go to create certificate and add data"} items={sortedItems}>
+                                <TableBody emptyContent={"Go to Create certificate and add data"} items={sortedItems}>
                                     {(item) => (
                                         <TableRow key={item._id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}
@@ -529,7 +524,7 @@ export default function CertificateTable() {
         </SidebarProvider>
     )
 };
+
 function setPage(arg0: number) {
     throw new Error("Function not implemented");
 }
-

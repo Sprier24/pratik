@@ -1,15 +1,8 @@
 'use client';
-
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import {
-  SidebarInset, SidebarProvider, SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,13 +11,10 @@ import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { AppSidebar } from "@/components/app-sidebar";
-
 
 const companiesSchema = z.object({
   companyName: z.string().nonempty({ message: "Required" }),
@@ -32,20 +22,14 @@ const companiesSchema = z.object({
   industries: z.string().nonempty({ message: "Required" }),
   industriesType: z.string().nonempty({ message: "Required" }),
   gstNumber: z.string().optional(),
-  website: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().url({ message: "Invalid Website URL" }).optional()
-  ),
-  flag: z.enum(["Red", "Yellow", "Green"], {
-    required_error: "Required",
-  }),
+  website: z.preprocess(val => (val === "" ? undefined : val), z.string().url({ message: "Invalid Website URL" }).optional()),
+  flag: z.enum(["Red", "Yellow", "Green"], { required_error: "Required" }),
 });
 
 export default function CompanyForm() {
   const searchParams = useSearchParams();
   const companyId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const form = useForm<z.infer<typeof companiesSchema>>({
     resolver: zodResolver(companiesSchema),
     defaultValues: {
@@ -92,7 +76,6 @@ export default function CompanyForm() {
 
   const onSubmit = async (values: z.infer<typeof companiesSchema>) => {
     setIsSubmitting(true);
-
     try {
       if (companyId) {
         const res = await axios.put(`/api/companies?id=${companyId}`, values);
@@ -165,7 +148,6 @@ export default function CompanyForm() {
                   : "Fill out the form to add a new company"}
               </CardDescription>
             </CardHeader>
-
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -214,7 +196,6 @@ export default function CompanyForm() {
                       )}
                     />
                   </div>
-
                   <Button
                     type="submit"
                     className="w-full bg-purple-950 text-white hover:bg-purple-900"

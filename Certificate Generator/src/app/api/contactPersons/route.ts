@@ -6,11 +6,9 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// POST - Create a contact person
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
     const requiredFields = [
       "firstName",
       "middleName",
@@ -20,15 +18,12 @@ export async function POST(request: Request) {
       "designation",
       "company",
     ];
-
     for (const field of requiredFields) {
       if (!(field in body)) {
         throw new Error(`Missing required field: ${field}`);
       }
     }
-
-    const id = crypto.randomUUID(); // Auto-generate ID
-
+    const id = crypto.randomUUID();
     await client.execute({
       sql: `
         INSERT INTO contact_persons (
@@ -46,7 +41,6 @@ export async function POST(request: Request) {
         body.company,
       ],
     });
-
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     console.error("POST error:", error);
@@ -57,34 +51,30 @@ export async function POST(request: Request) {
   }
 }
 
-// GET - Fetch all or single contact person
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const companyId = searchParams.get("companyId");
-
     if (id) {
       const result = await client.execute({
         sql: "SELECT * FROM contact_persons WHERE id = ?",
         args: [id],
       });
-
       if (result.rows.length === 0) {
-        return NextResponse.json({ error: "Contact not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Contact not found" },
+          { status: 404 }
+        );
       }
-
       return NextResponse.json(result.rows[0], { status: 200 });
     }
-
     let query = "SELECT * FROM contact_persons";
     let args: string[] = [];
-
     if (companyId) {
       query += " WHERE company_id = ?";
       args.push(companyId);
     }
-
     const result = await client.execute({ sql: query, args });
     return NextResponse.json(result.rows, { status: 200 });
   } catch (error) {
@@ -96,29 +86,25 @@ export async function GET(request: Request) {
   }
 }
 
-// PUT - Update contact person by id
 export async function PUT(request: Request) {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
-
     if (!id) {
-      return NextResponse.json({ error: "Contact ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Contact ID is required" },
+        { status: 400 }
+      );
     }
-
     const body = await request.json();
-
     const checkResult = await client.execute({
       sql: "SELECT * FROM contact_persons WHERE id = ?",
       args: [id],
     });
-
     if (checkResult.rows.length === 0) {
       return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
-
     const existing = checkResult.rows[0];
-
     await client.execute({
       sql: `
         UPDATE contact_persons SET
@@ -137,8 +123,10 @@ export async function PUT(request: Request) {
         id,
       ],
     });
-
-    return NextResponse.json({ message: "Contact updated successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Contact updated successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("PUT error:", error);
     return NextResponse.json(
@@ -148,31 +136,31 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE - Delete contact person by id
 export async function DELETE(request: Request) {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
-
     if (!id) {
-      return NextResponse.json({ error: "Contact ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Contact ID is required" },
+        { status: 400 }
+      );
     }
-
     const check = await client.execute({
       sql: "SELECT * FROM contact_persons WHERE id = ?",
       args: [id],
     });
-
     if (check.rows.length === 0) {
       return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
-
     await client.execute({
       sql: "DELETE FROM contact_persons WHERE id = ?",
       args: [id],
     });
-
-    return NextResponse.json({ message: "Contact deleted successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Contact deleted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("DELETE error:", error);
     return NextResponse.json(

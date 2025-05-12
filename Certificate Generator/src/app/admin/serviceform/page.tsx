@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -17,8 +17,6 @@ interface Contact {
     contactNo: string;
     companyName?: string;
 }
-
-
 interface EngineerRemark {
     serviceSpares: string;
     partNo: string;
@@ -27,7 +25,6 @@ interface EngineerRemark {
     total: string;
     poNo: string;
 }
-
 interface ServiceRequest {
     id: string;
     serviceId?: string;
@@ -52,18 +49,15 @@ interface ServiceRequest {
     engineerId?: string;
     status: string;
 }
-
 interface ServiceResponse {
     serviceId: string;
     message: string;
     downloadUrl: string;
 }
-
 interface Engineer {
     id: string;
     name: string;
 }
-
 interface ServiceEngineer {
     id: string;
     name: string;
@@ -96,7 +90,8 @@ export default function GenerateService() {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('id');
     const isEditMode = !!serviceId;
-    const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const [startDate, setStartDate] = useState<string>(today);
     const [formData, setFormData] = useState<ServiceRequest>(initialFormData);
     const [contactPersons, setContactPersons] = useState<Contact[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
@@ -108,8 +103,6 @@ export default function GenerateService() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
-
-
     const generateReportNo = useCallback(() => {
         const date = new Date();
         const currentYear = date.getFullYear();
@@ -120,7 +113,6 @@ export default function GenerateService() {
         return `RPS/SRV/${yearRange}/${randomNum}`;
     }, []);
 
-
     const fetchContactPersons = useCallback(async () => {
         setIsLoadingContacts(true);
         try {
@@ -129,7 +121,6 @@ export default function GenerateService() {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
             });
-
             const data = Array.isArray(response.data?.data)
                 ? response.data.data
                 : Array.isArray(response.data)
@@ -151,7 +142,6 @@ export default function GenerateService() {
         }
     }, []);
 
-
     const fetchEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/engineers");
@@ -164,7 +154,6 @@ export default function GenerateService() {
             });
         }
     }, []);
-
 
     const fetchServiceEngineers = useCallback(async () => {
         try {
@@ -181,15 +170,12 @@ export default function GenerateService() {
         }
     }, []);
 
-
     const fetchServiceData = useCallback(async () => {
         if (!isEditMode) return;
-
         try {
             setLoading(true);
             const response = await axios.get(`/api/services?id=${serviceId}`);
             const serviceData = response.data;
-
             setFormData({
                 id: serviceData.id || serviceData._id || '',
                 serviceId: serviceData.serviceId || serviceData.id || serviceData._id || '',
@@ -245,7 +231,6 @@ export default function GenerateService() {
         }
     }, [isEditMode, serviceId, generateReportNo]);
 
-
     useEffect(() => {
         if (!isEditMode) {
             setFormData(prev => ({
@@ -255,25 +240,19 @@ export default function GenerateService() {
         }
     }, [isEditMode, generateReportNo]);
 
-
     useEffect(() => {
         fetchContactPersons();
         fetchEngineers();
         fetchServiceEngineers();
-        if (isEditMode) {
-            fetchServiceData();
-        }
+        if (isEditMode) fetchServiceData();
     }, [fetchContactPersons, fetchEngineers, fetchServiceEngineers, fetchServiceData, isEditMode]);
-
 
     useEffect(() => {
         if (!Array.isArray(contactPersons)) {
             setFilteredContacts([]);
             return;
         }
-
         const customerNameInput = formData.customerName.trim().toLowerCase();
-
         setFilteredContacts(
             customerNameInput.length > 0
                 ? contactPersons.filter(person =>
@@ -284,16 +263,10 @@ export default function GenerateService() {
         );
     }, [formData.customerName, contactPersons]);
 
-
     const handleServiceEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
         const selectedEngineer = serviceEngineers.find(engineer => engineer.id === selectedId);
-
-        setFormData(prev => ({
-            ...prev,
-            serviceEngineerId: selectedId,
-            serviceEngineer: selectedEngineer?.name || ""
-        }));
+        setFormData(prev => ({ ...prev, serviceEngineerId: selectedId, serviceEngineer: selectedEngineer?.name || "" }));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -304,13 +277,11 @@ export default function GenerateService() {
     const handleEngineerRemarksChange = (index: number, field: keyof EngineerRemark, value: string) => {
         const updatedEngineerRemarks = [...formData.engineerRemarks];
         updatedEngineerRemarks[index] = { ...updatedEngineerRemarks[index], [field]: value };
-
         if (field === 'rate' || field === 'quantity') {
             const rate = parseFloat(updatedEngineerRemarks[index].rate) || 0;
             const quantity = parseFloat(updatedEngineerRemarks[index].quantity) || 0;
             updatedEngineerRemarks[index].total = (rate * quantity).toString();
         }
-
         setFormData({ ...formData, engineerRemarks: updatedEngineerRemarks });
     };
 
@@ -339,17 +310,14 @@ export default function GenerateService() {
             'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK',
             'serialNumberoftheFaultyNonWorkingInstruments', 'engineerReport', 'engineerName'
         ];
-
         const missingFields = requiredFields.filter(field => {
             const value = formData[field as keyof typeof formData];
             return typeof value === 'string' ? value.trim() === '' : !value;
         });
-
         if (missingFields.length > 0) {
             setError(`Please fill all required fields: ${missingFields.join(', ')}`);
             return false;
         }
-
         const validRemarks = formData.engineerRemarks.filter(remark =>
             remark.serviceSpares?.trim() &&
             remark.partNo?.trim() &&
@@ -358,12 +326,10 @@ export default function GenerateService() {
             remark.total?.toString().trim() &&
             remark.poNo?.trim()
         );
-
         if (validRemarks.length === 0) {
             setError("Please add at least one valid engineer remark");
             return false;
         }
-
         return true;
     };
 
@@ -371,12 +337,10 @@ export default function GenerateService() {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
         if (!validateForm()) {
             setLoading(false);
             return;
         }
-
         const payload = {
             id: formData.id || uuidv4(),
             serviceId: formData.serviceId || formData.id || uuidv4(),
@@ -410,7 +374,6 @@ export default function GenerateService() {
             engineerId: formData.engineerId,
             status: formData.status || "checked"
         };
-
         try {
             const response = await axios({
                 method: isEditMode ? 'put' : 'post',
@@ -421,12 +384,10 @@ export default function GenerateService() {
                     'Content-Type': 'application/json',
                 }
             });
-
             toast({
                 title: isEditMode ? "Service updated successfully" : "Service created successfully",
                 variant: "default",
             });
-
             router.push("/admin/servicerecord");
         } catch (err: any) {
             console.error("API Error:", err);
@@ -443,7 +404,7 @@ export default function GenerateService() {
     };
 
     function handleStartDateChange(event: ChangeEvent<HTMLInputElement>): void {
-        throw new Error("Function not implemented");
+        setStartDate(event.target.value);
     }
 
     return (
@@ -487,7 +448,6 @@ export default function GenerateService() {
 
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Customer Information Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <div className="relative w-full">
                                         <input
@@ -495,10 +455,7 @@ export default function GenerateService() {
                                             name="customerName"
                                             placeholder="Customer Name"
                                             value={formData.customerName}
-                                            onChange={(e) => {
-                                                handleChange(e);
-                                                setShowDropdown(true);
-                                            }}
+                                            onChange={e => (handleChange(e), setShowDropdown(true))}
                                             onFocus={() => setShowDropdown(true)}
                                             onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                                             className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
@@ -538,9 +495,7 @@ export default function GenerateService() {
                                                 )}
                                             </ul>
                                         )}
-
                                     </div>
-
                                     <input
                                         type="text"
                                         name="customerLocation"
@@ -552,7 +507,6 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                {/* Contact Information Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
@@ -574,7 +528,6 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                {/* Status and Service Engineer Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <select
                                         name="status"
@@ -586,7 +539,6 @@ export default function GenerateService() {
                                         <option value="checked">Checked</option>
                                         <option value="unchecked">Unchecked</option>
                                     </select>
-
                                     <select
                                         name="serviceEngineerId"
                                         value={formData.serviceEngineerId || ""}
@@ -604,14 +556,13 @@ export default function GenerateService() {
                                     </select>
                                 </div>
 
-                                {/* Date and Place Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="date"
                                         name="dateOfCalibration"
                                         value={startDate}
                                         onChange={handleStartDateChange}
-                                        className="p-2 rounded-md border bg-white"
+                                        className="p-2 rounded-md border bg-gray-300"
                                         min="2000-01-01"
                                         max="2100-12-31"
                                     />
@@ -626,7 +577,6 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                {/* Place Options Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <label className="font-medium text-black">Place :</label>
                                     <div className="flex gap-4">
@@ -654,7 +604,6 @@ export default function GenerateService() {
                                     </div>
                                 </div>
 
-                                {/* Nature of Job Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <label className="font-medium text-black">Nature of Job :</label>
                                     <div className="flex gap-4 flex-wrap">
@@ -682,8 +631,6 @@ export default function GenerateService() {
                                     </div>
                                 </div>
 
-
-                                {/* Report Number and Engineer Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
@@ -692,7 +639,7 @@ export default function GenerateService() {
                                         value={formData.reportNo}
                                         onChange={handleChange}
                                         readOnly
-                                        className="w-full bg-gray-100 text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        className="bg-gray-100 text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
                                     />
                                     <select
                                         name="engineerName"
@@ -710,7 +657,6 @@ export default function GenerateService() {
                                     </select>
                                 </div>
 
-                                {/* Instrument Details Section */}
                                 <div className="flex flex-col gap-4">
                                     <input
                                         name="makeModelNumberoftheInstrumentQuantity"
@@ -746,7 +692,6 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                {/* Engineer Remarks Section */}
                                 <div className="flex justify-end mb-4">
                                     <button
                                         type="button"
@@ -862,7 +807,6 @@ export default function GenerateService() {
                                     </table>
                                 </div>
 
-                                {/* Customer Report Section */}
                                 <div className="flex flex-col gap-4">
                                     <input
                                         name="customerReport"
@@ -873,13 +817,11 @@ export default function GenerateService() {
                                     />
                                 </div>
 
-                                {/* Error and Submit Button */}
                                 {error && (
                                     <div className="text-red-500 text-sm p-2 border border-red-300 rounded bg-red-50">
                                         {error}
                                     </div>
                                 )}
-
                                 <button
                                     type="submit"
                                     className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-purple-900 w-full"

@@ -1,33 +1,13 @@
 "use client";
 import { toast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Separator } from "@/components/ui/separator";
-
 import { Eye, EyeOff } from "react-feather";
-
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,9 +17,7 @@ import { useState } from "react";
 const registerSchema = z
   .object({
     name: z.string().nonempty("Required"),
-    contact: z.string()
-      .regex(/^\d*$/, { message: "Contact number must be numeric" })
-      .nonempty({ message: "Required" }),
+    contact: z.string().regex(/^\d*$/, { message: "Contact number must be numeric" }).nonempty({ message: "Required" }),
     email: z.string().email({ message: "Invalid email id" }),
     password: z.string().nonempty({ message: "Required" }),
     confirmPassword: z.string().nonempty({ message: "Required" }),
@@ -55,7 +33,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -70,7 +47,6 @@ export default function RegisterPage() {
   const handleRegister = async (values: z.infer<typeof registerSchema>) => {
     setLoading(true);
     setServerError('');
-
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -79,9 +55,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify(values),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         toast({
           title: 'Registration failed',
@@ -105,15 +79,12 @@ export default function RegisterPage() {
     }
   };
 
-
-
   return (
     <SidebarProvider>
       <AdminSidebar />
       <SidebarInset>
         <header className="flex h-16 items-center gap-2 px-4">
           <SidebarTrigger />
-
           <Separator orientation="vertical" className="mx-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
@@ -141,7 +112,6 @@ export default function RegisterPage() {
                 <form
                   onSubmit={form.handleSubmit(handleRegister)}
                   className="grid gap-4"
-
                 >
                   <FormField
                     name="name"
@@ -246,11 +216,9 @@ export default function RegisterPage() {
                       </FormItem>
                     )}
                   />
-
                   {serverError && (
                     <p className="text-red-500 text-sm">{serverError}</p>
                   )}
-
                   <CardFooter className="px-0">
                     <Button type="submit" className="w-full bg-purple-950 text-white hover:bg-purple-900" disabled={loading}>
                       {loading ? "Registering..." : "Create"}

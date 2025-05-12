@@ -613,7 +613,7 @@ export default function CertificateForm() {
                                     <input
                                         value={formData.range}
                                         readOnly
-                                        className="w-full sm:w-1/2 bg-gray-100 border px-3 py-2 rounded-md text-black"
+                                        className="bg-gray-100 text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md w-full sm:w-1/2"
                                         placeholder="Model Range"
                                     />
                                 </div>
@@ -651,7 +651,7 @@ export default function CertificateForm() {
                                         name="dateOfCalibration"
                                         value={startDate}
                                         onChange={handleStartDateChange}
-                                        className="p-2 rounded-md border bg-white"
+                                        className="p-2 rounded-md border bg-gray-300"
                                         min="2000-01-01"
                                         max="2100-12-31"
                                     />
@@ -679,7 +679,7 @@ export default function CertificateForm() {
                                                 calibrationDueDate: e.target.value
                                             }));
                                         }}
-                                        className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        className="p-2 rounded-md border bg-gray-300"
                                         disabled={timePeriod !== null}
                                         data-date-format="DD-MM-YYYY"
                                         min="2000-01-01"

@@ -7,13 +7,8 @@ import { SearchIcon, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import * as z from "zod";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
@@ -30,12 +25,10 @@ interface companies {
     industries_type: string;
     flag: string;
 }
-
 interface SortDescriptor {
     column: string;
     direction: "ascending" | "descending";
 }
-
 const generateUniqueId = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
@@ -49,7 +42,6 @@ const columns = [
     { name: "Website", uid: "website", sortable: true, width: "120px" },
     { name: "Flag", uid: "flag", sortable: true, width: "120px" },
 ];
-
 const INITIAL_VISIBLE_COLUMNS = ["company_name", "address", "gst_number", "industries", "website", "industries_type", "flag"];
 
 const companiesSchema = z.object({
@@ -58,13 +50,8 @@ const companiesSchema = z.object({
     industries: z.string().min(1, { message: "Industries is required" }),
     industriesType: z.string().min(1, { message: "Industry type is required" }),
     gstNumber: z.string().min(1, { message: "GST number is required" }),
-    website: z.preprocess(
-        (val) => (val === "" ? undefined : val),
-        z.string().url({ message: "Invalid website URL" }).optional()
-    ),
-    flag: z.enum(["Red", "Yellow", "Green"], {
-        required_error: "Please select a flag color",
-    }),
+    website: z.preprocess(val => (val === "" ? undefined : val), z.string().url({ message: "Invalid website URL" }).optional()),
+    flag: z.enum(["Red", "Yellow", "Green"], { required_error: "Please select a flag color" }),
 });
 
 export default function CompanyDetailsTable() {
@@ -75,11 +62,7 @@ export default function CompanyDetailsTable() {
     const [filterValue, setFilterValue] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
-
-    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-        column: "createdAt",
-        direction: "descending",
-    });
+    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({ column: "createdAt", direction: "descending" });
     const router = useRouter();
     const hasSearchFilter = Boolean(filterValue);
 
@@ -99,7 +82,6 @@ export default function CompanyDetailsTable() {
                 setIsSubmitting(false);
             }
         };
-
         fetchCompanies();
     }, []);
 
@@ -108,12 +90,9 @@ export default function CompanyDetailsTable() {
             console.error("No company ID provided for deletion");
             return;
         }
-
         const confirmed = window.confirm("Are you sure you want to delete this company?");
         if (!confirmed) return;
-
         setIsSubmitting(true);
-
         fetch(`/api/companies?id=${companyId}`, {
             method: "DELETE",
         })
@@ -146,7 +125,6 @@ export default function CompanyDetailsTable() {
 
     const filteredItems = React.useMemo(() => {
         let filtered = [...companies];
-
         if (hasSearchFilter) {
             const searchLower = filterValue.toLowerCase();
             filtered = filtered.filter(company =>
@@ -159,7 +137,6 @@ export default function CompanyDetailsTable() {
                 (company.flag?.toLowerCase() ?? "").includes(searchLower)
             );
         }
-
         return filtered;
     }, [companies, filterValue, hasSearchFilter]);
 
@@ -167,11 +144,9 @@ export default function CompanyDetailsTable() {
         return [...filteredItems].sort((a, b) => {
             const first = a[sortDescriptor.column as keyof companies] || "";
             const second = b[sortDescriptor.column as keyof companies] || "";
-
             let cmp = 0;
             if (first < second) cmp = -1;
             if (first > second) cmp = 1;
-
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
@@ -200,7 +175,6 @@ export default function CompanyDetailsTable() {
             const value = company[columnKey as keyof companies];
             return value && value.trim() !== "" ? value : "N/A";
         }
-
         return company[columnKey as keyof companies];
     }, [router, handleDelete]);
 

@@ -1,22 +1,14 @@
 'use client';
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { SearchIcon, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import axios from "axios";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { Pagination, Tooltip } from "@heroui/react";
+import { Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 interface User {
@@ -32,7 +24,6 @@ const columns = [
   { name: "Contact Number", uid: "contact", sortable: true, width: "120px" },
   { name: "Delete", uid: "actions", sortable: false, width: "100px" },
 ];
-
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "contact", "actions"];
 
 export default function UserTable() {
@@ -40,11 +31,7 @@ export default function UserTable() {
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
   const router = useRouter();
-
-  const [sortDescriptor, setSortDescriptor] = useState({
-    column: "name",
-    direction: "ascending" as "ascending" | "descending",
-  });
+  const [sortDescriptor, setSortDescriptor] = useState({ column: "name", direction: "ascending" as "ascending" | "descending" });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -61,7 +48,6 @@ export default function UserTable() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-
     try {
       const response = await fetch(`http://localhost:5000/api/v1/users/deleteuser/${id}`, {
         method: "DELETE",
@@ -80,7 +66,6 @@ export default function UserTable() {
 
   const filteredItems = React.useMemo(() => {
     let filtered = [...users];
-
     if (filterValue) {
       const searchLower = filterValue.toLowerCase();
       filtered = filtered.filter(user =>
@@ -88,7 +73,6 @@ export default function UserTable() {
         user.email.toLowerCase().includes(searchLower)
       );
     }
-
     return filtered;
   }, [users, filterValue]);
 
@@ -96,11 +80,9 @@ export default function UserTable() {
     return [...filteredItems].sort((a, b) => {
       const first = a[sortDescriptor.column as keyof User] || "";
       const second = b[sortDescriptor.column as keyof User] || "";
-
       let cmp = 0;
       if (first < second) cmp = -1;
       if (first > second) cmp = 1;
-
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [filteredItems, sortDescriptor]);
@@ -152,7 +134,6 @@ export default function UserTable() {
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
