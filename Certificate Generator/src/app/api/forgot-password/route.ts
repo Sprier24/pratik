@@ -27,23 +27,23 @@ export async function POST(request: Request) {
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const userId = user.id as string; // Explicit type assertion
-      const userName = typeof user.name === 'string' ? user.name : "User"; // Type handling
+      const userId = user.id as string; 
+      const userName = typeof user.name === 'string' ? user.name : "User"; 
 
-      // Create the reset password token
+      
       const token = jwt.sign({ id: userId }, process.env.JWT_SECRET!, { expiresIn: "1h" });
-      const expires = Date.now() + 3600000; // 1 hour expiration time
+      const expires = Date.now() + 3600000; 
 
-      // Update the user with the reset token and expiration
+      
       await client.execute({
         sql: `UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?`,
         args: [token, expires, userId],
       });
 
-      // Generate the password reset link
+    
       const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/Resetpassword/${token}?email=${encodeURIComponent(email)}`;
 
-      // Send the reset password email
+  
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: email,

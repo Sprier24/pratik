@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { SearchIcon, Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,7 +13,7 @@ import { Tooltip } from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   contact: number;
@@ -32,11 +33,10 @@ export default function UserTable() {
   const [visibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
   const router = useRouter();
   const [sortDescriptor, setSortDescriptor] = useState({ column: "name", direction: "ascending" as "ascending" | "descending" });
-
-  useEffect(() => {
+useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/v1/users/getusers");
+        const response = await fetch("/api/users");
         const data = await response.json();
         setUsers(data);
       } catch (error) {
@@ -45,20 +45,43 @@ export default function UserTable() {
     };
     fetchUsers();
   }, []);
-
+  
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
+  
     try {
-      const response = await fetch(`http://localhost:5000/api/v1/users/deleteuser/${id}`, {
+      const response = await fetch(`/api/users?id=${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+      const result = await response.json();
       if (response.ok) {
-        setUsers(prev => prev.filter(user => user._id !== id));
+        setUsers(prev => prev.filter(user => user.id !== id));
+        toast({
+          title: "Success!",
+          description: "User has been deleted successfully.",
+          variant: "default",
+        });
+      } else {
+        console.error(result.error || "Failed to delete user");
+        toast({
+          title: "Error",
+          description: result.error || "Failed to delete user.",
+          variant: "destructive", // To show an error toast
+        });
       }
     } catch (error) {
       console.error("Failed to delete user", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while deleting the user.",
+        variant: "destructive", // To show an error toast
+      });
     }
   };
+  
 
   const headerColumns = React.useMemo(() => {
     return columns.filter(column => visibleColumns.has(column.uid));
@@ -115,7 +138,7 @@ export default function UserTable() {
               className="text-lg text-danger cursor-pointer active:opacity-50"
               onClick={(e) => {
                 e.preventDefault();
-                handleDelete(user._id);
+                handleDelete(user.id);
               }}
             >
               <Trash2 className="h-6 w-6" />

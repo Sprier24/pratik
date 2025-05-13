@@ -12,7 +12,7 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useState } from "react";
+import { useState,Suspense } from "react";
 
 const registerSchema = z
   .object({
@@ -27,7 +27,24 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-export default function RegisterPage() {
+  export default function RegisterFormWrapper() {
+      return (
+          <Suspense fallback={<RegisterFormLoading />}>
+              <RegisterPage/>
+          </Suspense>
+      );
+  }
+  
+  function RegisterFormLoading() {
+      return (
+          <div className="flex justify-center items-center h-screen">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+              <span className="ml-4">Loading Service form...</span>
+          </div>
+      );
+  }
+
+ function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);

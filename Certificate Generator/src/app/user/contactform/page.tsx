@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -31,7 +31,23 @@ const contactPersonsSchema = z.object({
   companyId: z.string().nonempty({ message: "Missing company" }),
 });
 
-export default function ContactForm() {
+export default function ContactFormWrapper() {
+  return (
+    <Suspense fallback={<ContactFormLoading />}>
+      <ContactForm />
+    </Suspense>
+  );
+}
+
+function ContactFormLoading() {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      <span className="ml-4">Loading contact form...</span>
+    </div>
+  );
+}
+function ContactForm() {
   const searchParams = useSearchParams();
   const contactId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);

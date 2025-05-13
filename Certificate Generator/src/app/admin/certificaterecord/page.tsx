@@ -20,23 +20,25 @@ interface Observation {
     before: string;
     after: string;
 }
+
 interface Certificate {
-    _id: string;
-    certificateNo: string;
-    customerName: string;
-    siteLocation: string;
-    makeModel: string;
+    id: string;
+    certificate_no: string;
+    customer_name: string;
+    site_location: string;
+    make_model: string;
     range: string;
-    serialNo: string;
-    calibrationGas: string;
-    gasCanisterDetails: string;
-    dateOfCalibration: string;
-    calibrationDueDate: string;
+    serial_no: string;
+    calibration_gas: string;
+    gas_canister_details: string;
+    date_of_calibration: string;
+    calibration_due_date: string;
     observations: Observation[];
-    engineerName: string;
+    engineer_name: string;
     status: string;
-    [key: string]: string;
+    createdAt?: string;
 }
+
 
 type SortDescriptor = {
     column: string;
@@ -116,7 +118,7 @@ export default function CertificateTable() {
                 }
             });
             setCertificates((prevCertificates) =>
-                prevCertificates.filter(cert => cert._id !== certificateId)
+                prevCertificates.filter(cert => cert.id !== certificateId)
             );
             toast({
                 title: "Certificate deleted successfully",
@@ -151,7 +153,7 @@ export default function CertificateTable() {
         }
         if (startDate || endDate) {
             filteredCertificates = filteredCertificates.filter((certificate) => {
-                const dateStr = certificate.dateOfCalibration || certificate.date_of_calibration;
+                const dateStr = certificate.date_of_calibration || certificate.date_of_calibration;
                 if (!dateStr) return false;
                 const calibrationDate = new Date(dateStr);
                 const start = startDate ? new Date(startDate) : null;
@@ -175,27 +177,30 @@ export default function CertificateTable() {
     const items = filteredItems;
 
     const sortedItems = React.useMemo(() => {
-        return [...items].sort((a, b) => {
-            if (sortDescriptor.column === 'dateOfCalibration' ||
-                sortDescriptor.column === 'calibrationDueDate' ||
-                sortDescriptor.column === 'createdAt') {
-                const dateA = new Date(a[sortDescriptor.column]).getTime();
-                const dateB = new Date(b[sortDescriptor.column]).getTime();
-                const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+            return [...items].sort((a, b) => {
+                if (
+                    sortDescriptor.column === 'dateOfCalibration' ||
+                    sortDescriptor.column === 'calibrationDueDate'
+                ) {
+                    const dateA = new Date(a[sortDescriptor.column as keyof Certificate] as string).getTime();
+                    const dateB = new Date(b[sortDescriptor.column as keyof Certificate] as string).getTime();
+                    const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+                    return sortDescriptor.direction === "descending" ? -cmp : cmp;
+                }
+    
+    
+                const first = a[sortDescriptor.column as keyof Certificate] || '';
+                const second = b[sortDescriptor.column as keyof Certificate] || '';
+                const cmp = String(first).localeCompare(String(second));
+    
                 return sortDescriptor.direction === "descending" ? -cmp : cmp;
-            }
-            const first = a[sortDescriptor.column as keyof Certificate] || '';
-            const second = b[sortDescriptor.column as keyof Certificate] || '';
-            const cmp = String(first).localeCompare(String(second));
-
-            return sortDescriptor.direction === "descending" ? -cmp : cmp;
-        });
-    }, [sortDescriptor, items]);
+            });
+        }, [sortDescriptor, items]);
 
     const handleDownload = async (certificateId: string) => {
         try {
             setIsDownloading(certificateId);
-            const certificateToDownload = certificates.find(cert => cert._id === certificateId);
+            const certificateToDownload = certificates.find(cert => cert.id === certificateId);
             if (!certificateToDownload) throw new Error("Certificate data not found");
             const logo = new Image();
             logo.src = "/img/rps.png";
@@ -395,7 +400,7 @@ export default function CertificateTable() {
 
     const handleSelectionChange = (keys: Selection) => {
         if (keys === "all") {
-            setSelectedKeys(new Set(certificates.map(cert => cert._id)));
+            setSelectedKeys(new Set(certificates.map(cert => cert.id)));
         } else {
             setSelectedKeys(keys as Set<string>);
         }
@@ -405,49 +410,71 @@ export default function CertificateTable() {
         setVisibleColumns(keys);
     };
 
-    const renderCell = React.useCallback((certificate: Certificate, columnKey: string): React.ReactNode => {
-        const cellValue = certificate[columnKey];
-        if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
-            return formatDate(cellValue);
-        }
-        if (columnKey === "actions") {
-            return (
-                <div className="relative flex items-center gap-2">
-                    <Tooltip>
-                        <span
-                            className="text-lg text-danger cursor-pointer active:opacity-50"
-                            onClick={() => handleDownload(certificate._id)}
-                        >
-                            <Download className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                    <Tooltip>
-                        <span
-                            className="text-lg text-info cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`certificateform?id=${certificate._id}`);
-                            }}
-                        >
-                            <Edit className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                    <Tooltip>
-                        <span
-                            className="text-lg text-danger cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleDelete(certificate._id);
-                            }}
-                        >
-                            <Trash2 className="h-6 w-6" />
-                        </span>
-                    </Tooltip>
-                </div>
-            );
-        }
-        return cellValue;
-    }, [isDownloading, handleDownload, handleDelete]);
+    
+ const renderCell = React.useCallback(
+  (certificate: Certificate, columnKey: string): React.ReactNode => {
+    // Handle actions column separately
+    if (columnKey === "actions") {
+      return (
+        <div className="relative flex items-center gap-2">
+          <Tooltip>
+            <span
+              className="text-lg text-danger cursor-pointer active:opacity-50"
+              onClick={() => handleDownload(certificate.id)}
+            >
+              <Download className="h-6 w-6" />
+            </span>
+          </Tooltip>
+
+          <Tooltip>
+            <span
+              className="text-lg text-info cursor-pointer active:opacity-50"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`certificateform?id=${certificate.id}`);
+              }}
+            >
+              <Edit className="h-6 w-6" />
+            </span>
+          </Tooltip>
+
+          <Tooltip>
+            <span
+              className="text-lg text-danger cursor-pointer active:opacity-50"
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete(certificate.id);
+              }}
+            >
+              <Trash2 className="h-6 w-6" />
+            </span>
+          </Tooltip>
+        </div>
+      );
+    }
+
+    // For all other columns, ensure we're accessing valid properties
+    const cellValue = certificate[columnKey as keyof Certificate];
+
+    // Handle date columns
+    if ((columnKey === "date_of_calibration" || columnKey === "calibration_due_date") && cellValue) {
+      return formatDate(cellValue as string);
+    }
+
+    // Handle observations column
+    if (columnKey === "observations" && Array.isArray(cellValue)) {
+      return (cellValue as Observation[]).map((obs, index) => (
+        <div key={index}>
+          <span>{obs.gas || '-'}</span> - <span>{obs.before || '-'}</span> - <span>{obs.after || '-'}</span>
+        </div>
+      ));
+    }
+
+    // Return default cell value
+    return (cellValue as string) || "N/A";
+  },
+  [handleDownload, handleDelete, router]
+);
 
     return (
         <SidebarProvider>
@@ -533,7 +560,7 @@ export default function CertificateTable() {
                                 </TableHeader>
                                 <TableBody emptyContent={"Go to Create certificate and add data"} items={sortedItems}>
                                     {(item) => (
-                                        <TableRow key={item._id}>
+                                        <TableRow key={item.id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}
                                         </TableRow>
                                     )}

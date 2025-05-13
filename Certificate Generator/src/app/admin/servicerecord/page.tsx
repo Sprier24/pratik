@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2, SearchIcon, Download, Edit, Trash2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection, ChipProps } from "@heroui/react"
+import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection } from "@heroui/react"
 import axios from "axios";
 import { Pagination, Tooltip } from "@heroui/react"
 import { useRouter } from "next/navigation";
@@ -23,34 +23,36 @@ interface engineer_remarks {
     total: string;
     poNo: string;
 }
+
 interface Service {
-    [x: string]: string;
     id: string;
-    customerName: string;
-    customerLocation: string;
-    contactPerson: string;
-    contactNumber: string;
-    serviceEngineer: string;
+    customer_name: string;
+    customer_location: string;
+    contact_person: string;
+    contact_number: string;
+    service_engineer: string;
     serviceEngineerId?: string;
     date: string;
     place: string;
-    placeOptions: string;
-    natureOfJob: string;
-    reportNo: string;
-    makeModelNumberoftheInstrumentQuantity: string;
-    serialNumberoftheInstrumentCalibratedOK: string;
-    serialNumberoftheFaultyNonWorkingInstruments: string;
-    engineerReport: string;
-    customerReport: string;
+    place_options: string;
+    nature_of_job: string;
+    report_no: string;
+    make_model_number_of_the_instrument_quantity: string;
+    serial_number_of_the_instrument_calibrated_ok: string;
+    serial_number_of_the_faulty_non_working_instruments: string;
+    engineer_report: string;
+    customer_report: string;
     engineer_remarks: engineer_remarks[];
-    engineerName: string;
+    engineer_name: string;
     engineerId?: string;
     status: 'checked' | 'unchecked';
 }
+
 type SortDescriptor = {
     column: string;
     direction: 'ascending' | 'descending';
 }
+
 interface ServiceResponse {
     serviceId: string;
     message: string;
@@ -69,10 +71,7 @@ const columns = [
     { name: "Service Engineer", uid: "service_engineer", sortable: true, width: "120px" },
     { name: "Action", uid: "actions", sortable: true, width: "100px" },
 ];
-export const statusOptions = [
-    { name: "Paused", uid: "paused" },
-    { name: "Vacation", uid: "vacation" },
-];
+
 const INITIAL_VISIBLE_COLUMNS = ["customer_name", "contact_person", "contact_number", "service_engineer", "report_no", "actions"];
 
 export default function AdminServiceTable() {
@@ -454,14 +453,22 @@ export default function AdminServiceTable() {
     };
 
     const renderCell = React.useCallback((service: Service, columnKey: string): React.ReactNode => {
+        // Safely get the cell value with proper typing
         const cellValue = service[columnKey as keyof Service];
-        if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate") && cellValue) {
-            return formatDate(cellValue);
+
+        // Handle date columns
+        if ((columnKey === "dateOfCalibration" || columnKey === "calibrationDueDate")) {
+            if (typeof cellValue === "string") {
+                return formatDate(cellValue);
+            }
+            return null; // or some fallback for invalid dates
         }
+
+        // Handle actions column
         if (columnKey === "actions") {
             return (
                 <div className="relative flex items-center gap-2">
-                    <Tooltip>
+                    <Tooltip content="Download">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -476,29 +483,50 @@ export default function AdminServiceTable() {
                             )}
                         </Button>
                     </Tooltip>
-                    <Tooltip>
-                        <span
+                    <Tooltip content="Edit">
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-lg text-info cursor-pointer active:opacity-50"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`serviceform?id=${service.id}`);
-                            }}
+                            onClick={() => router.push(`serviceform?id=${service.id}`)}
                         >
                             <Edit className="h-6 w-6" />
-                        </span>
+                        </Button>
                     </Tooltip>
-                    <Tooltip>
-                        <span
+                    <Tooltip content="Delete">
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-lg text-danger cursor-pointer active:opacity-50"
                             onClick={() => handleDelete(service.id)}
                         >
                             <Trash2 className="h-6 w-6" />
-                        </span>
+                        </Button>
                     </Tooltip>
                 </div>
             );
         }
-        return cellValue;
+
+        // Handle engineer_remarks array
+        if (columnKey === "engineer_remarks" && Array.isArray(cellValue)) {
+            return (
+                <div className="space-y-1">
+                    {cellValue.map((remark, index) => (
+                        <div key={index} className="text-sm">
+                            {remark.serviceSpares}: {remark.partNo} (Qty: {remark.quantity})
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // Default case for strings/numbers
+        if (typeof cellValue === "string" || typeof cellValue === "number") {
+            return cellValue;
+        }
+
+        // Fallback for other types
+        return null;
     }, [isDownloading, router]);
 
     return (

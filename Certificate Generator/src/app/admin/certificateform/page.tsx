@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { useState, useEffect } from "react";
+import { useState, useEffect,Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { toast } from '@/hooks/use-toast'
@@ -12,7 +12,7 @@ import { Trash2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 interface Company {
-    _id: string;
+    id: string;
     company_name: string;
 }
 interface Observation {
@@ -55,7 +55,24 @@ const generateCertificateNumber = () => {
     return `RPS/CER/${yearRange}/${randomNum}`;
 };
 
-export default function CertificateForm() {
+export default function CertificateFormWrapper() {
+    return (
+        <Suspense fallback={<CertificateFormLoading />}>
+            <CertificateForm />
+        </Suspense>
+    );
+}
+
+function CertificateFormLoading() {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+            <span className="ml-4">Loading certificate form...</span>
+        </div>
+    );
+}
+
+function CertificateForm() {
     const searchParams = useSearchParams();
     const certificateId = searchParams.get('id');
     const [formData, setFormData] = useState<Certificate>({
@@ -563,7 +580,7 @@ export default function CertificateForm() {
                                                 {filteredCompanies.length > 0 ? (
                                                     filteredCompanies.map((company) => (
                                                         <li
-                                                            key={company._id}
+                                                            key={company.id}
                                                             className={`px-4 py-2 cursor-pointer transition-colors ${selectedCompanyName === company.company_name ? " font-medium" : ""
                                                                 }`}
                                                             onMouseDown={(e) => e.preventDefault()}
@@ -806,6 +823,17 @@ export default function CertificateForm() {
                                     {loading ? "Generating..." : "Generate Certificate"}
                                 </button>
                             </form>
+                            {certificate && (
+                                <div className="mt-4 text-center">
+                                    <p className="text-green-600 mb-2">Certificate Generated Successfully</p>
+                                    <button
+                                        onClick={handleDownload}
+                                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                                    >
+                                        Download Certificate
+                                    </button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

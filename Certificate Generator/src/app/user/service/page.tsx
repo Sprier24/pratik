@@ -1,5 +1,7 @@
-"use client";
-import { useState, useEffect, useCallback, ChangeEvent,Suspense } from "react";
+'use client';
+
+
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -7,10 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
-import { AdminSidebar } from "@/components/admin-sidebar";
+
 import { Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { jsPDF } from "jspdf";
+import { AppSidebar } from "@/components/app-sidebar";
 
 interface Contact {
     id: string;
@@ -18,6 +21,7 @@ interface Contact {
     contactNo: string;
     companyName?: string;
 }
+
 interface EngineerRemark {
     serviceSpares: string;
     partNo: string;
@@ -26,6 +30,7 @@ interface EngineerRemark {
     total: string;
     poNo: string;
 }
+
 interface ServiceRequest {
     id: string;
     serviceId?: string;
@@ -50,15 +55,18 @@ interface ServiceRequest {
     engineerId?: string;
     status: string;
 }
+
 interface ServiceResponse {
     serviceId: string;
     message: string;
     downloadUrl: string;
 }
+
 interface Engineer {
     id: string;
     name: string;
 }
+
 interface ServiceEngineer {
     id: string;
     name: string;
@@ -86,8 +94,6 @@ const initialFormData: ServiceRequest = {
     status: "checked"
 };
 
-
-
 export default function ServiceFormWrapper() {
     return (
         <Suspense fallback={<ServiceFormLoading />}>
@@ -105,18 +111,18 @@ function ServiceFormLoading() {
     );
 }
 
-
- function GenerateService() {
+  function GenerateService() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('id');
     const isEditMode = !!serviceId;
-    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
-    const [startDate, setStartDate] = useState<string>(today);
+
     const [formData, setFormData] = useState<ServiceRequest>(initialFormData);
     const [contactPersons, setContactPersons] = useState<Contact[]>([]);
     const [service, setService] = useState<ServiceResponse | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [isSendingPDF, setIsSendingPDF] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [engineers, setEngineers] = useState<Engineer[]>([]);
     const [serviceEngineers, setServiceEngineers] = useState<ServiceEngineer[]>([]);
@@ -124,7 +130,9 @@ function ServiceFormLoading() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
     const [isLoadingEngineers, setIsLoadingEngineers] = useState(true);
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [generatedPdfBlob, setGeneratedPdfBlob] = useState<Blob | null>(null);
+
+    // Generate report number if not in edit mode
     const generateReportNo = useCallback(() => {
         const date = new Date();
         const currentYear = date.getFullYear();
@@ -135,6 +143,7 @@ function ServiceFormLoading() {
         return `RPS/SRV/${yearRange}/${randomNum}`;
     }, []);
 
+    // Fetch contact persons
     const fetchContactPersons = useCallback(async () => {
         setIsLoadingContacts(true);
         try {
@@ -143,6 +152,7 @@ function ServiceFormLoading() {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
             });
+
             const data = Array.isArray(response.data?.data)
                 ? response.data.data
                 : Array.isArray(response.data)
@@ -152,9 +162,10 @@ function ServiceFormLoading() {
             setContactPersons(data);
             setFilteredContacts(data);
         } catch (error) {
-            console.error("Error fetching contact", error);
+            console.error("Error fetching contact persons:", error);
             toast({
-                title: "Failed to load contact",
+                title: "Error",
+                description: "Failed to load contacts",
                 variant: "destructive",
             });
             setContactPersons([]);
@@ -164,6 +175,7 @@ function ServiceFormLoading() {
         }
     }, []);
 
+    // Fetch engineers
     const fetchEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/engineers");
@@ -171,12 +183,14 @@ function ServiceFormLoading() {
             setEngineers(Array.isArray(data) ? data : []);
         } catch (error) {
             toast({
-                title: "Failed to load engineers",
+                title: "Error",
+                description: "Failed to load engineers",
                 variant: "destructive"
             });
         }
     }, []);
 
+    // Fetch service engineers
     const fetchServiceEngineers = useCallback(async () => {
         try {
             const res = await fetch("/api/service-engineers");
@@ -184,74 +198,14 @@ function ServiceFormLoading() {
             setServiceEngineers(Array.isArray(data) ? data : []);
         } catch (error) {
             toast({
-                title: "Failed to load service engineers",
+                title: "Error",
+                description: "Failed to load service engineers",
                 variant: "destructive"
             });
         } finally {
             setIsLoadingEngineers(false);
         }
     }, []);
-
-    const fetchServiceData = useCallback(async () => {
-        if (!isEditMode) return;
-        try {
-            setLoading(true);
-            const response = await axios.get(`/api/services?id=${serviceId}`);
-            const serviceData = response.data;
-            setFormData({
-                id: serviceData.id || serviceData._id || '',
-                serviceId: serviceData.serviceId || serviceData.id || serviceData._id || '',
-                customerName: serviceData.customer_name || '',
-                customerLocation: serviceData.customer_location || '',
-                contactPerson: serviceData.contact_person || '',
-                contactNumber: serviceData.contact_number || serviceData.contactNo || '',
-                serviceEngineer: serviceData.service_engineer || '',
-                serviceEngineerId: serviceData.serviceEngineerId || serviceData.service_engineer_id || '',
-                date: serviceData.date
-                    ? new Date(serviceData.date).toISOString().split('T')[0]
-                    : new Date().toISOString().split('T')[0],
-                place: serviceData.place || '',
-                placeOptions: serviceData.place_options || "At Site",
-                natureOfJob: serviceData.nature_of_Job || "AMC",
-                reportNo: serviceData.report_no || generateReportNo(),
-                makeModelNumberoftheInstrumentQuantity:
-                    serviceData.make_model_number_of_the_instrument_quantity ||
-                    serviceData.makeModelNumber ||
-                    serviceData.instrumentDetails || '',
-                serialNumberoftheInstrumentCalibratedOK:
-                    serviceData.serial_number_of_the_instrument_calibrated_ok ||
-                    serviceData.serialNumberCalibrated ||
-                    serviceData.calibratedInstruments || '',
-                serialNumberoftheFaultyNonWorkingInstruments:
-                    serviceData.serial_number_of_the_faulty_non_working_instruments ||
-                    serviceData.serialNumberFaulty ||
-                    serviceData.faultyInstruments || '',
-                engineerReport: serviceData.engineer_report || '',
-                customerReport: serviceData.customer_report || '',
-                engineerRemarks: serviceData.engineerRemarks?.length > 0
-                    ? serviceData.engineerRemarks.map((remark: any) => ({
-                        serviceSpares: remark.serviceSpares || '',
-                        partNo: remark.partNo || '',
-                        rate: remark.rate || '0',
-                        quantity: remark.quantity?.toString() || '0',
-                        total: remark.total || (Number(remark.rate || 0) * Number(remark.quantity || 0)).toString(),
-                        poNo: remark.poNo || ''
-                    }))
-                    : [{ serviceSpares: "", partNo: "", rate: "", quantity: "", poNo: "", total: "" }],
-                engineerName: serviceData.engineer_name || '',
-                engineerId: serviceData.engineerId || '',
-                status: serviceData.status || "checked"
-            });
-        } catch (error) {
-            console.error("Error fetching service data", error);
-            toast({
-                title: "Failed to load service data",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    }, [isEditMode, serviceId, generateReportNo]);
 
     useEffect(() => {
         if (!isEditMode) {
@@ -262,33 +216,40 @@ function ServiceFormLoading() {
         }
     }, [isEditMode, generateReportNo]);
 
+    // Fetch all required data
     useEffect(() => {
         fetchContactPersons();
         fetchEngineers();
         fetchServiceEngineers();
-        if (isEditMode) fetchServiceData();
-    }, [fetchContactPersons, fetchEngineers, fetchServiceEngineers, fetchServiceData, isEditMode]);
+    }, [fetchContactPersons, fetchEngineers, fetchServiceEngineers, isEditMode]);
 
+    // Filter contacts based on customer name
     useEffect(() => {
         if (!Array.isArray(contactPersons)) {
             setFilteredContacts([]);
             return;
         }
+
         const customerNameInput = formData.customerName.trim().toLowerCase();
+
         setFilteredContacts(
             customerNameInput.length > 0
                 ? contactPersons.filter(person =>
                     (person.companyName || '').toLowerCase().includes(customerNameInput) ||
                     (person.firstName || '').toLowerCase().includes(customerNameInput)
-                )
-                : contactPersons
+                ) : contactPersons
         );
     }, [formData.customerName, contactPersons]);
 
     const handleServiceEngineerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
         const selectedEngineer = serviceEngineers.find(engineer => engineer.id === selectedId);
-        setFormData(prev => ({ ...prev, serviceEngineerId: selectedId, serviceEngineer: selectedEngineer?.name || "" }));
+
+        setFormData(prev => ({
+            ...prev,
+            serviceEngineerId: selectedId,
+            serviceEngineer: selectedEngineer?.name || ""
+        }));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -299,11 +260,13 @@ function ServiceFormLoading() {
     const handleEngineerRemarksChange = (index: number, field: keyof EngineerRemark, value: string) => {
         const updatedEngineerRemarks = [...formData.engineerRemarks];
         updatedEngineerRemarks[index] = { ...updatedEngineerRemarks[index], [field]: value };
+
         if (field === 'rate' || field === 'quantity') {
             const rate = parseFloat(updatedEngineerRemarks[index].rate) || 0;
             const quantity = parseFloat(updatedEngineerRemarks[index].quantity) || 0;
             updatedEngineerRemarks[index].total = (rate * quantity).toString();
         }
+
         setFormData({ ...formData, engineerRemarks: updatedEngineerRemarks });
     };
 
@@ -332,14 +295,17 @@ function ServiceFormLoading() {
             'makeModelNumberoftheInstrumentQuantity', 'serialNumberoftheInstrumentCalibratedOK',
             'serialNumberoftheFaultyNonWorkingInstruments', 'engineerReport', 'engineerName'
         ];
+
         const missingFields = requiredFields.filter(field => {
             const value = formData[field as keyof typeof formData];
             return typeof value === 'string' ? value.trim() === '' : !value;
         });
+
         if (missingFields.length > 0) {
             setError(`Please fill all required fields: ${missingFields.join(', ')}`);
             return false;
         }
+
         const validRemarks = formData.engineerRemarks.filter(remark =>
             remark.serviceSpares?.trim() &&
             remark.partNo?.trim() &&
@@ -348,60 +314,316 @@ function ServiceFormLoading() {
             remark.total?.toString().trim() &&
             remark.poNo?.trim()
         );
+
         if (validRemarks.length === 0) {
-            setError("Please add at least one valid engineer remark");
+            setError("Please add at least one valid engineer remark.");
             return false;
         }
+
         return true;
     };
+
+    const generatePDFDocument = (): jsPDF => {
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4"
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const logo = new Image();
+        logo.src = "/img/rps.png";
+        const infoImage = new Image();
+        infoImage.src = "/img/handf.png";
+
+        const formatDate = (inputDateString: string | undefined): string => {
+            if (!inputDateString) return "N/A";
+            const inputDate = new Date(inputDateString);
+            if (isNaN(inputDate.getTime())) return "N/A";
+            const pad = (n: number) => n.toString().padStart(2, "0");
+            return `${pad(inputDate.getDate())} - ${pad(inputDate.getMonth() + 1)} - ${inputDate.getFullYear()}`;
+        };
+
+        const leftMargin = 15;
+        const rightMargin = 15;
+        const topMargin = 20;
+        let y = topMargin;
+
+        doc.addImage(logo, "PNG", 5, 5, 50, 15);
+        y = 40;
+
+        doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
+        doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
+        y += 10;
+
+        const addRow = (label: string, value: string) => {
+            const labelOffset = 65;
+            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+            doc.text(label + ":", leftMargin, y);
+            doc.setFont("times", "normal").setTextColor(50);
+            doc.text(value || "N/A", leftMargin + labelOffset, y);
+            y += 7;
+        };
+
+        addRow("Report No.", formData.reportNo);
+        addRow("Customer Name", formData.customerName);
+        addRow("Customer Location", formData.customerLocation);
+        addRow("Contact Person", formData.contactPerson);
+        addRow("Status", formData.status);
+        addRow("Contact Number", formData.contactNumber);
+        addRow("Service Engineer", formData.serviceEngineer);
+        addRow("Date", formatDate(formData.date));
+        addRow("Place", formData.place);
+        addRow("Place Options", formData.placeOptions);
+        addRow("Nature of Job", formData.natureOfJob);
+        addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
+        y += 5;
+        addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
+        addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
+        y += 10;
+
+        doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+        doc.text("Engineer Report:", leftMargin, y);
+        y += 5;
+
+        const engineerReportHeight = 30;
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.2);
+        doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
+
+        const engineerReportLines = doc.splitTextToSize(formData.engineerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
+        doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+        doc.text(engineerReportLines, leftMargin + 2, y + 5);
+        y += engineerReportHeight + 5;
+
+        doc.addPage();
+        y = topMargin;
+
+        doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+        doc.text("ENGINEER REMARKS", leftMargin, y);
+        y += 8;
+
+        const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "Total", "PO No."];
+        const colWidths = [15, 50, 25, 20, 20, 25, 25];
+        let x = leftMargin;
+
+        tableHeaders.forEach((header, i) => {
+            doc.rect(x, y, colWidths[i], 8);
+            doc.text(header, x + 2, y + 6);
+            x += colWidths[i];
+        });
+
+        y += 8;
+
+        formData.engineerRemarks.forEach((item, index) => {
+            x = leftMargin;
+            const values = [
+                String(index + 1),
+                item.serviceSpares || "",
+                item.partNo || "",
+                item.rate || "",
+                item.quantity || "",
+                item.total || "",
+                item.poNo || ""
+            ];
+            values.forEach((val, i) => {
+                doc.rect(x, y, colWidths[i], 8);
+                doc.text(val, x + 2, y + 6);
+                x += colWidths[i];
+            });
+            y += 8;
+            if (y + 50 > pageHeight) {
+                doc.addPage();
+                y = topMargin;
+            }
+        });
+
+        y += 10;
+
+        doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
+        doc.text("Customer Report:", leftMargin, y);
+        y += 5;
+
+        const customerReportHeight = 30;
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.2);
+        doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
+
+        const customerReportLines = doc.splitTextToSize(formData.customerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
+        doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
+        doc.text(customerReportLines, leftMargin + 2, y + 5);
+        y += customerReportHeight + 5;
+
+        doc.setFont("times", "normal");
+        doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
+        doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
+
+        const now = new Date();
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
+        const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        doc.setFontSize(9).setTextColor(100);
+        doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
+
+        const addFooterImage = () => {
+            const footerY = pageHeight - 25;
+            const footerWidth = 180;
+            const footerHeight = 20;
+            const footerX = (pageWidth - footerWidth) / 2;
+            const pageCount = doc.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.addImage(infoImage, "PNG", footerX, footerY, footerWidth, footerHeight);
+            }
+        };
+
+        addFooterImage();
+
+        return doc;
+    };
+
+ const handleDownload = async () => {
+  if (!generatedPdfBlob) {
+    toast({
+      title: "Error",
+      description: "No PDF generated yet",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // First, download the PDF
+  try {
+    const url = URL.createObjectURL(generatedPdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `service-${formData.reportNo}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Revoke the URL after a short delay to ensure download completes
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (downloadError) {
+    console.error("Download failed:", downloadError);
+    toast({
+      title: "Download Error",
+      description: "Failed to download PDF",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // Then send the email with the PDF
+  setIsSendingPDF(true);
+  try {
+    // Convert blob to base64
+    const base64data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result?.toString().split(',')[1];
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error("Failed to convert PDF to base64"));
+        }
+      };
+      reader.onerror = () => reject(new Error("FileReader error"));
+      reader.readAsDataURL(generatedPdfBlob);
+    });
+
+    // Send to API
+    const response = await axios.post('/api/send-service', {
+      serviceId: formData.id || formData.serviceId || uuidv4(),
+      pdfData: base64data,
+      customerName: formData.customerName,
+      
+    }, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem("token")}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    toast({
+      title: "Success",
+      description: "PDF downloaded and sent via email successfully",
+      variant: "default",
+    });
+
+  } catch (error: any) {
+    console.error("Error sending email:", error);
+    toast({
+      title: "PDF Downloaded",
+      description: "PDF was downloaded but email failed: " + 
+        (error.response?.data?.error || error.message || "Email service error"),
+      variant: "destructive",
+    });
+  } finally {
+    setIsSendingPDF(false);
+  }
+};
+
+
+   
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
         if (!validateForm()) {
             setLoading(false);
             return;
         }
 
-        const payload = {
-            id: formData.id || uuidv4(),
-            serviceId: formData.serviceId || formData.id || uuidv4(),
-            customerName: formData.customerName.trim(),
-            customerLocation: formData.customerLocation.trim(),
-            contactPerson: formData.contactPerson.trim(),
-            contactNumber: formData.contactNumber.trim(),
-            serviceEngineer: formData.serviceEngineer.trim(),
-            serviceEngineerId: formData.serviceEngineerId,
-            date: formData.date,
-            place: formData.place.trim(),
-            placeOptions: formData.placeOptions,
-            natureOfJob: formData.natureOfJob.trim(),
-            reportNo: formData.reportNo.trim(),
-            makeModelNumberoftheInstrumentQuantity: formData.makeModelNumberoftheInstrumentQuantity.trim(),
-            serialNumberoftheInstrumentCalibratedOK: formData.serialNumberoftheInstrumentCalibratedOK.trim(),
-            serialNumberoftheFaultyNonWorkingInstruments: formData.serialNumberoftheFaultyNonWorkingInstruments.trim(),
-            engineerReport: formData.engineerReport.trim(),
-            customerReport: formData.customerReport?.trim() || "",
-            engineerRemarks: formData.engineerRemarks
-                .filter(remark => remark.serviceSpares.trim())
-                .map(remark => ({
-                    serviceSpares: remark.serviceSpares.trim(),
-                    partNo: remark.partNo.trim(),
-                    rate: remark.rate.toString().trim(),
-                    quantity: Number(remark.quantity),
-                    total: remark.total.toString().trim(),
-                    poNo: remark.poNo.trim()
-                })),
-            engineerName: formData.engineerName.trim(),
-            engineerId: formData.engineerId,
-            status: formData.status || "checked"
-        };
-
         try {
+            // Generate PDF first
+            const doc = generatePDFDocument();
+            const pdfBlob = doc.output('blob');
+            setGeneratedPdfBlob(pdfBlob);
+
+            // Prepare payload
+            const payload = {
+                id: formData.id || uuidv4(),
+                serviceId: formData.serviceId || formData.id || uuidv4(),
+                customerName: formData.customerName.trim(),
+                customerLocation: formData.customerLocation.trim(),
+                contactPerson: formData.contactPerson.trim(),
+                contactNumber: formData.contactNumber.trim(),
+                serviceEngineer: formData.serviceEngineer.trim(),
+                serviceEngineerId: formData.serviceEngineerId,
+                date: formData.date,
+                place: formData.place.trim(),
+                placeOptions: formData.placeOptions,
+                natureOfJob: formData.natureOfJob.trim(),
+                reportNo: formData.reportNo.trim(),
+                makeModelNumberoftheInstrumentQuantity: formData.makeModelNumberoftheInstrumentQuantity.trim(),
+                serialNumberoftheInstrumentCalibratedOK: formData.serialNumberoftheInstrumentCalibratedOK.trim(),
+                serialNumberoftheFaultyNonWorkingInstruments: formData.serialNumberoftheFaultyNonWorkingInstruments.trim(),
+                engineerReport: formData.engineerReport.trim(),
+                customerReport: formData.customerReport?.trim() || "",
+                engineerRemarks: formData.engineerRemarks
+                    .filter(remark => remark.serviceSpares.trim())
+                    .map(remark => ({
+                        serviceSpares: remark.serviceSpares.trim(),
+                        partNo: remark.partNo.trim(),
+                        rate: remark.rate.toString().trim(),
+                        quantity: Number(remark.quantity),
+                        total: remark.total.toString().trim(),
+                        poNo: remark.poNo.trim()
+                    })),
+                engineerName: formData.engineerName.trim(),
+                engineerId: formData.engineerId,
+                status: formData.status || "checked"
+            };
+
+            // Save service data
             const response = await axios({
-                method: isEditMode ? 'put' : 'post',
-                url: isEditMode ? `/api/services?id=${formData.id}` : '/api/services',
+                method: 'post',
+                url: '/api/services',
                 data: payload,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem("token")}`,
@@ -409,28 +631,23 @@ function ServiceFormLoading() {
                 }
             });
 
+            // Set service response with download URL
+            const pdfUrl = URL.createObjectURL(pdfBlob);
             setService({
-                serviceId: response.data.id || formData.id || uuidv4(),
-                message: isEditMode ? "Service updated successfully" : "Service created successfully",
-                downloadUrl: response.data.downloadUrl || ""
+                serviceId: payload.serviceId,
+                message: "Service created successfully",
+                downloadUrl: pdfUrl
             });
-            if (!isEditMode) {
-                setFormData(prev => ({
-                    ...prev,
-                    id: response.data.id || prev.id,
-                    serviceId: response.data.id || prev.id
-                }));
-            }
 
             toast({
-                title: isEditMode ? "Service updated successfully" : "Service created successfully",
+                title: "Success",
+                description: "Service created and PDF generated successfully",
                 variant: "default",
             });
 
         } catch (err: any) {
             console.error("API Error:", err);
-            setError(err.response?.data?.error ||
-                (isEditMode ? "Failed to update service" : "Failed to create service"));
+            setError(err.response?.data?.error || "Failed to create service");
             toast({
                 title: "Error",
                 description: err.response?.data?.error || "An error occurred",
@@ -440,213 +657,9 @@ function ServiceFormLoading() {
             setLoading(false);
         }
     };
-
-
-    const handleDownload = async (serviceId: string) => {
-        if (!serviceId) {
-            toast({
-                title: "Error",
-                description: "No service ID available",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsGeneratingPDF(true);
-
-        try {
-            const doc = new jsPDF({
-                orientation: "portrait",
-                unit: "mm",
-                format: "a4"
-            });
-
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-
-            const logo = new Image();
-            logo.src = "/img/rps.png";
-            const infoImage = new Image();
-            infoImage.src = "/img/handf.png";
-
-            await new Promise<void>((resolve, reject) => {
-                logo.onload = () => {
-                    infoImage.onload = () => resolve();
-                    infoImage.onerror = () => reject("Failed to load footer image");
-                };
-                logo.onerror = () => reject("Failed to load logo image");
-            });
-
-            const formatDate = (inputDateString: string | undefined): string => {
-                if (!inputDateString) return "N/A";
-                const inputDate = new Date(inputDateString);
-                if (isNaN(inputDate.getTime())) return "N/A";
-                const pad = (n: number) => n.toString().padStart(2, "0");
-                return `${pad(inputDate.getDate())} - ${pad(inputDate.getMonth() + 1)} - ${inputDate.getFullYear()}`;
-            };
-
-            const leftMargin = 15;
-            const rightMargin = 15;
-            const topMargin = 20;
-            let y = topMargin;
-
-            doc.addImage(logo, "PNG", 5, 5, 50, 15);
-            y = 40;
-
-            doc.setFont("times", "bold").setFontSize(13).setTextColor(0, 51, 153);
-            doc.text("SERVICE / CALIBRATION / INSTALLATION JOBREPORT", pageWidth / 2, y, { align: "center" });
-            y += 10;
-
-            const addRow = (label: string, value: string) => {
-                const labelOffset = 65;
-                doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-                doc.text(label + ":", leftMargin, y);
-                doc.setFont("times", "normal").setTextColor(50);
-                doc.text(value || "N/A", leftMargin + labelOffset, y);
-                y += 7;
-            };
-
-            addRow("Report No.", formData.reportNo);
-            addRow("Customer Name", formData.customerName);
-            addRow("Customer Location", formData.customerLocation);
-            addRow("Contact Person", formData.contactPerson);
-            addRow("Status", formData.status);
-            addRow("Contact Number", formData.contactNumber);
-            addRow("Service Engineer", formData.serviceEngineer);
-            addRow("Date", formatDate(formData.date));
-            addRow("Place", formData.place);
-            addRow("Place Options", formData.placeOptions);
-            addRow("Nature of Job", formData.natureOfJob);
-            addRow("Make & Model Number", formData.makeModelNumberoftheInstrumentQuantity);
-            y += 5;
-            addRow("Calibrated & Tested OK", formData.serialNumberoftheInstrumentCalibratedOK);
-            addRow("Sr.No Faulty/Non-Working", formData.serialNumberoftheFaultyNonWorkingInstruments);
-            y += 10;
-
-            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-            doc.text("Engineer Report:", leftMargin, y);
-            y += 5;
-
-            const engineerReportHeight = 30;
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.2);
-            doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, engineerReportHeight);
-
-            const engineerReportLines = doc.splitTextToSize(formData.engineerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
-            doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
-            doc.text(engineerReportLines, leftMargin + 2, y + 5);
-            y += engineerReportHeight + 5;
-
-            doc.addPage();
-            y = topMargin;
-
-            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-            doc.text("ENGINEER REMARKS", leftMargin, y);
-            y += 8;
-
-            const tableHeaders = ["Sr. No.", "Service/Spares", "Part No.", "Rate", "Quantity", "Total", "PO No."];
-            const colWidths = [15, 50, 25, 20, 20, 25, 25];
-            let x = leftMargin;
-
-            tableHeaders.forEach((header, i) => {
-                doc.rect(x, y, colWidths[i], 8);
-                doc.text(header, x + 2, y + 6);
-                x += colWidths[i];
-            });
-
-            y += 8;
-
-            formData.engineerRemarks.forEach((item, index) => {
-                x = leftMargin;
-                const values = [
-                    String(index + 1),
-                    item.serviceSpares || "",
-                    item.partNo || "",
-                    item.rate || "",
-                    item.quantity || "",
-                    item.total || "",
-                    item.poNo || ""
-                ];
-                values.forEach((val, i) => {
-                    doc.rect(x, y, colWidths[i], 8);
-                    doc.text(val, x + 2, y + 6);
-                    x += colWidths[i];
-                });
-                y += 8;
-                if (y + 50 > pageHeight) {
-                    doc.addPage();
-                    y = topMargin;
-                }
-            });
-
-            y += 10;
-
-            doc.setFont("times", "bold").setFontSize(10).setTextColor(0);
-            doc.text("Customer Report:", leftMargin, y);
-            y += 5;
-
-            const customerReportHeight = 30;
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.2);
-            doc.rect(leftMargin, y, pageWidth - leftMargin - rightMargin, customerReportHeight);
-
-            const customerReportLines = doc.splitTextToSize(formData.customerReport || "No report provided", pageWidth - leftMargin - rightMargin - 5);
-            doc.setFont("times", "normal").setFontSize(9).setTextColor(0);
-            doc.text(customerReportLines, leftMargin + 2, y + 5);
-            y += customerReportHeight + 5;
-
-            doc.setFont("times", "normal");
-            doc.text("Service Engineer", pageWidth - rightMargin - 40, y);
-            doc.text(formData.serviceEngineer || "", pageWidth - rightMargin - 40, y + 5);
-
-            const now = new Date();
-            const pad = (n: number) => n.toString().padStart(2, "0");
-            const date = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
-            const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            doc.setFontSize(9).setTextColor(100);
-            doc.text(`Report Generated On: ${date} ${time}`, leftMargin, pageHeight - 10);
-
-            const addFooterImage = () => {
-                const footerY = pageHeight - 25;
-                const footerWidth = 180;
-                const footerHeight = 20;
-                const footerX = (pageWidth - footerWidth) / 2;
-                const pageCount = doc.getNumberOfPages();
-                for (let i = 1; i <= pageCount; i++) {
-                    doc.setPage(i);
-                    doc.addImage(infoImage, "PNG", footerX, footerY, footerWidth, footerHeight);
-                }
-            };
-
-            addFooterImage();
-
-            doc.save(`service-${serviceId}.pdf`);
-
-            toast({
-                title: "Success",
-                description: "PDF generated successfully",
-                variant: "default",
-            });
-
-        } catch (err: any) {
-            console.error("Error generating PDF:", err);
-            toast({
-                title: "Error",
-                description: err.response?.data?.error || "Failed to generate PDF",
-                variant: "destructive",
-            });
-        } finally {
-            setIsGeneratingPDF(false);
-        }
-    };
-
-    function handleStartDateChange(event: ChangeEvent<HTMLInputElement>): void {
-        setStartDate(event.target.value);
-    }
-
     return (
         <SidebarProvider>
-            <AdminSidebar />
+            <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -655,13 +668,13 @@ function ServiceFormLoading() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/admin/dashboard">
+                                    <BreadcrumbLink href="/user/dashboard">
                                         Dashboard
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/admin/servicerecord">
+                                    <BreadcrumbLink href="/user/servicerecord">
                                         Service Record
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
@@ -684,7 +697,9 @@ function ServiceFormLoading() {
                         </CardHeader>
 
                         <CardContent>
+                            <Suspense fallback={<div>Loading Service...</div>}>
                             <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Customer Information Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <div className="relative w-full">
                                         <input
@@ -692,7 +707,10 @@ function ServiceFormLoading() {
                                             name="customerName"
                                             placeholder="Customer Name"
                                             value={formData.customerName}
-                                            onChange={e => (handleChange(e), setShowDropdown(true))}
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                setShowDropdown(true);
+                                            }}
                                             onFocus={() => setShowDropdown(true)}
                                             onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                                             className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
@@ -701,7 +719,7 @@ function ServiceFormLoading() {
                                         {showDropdown && (
                                             <ul className="absolute left-0 top-full mt-1 z-20 w-full rounded-md border bg-white shadow-lg max-h-60 overflow-y-auto">
                                                 {isLoadingContacts ? (
-                                                    <li className="px-4 py-2 text-gray-500">Start typing to search company</li>
+                                                    <li className="px-4 py-2 text-gray-500">Loading contacts...</li>
                                                 ) : filteredContacts.length > 0 ? (
                                                     filteredContacts.map((contact) => (
                                                         <li
@@ -726,13 +744,15 @@ function ServiceFormLoading() {
                                                 ) : (
                                                     <li className="px-4 py-2 text-gray-500">
                                                         {contactPersons.length === 0
-                                                            ? "Create customer and add data"
-                                                            : "No matching contact found"}
+                                                            ? "No contacts available"
+                                                            : "No matching contacts found"}
                                                     </li>
                                                 )}
                                             </ul>
                                         )}
+
                                     </div>
+
                                     <input
                                         type="text"
                                         name="customerLocation"
@@ -744,6 +764,7 @@ function ServiceFormLoading() {
                                     />
                                 </div>
 
+                                {/* Contact Information Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
@@ -765,6 +786,7 @@ function ServiceFormLoading() {
                                     />
                                 </div>
 
+                                {/* Status and Service Engineer Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <select
                                         name="status"
@@ -776,6 +798,7 @@ function ServiceFormLoading() {
                                         <option value="checked">Checked</option>
                                         <option value="unchecked">Unchecked</option>
                                     </select>
+
                                     <select
                                         name="serviceEngineerId"
                                         value={formData.serviceEngineerId || ""}
@@ -793,15 +816,17 @@ function ServiceFormLoading() {
                                     </select>
                                 </div>
 
+                                {/* Date and Place Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="date"
-                                        name="dateOfCalibration"
-                                        value={startDate}
-                                        onChange={handleStartDateChange}
-                                        className="p-2 rounded-md border bg-gray-300"
+                                        name="date"
+                                        value={formData.date}
+                                        onChange={handleChange}
+                                        className="p-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         min="2000-01-01"
                                         max="2100-12-31"
+                                        required
                                     />
                                     <input
                                         type="text"
@@ -814,60 +839,76 @@ function ServiceFormLoading() {
                                     />
                                 </div>
 
+                                {/* Place Options Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <label className="font-medium text-black">Place :</label>
                                     <div className="flex gap-4">
-                                        {["At Site", "In House"].map((option) => (
-                                            <label key={option} className="flex items-center cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="placeOptions"
-                                                    value={option}
-                                                    checked={formData.placeOptions === option}
-                                                    onChange={handleChange}
-                                                    className={`
-                        appearance-none w-4 h-4 border border-gray-400 rounded-full mr-2
-                        checked:bg-blue-600 checked:border-blue-600
-                        transition-colors duration-200
-                    `}
-                                                    style={{
-                                                        backgroundColor:
-                                                            formData.placeOptions === option ? "#2563EB" : "#ffffff",
-                                                    }}
-                                                />
-                                                <span className="text-black">{option}</span>
-                                            </label>
-                                        ))}
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="placeOptions"
+                                                value="At Site"
+                                                checked={formData.placeOptions === "At Site"}
+                                                onChange={handleChange}
+                                                className="mr-2 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-black">At Site</span>
+                                        </label>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="placeOptions"
+                                                value="In House"
+                                                checked={formData.placeOptions === "In House"}
+                                                onChange={handleChange}
+                                                className="mr-2 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-black">In House</span>
+                                        </label>
                                     </div>
                                 </div>
 
+                                {/* Nature of Job Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <label className="font-medium text-black">Nature of Job :</label>
                                     <div className="flex gap-4 flex-wrap">
-                                        {["AMC", "Charged", "Warranty"].map((option) => (
-                                            <label key={option} className="flex items-center cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="natureOfJob"
-                                                    value={option}
-                                                    checked={formData.natureOfJob === option}
-                                                    onChange={handleChange}
-                                                    className={`
-                        appearance-none w-4 h-4 border border-gray-400 rounded-full mr-2
-                        checked:bg-blue-600 checked:border-blue-600
-                        transition-colors duration-200
-                    `}
-                                                    style={{
-                                                        backgroundColor:
-                                                            formData.natureOfJob === option ? "#2563EB" : "#ffffff",
-                                                    }}
-                                                />
-                                                <span className="text-black">{option}</span>
-                                            </label>
-                                        ))}
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="natureOfJob"
+                                                value="AMC"
+                                                checked={formData.natureOfJob === "AMC"}
+                                                onChange={handleChange}
+                                                className="mr-2 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-black">AMC</span>
+                                        </label>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="natureOfJob"
+                                                value="Charged"
+                                                checked={formData.natureOfJob === "Charged"}
+                                                onChange={handleChange}
+                                                className="mr-2 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-black">Charged</span>
+                                        </label>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="natureOfJob"
+                                                value="Warranty"
+                                                checked={formData.natureOfJob === "Warranty"}
+                                                onChange={handleChange}
+                                                className="mr-2 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-black">Warranty</span>
+                                        </label>
                                     </div>
                                 </div>
 
+                                {/* Report Number and Engineer Section */}
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                     <input
                                         type="text"
@@ -876,7 +917,7 @@ function ServiceFormLoading() {
                                         value={formData.reportNo}
                                         onChange={handleChange}
                                         readOnly
-                                        className="bg-gray-100 text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
                                     />
                                     <select
                                         name="engineerName"
@@ -885,7 +926,7 @@ function ServiceFormLoading() {
                                         className="bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
                                         required
                                     >
-                                        <option value="">Created By</option>
+                                        <option value="">Select Engineer</option>
                                         {engineers.map((eng) => (
                                             <option key={eng.id} value={eng.name}>
                                                 {eng.name}
@@ -894,46 +935,52 @@ function ServiceFormLoading() {
                                     </select>
                                 </div>
 
+                                {/* Instrument Details Section */}
                                 <div className="flex flex-col gap-4">
-                                    <input
+                                    <textarea
                                         name="makeModelNumberoftheInstrumentQuantity"
                                         placeholder="Model Number of the Instrument Quantity"
                                         value={formData.makeModelNumberoftheInstrumentQuantity}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        rows={3}
                                         required
                                     />
-                                    <input
+                                    <textarea
                                         name="serialNumberoftheInstrumentCalibratedOK"
                                         placeholder="Serial Number of the Instrument Calibrated & OK"
                                         value={formData.serialNumberoftheInstrumentCalibratedOK}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        rows={3}
                                         required
                                     />
-                                    <input
+                                    <textarea
                                         name="serialNumberoftheFaultyNonWorkingInstruments"
                                         placeholder="Serial Number of Faulty / Non-Working Instruments"
                                         value={formData.serialNumberoftheFaultyNonWorkingInstruments}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        rows={3}
                                         required
                                     />
-                                    <input
+                                    <textarea
                                         name="engineerReport"
-                                        placeholder="Engineer Remark"
+                                        placeholder="Engineer Report"
                                         value={formData.engineerReport}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        rows={3}
                                         required
                                     />
                                 </div>
 
+                                {/* Engineer Remarks Section */}
                                 <div className="flex justify-end mb-4">
                                     <button
                                         type="button"
                                         onClick={addEngineerRemark}
-                                        className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-purple-900"
+                                        className="bg-purple-950 text-white px-4 py-2 border rounded hover:bg-gray-900 disabled:opacity-50"
                                         disabled={formData.engineerRemarks.length >= 10}
                                     >
                                         Add Engineer Remark
@@ -1018,7 +1065,7 @@ function ServiceFormLoading() {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeEngineerRemark(index)}
-                                                            className="text-black-600 hover:text-black-800"
+                                                            className="text-red-600 hover:text-red-800"
                                                             aria-label="Remove remark"
                                                         >
                                                             <Trash2 className="h-5 w-5" />
@@ -1044,43 +1091,51 @@ function ServiceFormLoading() {
                                     </table>
                                 </div>
 
+                                {/* Customer Report Section */}
                                 <div className="flex flex-col gap-4">
-                                    <input
+                                    <textarea
                                         name="customerReport"
                                         placeholder="Customer Report"
                                         value={formData.customerReport}
                                         onChange={handleChange}
                                         className="w-full bg-white text-black border border-gray-300 focus:border-black focus:ring-1 focus:ring-black p-2 rounded-md"
+                                        rows={3}
                                     />
                                 </div>
+
 
                                 {error && (
                                     <div className="text-red-500 text-sm p-2 border border-red-300 rounded bg-red-50">
                                         {error}
                                     </div>
                                 )}
+
                                 <button
                                     type="submit"
                                     className="bg-blue-950 hover:bg-blue-900 text-white p-2 rounded-md w-full"
                                     disabled={loading}
                                 >
-                                    {loading ? "Processing..." : "Generate Service Report"}
+                                    {loading ? "Generating..." : "Generate Service Report"}
                                 </button>
                             </form>
 
-                            {/* Updated download button section */}
-                            {(service?.serviceId || formData.id) && (
-                                <div className="mt-4 text-center">
-                                    <p className="text-green-600 mb-2">Service report ready for download</p>
-                                    <button
-                                        onClick={() => handleDownload(service?.serviceId || formData.id)}
-                                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-                                        disabled={isGeneratingPDF}
-                                    >
-                                        {isGeneratingPDF ? "Generating PDF..." : "Download Service Report"}
-                                    </button>
-                                </div>
-                            )}
+                             {service?.serviceId && (
+                    <div className="mt-4 text-center space-y-2">
+                        <p className="text-green-600 mb-2">Service created successfully</p>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                onClick={handleDownload}
+                                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                                disabled={!generatedPdfBlob}
+                            >
+                                Download PDF & sendMail
+                            </button>
+                            
+                        </div>
+                    </div>
+                )}
+                            </Suspense>
+
                         </CardContent>
                     </Card>
                 </div>

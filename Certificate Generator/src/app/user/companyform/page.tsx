@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { useState, useEffect } from "react";
+import { useState, useEffect,Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -26,7 +26,24 @@ const companiesSchema = z.object({
   flag: z.enum(["Red", "Yellow", "Green"], { required_error: "Required" }),
 });
 
-export default function CompanyForm() {
+  export default function CompanyFormWrapper() {
+    return (
+        <Suspense fallback={<CompanyFormLoading />}>
+            <CompanyForm />
+        </Suspense>
+    );
+}
+
+function CompanyFormLoading() {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+            <span className="ml-4">Loading company form...</span>
+        </div>
+    );
+}
+
+ function CompanyForm() {
   const searchParams = useSearchParams();
   const companyId = searchParams.get('id');
   const [isSubmitting, setIsSubmitting] = useState(false);
