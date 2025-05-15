@@ -126,7 +126,8 @@ export default function ContactRecordTable() {
     });
   }, [filteredItems, sortDescriptor]);
 
-  const paginatedItems = sortedItems;
+  const paginatedItems = [...sortedItems].reverse();
+
 
   const topContent = (
     <div className="flex justify-between items-center gap-4 w-full">
@@ -217,7 +218,8 @@ export default function ContactRecordTable() {
                     </TableColumn>
                   ))}
                 </TableHeader>
-                <TableBody>
+                <TableBody emptyContent={"No contact found"} items={paginatedItems}>
+
                   {paginatedItems.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
@@ -226,7 +228,7 @@ export default function ContactRecordTable() {
                     </TableRow>
                   ) : (
                     paginatedItems.map((contactPerson) => (
-                      <TableRow key={contactPerson.id}>
+                      <TableRow key={contactPerson.id}> 
                         {columns.map((column) => (
                           <TableCell key={column.uid}>
                             {renderCell(contactPerson, column.uid)}

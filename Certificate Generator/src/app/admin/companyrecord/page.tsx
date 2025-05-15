@@ -150,7 +150,7 @@ export default function CompanyDetailsTable() {
         });
     }, [filteredItems, sortDescriptor]);
 
-    const paginatedItems = sortedItems;
+    const paginatedItems = [...sortedItems].reverse();
 
     const topContent = (
         <div className="flex justify-between items-center gap-4 w-full">
@@ -280,7 +280,7 @@ export default function CompanyDetailsTable() {
                                         </TableColumn>
                                     ))}
                                 </TableHeader>
-                                <TableBody>
+                                <TableBody emptyContent={"No Companies found"} items={paginatedItems}>
                                     {paginatedItems.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">

@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ChevronRight, type LucideIcon } from "lucide-react";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,8 +15,10 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  useSidebar
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 export function NavMain({
   items,
@@ -26,23 +27,33 @@ export function NavMain({
     title: string;
     url: string;
     icon?: LucideIcon;
-    isActive?: boolean;
     items?: {
       title: string;
       url: string;
     }[];
   }[];
 }) {
-  const [activePath, setActivePath] = React.useState<string>("");
-
-
   const { state, toggleSidebar } = useSidebar();
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  // Initialize openStates immediately based on current path
+  const [openStates, setOpenStates] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    items.forEach((item) => {
+      if (item.items?.some((sub) => sub.url === pathname)) {
+        initialState[item.title] = true;
+      }
+    });
+    return initialState;
+  });
 
-  React.useEffect(() => {
-    setActivePath(window.location.pathname);
-  }, []);
-
-  const isItemActive = (itemUrl: string) => activePath === itemUrl;
+  const toggleOpen = (title: string) => {
+    setOpenStates((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
 
   return (
     <SidebarGroup>
@@ -57,15 +68,21 @@ export function NavMain({
 
       <SidebarMenu>
         {items.map((item) => {
-          if (!item.items || item.items.length <= 1) {
-            const url = item.items?.[0]?.url || item.url;
+          const hasSubItems = item.items && item.items.length > 0;
+          const isOpen = openStates[item.title];
+
+          // If no subitems, create a simple menu item
+          if (!hasSubItems) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title}>
-                  <a href={url}>
+                  <Link href={item.url} onClick={(e) => {
+                    e.preventDefault();
+                    router.push(item.url);
+                  }}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
@@ -75,7 +92,7 @@ export function NavMain({
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={item.isActive}
+              open={isOpen}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -86,22 +103,30 @@ export function NavMain({
                       if (state === "collapsed") {
                         e.preventDefault();
                         toggleSidebar();
+                      } else {
+                        e.preventDefault();
+                        toggleOpen(item.title); 
                       }
                     }}
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    <ChevronRight
+                      className={`ml-auto transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+                    />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items.map((subItem) => (
+                    {(item.items || []).map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
+                          <Link href={subItem.url} onClick={(e) => {
+                            e.preventDefault();
+                            router.push(subItem.url);
+                          }}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

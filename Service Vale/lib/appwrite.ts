@@ -1,4 +1,4 @@
-import { Client, Account } from 'react-native-appwrite';
+import { Client, Account, Databases } from 'react-native-appwrite';
 
 const client = new Client()
     .setEndpoint('https://fra.cloud.appwrite.io/v1')
@@ -6,3 +6,4 @@ const client = new Client()
     .setPlatform('com.test.servicevale');
 
 export const account = new Account(client);
+export const databases = new Databases(client);

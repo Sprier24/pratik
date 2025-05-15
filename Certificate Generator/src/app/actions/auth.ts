@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@/db/index"
-import { usersTable } from "@/db/schema"
+import { db } from "@/db/index.TS"
+import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { toast } from "sonner"
 
@@ -15,7 +15,7 @@ export async function authenticate(formData: FormData) {
       return { error: "Username and password are required" }
     }
 
-    const user = await db.select().from(usersTable).where(eq(usersTable.email, username)).get()
+    const user = await db.select().from(users).where(eq(users.username, username)).get()
 
     if (!user) {
       toast.error("Invalid credentials")

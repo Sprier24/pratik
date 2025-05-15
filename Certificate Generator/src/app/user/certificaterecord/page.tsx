@@ -12,9 +12,8 @@ import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Selection } from "@heroui/react"
 import { Pagination, Tooltip, User } from "@heroui/react"
+import { AppSidebar } from "@/components/app-sidebar"
 import { jsPDF } from "jspdf";
-import { AppSidebar } from "@/components/app-sidebar";
-
 
 interface Observation {
     gas: string;
@@ -60,7 +59,7 @@ const columns = [
     { name: "Model", uid: "make_model", sortable: true, width: "120px" },
     { name: "Serial Number", uid: "serial_no", sortable: true, width: "120px" },
     { name: "Engineer Name", uid: "engineer_name", sortable: true, width: "120px" },
-    { name: "Download", uid: "actions", sortable: true, width: "100px" },
+    { name: "Actions", uid: "actions", sortable: true, width: "100px" },
 ];
 const INITIAL_VISIBLE_COLUMNS = ["certificate_no", "customer_name", "site_location", "make_model", "serial_no", "engineer_name", "actions"];
 
@@ -107,7 +106,31 @@ export default function CertificateTable() {
         fetchCertificates();
     }, []);
 
-    
+    const handleDelete = async (certificateId: string) => {
+        if (!window.confirm("Are you sure you want to delete this certificate?")) {
+            return;
+        }
+        try {
+            await axios.delete(`/api/certificates?id=${certificateId}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                }
+            });
+            setCertificates((prevCertificates) =>
+                prevCertificates.filter(cert => cert.id !== certificateId)
+            );
+            toast({
+                title: "Certificate deleted successfully",
+            });
+        } catch (error) {
+            console.error("Error deleting certificate", error);
+            toast({
+                title: "Failed to delete certificate",
+                variant: "destructive",
+            });
+        }
+    };
 
     const [filterValue, setFilterValue] = useState("");
     const hasSearchFilter = Boolean(filterValue);
@@ -154,25 +177,25 @@ export default function CertificateTable() {
     const items = filteredItems;
 
     const sortedItems = React.useMemo(() => {
-        return [...items].sort((a, b) => {
-            if (
-                sortDescriptor.column === 'dateOfCalibration' ||
-                sortDescriptor.column === 'calibrationDueDate'
-            ) {
-                const dateA = new Date(a[sortDescriptor.column as keyof Certificate] as string).getTime();
-                const dateB = new Date(b[sortDescriptor.column as keyof Certificate] as string).getTime();
-                const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+            return [...items].sort((a, b) => {
+                if (
+                    sortDescriptor.column === 'dateOfCalibration' ||
+                    sortDescriptor.column === 'calibrationDueDate'
+                ) {
+                    const dateA = new Date(a[sortDescriptor.column as keyof Certificate] as string).getTime();
+                    const dateB = new Date(b[sortDescriptor.column as keyof Certificate] as string).getTime();
+                    const cmp = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+                    return sortDescriptor.direction === "descending" ? -cmp : cmp;
+                }
+    
+    
+                const first = a[sortDescriptor.column as keyof Certificate] || '';
+                const second = b[sortDescriptor.column as keyof Certificate] || '';
+                const cmp = String(first).localeCompare(String(second));
+    
                 return sortDescriptor.direction === "descending" ? -cmp : cmp;
-            }
-
-
-            const first = a[sortDescriptor.column as keyof Certificate] || '';
-            const second = b[sortDescriptor.column as keyof Certificate] || '';
-            const cmp = String(first).localeCompare(String(second));
-
-            return sortDescriptor.direction === "descending" ? -cmp : cmp;
-        });
-    }, [sortDescriptor, items]);
+            });
+        }, [sortDescriptor, items]);
 
     const handleDownload = async (certificateId: string) => {
         try {
@@ -387,47 +410,49 @@ export default function CertificateTable() {
         setVisibleColumns(keys);
     };
 
-    const renderCell = React.useCallback(
-        (certificate: Certificate, columnKey: string): React.ReactNode => {
-            // Handle actions column separately
-            if (columnKey === "actions") {
-                return (
-                    <div className="relative flex items-center gap-2">
-                        <Tooltip>
-                            <span
-                                className="text-lg text-danger cursor-pointer active:opacity-50"
-                                onClick={() => handleDownload(certificate.id)}
-                            >
-                                <Download className="h-6 w-6" />
-                            </span>
-                        </Tooltip>
+    
+ const renderCell = React.useCallback(
+  (certificate: Certificate, columnKey: string): React.ReactNode => {
+    // Handle actions column separately
+    if (columnKey === "actions") {
+      return (
+        <div className="relative flex items-center gap-2">
+          <Tooltip>
+            <span
+              className="text-lg text-danger cursor-pointer active:opacity-50"
+              onClick={() => handleDownload(certificate.id)}
+            >
+              <Download className="h-6 w-6" />
+            </span>
+          </Tooltip>
 
-                    </div>
-                );
-            }
+          
+        </div>
+      );
+    }
 
-            // For all other columns, ensure we're accessing valid properties
-            const cellValue = certificate[columnKey as keyof Certificate];
+    // For all other columns, ensure we're accessing valid properties
+    const cellValue = certificate[columnKey as keyof Certificate];
 
-            // Handle date columns
-            if ((columnKey === "date_of_calibration" || columnKey === "calibration_due_date") && cellValue) {
-                return formatDate(cellValue as string);
-            }
+    // Handle date columns
+    if ((columnKey === "date_of_calibration" || columnKey === "calibration_due_date") && cellValue) {
+      return formatDate(cellValue as string);
+    }
 
-            // Handle observations column
-            if (columnKey === "observations" && Array.isArray(cellValue)) {
-                return (cellValue as Observation[]).map((obs, index) => (
-                    <div key={index}>
-                        <span>{obs.gas || '-'}</span> - <span>{obs.before || '-'}</span> - <span>{obs.after || '-'}</span>
-                    </div>
-                ));
-            }
+    // Handle observations column
+    if (columnKey === "observations" && Array.isArray(cellValue)) {
+      return (cellValue as Observation[]).map((obs, index) => (
+        <div key={index}>
+          <span>{obs.gas || '-'}</span> - <span>{obs.before || '-'}</span> - <span>{obs.after || '-'}</span>
+        </div>
+      ));
+    }
 
-            // Return default cell value
-            return (cellValue as string) || "N/A";
-        },
-        [handleDownload, router]
-    );
+    // Return default cell value
+    return (cellValue as string) || "N/A";
+  },
+  [handleDownload, handleDelete, router]
+);
 
     return (
         <SidebarProvider>
@@ -511,7 +536,7 @@ export default function CertificateTable() {
                                         </TableColumn>
                                     )}
                                 </TableHeader>
-                                <TableBody emptyContent={"Go to Create certificate and add data"} items={sortedItems}>
+                                <TableBody emptyContent={"No certificates found"} items={[...sortedItems].reverse()}>
                                     {(item) => (
                                         <TableRow key={item.id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

@@ -558,7 +558,7 @@ export default function CertificateTable() {
                                         </TableColumn>
                                     )}
                                 </TableHeader>
-                                <TableBody emptyContent={"Go to Create certificate and add data"} items={sortedItems}>
+                                <TableBody emptyContent={"No certificates found"} items={[...sortedItems].reverse()}>
                                     {(item) => (
                                         <TableRow key={item.id}>
                                             {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}

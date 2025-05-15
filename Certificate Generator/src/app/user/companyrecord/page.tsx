@@ -10,12 +10,12 @@ import * as z from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { Pagination, Tooltip } from "@heroui/react";
 import { AppSidebar } from "@/components/app-sidebar";
 
-interface companies {
+interface Company {
     id: string;
     company_name: string;
     address: string;
@@ -24,14 +24,13 @@ interface companies {
     website: string;
     industries_type: string;
     flag: string;
+    createdAt: string; // Ensure this field exists in your data
 }
+
 interface SortDescriptor {
     column: string;
     direction: "ascending" | "descending";
 }
-const generateUniqueId = () => {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
 
 const columns = [
     { name: "Company Name", uid: "company_name", sortable: true, width: "120px" },
@@ -42,6 +41,7 @@ const columns = [
     { name: "Website", uid: "website", sortable: true, width: "120px" },
     { name: "Flag", uid: "flag", sortable: true, width: "120px" },
 ];
+
 const INITIAL_VISIBLE_COLUMNS = ["company_name", "address", "gst_number", "industries", "website", "industries_type", "flag"];
 
 const companiesSchema = z.object({
@@ -55,7 +55,7 @@ const companiesSchema = z.object({
 });
 
 export default function CompanyDetailsTable() {
-    const [companies, setCompanies] = useState<companies[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -71,7 +71,12 @@ export default function CompanyDetailsTable() {
             setIsSubmitting(true);
             try {
                 const res = await axios.get('/api/companies');
-                setCompanies(res.data);
+                const sortedData = res.data.sort((a: Company, b: Company) => {
+                    const dateA = new Date(a.createdAt);
+                    const dateB = new Date(b.createdAt);
+                    return dateB.getTime() - dateA.getTime(); // Sort descending
+                });
+                setCompanies(sortedData);
             } catch (err: any) {
                 console.error("Error fetching company", err);
                 toast({
@@ -142,16 +147,19 @@ export default function CompanyDetailsTable() {
 
     const sortedItems = React.useMemo(() => {
         return [...filteredItems].sort((a, b) => {
-            const first = a[sortDescriptor.column as keyof companies] || "";
-            const second = b[sortDescriptor.column as keyof companies] || "";
+            const first = a[sortDescriptor.column as keyof Company] || "";
+            const second = b[sortDescriptor.column as keyof Company] || "";
             let cmp = 0;
-            if (first < second) cmp = -1;
-            if (first > second) cmp = 1;
+            if (first < second)
+
+            cmp = -1;
+            if (first > second)
+                cmp = 1;
             return sortDescriptor.direction === "descending" ? -cmp : cmp;
         });
     }, [filteredItems, sortDescriptor]);
 
-    const paginatedItems = sortedItems;
+    const paginatedItems = [...sortedItems].reverse();
 
     const topContent = (
         <div className="flex justify-between items-center gap-4 w-full">
@@ -165,18 +173,18 @@ export default function CompanyDetailsTable() {
                 onClear={() => setFilterValue("")}
             />
             <span className="text-default-400 text-sm whitespace-nowrap">
-                Total {filteredItems.length} {filteredItems.length === 1 ? "y" : "Company"}
+                Total {filteredItems.length} {filteredItems.length === 1 ? "Company" : "Companies"}
             </span>
         </div>
     );
 
-    const renderCell = useCallback((company: companies, columnKey: string) => {
+    const renderCell = useCallback((company: Company, columnKey: string) => {
+        const value = company[columnKey as keyof Company];
         if (columnKey === "gst_number" || columnKey === "website") {
-            const value = company[columnKey as keyof companies];
-            return value && value.trim() !== "" ? value : "N/A";
+            return value && value.toString().trim() !== "" ? value : "N/A";
         }
-        return company[columnKey as keyof companies];
-    }, [router, handleDelete]);
+        return value;
+    }, []);
 
     return (
         <SidebarProvider>
@@ -189,20 +197,17 @@ export default function CompanyDetailsTable() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/user/dashboard">
-                                        Dashboard
-                                    </BreadcrumbLink>
+                                    <BreadcrumbLink href="/user/dashboard">Dashboard</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/user/companyform">
-                                        Create Company
-                                    </BreadcrumbLink>
+                                    <BreadcrumbLink href="/user/companyform">Create Company</BreadcrumbLink>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
                 </header>
+
                 <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
                     <Card className="max-w-6xl mx-auto">
                         <CardHeader>
@@ -248,7 +253,7 @@ export default function CompanyDetailsTable() {
                                         </TableColumn>
                                     ))}
                                 </TableHeader>
-                                <TableBody>
+                                    <TableBody emptyContent={"No contact found"} items={paginatedItems}>
                                     {paginatedItems.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
@@ -256,11 +261,11 @@ export default function CompanyDetailsTable() {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        paginatedItems.map((companies) => (
-                                            <TableRow key={companies.id}>
+                                        paginatedItems.map((company) => (
+                                            <TableRow key={company.id}>
                                                 {columns.map((column) => (
                                                     <TableCell key={column.uid}>
-                                                        {renderCell(companies, column.uid)}
+                                                        {renderCell(company, column.uid)}
                                                     </TableCell>
                                                 ))}
                                             </TableRow>

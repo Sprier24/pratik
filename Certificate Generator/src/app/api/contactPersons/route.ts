@@ -13,8 +13,6 @@ export async function POST(request: Request) {
 
     const requiredFields = [
       "firstName",
-      "middleName",
-      "lastName",
       "contactNo",
       "email",
       "designation",
@@ -32,14 +30,12 @@ export async function POST(request: Request) {
     await client.execute({
       sql: `
         INSERT INTO contact_persons (
-          id, first_name, middle_name, last_name,
+          id, first_name, 
           contact_no, email, designation, company_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
       args: [
         id,
         body.firstName,
-        body.middleName,
-        body.lastName,
         body.contactNo,
         body.email,
         body.designation,
@@ -122,14 +118,12 @@ export async function PUT(request: Request) {
     await client.execute({
       sql: `
         UPDATE contact_persons SET
-          first_name = ?, middle_name = ?, last_name = ?,
+          first_name = ?, 
           contact_no = ?, email = ?, designation = ?, company_id = ?
         WHERE id = ?
       `,
       args: [
         body.firstName ?? existing.first_name,
-        body.middleName ?? existing.middle_name,
-        body.lastName ?? existing.last_name,
         body.contactNo ?? existing.contact_no,
         body.email ?? existing.email,
         body.designation ?? existing.designation,

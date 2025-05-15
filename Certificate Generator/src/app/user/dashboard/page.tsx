@@ -587,7 +587,7 @@ export default function Page() {
                                                 </TableColumn>
                                             )}
                                         </TableHeader>
-                                        <TableBody emptyContent={"Go to create certificate and add data"} items={sortedItems}>
+                                        <TableBody emptyContent={"Go to create certificate and add data"} items={[...sortedItems].reverse()}>
                                             {(item) => (
                                                 <TableRow key={item._id}>
                                                     {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCell(item as Certificate, columnKey as string)}</TableCell>}
@@ -635,7 +635,7 @@ export default function Page() {
                                                 </TableColumn>
                                             )}
                                         </TableHeader>
-                                        <TableBody emptyContent={"Go to create service and add data"} items={sortedItemsservice}>
+                                        <TableBody emptyContent={"Go to create service and add data"} items={[...sortedItemsservice].reverse()}>
                                             {(item) => (
                                                 <TableRow key={item._id}>
                                                     {(columnKey) => <TableCell style={{ fontSize: "12px", padding: "8px" }}>{renderCellservice(item as Service, columnKey as string)}</TableCell>}

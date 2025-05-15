@@ -3,12 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState } from "react"  
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai"
-import axios from "axios";
-import { toast } from "@/hooks/use-toast";
-import "react-toastify/dist/ReactToastify.css"
+import { toast } from "@/hooks/use-toast"
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 export function LoginForm() {
@@ -16,11 +14,12 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [passwordVisible, setPasswordVisible] = useState(false)
-  const [isForgotPassword, setIsForgotPassword] = useState<boolean>(false);
-  const [emailSent, setEmailSent] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isForgotPassword, setIsForgotPassword] = useState<boolean>(false)
+  const [emailSent, setEmailSent] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const router = useRouter()
 
+  // Handle Forgot Password Submit
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -32,17 +31,16 @@ export function LoginForm() {
     }
     setIsSubmitting(true);
     try {
-      const response = await axios.post(
-        "/api/forgot-password",
-        { email },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
       setEmailSent(true);
       toast({
         title: "Success",
-        description: response.data.message,
+        description: data.message,
       });
     } catch (error: any) {
       console.error("Forgot password error", error);
@@ -97,9 +95,10 @@ export function LoginForm() {
         toast({
           title: "Login successful",
         });
-        router.push("/user/dashboard");
+        router.push("/user/dashboard"); // Redirect to user dashboard after successful login
         return;
       }
+
       const adminResponse = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,9 +112,10 @@ export function LoginForm() {
         toast({
           title: "Admin login successful",
         });
-        router.push("/admin/dashboard");
+        router.push("/admin/dashboard"); // Redirect to admin dashboard after successful login
         return;
       }
+
       const errorMessage = userData.error || adminData.error || "Invalid credentials";
       toast({
         title: "Login failed",
@@ -138,9 +138,7 @@ export function LoginForm() {
       {isForgotPassword ? (
         emailSent ? (
           <div className="border border-black dark:border-black rounded-xl p-6 shadow-sm">
-            <h2 className="font-bold text-xl text-black dark:text-black">
-              Check your email
-            </h2>
+            <h2 className="font-bold text-xl text-black dark:text-black">Check your email</h2>
             <p className="text-black text-sm mt-2 dark:text-black">
               If an account exists with this email, you'll receive a password reset link.
             </p>
@@ -156,9 +154,7 @@ export function LoginForm() {
           </div>
         ) : (
           <div className="border border-black dark:border-black rounded-xl p-6 shadow-sm">
-            <h2 className="font-bold text-xl text-black dark:text-black">
-              Forgot Password
-            </h2>
+            <h2 className="font-bold text-xl text-black dark:text-black">Forgot Password</h2>
             <p className="text-black text-sm mt-2 dark:text-black">
               Enter your email address to receive a password reset link
             </p>
@@ -221,7 +217,7 @@ export function LoginForm() {
                   disabled={loading}
                 />
                 <div
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                  className="flex flex-col absolute top-5 right-2 cursor-pointer"
                   onClick={() => !loading && setPasswordVisible(!passwordVisible)}
                 >
                   {passwordVisible ? (
@@ -256,6 +252,5 @@ export function LoginForm() {
         </Card>
       )}
     </div>
-  );
-
+  )
 }

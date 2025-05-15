@@ -23,10 +23,8 @@ export const companies = sqliteTable("companies", {
 });
 
 export const contactPersons = sqliteTable("contact_persons", {
-  id: text("id").primaryKey(), // assuming UUID or some unique ID
+  id: text("id").primaryKey(),
   firstName: text("first_name").notNull(),
-  middleName: text("middle_name").notNull(),
-  lastName: text("last_name").notNull(),
   contactNo: text("contact_no").notNull(),
   email: text("email").notNull(),
   designation: text("designation").notNull(),
@@ -89,7 +87,7 @@ export const services = sqliteTable("services", {
   contactPerson: text("contact_person").notNull(),
   contactNumber: text("contact_number").notNull(),
   serviceEngineer: text("service_engineer").notNull(),
-  date: text("date").notNull(), // ISO string format
+  date: text("date").notNull(), 
   place: text("place").notNull(),
   placeOptions: text("place_options").notNull(),
   natureOfJob: text("nature_of_job").notNull(),

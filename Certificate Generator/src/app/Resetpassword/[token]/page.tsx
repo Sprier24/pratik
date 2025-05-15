@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Label } from "../../../components/ui/label";
 import { Input } from "../../../components/ui/input";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { IoEye, IoEyeOff } from "react-icons/io5";
 
 export default function ResetPassword() {
@@ -13,47 +13,62 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [passwordReset, setPasswordReset] = useState<boolean>(false);
+  const [token, setToken] = useState<string>("");
   const router = useRouter();
-  const { token } = useParams();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [passwordMessage, setPasswordMessage] = useState<string>("");
 
+  useEffect(() => {
+    // Extract token from the last part of the URL path
+    if (typeof window !== "undefined") {
+      const pathParts = window.location.pathname.split("/");
+      const tokenFromUrl = pathParts[pathParts.length - 1];
+      setToken(tokenFromUrl);
+    }
+  }, []);
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
         description: "Passwords do not match.",
         variant: "destructive",
-      }); return;
+      });
+      return;
     }
+
     if (!isPasswordStrong(password)) {
       toast({
         title: "Error",
-        description: "Passwords do not match.",
+        description: "Password is not strong enough.",
         variant: "destructive",
-      }); return;
+      });
+      return;
     }
+
     setIsSubmitting(true);
+
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/v1/users/reset-password/${token}`,
-        { password }
-      );
+      const response = await axios.post(`/api/reset-password/${token}`, {
+        password,
+      });
+
       if (response.data.success) {
         setPasswordReset(true);
       } else {
         toast({
           title: "Error",
-          description: "Passwords do not match.",
+          description: response.data.message || "Something went wrong.",
           variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Passwords do not match.",
+        description: error.response?.data?.message || "Server error.",
         variant: "destructive",
       });
     } finally {
@@ -125,7 +140,7 @@ export default function ResetPassword() {
                       validatePassword(e.target.value);
                     }}
                     required
-                    className="pr-10"
+                    className="pr-10 text-white"
                   />
                   <button
                     type="button"
@@ -140,6 +155,7 @@ export default function ResetPassword() {
                   <p className="text-sm text-red-500 mt-1">{passwordMessage}</p>
                 )}
               </LabelInputContainer>
+
               <LabelInputContainer className="mb-8">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
@@ -150,7 +166,7 @@ export default function ResetPassword() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="pr-10"
+                    className="pr-10 text-white"
                   />
                   <button
                     type="button"
@@ -162,6 +178,7 @@ export default function ResetPassword() {
                   </button>
                 </div>
               </LabelInputContainer>
+
               <button
                 className="bg-gradient-to-br from-black to-neutral-600 block w-full text-white rounded-md h-10 font-medium shadow-lg"
                 type="submit"
@@ -184,9 +201,5 @@ const LabelInputContainer = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <div className={cn("flex flex-col space-y-2 w-full", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("flex flex-col space-y-2 w-full", className)}>{children}</div>;
 };

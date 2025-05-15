@@ -1,18 +1,18 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
-type CustomExperimentalConfig = NextConfig["experimental"] & {
+type CustomExperimentalConfig = NextConfig['experimental'] & {
   missingSuspenseWithCSRBailout?: boolean;
 };
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["example.com"],
+    domains: ['example.com'],
     unoptimized: true,
     dangerouslyAllowSVG: true,
     disableStaticImages: false,
   },
   productionBrowserSourceMaps: false,
-  output: "standalone",
+  output: 'standalone',
   compress: true,
   experimental: {
     externalDir: true,
@@ -21,11 +21,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: '/(.*)',
         headers: [
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
         ],
       },
@@ -34,3 +34,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

@@ -7,9 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { Tooltip } from "@heroui/react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  Tooltip,
+} from "@heroui/react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 interface User {
@@ -25,15 +38,22 @@ const columns = [
   { name: "Contact Number", uid: "contact", sortable: true, width: "120px" },
   { name: "Delete", uid: "actions", sortable: false, width: "100px" },
 ];
+
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "contact", "actions"];
+const ITEMS_PER_PAGE = 10;
 
 export default function UserTable() {
   const [users, setUsers] = useState<User[]>([]);
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns] = useState<Set<string>>(new Set(INITIAL_VISIBLE_COLUMNS));
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortDescriptor, setSortDescriptor] = useState({
+    column: "name",
+    direction: "ascending" as "ascending" | "descending",
+  });
   const router = useRouter();
-  const [sortDescriptor, setSortDescriptor] = useState({ column: "name", direction: "ascending" as "ascending" | "descending" });
-useEffect(() => {
+
+  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch("/api/users");
@@ -45,10 +65,10 @@ useEffect(() => {
     };
     fetchUsers();
   }, []);
-  
+
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-  
+
     try {
       const response = await fetch(`/api/users?id=${id}`, {
         method: "DELETE",
@@ -65,23 +85,20 @@ useEffect(() => {
           variant: "default",
         });
       } else {
-        console.error(result.error || "Failed to delete user");
         toast({
           title: "Error",
           description: result.error || "Failed to delete user.",
-          variant: "destructive", // To show an error toast
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Failed to delete user", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred while deleting the user.",
-        variant: "destructive", // To show an error toast
+        variant: "destructive",
       });
     }
   };
-  
 
   const headerColumns = React.useMemo(() => {
     return columns.filter(column => visibleColumns.has(column.uid));
@@ -110,7 +127,14 @@ useEffect(() => {
     });
   }, [filteredItems, sortDescriptor]);
 
-  const paginatedItems = sortedItems;
+  // Pagination Logic
+  const paginatedItems = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return sortedItems.slice(startIndex, endIndex);
+  }, [sortedItems, currentPage]);
+
+  const totalPages = Math.ceil(sortedItems.length / ITEMS_PER_PAGE);
 
   const topContent = (
     <div className="flex justify-between items-center gap-4 w-full">
@@ -124,7 +148,7 @@ useEffect(() => {
         onClear={() => setFilterValue("")}
       />
       <span className="text-default-400 text-sm whitespace-nowrap">
-        Total {filteredItems.length} {filteredItems.length === 1 ? "y" : "User"}
+        Total {filteredItems.length} {filteredItems.length === 1 ? "User" : "Users"}
       </span>
     </div>
   );
@@ -150,6 +174,11 @@ useEffect(() => {
     return user[columnKey as keyof User];
   }, [router]);
 
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
   return (
     <SidebarProvider>
       <AdminSidebar />
@@ -168,13 +197,14 @@ useEffect(() => {
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/admin/userform">
-                    <BreadcrumbLink>Create User</BreadcrumbLink>
+                    Create User
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
+
         <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 pt-15">
           <Card className="max-w-6xl mx-auto">
             <CardHeader>
@@ -185,9 +215,7 @@ useEffect(() => {
                 isHeaderSticky
                 aria-label="Users table with custom cells, pagination and sorting"
                 bottomContentPlacement="outside"
-                classNames={{
-                  wrapper: "max-h-[382px] overflow-y-auto",
-                }}
+                classNames={{ wrapper: "max-h-[382px] overflow-y-auto" }}
                 sortDescriptor={sortDescriptor}
                 topContent={topContent}
                 topContentPlacement="outside"
@@ -209,7 +237,7 @@ useEffect(() => {
                     </TableColumn>
                   )}
                 </TableHeader>
-                <TableBody>
+                <TableBody emptyContent={"No contact found"} items={paginatedItems}>
                   {paginatedItems.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-6">
@@ -217,11 +245,11 @@ useEffect(() => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedItems.map((User) => (
-                      <TableRow key={User.id}>
+                    paginatedItems.map((user) => (
+                      <TableRow key={user.id}>
                         {columns.map((column) => (
                           <TableCell key={column.uid}>
-                            {renderCell(User, column.uid)}
+                            {renderCell(user, column.uid)}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -229,6 +257,15 @@ useEffect(() => {
                   )}
                 </TableBody>
               </Table>
+
+              {/* Pagination Controls */}
+              <div className="flex justify-center mt-4">
+               
+                <span className="px-4 py-2">
+                  {totalPages}
+                </span>
+               
+              </div>
             </CardContent>
           </Card>
         </div>
