@@ -8,8 +8,8 @@ import { useLocalSearchParams } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681d92600018a87c1478';
+const DATABASE_ID = 'ServiceVale';
+const COLLECTION_ID = 'orders_id';
 
 type Service = {
   id: string;

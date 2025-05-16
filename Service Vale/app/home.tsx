@@ -6,9 +6,9 @@ import { account, databases } from '../lib/appwrite';
 import { RefreshControl } from 'react-native';
 import { Query } from 'react-native-appwrite';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
+const DATABASE_ID = 'ServiceVale';
+const COLLECTION_ID = 'bill_id';
+const ORDERS_COLLECTION_ID = 'orders_id';
 
 const { width } = Dimensions.get('window');
 

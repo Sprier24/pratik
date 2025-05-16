@@ -6,8 +6,8 @@ import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { ID } from 'appwrite';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681d92600018a87c1478';
+const DATABASE_ID = 'ServiceVale';
+const COLLECTION_ID = 'orders_id';
 
 type FormData = {
   serviceboyName: string;

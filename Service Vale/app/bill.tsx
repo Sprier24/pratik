@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TextInput, StyleSheet,
-  TouchableOpacity, ScrollView, Image,
-  Alert
-} from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { Databases, ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { databases } from '../lib/appwrite';
+import * as Print from 'expo-print';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
+const DATABASE_ID = 'ServiceVale';
+const COLLECTION_ID = 'bill_id';
 
-  const fieldLabels = {
+type Bill = {
+  notes: any;
+  billNumber: string;
+  serviceType: string;
+  serviceBoyName: string;
+  customerName: string;
+  contactNumber: string;
+  address: string;
+  serviceCharge: string;
+  paymentMethod: string;
+  cashGiven: string;
+  change: string;
+  $createdAt: string;
+};
+
+const fieldLabels = {
   serviceType: 'Service Type',
   serviceBoyName: 'Service Provider Name',
   customerName: 'Customer Name',
@@ -37,6 +49,8 @@ const BillPage = () => {
   const [cashGiven, setCashGiven] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [notes, setNotes] = useState('');
+  const [isBillDetailVisible, setIsBillDetailVisible] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 
   useEffect(() => {
     fetchBills();
@@ -49,7 +63,7 @@ const BillPage = () => {
         DATABASE_ID,
         COLLECTION_ID,
         [
-          Query.orderDesc('date') // Show newest bills first
+          Query.orderDesc('date')
         ]
       );
       setBills(response.documents);
@@ -100,40 +114,189 @@ const BillPage = () => {
     return true;
   };
 
-const handleSubmitBill = async () => {
-  if (!validateForm()) return;
+  const handleSubmitBill = async () => {
+    if (!validateForm()) return;
+    const billNumber = await generateBillNumber();
+    const billData = {
+      ...form,
+      paymentMethod,
+      total: calculateTotal(),
+      cashGiven: paymentMethod === 'cash' ? cashGiven : null,
+      change: paymentMethod === 'cash' ? calculateChange() : null,
+      date: new Date().toISOString(),
+      billNumber,
+      status: 'paid',
+      notes: notes.trim() || null
+    };
+    try {
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTION_ID,
+        billNumber,
+        billData
+      );
 
-  const billNumber = await generateBillNumber(); // Generate this first
-  
-  const billData = {
-    ...form,
-    paymentMethod,
-    total: calculateTotal(),
-    cashGiven: paymentMethod === 'cash' ? cashGiven : null,
-    change: paymentMethod === 'cash' ? calculateChange() : null,
-    date: new Date().toISOString(),
-    billNumber, // Use the generated bill number
-    status: 'paid',
-    notes: notes.trim() || null
+      Alert.alert('Success', 'Bill saved successfully!');
+      fetchBills();
+      setIsFormVisible(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error saving bill:', error);
+      Alert.alert('Error', 'Failed to save bill');
+    }
   };
 
-  try {
-    await databases.createDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      billNumber, // Use billNumber as the document ID
-      billData
+  const handleDeleteBill = (billId: string) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this bill?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, billId);
+              Alert.alert('Deleted', 'Bill has been deleted.');
+              fetchBills();
+            } catch (error) {
+              console.error('Error deleting bill:', error);
+              Alert.alert('Error', 'Failed to delete bill.');
+            }
+          }
+        }
+      ]
     );
-    
-    Alert.alert('Success', 'Bill saved successfully!');
-    fetchBills();
-    setIsFormVisible(false);
-    resetForm();
-  } catch (error) {
-    console.error('Error saving bill:', error);
-    Alert.alert('Error', 'Failed to save bill');
-  }
-};
+  };
+
+  const handlePrint = async () => {
+    if (!selectedBill) return;
+    const htmlContent = `
+  <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Arial', sans-serif;
+          padding: 40px;
+          font-size: 14px;
+          color: #333;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 30px;
+        }
+        .logo {
+          width: 80px;
+        }
+        .center-info {
+          text-align: center;
+          flex: 1;
+        }
+        .center-info h1 {
+          margin: 0;
+          font-size: 22px;
+          color: #007bff;
+        }
+        .center-info p {
+          margin: 2px 0;
+          font-size: 13px;
+        }
+        .contact-info {
+          text-align: right;
+          font-size: 12px;
+          color: #555;
+          max-width: 180px;
+        }
+        .section {
+          margin-bottom: 20px;
+        }
+        .section-title {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 10px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 5px;
+          color: #2c3e50;
+        }
+        .row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 6px;
+        }
+        .label {
+          font-weight: bold;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 40px;
+          font-size: 12px;
+          color: #888;
+        }
+        .highlight {
+          color: #007bff;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="logo.png" class="logo" alt="Logo" />
+        <div class="center-info">
+          <h1>Service Vale</h1>
+          <p><strong>Bill Number : </strong> ${selectedBill.billNumber}</p>
+          <p><strong>Date : </strong> ${new Date(selectedBill.$createdAt).toLocaleDateString()}</p>
+        </div>
+        <div class="contact-info">
+          <div><strong>Contact : </strong> +91 635 320 2602</div>
+          <div><strong>Email : </strong> info@elementskit.com</div>
+          <div><strong>Address : </strong> Chowk bazar nanpura khatkiwad basir jhinga gali me</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Customer Details</div>
+        <div class="row"><span class="label">Customer Name : </span><span>${selectedBill.customerName}</span></div>
+        <div class="row"><span class="label">Contact Number : </span><span>${selectedBill.contactNumber}</span></div>
+        <div class="row"><span class="label">Address : </span><span>${selectedBill.address}</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Service Details</div>
+        <div class="row"><span class="label">Service Type : </span><span>${selectedBill.serviceType}</span></div>
+        <div class="row"><span class="label">Engineer Name : </span><span>${selectedBill.serviceBoyName}</span></div>
+        <div class="row"><span class="label">Service Charge : </span><span>₹${selectedBill.serviceCharge}</span></div>
+        <div class="row"><span class="label">Commission (25%) : </span><span>₹${(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Payment Details</div>
+        <div class="row"><span class="label">Payment Method : </span><span class="highlight">${selectedBill.paymentMethod.toUpperCase()}</span></div>
+        ${selectedBill.paymentMethod === 'cash' ? `
+        <div class="row"><span class="label">Cash Given : </span><span>₹${selectedBill.cashGiven}</span></div>
+        <div class="row"><span class="label">Change Returned : </span><span>₹${selectedBill.change}</span></div>
+        ` : ''}
+      </div>
+      ${selectedBill.notes ? `
+        <div class="section">
+          <div class="section-title">Notes</div>
+          <p>${selectedBill.notes}</p>
+        </div>
+      ` : ''}
+      <div class="footer">
+        “Service completed with care and precision. Let us know if you need further assistance.” <br/>
+        © ${new Date().getFullYear()} Service Vale
+      </div>
+    </body>
+  </html>
+`;
+    try {
+      await Print.printAsync({
+        html: htmlContent
+      });
+    } catch (error) {
+      console.error('Error printing:', error);
+      Alert.alert('Print Failed', 'Unable to generate PDF');
+    }
+  };
 
   const resetForm = () => {
     setForm({
@@ -190,14 +353,22 @@ const handleSubmitBill = async () => {
     }
   };
 
+  const showBillPage = (bill: Bill) => {
+    setSelectedBill(bill);
+    setIsBillDetailVisible(true);
+  }
+
+  const closeBillPage = () => {
+    setIsBillDetailVisible(false);
+    setSelectedBill(null);
+  };
+
   return (
     <View style={styles.mainContainer}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Bill Summary</Text>
-
         {isFormVisible ? (
           <>
-            {/* Service Details Section */}
             <Text style={styles.sectionTitle}>Service Details</Text>
             {Object.entries(form).map(([key, value]) => (
               <View key={key}>
@@ -212,7 +383,6 @@ const handleSubmitBill = async () => {
               </View>
             ))}
 
-            {/* Notes Field */}
             <Text style={styles.sectionTitle}>Additional Notes</Text>
             <TextInput
               placeholder="Enter any additional notes (optional)"
@@ -224,7 +394,6 @@ const handleSubmitBill = async () => {
               maxLength={500}
             />
 
-            {/* Charges Breakdown */}
             <View style={styles.chargesContainer}>
               <View style={styles.chargeRow}>
                 <Text style={styles.chargeLabel}>Service Charge:</Text>
@@ -236,7 +405,6 @@ const handleSubmitBill = async () => {
               </View>
             </View>
 
-            {/* Payment Method Section */}
             <Text style={styles.sectionTitle}>Payment Method</Text>
             <View style={styles.radioContainer}>
               <TouchableOpacity style={styles.radioOption} onPress={() => setPaymentMethod('cash')}>
@@ -249,7 +417,6 @@ const handleSubmitBill = async () => {
               </TouchableOpacity>
             </View>
 
-            {/* Payment Details */}
             {paymentMethod === 'cash' && (
               <View style={styles.cashContainer}>
                 <Text style={styles.sectionTitle}>Cash Payment</Text>
@@ -285,7 +452,6 @@ const handleSubmitBill = async () => {
         ) : (
           <View style={styles.billsContainer}>
             <Text style={styles.sectionTitle}>Recent Bills</Text>
-            
             {isLoading ? (
               <Text>Loading bills...</Text>
             ) : bills.length === 0 ? (
@@ -295,38 +461,141 @@ const handleSubmitBill = async () => {
               </View>
             ) : (
               bills.map((bill) => (
-                <TouchableOpacity 
-                  key={bill.$id} 
-                  style={styles.billCard}
-                >
+                <View key={bill.$id} style={styles.billCard}>
                   <View style={styles.billHeader}>
                     <Text style={styles.billCustomer}>{bill.customerName}</Text>
-                    <Text style={styles.billAmount}>₹{bill.total}</Text>
+                    <View style={styles.amountContainer}>
+                      <TouchableOpacity onPress={() => handleDeleteBill(bill.$id)}>
+                        <Ionicons name="trash" size={20} color="#e74c3c" />
+                      </TouchableOpacity>
+                      <Text style={styles.billAmount}>₹{bill.total}</Text>
+                    </View>
                   </View>
-                  <View style={styles.billSubHeader}>
-                    <Text style={styles.billNumber}>{bill.billNumber}</Text>
-                    <Text style={[
-                      styles.billStatus,
-                      bill.status === 'paid' && styles.statusPaid,
-                      bill.status === 'pending' && styles.statusPending,
-                      bill.status === 'cancelled' && styles.statusCancelled
-                    ]}>
-                      {bill.status}
-                    </Text>
-                  </View>
-                  {bill.notes && <Text style={styles.billNotes}>{bill.notes}</Text>}
-                  <View style={styles.userFooter}>
-                  <Text style={styles.billService}>{bill.serviceType} by {bill.serviceBoyName}</Text>
-                  <Text style={styles.billDate}>
-                    {new Date(bill.date).toLocaleDateString()}
-                  </Text>
+
+                  <TouchableOpacity onPress={() => showBillPage(bill)}>
+                    <View style={styles.billSubHeader}>
+                      <Text style={styles.billNumber}>{bill.billNumber}</Text>
+                      <Text style={[
+                        styles.billStatus,
+                        bill.status === 'paid' && styles.statusPaid,
+                        bill.status === 'pending' && styles.statusPending,
+                        bill.status === 'cancelled' && styles.statusCancelled
+                      ]}>
+                        {bill.status}
+                      </Text>
+                    </View>
+
+                    {bill.notes && <Text style={styles.billNotes}>{bill.notes}</Text>}
+
+                    <View style={styles.billFooter}>
+                      <Text style={styles.billService}>{bill.serviceType} by {bill.serviceBoyName}</Text>
+                      <Text style={styles.billDate}>
+                        {new Date(bill.date).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                </TouchableOpacity>
               ))
             )}
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        visible={isBillDetailVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeBillPage}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {selectedBill && (
+              <>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Bill Details</Text>
+                  <TouchableOpacity onPress={closeBillPage}>
+                    <Ionicons name="close" size={24} color="#666" />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.modalContent}>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Bill Number :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.billNumber}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Service Type :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.serviceType}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Engineer Name :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Customer Name :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.customerName}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Contact Number :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.contactNumber}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Address :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.address}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Service Charge :</Text>
+                    <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Service Commission :</Text>
+                    <Text style={styles.detailValue}>
+                      ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Payment Method :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.paymentMethod}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Cash given by customer :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.cashGiven}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Change given by engineer :</Text>
+                    <Text style={styles.detailValue}>{selectedBill.change}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Created At :</Text>
+                    <Text style={styles.detailValue}>
+                      {new Date(selectedBill.$createdAt || '').toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.modalFooter}>
+                    <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
+                      <Ionicons name="print" size={20} color="#fff" />
+                      <Text style={styles.printButtonText}>Print</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       <TouchableOpacity style={styles.fab} onPress={toggleFormVisibility}>
         <Ionicons name={isFormVisible ? 'close' : 'add'} size={28} color="white" />
@@ -336,7 +605,7 @@ const handleSubmitBill = async () => {
 };
 
 const styles = StyleSheet.create({
-  userFooter: {
+  billFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 5,
@@ -345,43 +614,43 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
   },
   billsContainer: {
-  flex: 1,
-  marginTop: 20,
-},
-billCard: {
-  backgroundColor: '#fff',
-  borderRadius: 10,
-  padding: 15,
-  marginBottom: 10,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 3,
-},
-billHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginBottom: 5,
-},
-billCustomer: {
-  fontSize: 16,
-  fontWeight: 'bold',
-},
-billAmount: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#007bff',
-},
-billService: {
-  fontSize: 14,
-  color: '#555',
-  marginBottom: 5,
-},
-billDate: {
-  fontSize: 12,
-  color: '#888',
-},
+    flex: 1,
+    marginTop: 20,
+  },
+  billCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  billHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  billCustomer: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  billAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
+  billService: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  billDate: {
+    fontSize: 12,
+    color: '#888',
+  },
   mainContainer: {
     flex: 1,
     position: 'relative',
@@ -601,40 +870,104 @@ billDate: {
     marginTop: 5,
   },
   fieldLabel: {
-  fontSize: 14,
-  fontWeight: '600',
-  color: '#2c3e50',
-  marginBottom: 5,
-  marginTop: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    width: '90%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  modalContent: {
+    padding: 15,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  detailLabel: {
+    fontWeight: 'bold',
+    color: '#555',
+    fontSize: 14,
+  },
+  detailValue: {
+    color: '#333',
+    fontSize: 14,
+  },
+  modalFooter: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 10
+  },
+  deleteButton: {
+    flex: 1,
+    backgroundColor: '#e74c3c',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  editButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 10,
+    gap: 10,
+  },
+  amountContainer: {
+    alignItems: 'flex-end',
+  },
+  printButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  printButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });
 
 export default BillPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
