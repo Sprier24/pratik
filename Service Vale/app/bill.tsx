@@ -5,6 +5,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { Query } from 'appwrite';
 import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
+import SignatureScreen from 'react-native-signature-canvas';
+import { styles } from '../constants/BillPage.styles';
 
 const DATABASE_ID = 'ServiceVale';
 const COLLECTION_ID = 'bill_id';
@@ -22,6 +24,7 @@ type Bill = {
   cashGiven: string;
   change: string;
   $createdAt: string;
+  signature?: string;
 };
 
 const fieldLabels = {
@@ -51,6 +54,8 @@ const BillPage = () => {
   const [notes, setNotes] = useState('');
   const [isBillDetailVisible, setIsBillDetailVisible] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [isSignatureVisible, setIsSignatureVisible] = useState(false);
 
   useEffect(() => {
     fetchBills();
@@ -116,6 +121,10 @@ const BillPage = () => {
 
   const handleSubmitBill = async () => {
     if (!validateForm()) return;
+    if (!signature) {
+      Alert.alert('Error', 'Customer signature is required');
+      return;
+    }
     const billNumber = await generateBillNumber();
     const billData = {
       ...form,
@@ -126,7 +135,8 @@ const BillPage = () => {
       date: new Date().toISOString(),
       billNumber,
       status: 'paid',
-      notes: notes.trim() || null
+      notes: notes.trim() || null,
+      signature: signature
     };
     try {
       await databases.createDocument(
@@ -135,11 +145,11 @@ const BillPage = () => {
         billNumber,
         billData
       );
-
       Alert.alert('Success', 'Bill saved successfully!');
       fetchBills();
       setIsFormVisible(false);
       resetForm();
+      setSignature(null);
     } catch (error) {
       console.error('Error saving bill:', error);
       Alert.alert('Error', 'Failed to save bill');
@@ -176,11 +186,20 @@ const BillPage = () => {
   <html>
     <head>
       <style>
-        body {
+        html, body {
+          margin: 0;
+          padding: 0;
           font-family: 'Arial', sans-serif;
-          padding: 40px;
           font-size: 14px;
           color: #333;
+          height: 100%;
+          box-sizing: border-box;
+        }
+        body {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 40px;
         }
         .header {
           display: flex;
@@ -231,12 +250,27 @@ const BillPage = () => {
         }
         .footer {
           text-align: center;
-          margin-top: 40px;
+          margin-top: 20px;
           font-size: 12px;
           color: #888;
         }
         .highlight {
           color: #007bff;
+        }
+        .signature-section {
+          margin-top: 30px;
+          text-align: center;
+          padding: 20px 0;
+          border-top: 1px dashed #ccc;
+        }
+        .signature-title {
+          font-weight: bold;
+          margin-bottom: 10px;
+        }
+        .signature-image {
+          max-width: 200px;
+          height: 60px;
+          margin: 0 auto;
         }
       </style>
     </head>
@@ -279,6 +313,12 @@ const BillPage = () => {
         <div class="section">
           <div class="section-title">Notes</div>
           <p>${selectedBill.notes}</p>
+        </div>
+      ` : ''}
+            ${selectedBill?.signature ? `
+        <div class="signature-section">
+          <div class="signature-title">Customer Signature</div>
+          <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
         </div>
       ` : ''}
       <div class="footer">
@@ -363,6 +403,12 @@ const BillPage = () => {
     setSelectedBill(null);
   };
 
+  const handleSignature = (signatureData: string) => {
+    const base64Data = signatureData.replace('data:image/png;base64,', '');
+    setSignature(base64Data);
+    setIsSignatureVisible(false);
+  };
+
   return (
     <View style={styles.mainContainer}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -443,6 +489,29 @@ const BillPage = () => {
                 />
                 <Text style={styles.upiId}>UPI ID: yourupi@bank</Text>
               </View>
+            )}
+
+            {signature ? (
+              <View style={styles.signaturePreviewContainer}>
+                <Text style={styles.signatureLabel}>Customer Signature:</Text>
+                <Image
+                  source={{ uri: `data:image/png;base64,${signature}` }}
+                  style={styles.signatureImage}
+                />
+                <TouchableOpacity
+                  style={styles.changeSignatureButton}
+                  onPress={() => setIsSignatureVisible(true)}
+                >
+                  <Text style={styles.changeSignatureText}>Change Signature</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.addSignatureButton}
+                onPress={() => setIsSignatureVisible(true)}
+              >
+                <Text style={styles.addSignatureText}>+ Add Customer Signature</Text>
+              </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
@@ -597,377 +666,38 @@ const BillPage = () => {
         </View>
       </Modal>
 
+      {isSignatureVisible && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isSignatureVisible}
+          onRequestClose={() => setIsSignatureVisible(false)}
+        >
+          <View style={styles.signatureModalContainer}>
+            <View style={styles.signatureModalContent}>
+              <Text style={styles.signatureTitle}>Please sign below</Text>
+              <SignatureScreen
+                onOK={handleSignature}
+                onEmpty={() => Alert.alert('Error', 'Please provide a signature')}
+                descriptionText="Sign above"
+                clearText="Clear"
+                confirmText="Save"
+                webStyle={`.m-signature-pad--footer
+            .button {
+              color: #FFF;
+              background-color: #007bff;
+            }`}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
       <TouchableOpacity style={styles.fab} onPress={toggleFormVisibility}>
         <Ionicons name={isFormVisible ? 'close' : 'add'} size={28} color="white" />
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  billFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 5,
-    paddingTop: 5,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  billsContainer: {
-    flex: 1,
-    marginTop: 20,
-  },
-  billCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  billHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  billCustomer: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  billAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007bff',
-  },
-  billService: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 5,
-  },
-  billDate: {
-    fontSize: 12,
-    color: '#888',
-  },
-  mainContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#f4f4f4',
-    flexGrow: 1,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 15,
-    fontSize: 16,
-    borderColor: '#ccc',
-    borderWidth: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginVertical: 15,
-    color: '#2c3e50',
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  radioOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#007bff',
-    marginRight: 8,
-  },
-  selected: {
-    backgroundColor: '#007bff',
-  },
-  radioText: {
-    fontSize: 16,
-    color: '#2c3e50',
-  },
-  chargesContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 15,
-  },
-  chargeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  chargeLabel: {
-    fontSize: 16,
-    color: '#555',
-  },
-  chargeValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#007bff',
-  },
-  cashContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  changeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  changeLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#555',
-  },
-  changeValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'green',
-  },
-  upiContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  qrCode: {
-    width: 200,
-    height: 200,
-    resizeMode: 'contain',
-    borderRadius: 10,
-    marginVertical: 10,
-  },
-  upiId: {
-    textAlign: 'center',
-    marginTop: 10,
-    fontSize: 16,
-    color: '#555',
-  },
-  submitButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  submitText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: '#007bff',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-  },
-  multilineInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  billSubHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  billNumber: {
-    fontSize: 12,
-    color: '#666',
-  },
-  billStatus: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    textTransform: 'capitalize',
-  },
-  statusPaid: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-  },
-  statusPending: {
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-  },
-  statusCancelled: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-  },
-  billNotes: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 5,
-    marginTop: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    width: '90%',
-    maxHeight: '80%',
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  modalContent: {
-    padding: 15,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  detailLabel: {
-    fontWeight: 'bold',
-    color: '#555',
-    fontSize: 14,
-  },
-  detailValue: {
-    color: '#333',
-    fontSize: 14,
-  },
-  modalFooter: {
-    padding: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: '#007bff',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginLeft: 10
-  },
-  deleteButton: {
-    flex: 1,
-    backgroundColor: '#e74c3c',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  editButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 10,
-    gap: 10,
-  },
-  amountContainer: {
-    alignItems: 'flex-end',
-  },
-  printButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007bff',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  printButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-});
 
 export default BillPage;
