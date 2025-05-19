@@ -22,6 +22,7 @@ type User = {
   address: string;
   contactNo: string;
   aadharNo: string;
+  panNo: string;
   city: string;
   $createdAt?: string;
   email: string;
@@ -32,6 +33,7 @@ const fieldLabels = {
   contactNo: 'Contact Number',
   email: 'Email Address',
   address: 'Address',
+  panNo: 'PAN Number',
   aadharNo: 'Aadhar Number',
   city: 'City',
 };
@@ -44,6 +46,7 @@ const UserDetailsForm = () => {
     contactNo: '',
     email: '',
     aadharNo: '',
+    panNo: '',
     city: '',
   });
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -73,7 +76,7 @@ const UserDetailsForm = () => {
       );
       setSubmittedUsers(response.documents as unknown as User[]);
     } catch (error: unknown) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching engineers:', error);
       if (error instanceof Error && 'code' in error && error.code === 401) {
         Alert.alert(
           'Session Expired',
@@ -118,6 +121,13 @@ const UserDetailsForm = () => {
       newErrors.aadharNo = 'Invalid Aadhar number (12 digits required)';
       valid = false;
     }
+    if (!formData.panNo.trim()) {
+      newErrors.panNo = 'PAN number is required';
+      valid = false;
+    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
+      newErrors.panNo = 'Invalid PAN number (format: ABCDE1234F)';
+      valid = false;
+    }
     if (!formData.city.trim()) {
       newErrors.city = 'City is required';
       valid = false;
@@ -149,6 +159,7 @@ const UserDetailsForm = () => {
             contactNo: formData.contactNo,
             email: formData.email,
             aadharNo: formData.aadharNo,
+            panNo: formData.panNo,
             city: formData.city,
           };
           await databases.updateDocument(
@@ -173,14 +184,14 @@ const UserDetailsForm = () => {
           );
           setSubmittedUsers(prevUsers => [response as unknown as User, ...prevUsers]);
         }
-        Alert.alert('Success', 'User details saved successfully!');
+        Alert.alert('Success', 'Engineer details saved successfully!');
         resetForm();
         setIsFormVisible(false);
       } catch (error: unknown) {
-        console.error('Error saving user:', error);
+        console.error('Error saving engineer:', error);
         Alert.alert(
           'Error',
-          error instanceof Error ? error.message : 'Failed to save user details'
+          error instanceof Error ? error.message : 'Failed to save engineer details'
         );
       }
     }
@@ -196,7 +207,7 @@ const UserDetailsForm = () => {
   const handleDeleteUser = async (index: number) => {
     Alert.alert(
       "Confirm Delete",
-      "Are you sure you want to delete this user?",
+      "Are you sure you want to delete this engineer?",
       [
         {
           text: "Cancel",
@@ -220,10 +231,10 @@ const UserDetailsForm = () => {
                 setEditingIndex(null);
                 resetForm();
               }
-              Alert.alert('Success', 'User deleted successfully');
+              Alert.alert('Success', 'Engineer deleted successfully');
             } catch (error) {
-              console.error('Error deleting user:', error);
-              Alert.alert('Error', (error as Error).message || 'Failed to delete user');
+              console.error('Error deleting engineer:', error);
+              Alert.alert('Error', (error as Error).message || 'Failed to delete engineer');
             }
           }
         }
@@ -238,6 +249,7 @@ const UserDetailsForm = () => {
       contactNo: '',
       email: '',
       aadharNo: '',
+      panNo: '',
       city: '',
     });
     setErrors({});
@@ -307,6 +319,7 @@ const UserDetailsForm = () => {
                       {key === 'email' && <MaterialIcons name="email" size={20} color="#666" style={styles.icon} />}
                       {key === 'address' && <MaterialIcons name="home" size={20} color="#666" style={styles.icon} />}
                       {key === 'aadharNo' && <MaterialIcons name="credit-card" size={20} color="#666" style={styles.icon} />}
+                      {key === 'panNo' && <MaterialIcons name="assignment" size={20} color="#666" style={styles.icon} />}
                       <TextInput
                         placeholder={`Enter ${label.toLowerCase()}`}
                         style={key === 'address' ? [styles.input, styles.multilineInput] : styles.input}
@@ -318,11 +331,8 @@ const UserDetailsForm = () => {
                         }
                         multiline={key === 'address'}
                         numberOfLines={key === 'address' ? 3 : 1}
-                        maxLength={
-                          key === 'aadharNo' ? 12 :
-                            key === 'contactNo' ? 10 : undefined
-                        }
-                        autoCapitalize="words"
+                        maxLength={key === 'panNo' ? 10 : key === 'aadharNo' ? 12 : key === 'contactNo' ? 10 : undefined}
+                        autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
                       />
                     </View>
                   )}
@@ -382,11 +392,11 @@ const UserDetailsForm = () => {
           <View style={styles.usersContainer}>
             <Text style={styles.sectionTitle}>Engineers List</Text>
             {isLoading ? (
-              <Text>Loading users...</Text>
+              <Text>Loading engineers...</Text>
             ) : submittedUsers.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No users added yet</Text>
-                <Text style={styles.emptySubtext}>Tap the + button to add a new user</Text>
+                <Text style={styles.emptyText}>No engineer added yet</Text>
+                <Text style={styles.emptySubtext}>Tap the + button to add a new engieer</Text>
               </View>
             ) : (
               submittedUsers.map((user, index) => (
@@ -444,6 +454,10 @@ const UserDetailsForm = () => {
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Aadhar Number :</Text>
                     <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>PAN:</Text>
+                    <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>City :</Text>
