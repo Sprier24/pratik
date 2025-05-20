@@ -125,7 +125,8 @@ const BillPage = () => {
       Alert.alert('Error', 'Customer signature is required');
       return;
     }
-    const billNumber = await generateBillNumber();
+
+    const billNumber = generateBillNumber();
     const billData = {
       ...form,
       paymentMethod,
@@ -138,6 +139,7 @@ const BillPage = () => {
       notes: notes.trim() || null,
       signature: signature
     };
+
     try {
       await databases.createDocument(
         DATABASE_ID,
@@ -315,7 +317,7 @@ const BillPage = () => {
           <p>${selectedBill.notes}</p>
         </div>
       ` : ''}
-            ${selectedBill?.signature ? `
+      ${selectedBill?.signature ? `
         <div class="signature-section">
           <div class="signature-title">Customer Signature</div>
           <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
@@ -394,7 +396,7 @@ const BillPage = () => {
   };
 
   const showBillPage = (bill: Bill) => {
-    setSelectedBill(bill);
+    setSelectedBill(bill);m
     setIsBillDetailVisible(true);
   }
 
