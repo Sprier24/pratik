@@ -276,7 +276,7 @@ const BillPage = () => {
     </head>
     <body>
       <div class="header">
-        <img src="logo.png" class="logo" alt="Logo" />
+        <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Logo" />
         <div class="center-info">
           <h1>Service Vale</h1>
           <p><strong>Bill Number : </strong> ${selectedBill.billNumber}</p>
