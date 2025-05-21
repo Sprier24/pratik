@@ -125,7 +125,6 @@ const BillPage = () => {
       Alert.alert('Error', 'Customer signature is required');
       return;
     }
-
     const billNumber = generateBillNumber();
     const billData = {
       ...form,
@@ -139,7 +138,6 @@ const BillPage = () => {
       notes: notes.trim() || null,
       signature: signature
     };
-
     try {
       await databases.createDocument(
         DATABASE_ID,
@@ -396,7 +394,7 @@ const BillPage = () => {
   };
 
   const showBillPage = (bill: Bill) => {
-    setSelectedBill(bill);m
+    setSelectedBill(bill);
     setIsBillDetailVisible(true);
   }
 
@@ -430,7 +428,6 @@ const BillPage = () => {
                 />
               </View>
             ))}
-
             <Text style={styles.sectionTitle}>Additional Notes</Text>
             <TextInput
               placeholder="Enter any additional notes (optional)"
@@ -441,7 +438,6 @@ const BillPage = () => {
               numberOfLines={4}
               maxLength={500}
             />
-
             <View style={styles.chargesContainer}>
               <View style={styles.chargeRow}>
                 <Text style={styles.chargeLabel}>Service Charge:</Text>
@@ -452,7 +448,6 @@ const BillPage = () => {
                 <Text style={styles.totalValue}>₹{calculateTotal()}</Text>
               </View>
             </View>
-
             <Text style={styles.sectionTitle}>Payment Method</Text>
             <View style={styles.radioContainer}>
               <TouchableOpacity style={styles.radioOption} onPress={() => setPaymentMethod('cash')}>
@@ -464,7 +459,6 @@ const BillPage = () => {
                 <Text style={styles.radioText}>UPI</Text>
               </TouchableOpacity>
             </View>
-
             {paymentMethod === 'cash' && (
               <View style={styles.cashContainer}>
                 <Text style={styles.sectionTitle}>Cash Payment</Text>
@@ -481,7 +475,6 @@ const BillPage = () => {
                 </View>
               </View>
             )}
-
             {paymentMethod === 'upi' && (
               <View style={styles.upiContainer}>
                 <Text style={styles.sectionTitle}>Scan UPI QR Code</Text>
@@ -492,9 +485,8 @@ const BillPage = () => {
                 <Text style={styles.upiId}>UPI ID: yourupi@bank</Text>
               </View>
             )}
-
             {signature ? (
-              <View style={styles.signaturePreviewContainer}>
+              <View style={styles.signatureContainer}>
                 <Text style={styles.signatureLabel}>Customer Signature:</Text>
                 <Image
                   source={{ uri: `data:image/png;base64,${signature}` }}
@@ -515,7 +507,6 @@ const BillPage = () => {
                 <Text style={styles.addSignatureText}>+ Add Customer Signature</Text>
               </TouchableOpacity>
             )}
-
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
               <Text style={styles.submitText}>Submit Bill</Text>
             </TouchableOpacity>
@@ -542,7 +533,6 @@ const BillPage = () => {
                       <Text style={styles.billAmount}>₹{bill.total}</Text>
                     </View>
                   </View>
-
                   <TouchableOpacity onPress={() => showBillPage(bill)}>
                     <View style={styles.billSubHeader}>
                       <Text style={styles.billNumber}>{bill.billNumber}</Text>
@@ -555,9 +545,7 @@ const BillPage = () => {
                         {bill.status}
                       </Text>
                     </View>
-
                     {bill.notes && <Text style={styles.billNotes}>{bill.notes}</Text>}
-
                     <View style={styles.billFooter}>
                       <Text style={styles.billService}>{bill.serviceType} by {bill.serviceBoyName}</Text>
                       <Text style={styles.billDate}>
@@ -588,73 +576,68 @@ const BillPage = () => {
                     <Ionicons name="close" size={24} color="#666" />
                   </TouchableOpacity>
                 </View>
-
                 <ScrollView style={styles.modalContent}>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Bill Number :</Text>
                     <Text style={styles.detailValue}>{selectedBill.billNumber}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Service Type :</Text>
                     <Text style={styles.detailValue}>{selectedBill.serviceType}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Engineer Name :</Text>
                     <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Customer Name :</Text>
                     <Text style={styles.detailValue}>{selectedBill.customerName}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Contact Number :</Text>
                     <Text style={styles.detailValue}>{selectedBill.contactNumber}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Address :</Text>
                     <Text style={styles.detailValue}>{selectedBill.address}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Service Charge :</Text>
                     <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Service Commission :</Text>
                     <Text style={styles.detailValue}>
                       ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                     </Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Payment Method :</Text>
                     <Text style={styles.detailValue}>{selectedBill.paymentMethod}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Cash given by customer :</Text>
                     <Text style={styles.detailValue}>{selectedBill.cashGiven}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Change given by engineer :</Text>
                     <Text style={styles.detailValue}>{selectedBill.change}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Created At :</Text>
                     <Text style={styles.detailValue}>
                       {new Date(selectedBill.$createdAt || '').toLocaleString()}
                     </Text>
                   </View>
-
+                  {selectedBill?.signature && (
+                    <View style={styles.signatureContainer}>
+                      <Text style={styles.signatureLabel}>Customer Signature:</Text>
+                      <Image
+                        source={{ uri: `data:image/png;base64,${selectedBill.signature}` }}
+                        style={styles.signatureImage}
+                      />
+                    </View>
+                  )}
                   <View style={styles.modalFooter}>
                     <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
                       <Ionicons name="print" size={20} color="#fff" />
@@ -678,18 +661,47 @@ const BillPage = () => {
           <View style={styles.signatureModalContainer}>
             <View style={styles.signatureModalContent}>
               <Text style={styles.signatureTitle}>Please sign below</Text>
-              <SignatureScreen
-                onOK={handleSignature}
-                onEmpty={() => Alert.alert('Error', 'Please provide a signature')}
-                descriptionText="Sign above"
-                clearText="Clear"
-                confirmText="Save"
-                webStyle={`.m-signature-pad--footer
-            .button {
-              color: #FFF;
-              background-color: #007bff;
-            }`}
-              />
+              <View style={styles.signatureWrapper}>
+                <SignatureScreen
+                  onOK={handleSignature}
+                  onEmpty={() => Alert.alert('Error', 'Please provide a signature')}
+                  descriptionText=""
+                  clearText="Clear"
+                  confirmText="Save"
+                  webStyle={`
+              .m-signature-pad {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                padding: 0;
+                height: 100%;
+              }
+              .m-signature-pad--body {
+                border: none;
+                height: calc(100% - 60px);
+              }
+              .m-signature-pad--footer {
+                height: 60px;
+                margin: 0;
+                padding: 10px;
+                background: white;
+              }
+              body, html {
+                background-color: #fff;
+                margin: 0;
+                padding: 0;
+                height: 100%;
+              }
+              canvas {
+                background-color: #fff;
+              }
+            `}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#fff',
+                  }}
+                />
+              </View>
             </View>
           </View>
         </Modal>
