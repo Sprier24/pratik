@@ -59,6 +59,7 @@ const LoginScreen = () => {
                 resetFields();
                 if (isAdmin) {
                     router.replace('/home');
+                } else {
                     router.replace('/userapp/home');
                 }
             } catch (error: any) {
