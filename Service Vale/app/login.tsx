@@ -6,8 +6,8 @@ import { Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { styles } from '../constants/LoginScreen.styles';
 
-const DATABASE_ID = 'ServiceVale';
-const COLLECTION_ID = 'user_id';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681c429800281e8a99bd';
 
 const LoginScreen = () => {
     const [isLogin, setIsLogin] = useState(true);

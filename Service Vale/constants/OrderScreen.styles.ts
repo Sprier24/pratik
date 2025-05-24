@@ -120,4 +120,42 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+    dateTimeInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  timeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timeInput: {
+    flex: 1,
+    marginRight: 10,
+  },
+  timePeriodContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  timePeriodButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#F3F4F6',
+  },
+  timePeriodButtonActive: {
+    backgroundColor: '#007bff',
+  },
+  timePeriodText: {
+    color: '#6B7280',
+  },
+  timePeriodTextActive: {
+    color: '#FFFFFF',
+  },
 });

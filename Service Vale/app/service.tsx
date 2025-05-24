@@ -6,14 +6,14 @@ import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import { styles } from '../constants/ServicePage.styles';
 
-const DATABASE_ID = 'ServiceVale';
-const COLLECTION_ID = 'user_id';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681c429800281e8a99bd';
 
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [allUsers, setAllUsers] = useState<{ id: string, name: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string }[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceKey>('AC');
   const router = useRouter();
 
@@ -27,7 +27,8 @@ const ServicePage = () => {
         );
         const users = response.documents.map(doc => ({
           id: doc.$id,
-          name: doc.name
+          name: doc.name,
+          email: doc.email,
         }));
         setAllUsers(users);
       } catch (error) {
@@ -42,7 +43,7 @@ const ServicePage = () => {
     setModalVisible(true);
   };
 
-  const handleApplicantPress = (applicantId: string, applicantName: string) => {
+  const handleApplicantPress = (applicantId: string, applicantName: string, applicantEmail: string) => {
     setModalVisible(false);
     router.push({
       pathname: '/order',
@@ -50,6 +51,7 @@ const ServicePage = () => {
         applicantId,
         applicantName,
         serviceType: selectedServiceType,
+        applicantEmail,
       },
     });
   };
@@ -71,9 +73,10 @@ const ServicePage = () => {
             <Text style={styles.modalTitle}>Applicants for this service</Text>
             {allUsers.length > 0 ? (
               allUsers.map((user, index) => (
-                <TouchableOpacity key={index} onPress={() => handleApplicantPress(user.id, user.name)}>
+                <TouchableOpacity key={index} onPress={() => handleApplicantPress(user.id, user.name, user.email)}>
                   <View style={styles.applicantItem}>
                     <Text style={styles.applicantName}>{user.name}</Text>
+                    <Text style={styles.applicantEmail}>{user.email}</Text>
                   </View>
                 </TouchableOpacity>
               ))

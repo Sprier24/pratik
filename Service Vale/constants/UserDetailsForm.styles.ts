@@ -101,7 +101,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 20,
     marginBottom: 10,
-    gap: 10,
+    gap: 5,
   },
   actionButton: {
     flex: 1,
@@ -281,5 +281,22 @@ export const styles = StyleSheet.create({
   editButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  headerCountContainer: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  headerCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
 });

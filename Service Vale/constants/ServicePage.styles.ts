@@ -1,6 +1,10 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+    applicantEmail: {
+    fontSize: 14,
+    color: '#555',
+  },
   container: {
     padding: 20,
     backgroundColor: '#fff',

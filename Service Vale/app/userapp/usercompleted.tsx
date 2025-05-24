@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
 import { Query } from 'appwrite';
-import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
+import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -24,12 +24,11 @@ type Service = {
   serviceboyEmail: string;
 };
 
-const PendingServicesScreenUser = () => {
+const CompletedServicesScreenUser = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const params = useLocalSearchParams();
-  const router = useRouter();
 
   const fetchServices = async () => {
     try {
@@ -38,29 +37,34 @@ const PendingServicesScreenUser = () => {
       const email = currentUser.email;
       setUserEmail(email);
 
-      // Then fetch services where status is pending and serviceboyEmail matches user's email
+      // Then fetch services where status is completed and serviceboyEmail matches user's email
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [
-          Query.equal('status', 'pending'),
+          Query.equal('status', 'completed'),
           Query.equal('serviceboyEmail', email),
-          Query.orderAsc('serviceDate'),
-          Query.orderAsc('serviceTime')
+          Query.orderDesc('$createdAt')
         ]
       );
 
       const formattedServices = response.documents.map(doc => {
-        // Convert stored yyyy-mm-dd to display dd/mm/yyyy
-        const [year, month, day] = doc.serviceDate.split('-');
-        const displayDate = `${day}/${month}/${year}`;
+        // Convert stored yyyy-mm-dd to display dd/mm/yyyy if serviceDate exists
+        let displayDate = '';
+        if (doc.serviceDate) {
+          const [year, month, day] = doc.serviceDate.split('-');
+          displayDate = `${day}/${month}/${year}`;
+        }
         
-        // Convert stored 24-hour time to AM/PM
-        const [hours, minutes] = doc.serviceTime.split(':');
-        const hourNum = parseInt(hours);
-        const ampm = hourNum >= 12 ? 'PM' : 'AM';
-        const displayHour = hourNum % 12 || 12;
-        const displayTime = `${displayHour}:${minutes} ${ampm}`;
+        // Convert stored 24-hour time to AM/PM if serviceTime exists
+        let displayTime = '';
+        if (doc.serviceTime) {
+          const [hours, minutes] = doc.serviceTime.split(':');
+          const hourNum = parseInt(hours);
+          const ampm = hourNum >= 12 ? 'PM' : 'AM';
+          const displayHour = hourNum % 12 || 12;
+          displayTime = `${displayHour}:${minutes} ${ampm}`;
+        }
 
         return {
           id: doc.$id,
@@ -90,20 +94,20 @@ const PendingServicesScreenUser = () => {
   useEffect(() => {
     fetchServices();
 
-    if (params.newService) {
+    if (params.completedService) {
       try {
-        const newService = JSON.parse(params.newService as string);
+        const newService = JSON.parse(params.completedService as string);
         if (newService.serviceboyEmail === userEmail) {
           const formattedService = {
             id: newService.id,
             serviceType: newService.serviceType,
             clientName: newService.clientName,
             address: newService.address,
-            phone: newService.phoneNumber,
-            amount: `₹${newService.billAmount || '0'}`,
-            status: 'pending',
-            date: 'Just now',
-            serviceBoy: newService.serviceboyName,
+            phone: newService.phone,
+            amount: newService.amount,
+            status: 'completed',
+            date: newService.date || 'Just now',
+            serviceBoy: newService.serviceBoy,
             serviceDate: newService.serviceDate || '',
             serviceTime: newService.serviceTime || '',
             serviceboyEmail: newService.serviceboyEmail || ''
@@ -112,17 +116,34 @@ const PendingServicesScreenUser = () => {
           setServices(prev => [formattedService, ...prev]);
         }
       } catch (error) {
-        console.error('Error parsing new service:', error);
+        console.error('Error parsing completed service:', error);
       }
     }
-  }, [params.newService, userEmail]);
+  }, [params.completedService, userEmail]);
 
   const renderServiceItem = ({ item }: { item: Service }) => (
-    <TouchableOpacity style={styles.serviceCard}>
+    <TouchableOpacity 
+      style={styles.serviceCard}
+      onPress={() => {
+        router.push({
+          pathname: '/bill',
+          params: {
+            serviceData: JSON.stringify({
+              serviceType: item.serviceType,
+              serviceBoyName: item.serviceBoy,
+              customerName: item.clientName,
+              address: item.address,
+              contactNumber: item.phone,
+              serviceCharge: item.amount
+            }),
+          },
+        });
+      }}
+    >
       <View style={styles.serviceHeader}>
         <Text style={styles.serviceType}>{item.serviceType}</Text>
-        <View style={[styles.statusBadge, styles.pendingBadge]}>
-          <Text style={styles.statusText}>Pending</Text>
+        <View style={[styles.statusBadge, styles.completedBadge]}>
+          <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
 
@@ -154,7 +175,9 @@ const PendingServicesScreenUser = () => {
 
       <View style={styles.serviceFooter}>
         <Text style={styles.dateText}>
-          {item.serviceDate} • {item.serviceTime}
+          {item.serviceDate && item.serviceTime ? 
+            `${item.serviceDate} • ${item.serviceTime}` : 
+            item.date}
         </Text>
       </View>
     </TouchableOpacity>
@@ -163,7 +186,7 @@ const PendingServicesScreenUser = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Pending Services</Text>
+        <Text style={styles.headerTitle}>My Completed Services</Text>
         <View style={styles.headerCountContainer}>
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
@@ -179,13 +202,13 @@ const PendingServicesScreenUser = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="pending-actions" size={48} color="#9CA3AF" />
-          <Text style={styles.emptyText}>No pending services assigned to you</Text>
-          <Text style={styles.emptySubtext}>All your assigned services are completed</Text>
+          <MaterialIcons name="check-circle" size={48} color="#9CA3AF" />
+          <Text style={styles.emptyText}>No completed services found</Text>
+          <Text style={styles.emptySubtext}>You haven't completed any services yet</Text>
         </View>
       )}
     </SafeAreaView>
   );
 };
 
-export default PendingServicesScreenUser;
+export default CompletedServicesScreenUser;

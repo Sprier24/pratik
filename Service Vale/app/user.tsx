@@ -6,8 +6,8 @@ import { account, databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { styles } from '../constants/UserDetailsForm.styles';
 
-const DATABASE_ID = 'ServiceVale';
-const COLLECTION_ID = 'user_id';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681c429800281e8a99bd';
 
 const cities = [
   "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad",
@@ -390,7 +390,12 @@ const UserDetailsForm = () => {
           </>
         ) : (
           <View style={styles.usersContainer}>
-            <Text style={styles.sectionTitle}>Engineers List</Text>
+            <View style={styles.header}>
+              <Text style={styles.sectionTitle}>Engineers List</Text>
+              <View style={styles.headerCountContainer}>
+                <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
+              </View>
+            </View>
             {isLoading ? (
               <Text>Loading engineers...</Text>
             ) : submittedUsers.length === 0 ? (

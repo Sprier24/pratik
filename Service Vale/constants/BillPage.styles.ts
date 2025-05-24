@@ -1,6 +1,23 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 8,
+  },
+  headerCountContainer: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  headerCountText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+  },
   billFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -316,9 +333,22 @@ export const styles = StyleSheet.create({
     fontSize: 14,
   },
   modalFooter: {
-    padding: 15,
+    paddingTop: 15,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    paddingHorizontal: 10,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 5,
+    flexDirection: "row",
   },
   editButton: {
     flex: 1,
@@ -328,13 +358,26 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 10,
   },
+  printButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007bff",
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  printButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
   deleteButton: {
     flex: 1,
     backgroundColor: "#e74c3c",
-    padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginRight: 10,
+    marginLeft: 5,
   },
   editButtonText: {
     color: "white",
@@ -349,20 +392,6 @@ export const styles = StyleSheet.create({
   },
   amountContainer: {
     alignItems: "flex-end",
-  },
-  printButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  printButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 8,
   },
   signatureModalContainer: {
     flex: 1,
@@ -428,5 +457,15 @@ export const styles = StyleSheet.create({
   changeSignatureText: {
     color: "#007bff",
     textDecorationLine: "underline",
+  },
+  whatsappButton: {
+    backgroundColor: "#25D366",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    flex: 1,
   },
 });

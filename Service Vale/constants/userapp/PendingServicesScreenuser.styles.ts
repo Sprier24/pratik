@@ -117,4 +117,15 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  headerCountContainer: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  headerCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
 });
