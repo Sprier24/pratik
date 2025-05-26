@@ -232,7 +232,7 @@ const HomeScreenuser = () => {
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.bottomButton}
-                onPress={() => router.push('/bill')}
+                onPress={() => router.push('/userapp/userbill')}
             >
                 <MaterialIcons name="receipt" size={24} color="#3498db" />
                 <Text style={styles.bottomButtonText}>Bill</Text>

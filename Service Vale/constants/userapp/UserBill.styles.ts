@@ -2,21 +2,21 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingBottom: 8,
   },
   headerCountContainer: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: '#E5E7EB',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   headerCountText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
+    fontWeight: '600',
+    color: '#111827',
   },
   billFooter: {
     flexDirection: "row",
@@ -338,17 +338,13 @@ export const styles = StyleSheet.create({
     borderTopColor: "#eee",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
-    paddingHorizontal: 10,
   },
   actionButton: {
     flex: 1,
     paddingVertical: 8,
     borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 5,
-    flexDirection: "row",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   editButton: {
     flex: 1,
@@ -457,15 +453,5 @@ export const styles = StyleSheet.create({
   changeSignatureText: {
     color: "#007bff",
     textDecorationLine: "underline",
-  },
-  whatsappButton: {
-    backgroundColor: "#25D366",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-    flex: 1,
   },
 });

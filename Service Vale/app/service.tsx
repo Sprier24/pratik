@@ -76,7 +76,6 @@ const ServicePage = () => {
                 <TouchableOpacity key={index} onPress={() => handleApplicantPress(user.id, user.name, user.email)}>
                   <View style={styles.applicantItem}>
                     <Text style={styles.applicantName}>{user.name}</Text>
-                    <Text style={styles.applicantEmail}>{user.email}</Text>
                   </View>
                 </TouchableOpacity>
               ))

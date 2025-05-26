@@ -32,12 +32,10 @@ const CompletedServicesScreenUser = () => {
 
   const fetchServices = async () => {
     try {
-      // First get the current user's email
       const currentUser = await account.get();
       const email = currentUser.email;
       setUserEmail(email);
 
-      // Then fetch services where status is completed and serviceboyEmail matches user's email
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -49,14 +47,12 @@ const CompletedServicesScreenUser = () => {
       );
 
       const formattedServices = response.documents.map(doc => {
-        // Convert stored yyyy-mm-dd to display dd/mm/yyyy if serviceDate exists
         let displayDate = '';
         if (doc.serviceDate) {
           const [year, month, day] = doc.serviceDate.split('-');
           displayDate = `${day}/${month}/${year}`;
         }
         
-        // Convert stored 24-hour time to AM/PM if serviceTime exists
         let displayTime = '';
         if (doc.serviceTime) {
           const [hours, minutes] = doc.serviceTime.split(':');
@@ -121,24 +117,65 @@ const CompletedServicesScreenUser = () => {
     }
   }, [params.completedService, userEmail]);
 
-  const renderServiceItem = ({ item }: { item: Service }) => (
+    const handleMoveToPending = async (id: string) => {
+    Alert.alert(
+        'Move to Pending',
+        'Are you sure you want to move this service back to pending?',
+        [
+        { text: 'Cancel', style: 'cancel' },
+        {
+            text: 'Move',
+            onPress: async () => {
+            try {
+                await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTION_ID,
+                id,
+                { status: 'pending' }
+                );
+                
+                setServices(prev => prev.filter(service => service.id !== id));
+                
+                const movedService = services.find(service => service.id === id);
+                if (movedService) {
+                router.push({
+                    pathname: '/userapp/userpending',
+                    params: {
+                    movedService: JSON.stringify({
+                        ...movedService,
+                        status: 'pending'
+                    })
+                    }
+                });
+                }
+            } catch (error) {
+                console.error('Error moving service:', error);
+                Alert.alert('Error', 'Failed to move service to pending');
+            }
+            }
+        }
+        ]
+    );
+    };
+
+    const renderServiceItem = ({ item }: { item: Service }) => (
     <TouchableOpacity 
-      style={styles.serviceCard}
-      onPress={() => {
+        style={styles.serviceCard}
+        onPress={() => {
         router.push({
-          pathname: '/bill',
-          params: {
+            pathname: '/userapp/userbill',
+            params: {
             serviceData: JSON.stringify({
-              serviceType: item.serviceType,
-              serviceBoyName: item.serviceBoy,
-              customerName: item.clientName,
-              address: item.address,
-              contactNumber: item.phone,
-              serviceCharge: item.amount
+                serviceType: item.serviceType,
+                serviceBoyName: item.serviceBoy,
+                customerName: item.clientName,
+                address: item.address,
+                contactNumber: item.phone,
+                serviceCharge: item.amount
             }),
-          },
+            },
         });
-      }}
+        }}
     >
       <View style={styles.serviceHeader}>
         <Text style={styles.serviceType}>{item.serviceType}</Text>
@@ -180,8 +217,17 @@ const CompletedServicesScreenUser = () => {
             item.date}
         </Text>
       </View>
+    <TouchableOpacity
+      style={styles.moveToPendingButton}
+      onPress={(e) => {
+        e.stopPropagation(); // Prevent card press
+        handleMoveToPending(item.id);
+      }}
+    >
+      <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
     </TouchableOpacity>
-  );
+  </TouchableOpacity>
+);
 
   return (
     <SafeAreaView style={styles.container}>

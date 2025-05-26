@@ -184,16 +184,16 @@ container: {
     color: '#9CA3AF',
     marginTop: 8,
   },
+
   moveToPendingButton: {
-    marginTop: 12,
     backgroundColor: '#F59E0B',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center'
   },
   moveToPendingButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+    color: 'white',
+    fontWeight: 'bold'
+  }
 });

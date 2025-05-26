@@ -286,13 +286,7 @@ const PendingServicesScreen = () => {
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
-
-        <View style={styles.detailRow}>
-          <MaterialIcons name="email" size={16} color="#6B7280" />
-          <Text style={styles.detailText}>{item.serviceboyEmail}</Text>
-        </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <Text 
           style={styles.serviceBoyText}

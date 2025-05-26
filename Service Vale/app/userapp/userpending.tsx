@@ -33,12 +33,10 @@ const PendingServicesScreenUser = () => {
 
   const fetchServices = async () => {
     try {
-      // First get the current user's email
       const currentUser = await account.get();
       const email = currentUser.email;
       setUserEmail(email);
 
-      // Then fetch services where status is pending and serviceboyEmail matches user's email
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -51,11 +49,9 @@ const PendingServicesScreenUser = () => {
       );
 
       const formattedServices = response.documents.map(doc => {
-        // Convert stored yyyy-mm-dd to display dd/mm/yyyy
         const [year, month, day] = doc.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
         
-        // Convert stored 24-hour time to AM/PM
         const [hours, minutes] = doc.serviceTime.split(':');
         const hourNum = parseInt(hours);
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
@@ -117,6 +113,44 @@ const PendingServicesScreenUser = () => {
     }
   }, [params.newService, userEmail]);
 
+  const handleComplete = async (id: string) => {
+    Alert.alert(
+      'Complete Service',
+      'Are you sure this service is completed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Complete',
+          onPress: async () => {
+            try {
+              await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTION_ID,
+                id,
+                { status: 'completed' }
+              );
+              
+              setServices(prev => prev.filter(service => service.id !== id));
+              
+              const completedService = services.find(service => service.id === id);
+              if (completedService) {
+                router.push({
+                  pathname: '/userapp/usercompleted',
+                  params: {
+                    completedService: JSON.stringify(completedService)
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error completing service:', error);
+              Alert.alert('Error', 'Failed to complete service');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderServiceItem = ({ item }: { item: Service }) => (
     <TouchableOpacity style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
@@ -157,6 +191,13 @@ const PendingServicesScreenUser = () => {
           {item.serviceDate} • {item.serviceTime}
         </Text>
       </View>
+
+      <TouchableOpacity 
+        style={styles.completeButton} 
+        onPress={() => handleComplete(item.id)}
+      >
+        <Text style={styles.completeButtonText}>Mark as Completed</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
