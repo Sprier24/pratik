@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { Query } from 'appwrite';
@@ -7,7 +7,6 @@ import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import SignatureScreen from 'react-native-signature-canvas';
 import { styles } from '../constants/BillPage.styles';
-import * as Sharing from 'expo-sharing';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -158,172 +157,6 @@ const BillPage = () => {
     }
   };
 
-  const handleShareViaWhatsApp = async () => {
-    if (!selectedBill) return;
-    try {
-      const htmlContent = `
-      <html>
-       <head>
-          <style>
-            html, body {
-              margin: 0;
-              padding: 0;
-              font-family: 'Arial', sans-serif;
-              font-size: 14px;
-              color: #333;
-              height: 100%;
-              box-sizing: border-box;
-            }
-            body {
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-              padding: 40px;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 30px;
-            }
-            .logo {
-              width: 80px;
-            }
-            .center-info {
-              text-align: center;
-              flex: 1;
-            }
-            .center-info h1 {
-              margin: 0;
-              font-size: 22px;
-              color: #007bff;
-            }
-            .center-info p {
-              margin: 2px 0;
-              font-size: 13px;
-            }
-            .contact-info {
-              text-align: right;
-              font-size: 12px;
-              color: #555;
-              max-width: 180px;
-            }
-            .section {
-              margin-bottom: 20px;
-            }
-            .section-title {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 5px;
-              color: #2c3e50;
-            }
-            .row {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 6px;
-            }
-            .label {
-              font-weight: bold;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 20px;
-              font-size: 12px;
-              color: #888;
-            }
-            .highlight {
-              color: #007bff;
-            }
-            .signature-section {
-              margin-top: 30px;
-              text-align: center;
-              padding: 20px 0;
-              border-top: 1px dashed #ccc;
-            }
-            .signature-title {
-              font-weight: bold;
-              margin-bottom: 10px;
-            }
-            .signature-image {
-              max-width: 200px;
-              height: 60px;
-              margin: 0 auto;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Logo" />
-            <div class="center-info">
-              <h1>Service Vale</h1>
-              <p><strong>Bill Number : </strong> ${selectedBill.billNumber}</p>
-              <p><strong>Date : </strong> ${new Date(selectedBill.$createdAt).toLocaleDateString()}</p>
-            </div>
-            <div class="contact-info">
-              <div><strong>Contact : </strong> +91 635 320 2602</div>
-              <div><strong>Email : </strong> info@elementskit.com</div>
-              <div><strong>Address : </strong> Chowk bazar nanpura khatkiwad basir jhinga gali me</div>
-            </div>
-          </div>
-          <div class="section">
-            <div class="section-title">Customer Details</div>
-            <div class="row"><span class="label">Customer Name : </span><span>${selectedBill.customerName}</span></div>
-            <div class="row"><span class="label">Contact Number : </span><span>${selectedBill.contactNumber}</span></div>
-            <div class="row"><span class="label">Address : </span><span>${selectedBill.address}</span></div>
-          </div>
-          <div class="section">
-            <div class="section-title">Service Details</div>
-            <div class="row"><span class="label">Service Type : </span><span>${selectedBill.serviceType}</span></div>
-            <div class="row"><span class="label">Engineer Name : </span><span>${selectedBill.serviceBoyName}</span></div>
-            <div class="row"><span class="label">Service Charge : </span><span>₹${selectedBill.serviceCharge}</span></div>
-            <div class="row"><span class="label">Commission (25%) : </span><span>₹${(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}</span></div>
-          </div>
-          <div class="section">
-            <div class="section-title">Payment Details</div>
-            <div class="row"><span class="label">Payment Method : </span><span class="highlight">${selectedBill.paymentMethod.toUpperCase()}</span></div>
-            ${selectedBill.paymentMethod === 'cash' ? `
-            <div class="row"><span class="label">Cash Given : </span><span>₹${selectedBill.cashGiven}</span></div>
-            <div class="row"><span class="label">Change Returned : </span><span>₹${selectedBill.change}</span></div>
-            ` : ''}
-          </div>
-          ${selectedBill.notes ? `
-            <div class="section">
-              <div class="section-title">Notes</div>
-              <p>${selectedBill.notes}</p>
-            </div>
-          ` : ''}
-          ${selectedBill?.signature ? `
-            <div class="signature-section">
-              <div class="signature-title">Customer Signature</div>
-              <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
-            </div>
-          ` : ''}
-          <div class="footer">
-            "Service completed with care and precision. Let us know if you need further assistance." <br/>
-            © ${new Date().getFullYear()} Service Vale
-          </div>
-        </body>
-      </html>
-    `;
-      const { uri } = await Print.printToFileAsync({
-        html: htmlContent,
-        width: 595,
-        height: 842,
-      });
-      await Sharing.shareAsync(uri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Share Bill via WhatsApp',
-        UTI: 'net.whatsapp.pdf'
-      });
-
-    } catch (error) {
-      console.error('Error sharing via WhatsApp:', error);
-      Alert.alert('Error', 'Failed to share bill');
-    }
-  };
-
   const handleDeleteBill = (billId: string) => {
     Alert.alert(
       'Confirm Delete',
@@ -351,151 +184,241 @@ const BillPage = () => {
   const handlePrint = async () => {
     if (!selectedBill) return;
     const htmlContent = `
-  <html>
-    <head>
-      <style>
-        html, body {
-          margin: 0;
-          padding: 0;
-          font-family: 'Arial', sans-serif;
-          font-size: 14px;
-          color: #333;
-          height: 100%;
-          box-sizing: border-box;
-        }
-        body {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 40px;
-        }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 30px;
-        }
-        .logo {
-          width: 80px;
-        }
-        .center-info {
-          text-align: center;
-          flex: 1;
-        }
-        .center-info h1 {
-          margin: 0;
-          font-size: 22px;
-          color: #007bff;
-        }
-        .center-info p {
-          margin: 2px 0;
-          font-size: 13px;
-        }
-        .contact-info {
-          text-align: right;
-          font-size: 12px;
-          color: #555;
-          max-width: 180px;
-        }
-        .section {
-          margin-bottom: 20px;
-        }
-        .section-title {
-          font-size: 18px;
-          font-weight: bold;
-          margin-bottom: 10px;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 5px;
-          color: #2c3e50;
-        }
-        .row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 6px;
-        }
-        .label {
-          font-weight: bold;
-        }
-        .footer {
-          text-align: center;
-          margin-top: 20px;
-          font-size: 12px;
-          color: #888;
-        }
-        .highlight {
-          color: #007bff;
-        }
-        .signature-section {
-          margin-top: 30px;
-          text-align: center;
-          padding: 20px 0;
-          border-top: 1px dashed #ccc;
-        }
-        .signature-title {
-          font-weight: bold;
-          margin-bottom: 10px;
-        }
-        .signature-image {
-          max-width: 200px;
-          height: 60px;
-          margin: 0 auto;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Logo" />
-        <div class="center-info">
-          <h1>Service Vale</h1>
-          <p><strong>Bill Number : </strong> ${selectedBill.billNumber}</p>
-          <p><strong>Date : </strong> ${new Date(selectedBill.$createdAt).toLocaleDateString()}</p>
-        </div>
-        <div class="contact-info">
-          <div><strong>Contact : </strong> +91 635 320 2602</div>
-          <div><strong>Email : </strong> info@elementskit.com</div>
-          <div><strong>Address : </strong> Chowk bazar nanpura khatkiwad basir jhinga gali me</div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="section-title">Customer Details</div>
-        <div class="row"><span class="label">Customer Name : </span><span>${selectedBill.customerName}</span></div>
-        <div class="row"><span class="label">Contact Number : </span><span>${selectedBill.contactNumber}</span></div>
-        <div class="row"><span class="label">Address : </span><span>${selectedBill.address}</span></div>
-      </div>
-      <div class="section">
-        <div class="section-title">Service Details</div>
-        <div class="row"><span class="label">Service Type : </span><span>${selectedBill.serviceType}</span></div>
-        <div class="row"><span class="label">Engineer Name : </span><span>${selectedBill.serviceBoyName}</span></div>
-        <div class="row"><span class="label">Service Charge : </span><span>₹${selectedBill.serviceCharge}</span></div>
-        <div class="row"><span class="label">Commission (25%) : </span><span>₹${(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}</span></div>
-      </div>
-      <div class="section">
-        <div class="section-title">Payment Details</div>
-        <div class="row"><span class="label">Payment Method : </span><span class="highlight">${selectedBill.paymentMethod.toUpperCase()}</span></div>
-        ${selectedBill.paymentMethod === 'cash' ? `
-        <div class="row"><span class="label">Cash Given : </span><span>₹${selectedBill.cashGiven}</span></div>
-        <div class="row"><span class="label">Change Returned : </span><span>₹${selectedBill.change}</span></div>
-        ` : ''}
-      </div>
-      ${selectedBill.notes ? `
-        <div class="section">
-          <div class="section-title">Notes</div>
-          <p>${selectedBill.notes}</p>
-        </div>
-      ` : ''}
-      ${selectedBill?.signature ? `
-        <div class="signature-section">
-          <div class="signature-title">Customer Signature</div>
-          <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
-        </div>
-      ` : ''}
-      <div class="footer">
-        “Service completed with care and precision. Let us know if you need further assistance.” <br/>
-        © ${new Date().getFullYear()} Service Vale
-      </div>
-    </body>
-  </html>
-`;
+        <html>
+            <head>
+              <style>
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Arial', sans-serif;
+                  font-size: 14px;
+                  color: #333;
+                  height: 100%;
+                  box-sizing: border-box;
+                  background-color: #f9f9f9;
+                }
+                body {
+                  display: flex;
+                  flex-direction: column;
+                  padding: 30px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  background: white;
+                  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 25px;
+                  padding-bottom: 20px;
+                  border-bottom: 2px solid #007bff;
+                }
+                .logo-container {
+                  display: flex;
+                  align-items: center;
+                }
+                .logo {
+                  width: 70px;
+                  height: auto;
+                  margin-right: 15px;
+                }
+                .company-info {
+                  text-align: left;
+                }
+                .company-name {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #007bff;
+                  margin: 0;
+                }
+                .company-tagline {
+                  font-size: 12px;
+                  color: #666;
+                  margin: 3px 0 0;
+                }
+                .invoice-info {
+                  text-align: right;
+                }
+                .invoice-title {
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #2c3e50;
+                  margin: 0 0 5px;
+                }
+                .invoice-details {
+                  font-size: 13px;
+                  color: #555;
+                }
+                .section {
+                  margin-bottom: 25px;
+                  padding: 15px;
+                  background: #f5f9ff;
+                  border-radius: 5px;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                .section-title {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #2c3e50;
+                  padding-bottom: 5px;
+                  border-bottom: 1px solid #ddd;
+                }
+                .row {
+                  display: flex;
+                  margin-bottom: 8px;
+                }
+                .label {
+                  font-weight: bold;
+                  min-width: 150px;
+                  color: #555;
+                }
+                .value {
+                  flex: 1;
+                }
+                .highlight {
+                  color: #007bff;
+                  font-weight: bold;
+                }
+                .payment-details {
+                  background: #e8f4ff;
+                }
+                .total-row {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px dashed #ccc;
+                }
+                .notes-section {
+                  background: #fff8e6;
+                  font-style: italic;
+                }
+                .signature-section {
+                  margin-top: 30px;
+                  text-align: center;
+                  padding: 20px 0;
+                  border-top: 2px dashed #007bff;
+                }
+                .signature-title {
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #555;
+                }
+                .signature-image {
+                  max-width: 250px;
+                  height: 80px;
+                  margin: 0 auto;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 30px;
+                  font-size: 12px;
+                  color: #888;
+                  padding-top: 15px;
+                  border-top: 1px solid #eee;
+                }
+                .thank-you {
+                  font-size: 16px;
+                  color: #007bff;
+                  margin-bottom: 10px;
+                  font-weight: bold;
+                }
+                .contact-info {
+                  margin-top: 5px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo-container">
+                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
+                  <div class="company-info">
+                    <h1 class="company-name">Service Vale</h1>
+                    <p class="company-tagline">Quality Service Solutions</p>
+                  </div>
+                </div>
+                <div class="invoice-info">
+                  <h2 class="invoice-title">INVOICE</h2>
+                  <div class="invoice-details">
+                    <div><strong>Bill No : </strong> ${selectedBill.billNumber}</div>
+                    <div><strong>Date : </strong> ${new Date(selectedBill.$createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-title">Customer Details</div>
+                <div class="row">
+                  <span class="label">Customer Name : </span>
+                  <span class="value">${selectedBill.customerName}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Contact Number : </span>
+                  <span class="value">${selectedBill.contactNumber}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Address : </span>
+                  <span class="value">${selectedBill.address}</span>
+                </div>
+              </div>       
+              <div class="section">
+                <div class="section-title">Service Details</div>
+                <div class="row">
+                  <span class="label">Service Type : </span>
+                  <span class="value">${selectedBill.serviceType}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Engineer Name : </span>
+                  <span class="value">${selectedBill.serviceBoyName}</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Service Charge : </span>
+                  <span class="value highlight">₹${selectedBill.serviceCharge}</span>
+                </div>
+              </div>       
+              <div class="section payment-details">
+                <div class="section-title">Payment Details</div>
+                <div class="row">
+                  <span class="label">Payment Method : </span>
+                  <span class="value highlight">${selectedBill.paymentMethod.toUpperCase()}</span>
+                </div>
+                ${selectedBill.paymentMethod === 'cash' ? `
+                <div class="row">
+                  <span class="label">Amount Received : </span>
+                  <span class="value">₹${selectedBill.cashGiven}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Change Returned : </span>
+                  <span class="value">₹${selectedBill.change}</span>
+                </div>
+                ` : ''}
+              </div>       
+              ${selectedBill.notes ? `
+                <div class="section notes-section">
+                  <div class="section-title">Notes</div>
+                  <p>${selectedBill.notes}</p>
+                </div>
+              ` : ''}       
+              ${selectedBill?.signature ? `
+                <div class="signature-section">
+                  <div class="signature-title">Customer Signature</div>
+                  <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
+                </div>
+              ` : ''}       
+              <div class="footer">
+                <div class="thank-you">Thank You For Your Business!</div>
+                <div class="contact-info">
+                  <strong>Contact : </strong> +91 635 320 2602 | 
+                  <strong>Email : </strong> info@servicevale.com
+                </div>
+                <div class="address">
+                  <strong>Address : </strong> Chowk Bazar Nanpura, Khatkiwad Basir, Jhinga Gali Me
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
     try {
       await Print.printAsync({
         html: htmlContent
@@ -815,13 +738,6 @@ const BillPage = () => {
                     >
                       <Ionicons name="print" size={20} color="#fff" />
                       <Text style={styles.printButtonText}>Print</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.whatsappButton, styles.actionButton]}
-                      onPress={handleShareViaWhatsApp}
-                    >
-                      <Ionicons name="logo-whatsapp" size={20} color="#fff" />
-                      <Text style={styles.printButtonText}>WhatsApp</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.deleteButton, styles.actionButton]}

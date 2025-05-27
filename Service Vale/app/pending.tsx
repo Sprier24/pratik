@@ -4,7 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
-import { styles } from '../constants/PendingServicesScreen.styles';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format, isSameDay } from 'date-fns';
+import { styles } from '../constants/PendingServicesScreen.styles'; 
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -23,6 +25,8 @@ type Service = {
   serviceDate: string;
   serviceTime: string;
   serviceboyEmail: string;
+  sortDate: string;
+  sortTime: string;
 };
 
 type User = {
@@ -39,6 +43,9 @@ const PendingServicesScreen = () => {
   const [serviceBoys, setServiceBoys] = useState<User[]>([]);
   const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
 
   const fetchServiceBoys = async () => {
     try {
@@ -58,7 +65,6 @@ const PendingServicesScreen = () => {
     }
   };
 
-// Update the fetchServices function
   const fetchServices = async () => {
     try {
       const response = await databases.listDocuments(
@@ -72,11 +78,9 @@ const PendingServicesScreen = () => {
       );
 
       const formattedServices = response.documents.map(doc => {
-        // Convert stored yyyy-mm-dd to display dd/mm/yyyy
         const [year, month, day] = doc.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
         
-        // Convert stored 24-hour time to AM/PM
         const [hours, minutes] = doc.serviceTime.split(':');
         const hourNum = parseInt(hours);
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
@@ -94,14 +98,13 @@ const PendingServicesScreen = () => {
           date: new Date(doc.$createdAt).toLocaleString(),
           serviceBoy: doc.serviceboyName,
           serviceboyEmail: doc.serviceboyEmail,
-          serviceDate: displayDate, // dd/mm/yyyy format
-          serviceTime: displayTime, // AM/PM format
-          sortDate: doc.serviceDate, // Keep original for sorting
-          sortTime: doc.serviceTime  // Keep original for sorting
+          serviceDate: displayDate,
+          serviceTime: displayTime,
+          sortDate: doc.serviceDate,
+          sortTime: doc.serviceTime
         };
       });
 
-      // Client-side sorting as fallback
       formattedServices.sort((a, b) => {
         if (a.sortDate !== b.sortDate) {
           return a.sortDate.localeCompare(b.sortDate);
@@ -136,21 +139,23 @@ const PendingServicesScreen = () => {
           status: 'pending',
           date: 'Just now',
           serviceBoy: newService.serviceboyName,
-          serviceDate: newService.serviceDate || '',
+          serviceDate: newService.serviceDate ? 
+            newService.serviceDate.split('-').reverse().join('/') : '',
           serviceTime: newService.serviceTime || '',
-          serviceboyEmail: newService.serviceboyEmail || ''
+          serviceboyEmail: newService.serviceboyEmail || '',
+          sortDate: newService.serviceDate || '',
+          sortTime: newService.serviceTime || ''
         };
         
-        // Add to beginning of array (will be sorted properly on next fetch)
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
-          if (!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) {
+          if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) && 
+              (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter))) {
             return [formattedService, ...prev];
           }
           return prev;
         });
         
-        // Immediately refetch to get proper sorting
         fetchServices();
       } catch (error) {
         console.error('Error parsing new service:', error);
@@ -158,7 +163,6 @@ const PendingServicesScreen = () => {
     }
   }, [params.newService]);
 
-  // Count pending orders by service boy
   const countPendingByServiceBoy = () => {
     const counts: Record<string, number> = { 'All': allServices.length };
     
@@ -167,19 +171,6 @@ const PendingServicesScreen = () => {
     });
     
     return counts;
-  };
-
-  const filterServices = (serviceBoyName: string | null) => {
-    setSelectedServiceBoy(serviceBoyName);
-    if (!serviceBoyName) {
-      setServices(allServices);
-    } else {
-      const filtered = allServices.filter(service => 
-        service.serviceBoy === serviceBoyName
-      );
-      setServices(filtered);
-    }
-    setFilterModalVisible(false);
   };
 
   const handleComplete = async (id: string) => {
@@ -238,7 +229,6 @@ const PendingServicesScreen = () => {
                 id
               );
               
-              // Remove from local state
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               
@@ -251,6 +241,43 @@ const PendingServicesScreen = () => {
         }
       ]
     );
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDateFilter(selectedDate);
+      applyFilters(selectedServiceBoy, selectedDate);
+    }
+  };
+
+  const applyFilters = (serviceBoy: string | null, date: Date | null) => {
+    let filtered = allServices;
+    
+    if (serviceBoy) {
+      filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
+    }
+    
+    if (date) {
+      filtered = filtered.filter(service => {
+        const [day, month, year] = service.serviceDate.split('/');
+        const serviceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        return isSameDay(serviceDate, date);
+      });
+    }
+    
+    setServices(filtered);
+  };
+
+  const filterServices = (serviceBoyName: string | null) => {
+    setSelectedServiceBoy(serviceBoyName);
+    applyFilters(serviceBoyName, dateFilter);
+    setFilterModalVisible(false);
+  };
+
+  const clearDateFilter = () => {
+    setDateFilter(null);
+    applyFilters(selectedServiceBoy, null);
   };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
@@ -320,26 +347,82 @@ const PendingServicesScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Filter Button */}
-      <TouchableOpacity 
-        style={styles.filterButton}
-        onPress={() => setFilterModalVisible(true)}
-      >
-        <Text style={styles.filterButtonText}>
-          {selectedServiceBoy ? `Filter: ${selectedServiceBoy}` : 'Filter by Service Boy'}
-        </Text>
-        <MaterialIcons name="filter-list" size={20} color="#fff" />
-      </TouchableOpacity>
+      {/* Filter Buttons Row */}
+      <View style={styles.filterRow}>
+        <TouchableOpacity 
+          style={[
+            styles.filterButton,
+            (selectedServiceBoy || filterType === 'serviceBoy') && styles.activeFilter
+          ]}
+          onPress={() => {
+            setFilterType('serviceBoy');
+            setFilterModalVisible(true);
+          }}
+        >
+          <Text style={styles.filterButtonText}>
+            {selectedServiceBoy ? `Boy: ${selectedServiceBoy}` : 'Filter by Boy'}
+          </Text>
+          <MaterialIcons name="filter-list" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[
+            styles.filterButton,
+            (dateFilter || filterType === 'date') && styles.activeFilter
+          ]}
+          onPress={() => {
+            setFilterType('date');
+            setShowDatePicker(true);
+          }}
+        >
+          <Text style={styles.filterButtonText}>
+            {dateFilter ? format(dateFilter, 'dd/MM/yy') : 'Filter by Date'}
+          </Text>
+          <MaterialIcons name="event" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Active filters display */}
+      {(selectedServiceBoy || dateFilter) && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersText}>Active filters:</Text>
+          
+          {selectedServiceBoy && (
+            <View style={styles.filterChip}>
+              <Text style={styles.filterChipText}>Boy: {selectedServiceBoy}</Text>
+              <TouchableOpacity onPress={() => filterServices(null)}>
+                <MaterialIcons name="close" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {dateFilter && (
+            <View style={styles.filterChip}>
+              <Text style={styles.filterChipText}>{format(dateFilter, 'dd/MM/yy')}</Text>
+              <TouchableOpacity onPress={clearDateFilter}>
+                <MaterialIcons name="close" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={dateFilter || new Date()}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
 
       {/* Header with count */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pending Services</Text>
         <View style={styles.headerCountContainer}>
           <Text style={styles.headerCountText}>
-            {selectedServiceBoy 
-              ? `${services.length} of ${countPendingByServiceBoy()[selectedServiceBoy] || 0}`
-              : services.length
-            }
+            {services.length} {selectedServiceBoy && `of ${countPendingByServiceBoy()[selectedServiceBoy] || 0}`}
           </Text>
         </View>
       </View>
@@ -389,20 +472,23 @@ const PendingServicesScreen = () => {
       </Modal>
 
       {services.length > 0 ? (
-      <FlatList
-        data={services}
-        renderItem={renderServiceItem}
-        keyExtractor={(item) => item.id || Math.random().toString()} // Fallback if id is missing
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+        <FlatList
+          data={services}
+          renderItem={renderServiceItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
       ) : (
         <View style={styles.emptyState}>
           <MaterialIcons name="pending-actions" size={48} color="#9CA3AF" />
           <Text style={styles.emptyText}>
             {selectedServiceBoy 
               ? `No pending services for ${selectedServiceBoy}`
-              : 'No pending services'}
+              : dateFilter
+                ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`
+                : 'No pending services'
+            }
           </Text>
           <Text style={styles.emptySubtext}>All services are up to date</Text>
         </View>

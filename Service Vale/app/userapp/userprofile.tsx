@@ -38,30 +38,18 @@ const ProfileScreen = () => {
                 if (response.documents.length > 0) {
                     const userData = response.documents[0];
                     setUser({
-                        name: userData.name,
-                        email: userData.email,
-                        phone: userData.contactNo || '+91 9876543210',
-                        address: userData.address || '123, Main Street, City',
+                        name: userData.name || '',
+                        email: userData.email || userEmail,
+                        phone: userData.contactNo || '',
+                        address: userData.address || '',
                         image: 'https://i.pravatar.cc/150?img=8',
                         aadharNo: userData.aadharNo || '',
                         panNo: userData.panNo || '',
                         city: userData.city || '',
                         category: userData.category || ''
                     });
-                } else {
-                    setUser({
-                        name: currentUser.name || currentUser.email.split('@')[0],
-                        email: currentUser.email,
-                        phone: '+91 9876543210',
-                        address: '123, Main Street, City',
-                        image: 'https://i.pravatar.cc/150?img=8',
-                        aadharNo: '',
-                        panNo: '',
-                        city: '',
-                        category: ''
-                    });
                 }
-                setLoading(false);
+                setLoading(false); 
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 Alert.alert('Error', 'Failed to load user data');

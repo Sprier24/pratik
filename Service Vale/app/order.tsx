@@ -4,16 +4,18 @@ import { useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
+const USER_COLLECTION_ID = '681c429800281e8a99bd';
 
 type FormData = {
   serviceboyName: string;
   serviceboyEmail: string;
+  serviceboyContact: string;
   clientName: string;
   phoneNumber: string;
   address: string;
@@ -33,7 +35,8 @@ const OrderScreen = () => {
   }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  
+  const [serviceboyContact, setServiceboyContact] = useState('');
+
   // For date picker
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -54,6 +57,7 @@ const OrderScreen = () => {
   const [formData, setFormData] = useState<FormData>({
     serviceboyName: applicantName || '',
     serviceboyEmail: applicantEmail || '',
+    serviceboyContact: '',
     clientName: '',
     phoneNumber: '',
     address: '',
@@ -65,23 +69,51 @@ const OrderScreen = () => {
     timePeriod: defaultPeriod
   });
 
+  useEffect(() => {
+    const fetchServiceboyContact = async () => {
+      if (!applicantEmail) return;
+
+      try {
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          USER_COLLECTION_ID,
+          [Query.equal('email', [applicantEmail])]
+        );
+
+        if (response.documents.length > 0) {
+          const user = response.documents[0] as any;
+          const contactNo = user.contactNo || '';
+          setServiceboyContact(contactNo);
+          setFormData(prev => ({
+            ...prev,
+            serviceboyContact: contactNo
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching serviceboy contact:', error);
+      }
+    };
+
+    fetchServiceboyContact();
+  }, [applicantEmail]);
+
   const handleTimeChange = (text: string) => {
     // Remove any non-digit characters except colon
     let digits = text.replace(/[^0-9:]/g, '');
-    
+
     // Ensure format stays as HH:MM
     if (digits.length > 2 && !digits.includes(':')) {
       digits = `${digits.substring(0, 2)}:${digits.substring(2)}`;
     }
-    
+
     // Limit to 5 characters (HH:MM)
     if (digits.length > 5) {
       digits = digits.substring(0, 5);
     }
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      serviceTime: digits 
+
+    setFormData(prev => ({
+      ...prev,
+      serviceTime: digits
     }));
   };
 
@@ -103,15 +135,15 @@ const OrderScreen = () => {
 
   const validateTime = (time: string) => {
     if (!time.includes(':')) return false;
-    
+
     const [hoursStr, minutesStr] = time.split(':');
     const hours = parseInt(hoursStr, 10);
     const minutes = parseInt(minutesStr, 10);
-    
+
     // Validate hours (1-12) and minutes (0-59)
-    return !isNaN(hours) && !isNaN(minutes) && 
-           hours >= 1 && hours <= 12 && 
-           minutes >= 0 && minutes <= 59;
+    return !isNaN(hours) && !isNaN(minutes) &&
+      hours >= 1 && hours <= 12 &&
+      minutes >= 0 && minutes <= 59;
   };
 
   const validateForm = () => {
@@ -138,18 +170,18 @@ const OrderScreen = () => {
       Alert.alert('Validation Error', 'Please fill all required fields correctly');
       return;
     }
-    
+
     // Convert 12-hour format to 24-hour format for sorting
     const [hoursStr, minutesStr] = formData.serviceTime.split(':');
     let hours = parseInt(hoursStr, 10);
     const minutes = minutesStr;
-    
+
     if (formData.timePeriod === 'PM' && hours < 12) {
       hours += 12;
     } else if (formData.timePeriod === 'AM' && hours === 12) {
       hours = 0;
     }
-    
+
     const sortableTime = `${String(hours).padStart(2, '0')}:${minutes}`;
     const [day, month, year] = formData.serviceDate.split('/');
     const sortableDate = `${year}-${month}-${day}`;
@@ -173,7 +205,7 @@ const OrderScreen = () => {
           serviceTime: sortableTime
         }
       );
-      
+
       Alert.alert('Success', 'Order created successfully!');
       router.push({
         pathname: '/pending',
@@ -223,18 +255,25 @@ const OrderScreen = () => {
             </View>
           </View>
           <View style={styles.field}>
+            <Text style={styles.label}>Service Boy Contact</Text>
+            <View style={styles.readOnlyContainer}>
+              <Text style={styles.readOnlyText}>
+                {serviceboyContact || 'Contact not available'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.field}>
             <Text style={styles.label}>Service Type</Text>
             <View style={styles.readOnlyContainer}>
               <Text style={styles.readOnlyText}>{serviceType}</Text>
             </View>
           </View>
         </View>
-        
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Service Schedule</Text>
           <View style={styles.field}>
             <Text style={styles.label}>Service Date <Text style={styles.required}>*</Text></Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.input}
               onPress={() => setShowDatePicker(true)}
             >

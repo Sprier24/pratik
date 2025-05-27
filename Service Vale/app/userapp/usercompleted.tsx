@@ -167,7 +167,7 @@ const CompletedServicesScreenUser = () => {
             params: {
             serviceData: JSON.stringify({
                 serviceType: item.serviceType,
-                serviceBoyName: item.serviceBoy,
+                serviceBoyName: item.serviceBoy || 'userName',
                 customerName: item.clientName,
                 address: item.address,
                 contactNumber: item.phone,
