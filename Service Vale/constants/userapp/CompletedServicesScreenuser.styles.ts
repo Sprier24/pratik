@@ -1,9 +1,7 @@
-import { Dimensions, StyleSheet } from "react-native";
-
-const { width } = Dimensions.get('window');
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-container: {
+  container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
@@ -11,89 +9,46 @@ container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007bff',
+    backgroundColor: '#6B7280',
     padding: 10,
     margin: 16,
     borderRadius: 8,
+  },
+  activeFilter: {
+    backgroundColor: '#007bff',
   },
   filterButtonText: {
     color: '#fff',
     marginRight: 8,
     fontWeight: '500',
+    fontSize: 14,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    maxHeight: '60%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#333',
-  },
-  filterOption: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  filterOptionContainer: {
+  activeFiltersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
-  filterOptionText: {
-    fontSize: 16,
+  activeFiltersText: {
+    color: '#6B7280',
+    fontSize: 14,
   },
-  countBadge: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    fontSize: 12,
-    color: '#4B5563',
-  },
-  modalCloseButton: {
-    marginTop: 15,
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: 'center',
-  },
-  modalCloseButtonText: {
-    color: 'white',
-    fontSize: 16,
+  clearFilterText: {
+    color: '#EF4444',
+    fontSize: 14,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingTop: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
     paddingBottom: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  headerCountContainer: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  headerCountText: {
-    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
   },
@@ -147,6 +102,7 @@ container: {
     fontSize: 14,
     color: '#374151',
     marginLeft: 8,
+    flexShrink: 1,
   },
   serviceFooter: {
     flexDirection: 'row',
@@ -156,16 +112,10 @@ container: {
     borderTopColor: '#F3F4F6',
     paddingTop: 12,
   },
-  dateText: {
+  completedTimeText: {
     fontSize: 12,
     color: '#6B7280',
-  },
-  serviceBoyText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontStyle: 'italic',
-    width: 150,           
-    textAlign: 'left',   
+    marginTop: 8,
   },
   emptyState: {
     flex: 1,
@@ -184,7 +134,6 @@ container: {
     color: '#9CA3AF',
     marginTop: 8,
   },
-
   moveToPendingButton: {
     backgroundColor: '#F59E0B',
     padding: 10,
@@ -195,5 +144,16 @@ container: {
   moveToPendingButtonText: {
     color: 'white',
     fontWeight: 'bold'
-  }
+  },
+  headerCountContainer: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  headerCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
 });

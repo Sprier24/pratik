@@ -6,11 +6,11 @@ import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
-import { styles } from '../constants/PendingServicesScreen.styles'; 
+import { styles } from '../constants/PendingServicesScreen.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
-const USERS_COLLECTION_ID = '681c429800281e8a99bd'; 
+const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Service = {
   id: string;
@@ -38,7 +38,7 @@ const PendingServicesScreen = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
-  const [allServices, setAllServices] = useState<Service[]>([]); 
+  const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceBoys, setServiceBoys] = useState<User[]>([]);
   const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(null);
@@ -53,12 +53,10 @@ const PendingServicesScreen = () => {
         DATABASE_ID,
         USERS_COLLECTION_ID
       );
-      
       const boys = response.documents.map(doc => ({
         id: doc.$id,
         name: doc.name
       }));
-      
       setServiceBoys(boys);
     } catch (error) {
       console.error('Error fetching service boys:', error);
@@ -76,17 +74,14 @@ const PendingServicesScreen = () => {
           Query.orderAsc('serviceTime')
         ]
       );
-
       const formattedServices = response.documents.map(doc => {
         const [year, month, day] = doc.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
-        
         const [hours, minutes] = doc.serviceTime.split(':');
         const hourNum = parseInt(hours);
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
         const displayHour = hourNum % 12 || 12;
         const displayTime = `${displayHour}:${minutes} ${ampm}`;
-
         return {
           id: doc.$id,
           serviceType: doc.serviceType,
@@ -104,14 +99,12 @@ const PendingServicesScreen = () => {
           sortTime: doc.serviceTime
         };
       });
-
       formattedServices.sort((a, b) => {
         if (a.sortDate !== b.sortDate) {
           return a.sortDate.localeCompare(b.sortDate);
         }
         return a.sortTime.localeCompare(b.sortTime);
       });
-
       setAllServices(formattedServices);
       setServices(formattedServices);
     } catch (error) {
@@ -125,7 +118,6 @@ const PendingServicesScreen = () => {
   useEffect(() => {
     fetchServices();
     fetchServiceBoys();
-
     if (params.newService) {
       try {
         const newService = JSON.parse(params.newService as string);
@@ -139,23 +131,21 @@ const PendingServicesScreen = () => {
           status: 'pending',
           date: 'Just now',
           serviceBoy: newService.serviceboyName,
-          serviceDate: newService.serviceDate ? 
+          serviceDate: newService.serviceDate ?
             newService.serviceDate.split('-').reverse().join('/') : '',
           serviceTime: newService.serviceTime || '',
           serviceboyEmail: newService.serviceboyEmail || '',
           sortDate: newService.serviceDate || '',
           sortTime: newService.serviceTime || ''
         };
-        
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
-          if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) && 
-              (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter))) {
+          if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) &&
+            (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter))) {
             return [formattedService, ...prev];
           }
           return prev;
         });
-        
         fetchServices();
       } catch (error) {
         console.error('Error parsing new service:', error);
@@ -165,11 +155,9 @@ const PendingServicesScreen = () => {
 
   const countPendingByServiceBoy = () => {
     const counts: Record<string, number> = { 'All': allServices.length };
-    
     serviceBoys.forEach(boy => {
       counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
     });
-    
     return counts;
   };
 
@@ -183,22 +171,28 @@ const PendingServicesScreen = () => {
           text: 'Complete',
           onPress: async () => {
             try {
+              const completedAt = new Date().toISOString();
               await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTION_ID,
                 id,
-                { status: 'completed' }
+                {
+                  status: 'completed',
+                  completedAt,
+                }
               );
-              
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
-              
               const completedService = allServices.find(service => service.id === id);
               if (completedService) {
                 router.push({
                   pathname: '/completed',
                   params: {
-                    completedService: JSON.stringify(completedService)
+                    completedService: JSON.stringify({
+                      ...completedService,
+                      status: 'completed',
+                      completedAt
+                    })
                   }
                 });
               }
@@ -228,10 +222,8 @@ const PendingServicesScreen = () => {
                 COLLECTION_ID,
                 id
               );
-              
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
-              
               Alert.alert('Success', 'Service order deleted successfully');
             } catch (error) {
               console.error('Error deleting service:', error);
@@ -253,11 +245,9 @@ const PendingServicesScreen = () => {
 
   const applyFilters = (serviceBoy: string | null, date: Date | null) => {
     let filtered = allServices;
-    
     if (serviceBoy) {
       filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
     }
-    
     if (date) {
       filtered = filtered.filter(service => {
         const [day, month, year] = service.serviceDate.split('/');
@@ -265,7 +255,6 @@ const PendingServicesScreen = () => {
         return isSameDay(serviceDate, date);
       });
     }
-    
     setServices(filtered);
   };
 
@@ -288,25 +277,21 @@ const PendingServicesScreen = () => {
           <Text style={styles.statusText}>Pending</Text>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={16} color="#6B7280" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
-
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={16} color="#6B7280" />
           <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">
             {item.address}
           </Text>
         </View>
-
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={16} color="#6B7280"/>
+          <MaterialIcons name="phone" size={16} color="#6B7280" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
-
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
           <Text style={styles.detailText}>
@@ -315,7 +300,7 @@ const PendingServicesScreen = () => {
         </View>
       </View>
       <View style={styles.serviceFooter}>
-        <Text 
+        <Text
           style={styles.serviceBoyText}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -326,7 +311,6 @@ const PendingServicesScreen = () => {
           {item.serviceDate} • {item.serviceTime}
         </Text>
       </View>
-
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={[styles.completeButton, styles.actionButton]}
@@ -334,7 +318,6 @@ const PendingServicesScreen = () => {
         >
           <Text style={styles.completeButtonText}>Complete</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={[styles.deleteButton, styles.actionButton]}
           onPress={() => handleDelete(item.id)}
@@ -347,12 +330,11 @@ const PendingServicesScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Filter Buttons Row */}
       <View style={styles.filterRow}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.filterButton,
-            (selectedServiceBoy || filterType === 'serviceBoy') && styles.activeFilter
+            selectedServiceBoy && styles.activeFilter
           ]}
           onPress={() => {
             setFilterType('serviceBoy');
@@ -364,11 +346,10 @@ const PendingServicesScreen = () => {
           </Text>
           <MaterialIcons name="filter-list" size={20} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.filterButton,
-            (dateFilter || filterType === 'date') && styles.activeFilter
+            dateFilter && styles.activeFilter
           ]}
           onPress={() => {
             setFilterType('date');
@@ -381,12 +362,9 @@ const PendingServicesScreen = () => {
           <MaterialIcons name="event" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-
-      {/* Active filters display */}
       {(selectedServiceBoy || dateFilter) && (
         <View style={styles.activeFiltersContainer}>
           <Text style={styles.activeFiltersText}>Active filters:</Text>
-          
           {selectedServiceBoy && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>Boy: {selectedServiceBoy}</Text>
@@ -395,7 +373,6 @@ const PendingServicesScreen = () => {
               </TouchableOpacity>
             </View>
           )}
-          
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd/MM/yy')}</Text>
@@ -406,8 +383,6 @@ const PendingServicesScreen = () => {
           )}
         </View>
       )}
-
-      {/* Date Picker Modal */}
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -416,8 +391,6 @@ const PendingServicesScreen = () => {
           onChange={handleDateChange}
         />
       )}
-
-      {/* Header with count */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pending Services</Text>
         <View style={styles.headerCountContainer}>
@@ -426,8 +399,6 @@ const PendingServicesScreen = () => {
           </Text>
         </View>
       </View>
-
-      {/* Filter Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -437,30 +408,37 @@ const PendingServicesScreen = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Service Boy</Text>
-            
-            <TouchableOpacity 
-              style={styles.filterOption}
-              onPress={() => filterServices(null)}
-            >
-              <View style={styles.filterOptionContainer}>
-                <Text style={styles.filterOptionText}>All Service Boys</Text>
-                <Text style={styles.countBadge}>{countPendingByServiceBoy()['All']}</Text>
-              </View>
-            </TouchableOpacity>
-            
-            {serviceBoys.map((boy) => (
-              <TouchableOpacity 
-                key={boy.id}
+            <View style={styles.modalScrollBox}>
+              <TouchableOpacity
                 style={styles.filterOption}
-                onPress={() => filterServices(boy.name)}
+                onPress={() => filterServices(null)}
               >
                 <View style={styles.filterOptionContainer}>
-                  <Text style={styles.filterOptionText}>{boy.name}</Text>
-                  <Text style={styles.countBadge}>{countPendingByServiceBoy()[boy.name] || 0}</Text>
+                  <Text style={styles.filterOptionText}>All Service Boys</Text>
+                  <Text style={styles.countBadge}>
+                    {countPendingByServiceBoy()['All']}
+                  </Text>
                 </View>
               </TouchableOpacity>
-            ))}
-            
+              <FlatList
+                data={serviceBoys}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => filterServices(item.name)}
+                  >
+                    <View style={styles.filterOptionContainer}>
+                      <Text style={styles.filterOptionText}>{item.name}</Text>
+                      <Text style={styles.countBadge}>
+                        {countPendingByServiceBoy()[item.name] || 0}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={true}
+              />
+            </View>
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}
@@ -470,7 +448,6 @@ const PendingServicesScreen = () => {
           </View>
         </View>
       </Modal>
-
       {services.length > 0 ? (
         <FlatList
           data={services}
@@ -483,7 +460,7 @@ const PendingServicesScreen = () => {
         <View style={styles.emptyState}>
           <MaterialIcons name="pending-actions" size={48} color="#9CA3AF" />
           <Text style={styles.emptyText}>
-            {selectedServiceBoy 
+            {selectedServiceBoy
               ? `No pending services for ${selectedServiceBoy}`
               : dateFilter
                 ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`

@@ -10,7 +10,6 @@ import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-
 const { width } = Dimensions.get('window');
 
 const HomeScreenuser = () => {
@@ -34,23 +33,17 @@ const HomeScreenuser = () => {
 
   const fetchRevenueData = async () => {
     try {
-      // First get the current user's name
       const currentUser = await account.get();
       const userResponse = await databases.listDocuments(
         DATABASE_ID,
-        '681c429800281e8a99bd', // Users collection ID
+        '681c429800281e8a99bd',
         [Query.equal('email', currentUser.email)]
       );
-      
       if (userResponse.documents.length === 0) return;
-      
       const userName = userResponse.documents[0].name;
-
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
-      // Fetch today's bills for this user
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -60,8 +53,6 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
-
-      // Fetch this month's bills for this user
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -71,17 +62,12 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
-
-      // Calculate daily revenue
       const dailyTotal = dailyBills.documents.reduce((sum, bill) => {
         return sum + parseFloat(bill.total || 0);
       }, 0);
-
-      // Calculate monthly revenue
       const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => {
         return sum + parseFloat(bill.total || 0);
       }, 0);
-
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
     } catch (error) {
@@ -92,12 +78,8 @@ const HomeScreenuser = () => {
   const fetchOrders = async () => {
     try {
       setRefreshing(true);
-      
-      // First get the current user's email
       const currentUser = await account.get();
       const email = currentUser.email;
-
-      // Fetch only pending orders for this specific user
       const orders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -106,11 +88,7 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
-
-      // Count all pending orders for this user
       setPendingCount(orders.total);
-      
-      // For completed count, we can still count all non-pending for this user
       const completedOrders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -119,7 +97,6 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
-      
       setCompletedCount(completedOrders.total);
     } catch (error) {
       console.error('Appwrite error:', error);
@@ -182,15 +159,13 @@ const HomeScreenuser = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Revenue Section */}
         <View style={styles.revenueContainer}>
           <View style={[styles.revenueCard, styles.dailyRevenue]}>
             <Text style={[styles.cardTitle, styles.revenueCardTitle]}>Daily Revenue</Text>
             <Text style={styles.cardAmount}>
-              ₹{dailyRevenue.toLocaleString('en-IN', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+              ₹{dailyRevenue.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
               })}
             </Text>
             <View style={styles.cardTrend}>
@@ -198,13 +173,12 @@ const HomeScreenuser = () => {
               <Text style={styles.trendText}>Today</Text>
             </View>
           </View>
-
           <View style={[styles.revenueCard, styles.monthlyRevenue]}>
             <Text style={[styles.cardTitle, styles.revenueCardTitle]}>Monthly Revenue</Text>
             <Text style={styles.cardAmount}>
-              ₹{monthlyRevenue.toLocaleString('en-IN', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+              ₹{monthlyRevenue.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
               })}
             </Text>
             <View style={styles.cardTrend}>
@@ -213,16 +187,14 @@ const HomeScreenuser = () => {
             </View>
           </View>
         </View>
-
-        {/* Services Section */}
         <View style={styles.servicesContainer}>
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.cardHeader}>
-              <MaterialIcons 
-                name="pending-actions" 
-                size={24} 
-                color="#e67e22" 
-                style={styles.icon} 
+              <MaterialIcons
+                name="pending-actions"
+                size={24}
+                color="#e67e22"
+                style={styles.icon}
               />
               <Text style={[styles.cardTitle, styles.serviceCardTitle]}>
                 Pending Services
@@ -237,14 +209,13 @@ const HomeScreenuser = () => {
               <AntDesign name="right" size={16} color="#3498db" />
             </TouchableOpacity>
           </View>
-
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.cardHeader}>
-              <MaterialIcons 
-                name="check-circle" 
-                size={24} 
-                color="#27ae60" 
-                style={styles.icon} 
+              <MaterialIcons
+                name="check-circle"
+                size={24}
+                color="#27ae60"
+                style={styles.icon}
               />
               <Text style={[styles.cardTitle, styles.serviceCardTitle]}>
                 Completed Services
@@ -261,23 +232,22 @@ const HomeScreenuser = () => {
           </View>
         </View>
       </ScrollView>
-
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.bottomButton}
-            onPress={() => router.push('/userapp/userprofile')}
-          >
-            <MaterialIcons name="people" size={24} color="#3498db" />
-            <Text style={styles.bottomButtonText}>Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.bottomButton}
-            onPress={() => router.push('/userapp/userbill')}
-          >
-            <MaterialIcons name="receipt" size={24} color="#3498db" />
-            <Text style={styles.bottomButtonText}>Bills</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.bottomBar}>
+        <TouchableOpacity
+          style={styles.bottomButton}
+          onPress={() => router.push('/userapp/userprofile')}
+        >
+          <MaterialIcons name="people" size={24} color="#3498db" />
+          <Text style={styles.bottomButtonText}>Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.bottomButton}
+          onPress={() => router.push('/userapp/userbill')}
+        >
+          <MaterialIcons name="receipt" size={24} color="#3498db" />
+          <Text style={styles.bottomButtonText}>Bills</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -285,4 +255,3 @@ const HomeScreenuser = () => {
 export default HomeScreenuser;
 
 
-  

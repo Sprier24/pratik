@@ -10,7 +10,6 @@ import { styles } from '../constants/HomeScreen.styles';
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
@@ -135,7 +134,6 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-
         <View style={styles.revenueContainer}>
           <View style={[styles.card, styles.dailyRevenue]}>
             <Text style={styles.cardTitle}>Daily Revenue</Text>
@@ -154,7 +152,6 @@ const HomeScreen = () => {
             </View>
           </View>
         </View>
-
         <View style={styles.servicesContainer}>
           <View style={[styles.card, styles.pendingCard]}>
             <View style={styles.cardHeader}>

@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { Query } from 'appwrite';
 import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import SignatureScreen from 'react-native-signature-canvas';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format, isSameDay } from 'date-fns';
 import { styles } from '../constants/BillPage.styles';
+import * as Sharing from 'expo-sharing';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
+const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Bill = {
   $id: string;
@@ -26,6 +30,11 @@ type Bill = {
   change: string;
   $createdAt: string;
   signature?: string;
+};
+
+type User = {
+  id: string;
+  name: string;
 };
 
 const fieldLabels = {
@@ -48,6 +57,7 @@ const BillPage = () => {
     serviceCharge: '',
   });
   const [bills, setBills] = useState<any[]>([]);
+  const [allBills, setAllBills] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [cashGiven, setCashGiven] = useState('');
@@ -57,10 +67,46 @@ const BillPage = () => {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
   const [isSignatureVisible, setIsSignatureVisible] = useState(false);
+  const [serviceBoys, setServiceBoys] = useState<User[]>([]);
+  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
 
   useEffect(() => {
     fetchBills();
+    fetchServiceBoys();
   }, []);
+
+  const formatToAmPm = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+    return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+  };
+
+  const fetchServiceBoys = async () => {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID
+      );
+      const boys = response.documents.map(doc => ({
+        id: doc.$id,
+        name: doc.name
+      }));
+      setServiceBoys(boys);
+    } catch (error) {
+      console.error('Error fetching service boys:', error);
+    }
+  };
 
   const fetchBills = async () => {
     setIsLoading(true);
@@ -68,10 +114,9 @@ const BillPage = () => {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
-        [
-          Query.orderDesc('date')
-        ]
+        [Query.orderDesc('$createdAt')]
       );
+      setAllBills(response.documents);
       setBills(response.documents);
     } catch (error) {
       console.error('Error fetching bills:', error);
@@ -79,6 +124,47 @@ const BillPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const countBillsByServiceBoy = () => {
+    const counts: Record<string, number> = { 'All': allBills.length };
+    serviceBoys.forEach(boy => {
+      counts[boy.name] = allBills.filter(bill => bill.serviceBoyName === boy.name).length;
+    });
+    return counts;
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDateFilter(selectedDate);
+      applyFilters(selectedServiceBoy, selectedDate);
+    }
+  };
+
+  const applyFilters = (serviceBoy: string | null, date: Date | null) => {
+    let filtered = allBills;
+    if (serviceBoy) {
+      filtered = filtered.filter(bill => bill.serviceBoyName === serviceBoy);
+    }
+    if (date) {
+      filtered = filtered.filter(bill => {
+        const billDate = new Date(bill.$createdAt);
+        return isSameDay(billDate, date);
+      });
+    }
+    setBills(filtered);
+  };
+
+  const filterBills = (serviceBoyName: string | null) => {
+    setSelectedServiceBoy(serviceBoyName);
+    applyFilters(serviceBoyName, dateFilter);
+    setFilterModalVisible(false);
+  };
+
+  const clearDateFilter = () => {
+    setDateFilter(null);
+    applyFilters(selectedServiceBoy, null);
   };
 
   const generateBillNumber = () => {
@@ -157,34 +243,11 @@ const BillPage = () => {
     }
   };
 
-  const handleDeleteBill = (billId: string) => {
-    Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to delete this bill?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, billId);
-              Alert.alert('Deleted', 'Bill has been deleted.');
-              fetchBills();
-            } catch (error) {
-              console.error('Error deleting bill:', error);
-              Alert.alert('Error', 'Failed to delete bill.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const handlePrint = async () => {
+  const handleShareViaWhatsApp = async () => {
     if (!selectedBill) return;
-    const htmlContent = `
-        <html>
+    try {
+      const htmlContent = `
+      <html>
             <head>
               <style>
                 html, body {
@@ -291,9 +354,273 @@ const BillPage = () => {
                   padding-top: 10px;
                   border-top: 1px dashed #ccc;
                 }
-                .notes-section {
-                  background: #fff8e6;
-                  font-style: italic;
+                .signature-section {
+                  margin-top: 30px;
+                  text-align: center;
+                  padding: 20px 0;
+                  border-top: 2px dashed #007bff;
+                }
+                .signature-title {
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #555;
+                }
+                .signature-image {
+                  max-width: 250px;
+                  height: 80px;
+                  margin: 0 auto;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 30px;
+                  font-size: 12px;
+                  color: #888;
+                  padding-top: 15px;
+                  border-top: 1px solid #eee;
+                }
+                .thank-you {
+                  font-size: 16px;
+                  color: #007bff;
+                  margin-bottom: 10px;
+                  font-weight: bold;
+                }
+                .contact-info {
+                  margin-top: 5px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo-container">
+                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
+                  <div class="company-info">
+                    <h1 class="company-name">Service Vale</h1>
+                    <p class="company-tagline">Quality Service Solutions</p>
+                  </div>
+                </div>
+                <div class="invoice-info">
+                  <h2 class="invoice-title">INVOICE</h2>
+                  <div class="invoice-details">
+                    <div><strong>Bill No : </strong> ${selectedBill.billNumber}</div>
+                    <div><strong>Date : </strong> ${new Date(selectedBill.$createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-title">Customer Details</div>
+                <div class="row">
+                  <span class="label">Customer Name : </span>
+                  <span class="value">${selectedBill.customerName}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Contact Number : </span>
+                  <span class="value">${selectedBill.contactNumber}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Address : </span>
+                  <span class="value">${selectedBill.address}</span>
+                </div>
+              </div>       
+              <div class="section">
+                <div class="section-title">Service Details</div>
+                <div class="row">
+                  <span class="label">Service Type : </span>
+                  <span class="value">${selectedBill.serviceType}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Engineer Name : </span>
+                  <span class="value">${selectedBill.serviceBoyName}</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Service Charge : </span>
+                  <span class="value highlight">₹${selectedBill.serviceCharge}</span>
+                </div>
+              </div>       
+              <div class="section payment-details">
+                <div class="section-title">Payment Details</div>
+                <div class="row">
+                  <span class="label">Payment Method : </span>
+                  <span class="value highlight">${selectedBill.paymentMethod.toUpperCase()}</span>
+                </div>
+                ${selectedBill.paymentMethod === 'cash' ? `
+                <div class="row">
+                  <span class="label">Amount Received : </span>
+                  <span class="value">₹${selectedBill.cashGiven}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Change Returned : </span>
+                  <span class="value">₹${selectedBill.change}</span>
+                </div>
+                ` : ''}
+              </div>             
+              ${selectedBill?.signature ? `
+                <div class="signature-section">
+                  <div class="signature-title">Customer Signature</div>
+                  <img src="data:image/png;base64,${selectedBill.signature}" class="signature-image" />
+                </div>
+              ` : ''}       
+              <div class="footer">
+                <div class="thank-you">Thank You For Your Business!</div>
+                <div class="contact-info">
+                  <strong>Contact : </strong> +91 635 320 2602 | 
+                  <strong>Email : </strong> info@servicevale.com
+                </div>
+                <div class="address">
+                  <strong>Address : </strong> Chowk Bazar Nanpura, Khatkiwad Basir, Jhinga Gali Me
+                </div>
+              </div>
+            </body>
+          </html>
+    `;
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        width: 595,
+        height: 842,
+      });
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Bill via WhatsApp',
+        UTI: 'net.whatsapp.pdf'
+      });
+    } catch (error) {
+      console.error('Error sharing via WhatsApp:', error);
+      Alert.alert('Error', 'Failed to share bill');
+    }
+  };
+
+  const handleDeleteBill = (billId: string) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this bill?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, billId);
+              Alert.alert('Deleted', 'Bill has been deleted.');
+              fetchBills();
+            } catch (error) {
+              console.error('Error deleting bill:', error);
+              Alert.alert('Error', 'Failed to delete bill.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handlePrint = async () => {
+    if (!selectedBill) return;
+    const htmlContent = `
+  <html>
+            <head>
+              <style>
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Arial', sans-serif;
+                  font-size: 14px;
+                  color: #333;
+                  height: 100%;
+                  box-sizing: border-box;
+                  background-color: #f9f9f9;
+                }
+                body {
+                  display: flex;
+                  flex-direction: column;
+                  padding: 30px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  background: white;
+                  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 25px;
+                  padding-bottom: 20px;
+                  border-bottom: 2px solid #007bff;
+                }
+                .logo-container {
+                  display: flex;
+                  align-items: center;
+                }
+                .logo {
+                  width: 70px;
+                  height: auto;
+                  margin-right: 15px;
+                }
+                .company-info {
+                  text-align: left;
+                }
+                .company-name {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #007bff;
+                  margin: 0;
+                }
+                .company-tagline {
+                  font-size: 12px;
+                  color: #666;
+                  margin: 3px 0 0;
+                }
+                .invoice-info {
+                  text-align: right;
+                }
+                .invoice-title {
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #2c3e50;
+                  margin: 0 0 5px;
+                }
+                .invoice-details {
+                  font-size: 13px;
+                  color: #555;
+                }
+                .section {
+                  margin-bottom: 25px;
+                  padding: 15px;
+                  background: #f5f9ff;
+                  border-radius: 5px;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                .section-title {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #2c3e50;
+                  padding-bottom: 5px;
+                  border-bottom: 1px solid #ddd;
+                }
+                .row {
+                  display: flex;
+                  margin-bottom: 8px;
+                }
+                .label {
+                  font-weight: bold;
+                  min-width: 150px;
+                  color: #555;
+                }
+                .value {
+                  flex: 1;
+                }
+                .highlight {
+                  color: #007bff;
+                  font-weight: bold;
+                }
+                .payment-details {
+                  background: #e8f4ff;
+                }
+                .total-row {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px dashed #ccc;
                 }
                 .signature-section {
                   margin-top: 30px;
@@ -393,13 +720,7 @@ const BillPage = () => {
                   <span class="value">₹${selectedBill.change}</span>
                 </div>
                 ` : ''}
-              </div>       
-              ${selectedBill.notes ? `
-                <div class="section notes-section">
-                  <div class="section-title">Notes</div>
-                  <p>${selectedBill.notes}</p>
-                </div>
-              ` : ''}       
+              </div>            
               ${selectedBill?.signature ? `
                 <div class="signature-section">
                   <div class="signature-title">Customer Signature</div>
@@ -418,7 +739,7 @@ const BillPage = () => {
               </div>
             </body>
           </html>
-        `;
+`;
     try {
       await Print.printAsync({
         html: htmlContent
@@ -504,6 +825,77 @@ const BillPage = () => {
     <View style={styles.mainContainer}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Bill Summary</Text>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={filterModalVisible}
+          onRequestClose={() => setFilterModalVisible(false)}
+        >
+          <View style={styles.modalContainerfilter}>
+            <View style={styles.modalContentfilter}>
+              <Text style={styles.modalTitlefilter}>Select Service Boy</Text>
+              <TouchableOpacity
+                style={styles.filterOption}
+                onPress={() => filterBills(null)}
+              >
+                <View style={styles.filterOptionContainer}>
+                  <Text style={styles.filterOptionText}>All Service Boys</Text>
+                  <Text style={styles.countBadge}>{countBillsByServiceBoy()['All']}</Text>
+                </View>
+              </TouchableOpacity>
+              {serviceBoys.map((boy) => (
+                <TouchableOpacity
+                  key={boy.id}
+                  style={styles.filterOption}
+                  onPress={() => filterBills(boy.name)}
+                >
+                  <View style={styles.filterOptionContainer}>
+                    <Text style={styles.filterOptionText}>{boy.name}</Text>
+                    <Text style={styles.countBadge}>{countBillsByServiceBoy()[boy.name] || 0}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <Text style={styles.modalCloseButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {(selectedServiceBoy || dateFilter) && (
+          <View style={styles.activeFiltersContainer}>
+            <Text style={styles.activeFiltersText}>Active filters:</Text>
+            {selectedServiceBoy && (
+              <View style={styles.filterChip}>
+                <Text style={styles.filterChipText}>Boy: {selectedServiceBoy}</Text>
+                <TouchableOpacity onPress={() => filterBills(null)}>
+                  <MaterialIcons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+            {dateFilter && (
+              <View style={styles.filterChip}>
+                <Text style={styles.filterChipText}>{format(dateFilter, 'dd/MM/yy')}</Text>
+                <TouchableOpacity onPress={clearDateFilter}>
+                  <MaterialIcons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={dateFilter || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
         {isFormVisible ? (
           <>
             <Text style={styles.sectionTitle}>Service Details</Text>
@@ -564,16 +956,6 @@ const BillPage = () => {
                   <Text style={styles.changeLabel}>Change to Return:</Text>
                   <Text style={styles.changeValue}>₹{calculateChange()}</Text>
                 </View>
-              </View>
-            )}
-            {paymentMethod === 'upi' && (
-              <View style={styles.upiContainer}>
-                <Text style={styles.sectionTitle}>Scan UPI QR Code</Text>
-                <Image
-                  source={require('../assets/images/payment.jpg')}
-                  style={styles.qrCode}
-                />
-                <Text style={styles.upiId}>UPI ID: yourupi@bank</Text>
               </View>
             )}
             {signature ? (
@@ -642,7 +1024,7 @@ const BillPage = () => {
                     <View style={styles.billFooter}>
                       <Text style={styles.billService}>{bill.serviceType} by {bill.serviceBoyName}</Text>
                       <Text style={styles.billDate}>
-                        {new Date(bill.date).toLocaleDateString()}
+                        {formatToAmPm(bill.$createdAt)}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -719,7 +1101,7 @@ const BillPage = () => {
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Created At :</Text>
                     <Text style={styles.detailValue}>
-                      {new Date(selectedBill.$createdAt || '').toLocaleString()}
+                      {formatToAmPm(selectedBill.$createdAt || '')}
                     </Text>
                   </View>
                   {selectedBill?.signature && (
@@ -738,6 +1120,13 @@ const BillPage = () => {
                     >
                       <Ionicons name="print" size={20} color="#fff" />
                       <Text style={styles.printButtonText}>Print</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.whatsappButton, styles.actionButton]}
+                      onPress={handleShareViaWhatsApp}
+                    >
+                      <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                      <Text style={styles.printButtonText}>WhatsApp</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.deleteButton, styles.actionButton]}
@@ -808,6 +1197,7 @@ const BillPage = () => {
           </View>
         </Modal>
       )}
+
       <TouchableOpacity style={styles.fab} onPress={toggleFormVisibility}>
         <Ionicons name={isFormVisible ? 'close' : 'add'} size={28} color="white" />
       </TouchableOpacity>

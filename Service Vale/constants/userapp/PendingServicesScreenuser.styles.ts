@@ -5,14 +5,54 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6B7280',
+    padding: 10,
+    margin: 16,
+    borderRadius: 8,
+  },
+  activeFilter: {
+    backgroundColor: '#007bff',
+  },
+  filterButtonText: {
+    color: '#fff',
+    marginRight: 8,
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  activeFiltersText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  clearFilterText: {
+    color: '#EF4444',
+    fontSize: 14,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingBottom: 8,
+
   },
   headerTitle: {
     fontSize: 18,
@@ -105,18 +145,6 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 8,
   },
-  // completeButton: {
-  //   marginTop: 12,
-  //   backgroundColor: '#10B981',
-  //   paddingVertical: 10,
-  //   borderRadius: 8,
-  //   alignItems: 'center',
-  // },
-  // completeButtonText: {
-  //   color: '#fff',
-  //   fontWeight: '600',
-  //   fontSize: 14,
-  // },
   completeButton: {
     backgroundColor: '#10B981',
     padding: 10,

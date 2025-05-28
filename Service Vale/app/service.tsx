@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
-import { Modal } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
@@ -8,7 +7,6 @@ import { styles } from '../constants/ServicePage.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
-
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
@@ -16,7 +14,6 @@ const ServicePage = () => {
   const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string }[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceKey>('AC');
   const router = useRouter();
-
   useEffect(() => {
     const fetchAllUsers = async () => {
       try {
@@ -56,10 +53,6 @@ const ServicePage = () => {
     });
   };
 
-  const handleLearnMore = () => {
-    Alert.alert('Learn More', 'Here you can navigate to detailed service info.');
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Modal
@@ -70,18 +63,24 @@ const ServicePage = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Applicants for this service</Text>
-            {allUsers.length > 0 ? (
-              allUsers.map((user, index) => (
-                <TouchableOpacity key={index} onPress={() => handleApplicantPress(user.id, user.name, user.email)}>
-                  <View style={styles.applicantItem}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Applicants for this service</Text>
+            </View>
+            <ScrollView style={{ maxHeight: '80%' }} contentContainerStyle={styles.scrollContent}>
+              {allUsers.length > 0 ? (
+                allUsers.map((user, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleApplicantPress(user.id, user.name, user.email)}
+                    style={styles.applicantItem}
+                  >
                     <Text style={styles.applicantName}>{user.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text style={styles.noApplicantsText}>No applicants yet</Text>
-            )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noApplicantsText}>No applicants yet</Text>
+              )}
+            </ScrollView>
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setModalVisible(false)}
@@ -102,13 +101,7 @@ const ServicePage = () => {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>A.C Repair And Services:</Text>
-        <Text style={styles.description}>
-          Expert A.C repair and maintenance services to keep your cooling system efficient. Fast, reliable, and professional solutions for optimal comfort.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={handleLearnMore}>
-          <Text style={styles.buttonText}>Learn More</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>AC Service</Text>
       </View>
 
       <View style={styles.serviceBox}>
@@ -121,13 +114,7 @@ const ServicePage = () => {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Washing Machine Repair:</Text>
-        <Text style={styles.description}>
-          We provide efficient washing machine repairs, tackling everything from leaks to spin cycle problems, restoring your laundry routine.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={handleLearnMore}>
-          <Text style={styles.buttonText}>Learn More</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Washing Machine Service</Text>
       </View>
 
       <View style={styles.serviceBox}>
@@ -140,13 +127,7 @@ const ServicePage = () => {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Fridge Repair</Text>
-        <Text style={styles.description}>
-          Our experts quickly diagnose and fix fridge issues, ensuring your food stays fresh with minimal downtime.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={handleLearnMore}>
-          <Text style={styles.buttonText}>Learn More</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Fridge Service</Text>
       </View>
 
       <View style={styles.serviceBox}>
@@ -159,13 +140,7 @@ const ServicePage = () => {
             />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Microwave Repair:</Text>
-        <Text style={styles.description}>
-          We fix Microwave malfunctions promptly, ensuring your appliance heats and cooks efficiently without hassle.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={handleLearnMore}>
-          <Text style={styles.buttonText}>Learn More</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Microwave Service</Text>
       </View>
     </ScrollView>
   );

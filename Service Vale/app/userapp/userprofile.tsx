@@ -21,7 +21,6 @@ const ProfileScreen = () => {
         aadharNo: '',
         panNo: '',
         city: '',
-        category: ''
     });
     const [loading, setLoading] = useState(true);
 
@@ -46,10 +45,9 @@ const ProfileScreen = () => {
                         aadharNo: userData.aadharNo || '',
                         panNo: userData.panNo || '',
                         city: userData.city || '',
-                        category: userData.category || ''
                     });
                 }
-                setLoading(false); 
+                setLoading(false);
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 Alert.alert('Error', 'Failed to load user data');
@@ -91,7 +89,6 @@ const ProfileScreen = () => {
                         city: user.city,
                         aadharNo: user.aadharNo,
                         panNo: user.panNo,
-                        category: user.category
                     }
                 );
             } else {
@@ -107,7 +104,6 @@ const ProfileScreen = () => {
                         city: user.city,
                         aadharNo: user.aadharNo,
                         panNo: user.panNo,
-                        category: user.category
                     }
                 );
             }
@@ -122,7 +118,6 @@ const ProfileScreen = () => {
     const handleCancelEdit = () => {
         setIsEditing(false);
     };
-
     if (loading) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -220,15 +215,6 @@ const ProfileScreen = () => {
                                 style={styles.input}
                             />
                         </View>
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Category</Text>
-                            <TextInput
-                                value={user.category}
-                                onChangeText={(text) => setUser({ ...user, category: text })}
-                                placeholder="Enter category"
-                                style={styles.input}
-                            />
-                        </View>
                         <TouchableOpacity
                             style={styles.saveButton}
                             onPress={handleSave}
@@ -260,10 +246,6 @@ const ProfileScreen = () => {
                             <View style={styles.infoItem}>
                                 <Ionicons name="business-outline" size={18} color="#4b5563" />
                                 <Text style={styles.infoText}>City: {user.city || 'Not provided'}</Text>
-                            </View>
-                            <View style={styles.infoItem}>
-                                <Ionicons name="pricetag-outline" size={18} color="#4b5563" />
-                                <Text style={styles.infoText}>Category: {user.category || 'Not provided'}</Text>
                             </View>
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity

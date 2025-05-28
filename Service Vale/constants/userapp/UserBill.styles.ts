@@ -1,22 +1,70 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  whatsappButton: {
+    backgroundColor: "#25D366",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    flex: 1,
+  },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6B7280",
+    padding: 10,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  activeFilter: {
+    backgroundColor: "#007bff",
+  },
+  filterButtonText: {
+    color: "#fff",
+    marginRight: 8,
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  activeFiltersContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 8,
+  },
+  activeFiltersText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  clearFilterText: {
+    color: "#EF4444",
+    fontSize: 14,
+  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingBottom: 8,
   },
   headerCountContainer: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   headerCountText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
   },
   billFooter: {
     flexDirection: "row",
@@ -28,7 +76,6 @@ export const styles = StyleSheet.create({
   },
   billsContainer: {
     flex: 1,
-    marginTop: 20,
   },
   billCard: {
     backgroundColor: "#fff",
@@ -343,8 +390,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   editButton: {
     flex: 1,

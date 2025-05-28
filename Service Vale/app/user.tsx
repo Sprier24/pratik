@@ -198,6 +198,9 @@ const UserDetailsForm = () => {
   };
 
   const handleChange = (name: string, value: string) => {
+    if (name === 'panNo') {
+      value = value.toUpperCase();
+    }
     setFormData({
       ...formData,
       [name]: value
@@ -277,7 +280,6 @@ const UserDetailsForm = () => {
     <View style={styles.mainContainer}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Engineer Details</Text>
-
         {isFormVisible ? (
           <>
             <View style={styles.formHeader}>
@@ -285,7 +287,6 @@ const UserDetailsForm = () => {
                 {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
               </Text>
             </View>
-
             {Object.entries(formData).map(([key, value]) => {
               const currentValue = value || '';
               const label = fieldLabels[key as keyof typeof fieldLabels] || key;
@@ -370,7 +371,6 @@ const UserDetailsForm = () => {
                 </View>
               );
             })}
-
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.resetButton]}
