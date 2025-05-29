@@ -3,13 +3,15 @@ import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'rea
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
-import { Query } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
+import { Platform, Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 
 type Service = {
   id: string;
@@ -24,6 +26,7 @@ type Service = {
   serviceDate: string;
   serviceTime: string;
   serviceboyEmail: string;
+  serviceboyContact: string;
   sortDate: string;
   sortTime: string;
 };
@@ -74,6 +77,7 @@ const PendingServicesScreenUser = () => {
           serviceDate: displayDate,
           serviceTime: displayTime,
           serviceboyEmail: doc.serviceboyEmail,
+          serviceboyContact: doc.serviceboyContact,
           sortDate: doc.serviceDate,
           sortTime: doc.serviceTime
         };
@@ -114,6 +118,7 @@ const PendingServicesScreenUser = () => {
               newService.serviceDate.split('-').reverse().join('/') : '',
             serviceTime: newService.serviceTime || '',
             serviceboyEmail: newService.serviceboyEmail || '',
+            serviceboyContact: newService.serviceboyContact || '',
             sortDate: newService.serviceDate || '',
             sortTime: newService.serviceTime || ''
           };
@@ -153,6 +158,25 @@ const PendingServicesScreenUser = () => {
     setServices(allServices);
   };
 
+  const createNotification = async (description: string, userEmail: string) => {
+    try {
+      await databases.createDocument(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        ID.unique(),
+        {
+          description,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          userEmail,
+        }
+      );
+      console.log('Notification sent to:', userEmail);
+    } catch (error) {
+      console.error('Notification creation failed:', error);
+    }
+  };
+
   const handleComplete = async (id: string) => {
     Alert.alert(
       'Complete Service',
@@ -163,28 +187,29 @@ const PendingServicesScreenUser = () => {
           text: 'Complete',
           onPress: async () => {
             try {
-              const completedAt = new Date().toISOString();
               await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTION_ID,
                 id,
-                {
-                  status: 'completed',
-                  completedAt
-                }
+                { status: 'completed' }
               );
-              setAllServices(prev => prev.filter(service => service.id !== id));
-              setServices(prev => prev.filter(service => service.id !== id));
-              const completedService = allServices.find(service => service.id === id);
+
+              const completedService = services.find(service => service.id === id);
               if (completedService) {
+                // Send notification
+                await createNotification(
+                  `Your ${completedService.serviceType} service has been marked as completed.`,
+                  completedService.serviceboyEmail
+                );
+
+                // Remove from list
+                setServices(prev => prev.filter(service => service.id !== id));
+
+                // Navigate
                 router.push({
                   pathname: '/userapp/usercompleted',
                   params: {
-                    completedService: JSON.stringify({
-                      ...completedService,
-                      status: 'completed',
-                      completedAt
-                    })
+                    completedService: JSON.stringify(completedService)
                   }
                 });
               }
@@ -198,10 +223,51 @@ const PendingServicesScreenUser = () => {
     );
   };
 
+  const sendManualWhatsAppNotification = (service: Service) => {
+    // Format the message (same as scheduled messages)
+    const message = `Dear ${service.clientName},\n\n` +
+      `Your ${service.serviceType} service is scheduled for:\n` +
+      `📅 Date: ${service.serviceDate}\n` +
+      `⏰ Time: ${service.serviceTime}\n\n` +
+      `Service Provider Details:\n` +
+      `👨‍🔧 Name: ${service.serviceBoy}\n` +
+      `📞 Contact: ${service.serviceboyContact}\n\n` +
+      `Service Amount: ₹${service.amount}\n\n` +
+      `Please be ready for the service. For any queries, contact us.\n\n` +
+      `Thank you for choosing our service!`;
+
+    // Format phone number (remove any non-digit characters)
+    const phone = service.phone.replace(/\D/g, '');
+
+    // Create WhatsApp URL
+    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+
+    // Try to open WhatsApp
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'WhatsApp is not installed');
+        // Optionally offer to send via SMS instead
+      }
+    });
+  };
+
+
   const renderServiceItem = ({ item }: { item: Service }) => (
     <TouchableOpacity style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <Text style={styles.serviceType}>{item.serviceType}</Text>
+        <TouchableOpacity
+          onPress={() => router.push({
+            pathname: '/userapp/PhotoComparisonPage',
+            params: {
+              notes: `Service: ${item.serviceType}\nClient: ${item.clientName}\nAddress: ${item.address}\nPhone: ${item.phone}\nAmount: ₹${item.amount}\nDate: ${item.serviceDate} at ${item.serviceTime}`
+            }
+          })}
+        >
+          <MaterialIcons name="photo-camera" size={24} color="#4B5563" style={{ marginLeft: 10 }} />
+        </TouchableOpacity>
         <View style={[styles.statusBadge, styles.pendingBadge]}>
           <Text style={styles.statusText}>Pending</Text>
         </View>
@@ -238,6 +304,12 @@ const PendingServicesScreenUser = () => {
         onPress={() => handleComplete(item.id)}
       >
         <Text style={styles.completeButtonText}>Mark as Completed</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.whatsappButton, styles.actionButton]}
+        onPress={() => sendManualWhatsAppNotification(item)}
+      >
+        <MaterialCommunityIcons name="whatsapp" size={20} color="#fff" />
       </TouchableOpacity>
     </TouchableOpacity>
   );

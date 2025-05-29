@@ -10,6 +10,7 @@ import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = ' note_id';
 const { width } = Dimensions.get('window');
 
 const HomeScreenuser = () => {
@@ -19,6 +20,7 @@ const HomeScreenuser = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleLogout = async () => {
     try {
@@ -106,9 +108,22 @@ const HomeScreenuser = () => {
     }
   };
 
+  const fetchUnreadNotifications = async () => {
+    try {
+      const res = await databases.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        [Query.equal('isRead', false)]
+      );
+      setUnreadCount(res.total);
+    } catch (error) {
+      console.error('Notification fetch error:', error);
+    }
+  };
+
   const fetchAllData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchRevenueData(), fetchOrders()]);
+    await Promise.all([fetchRevenueData(), fetchOrders(), fetchUnreadNotifications()]);
     setIsLoading(false);
   };
 
@@ -146,10 +161,11 @@ const HomeScreenuser = () => {
           <Text style={styles.headerTitle}>User Dashboard</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity
-              style={styles.notificationIcon}
-              onPress={() => console.log('Notifications pressed')}
+              style={[styles.notificationIcon, { marginRight: 10 }]}
+              onPress={() => router.push('/notification')}
             >
               <MaterialIcons name="notifications" size={24} color="#fff" />
+              {unreadCount > 0 && <View style={styles.redDot} />}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.logoutIcon}

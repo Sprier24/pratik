@@ -14,6 +14,7 @@ const COLLECTION_ID = '681d92600018a87c1478';
 type FormData = {
   serviceboyName: string;
   serviceboyEmail: string;
+  serviceboyContact: string;
   clientName: string;
   phoneNumber: string;
   address: string;
@@ -26,10 +27,11 @@ type FormData = {
 };
 
 const OrderScreen = () => {
-  const { applicantName, serviceType, applicantEmail } = useLocalSearchParams<{
+  const { applicantName, serviceType, applicantEmail, applicantPhone } = useLocalSearchParams<{
     applicantName: string;
     serviceType: string;
     applicantEmail: string;
+    applicantPhone: string;
   }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -50,6 +52,7 @@ const OrderScreen = () => {
   const [formData, setFormData] = useState<FormData>({
     serviceboyName: applicantName || '',
     serviceboyEmail: applicantEmail || '',
+    serviceboyContact: applicantPhone || '',
     clientName: '',
     phoneNumber: '',
     address: '',
@@ -145,6 +148,7 @@ const OrderScreen = () => {
         {
           serviceboyName: formData.serviceboyName,
           serviceboyEmail: formData.serviceboyEmail,
+          serviceboyContact: formData.serviceboyContact,
           clientName: formData.clientName,
           phoneNumber: formData.phoneNumber,
           address: formData.address,
@@ -168,6 +172,7 @@ const OrderScreen = () => {
             status: 'pending',
             serviceboyName: formData.serviceboyName,
             serviceboyEmail: formData.serviceboyEmail,
+            serviceboyContact: formData.serviceboyContact,
             serviceDate: formData.serviceDate,
             serviceTime: `${formData.serviceTime} ${formData.timePeriod}`,
             createdAt: response.$createdAt
@@ -201,6 +206,12 @@ const OrderScreen = () => {
             <Text style={styles.label}>Service Boy Email</Text>
             <View style={styles.readOnlyContainer}>
               <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
+            </View>
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Service Boy Contact</Text>
+            <View style={styles.readOnlyContainer}>
+              <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
             </View>
           </View>
           <View style={styles.field}>

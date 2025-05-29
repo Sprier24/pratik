@@ -7,6 +7,7 @@ import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { styles } from '../constants/PendingServicesScreen.styles';
+import { Platform, Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -25,6 +26,7 @@ type Service = {
   serviceDate: string;
   serviceTime: string;
   serviceboyEmail: string;
+  serviceboyContact: string;
   sortDate: string;
   sortTime: string;
 };
@@ -93,6 +95,7 @@ const PendingServicesScreen = () => {
           date: new Date(doc.$createdAt).toLocaleString(),
           serviceBoy: doc.serviceboyName,
           serviceboyEmail: doc.serviceboyEmail,
+          serviceboyContact: doc.serviceboyContact,
           serviceDate: displayDate,
           serviceTime: displayTime,
           sortDate: doc.serviceDate,
@@ -135,6 +138,7 @@ const PendingServicesScreen = () => {
             newService.serviceDate.split('-').reverse().join('/') : '',
           serviceTime: newService.serviceTime || '',
           serviceboyEmail: newService.serviceboyEmail || '',
+          serviceboyContact: newService.serviceboyContact || '',
           sortDate: newService.serviceDate || '',
           sortTime: newService.serviceTime || ''
         };
@@ -269,6 +273,36 @@ const PendingServicesScreen = () => {
     applyFilters(selectedServiceBoy, null);
   };
 
+  const sendManualWhatsAppNotification = (service: Service) => {
+    // Format the message (same as scheduled messages)
+    const message = `Dear ${service.clientName},\n\n` +
+      `Your ${service.serviceType} service is scheduled for:\n` +
+      `📅 Date: ${service.serviceDate}\n` +
+      `⏰ Time: ${service.serviceTime}\n\n` +
+      `Service Provider Details:\n` +
+      `👨‍🔧 Name: ${service.serviceBoy}\n` +
+      `📞 Contact: ${service.serviceboyContact}\n\n` +
+      `Service Amount: ₹${service.amount}\n\n` +
+      `Please be ready for the service. For any queries, contact us.\n\n` +
+      `Thank you for choosing our service!`;
+
+    // Format phone number (remove any non-digit characters)
+    const phone = service.phone.replace(/\D/g, '');
+
+    // Create WhatsApp URL
+    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+
+    // Try to open WhatsApp
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'WhatsApp is not installed');
+        // Optionally offer to send via SMS instead
+      }
+    });
+  };
+
   const renderServiceItem = ({ item }: { item: Service }) => (
     <TouchableOpacity style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
@@ -317,6 +351,12 @@ const PendingServicesScreen = () => {
           onPress={() => handleComplete(item.id)}
         >
           <Text style={styles.completeButtonText}>Complete</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.whatsappButton, styles.actionButton]}
+          onPress={() => sendManualWhatsAppNotification(item)}
+        >
+          <MaterialCommunityIcons name="whatsapp" size={20} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.deleteButton, styles.actionButton]}

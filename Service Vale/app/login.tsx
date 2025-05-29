@@ -150,6 +150,7 @@ const LoginScreen = () => {
                         resizeMode="contain"
                     />
                 </View>
+
                 <Modal transparent animationType="fade" visible={forgotModalVisible}>
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalCard}>
@@ -157,13 +158,14 @@ const LoginScreen = () => {
                             <Text style={styles.modalSubtitle}>Enter your email to receive a recovery link</Text>
                             <TextInput
                                 style={styles.modalInput}
-                                placeholder="Email address"
+                                placeholder="Enter your email"
                                 placeholderTextColor="#999"
                                 value={forgotEmail}
                                 onChangeText={setForgotEmail}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
+
                             <View style={styles.modalButtonGroup}>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.secondaryButton]}
@@ -206,6 +208,7 @@ const LoginScreen = () => {
                                     />
                                 </TouchableOpacity>
                             </View>
+
                             <TextInput
                                 style={styles.modalInput}
                                 placeholder="Confirm Password"
@@ -214,6 +217,7 @@ const LoginScreen = () => {
                                 onChangeText={setResetConfirmPassword}
                                 secureTextEntry={true}
                             />
+
                             <View style={styles.modalButtonGroup}>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.secondaryButton]}
@@ -234,7 +238,7 @@ const LoginScreen = () => {
 
                 <View style={styles.authCard}>
                     <Text style={styles.authTitle}>
-                        {isLogin ? 'Welcome Back' : 'Create Account'}
+                        {isLogin ? 'Sign In as an admin or engineer' : 'Create Account'}
                     </Text>
                     {!isLogin && (
                         <View style={styles.inputContainer}>
@@ -248,6 +252,7 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
+
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Email Address</Text>
                         <TextInput
@@ -260,6 +265,7 @@ const LoginScreen = () => {
                             autoCapitalize="none"
                         />
                     </View>
+
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Password</Text>
                         <View style={styles.passwordInputContainer}>
@@ -283,6 +289,7 @@ const LoginScreen = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
+
                     {!isLogin && (
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -296,6 +303,7 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
+
                     {isLogin && (
                         <TouchableOpacity
                             style={styles.forgotPasswordButton}
@@ -304,6 +312,7 @@ const LoginScreen = () => {
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     )}
+
                     <TouchableOpacity
                         style={styles.authButton}
                         onPress={isLogin ? handleLogin : handleRegister}
@@ -312,6 +321,7 @@ const LoginScreen = () => {
                             {isLogin ? 'Sign In' : 'Sign Up'}
                         </Text>
                     </TouchableOpacity>
+
                     <View style={styles.authFooter}>
                         <Text style={styles.authFooterText}>
                             {isLogin ? "Don't have an account?" : "Already have an account?"}

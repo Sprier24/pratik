@@ -1,6 +1,17 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  whatsappButton: {
+    marginTop: 12,
+    backgroundColor: "#25D366",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",

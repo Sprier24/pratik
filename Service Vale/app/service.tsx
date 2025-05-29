@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { styles } from '../constants/ServicePage.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string, phone: string }[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceKey>('AC');
   const router = useRouter();
   useEffect(() => {
@@ -26,6 +27,7 @@ const ServicePage = () => {
           id: doc.$id,
           name: doc.name,
           email: doc.email,
+          phone: doc.contactNo
         }));
         setAllUsers(users);
       } catch (error) {
@@ -35,13 +37,45 @@ const ServicePage = () => {
     fetchAllUsers();
   }, []);
 
+  const createNotification = async (description: string, userEmail: string,) => {
+    try {
+      await databases.createDocument(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        ID.unique(),
+        {
+          description,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          userEmail,
+        }
+      );
+      console.log('Notification sent to:', userEmail);
+    } catch (error) {
+      console.error('Notification creation failed:', error);
+    }
+  };
+
   const handleImagePress = (serviceKey: ServiceKey) => {
     setSelectedServiceType(serviceKey);
     setModalVisible(true);
   };
 
-  const handleApplicantPress = (applicantId: string, applicantName: string, applicantEmail: string) => {
+  const handleApplicantPress = async (
+    applicantId: string,
+    applicantName: string,
+    applicantEmail: string,
+    applicantPhone: string
+  ) => {
     setModalVisible(false);
+
+    // Send a notification
+    await createNotification(
+      ` assigned a new ${selectedServiceType} service.`,
+      applicantEmail
+    );
+
+    // Navigate to the order page
     router.push({
       pathname: '/order',
       params: {
@@ -49,6 +83,7 @@ const ServicePage = () => {
         applicantName,
         serviceType: selectedServiceType,
         applicantEmail,
+        applicantPhone
       },
     });
   };
@@ -71,7 +106,7 @@ const ServicePage = () => {
                 allUsers.map((user, index) => (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => handleApplicantPress(user.id, user.name, user.email)}
+                    onPress={() => handleApplicantPress(user.id, user.name, user.email, user.phone)}
                     style={styles.applicantItem}
                   >
                     <Text style={styles.applicantName}>{user.name}</Text>
