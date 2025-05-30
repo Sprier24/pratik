@@ -238,4 +238,7 @@ export const styles = StyleSheet.create({
     maxHeight: 300,
     marginBottom: 10,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
 });

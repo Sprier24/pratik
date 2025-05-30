@@ -1119,20 +1119,18 @@ const BillPage = () => {
                       onPress={handlePrint}
                     >
                       <Ionicons name="print" size={20} color="#fff" />
-                      <Text style={styles.printButtonText}>Print</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.whatsappButton, styles.actionButton]}
                       onPress={handleShareViaWhatsApp}
                     >
                       <Ionicons name="logo-whatsapp" size={20} color="#fff" />
-                      <Text style={styles.printButtonText}>WhatsApp</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.deleteButton, styles.actionButton]}
                       onPress={() => handleDeleteBill(selectedBill.$id)}
                     >
-                      <Text style={styles.printButtonText}>Delete</Text>
+                      <Ionicons name="trash" size={20} color="#fff" />
                     </TouchableOpacity>
                   </View>
                 </ScrollView>
