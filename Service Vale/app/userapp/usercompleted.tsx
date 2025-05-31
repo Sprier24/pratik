@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
@@ -10,6 +10,7 @@ import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styl
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
+const BILLS_COLLECTION_ID = 'bill_ID';
 
 type Service = {
   id: string;
@@ -171,6 +172,24 @@ const CompletedServicesScreenUser = () => {
     setServices(allServices);
   };
 
+  const handleCreateBill = (service: Service) => {
+    router.push({
+      pathname: '/userapp/userbill',
+      params: {
+        serviceData: JSON.stringify({
+          clientName: service.clientName,
+          address: service.address,
+          phone: service.phone,
+          serviceType: service.serviceType,
+          amount: service.amount,
+          serviceDate: service.serviceDate,
+          serviceTime: service.serviceTime,
+          serviceBoy: service.serviceBoy
+        })
+      }
+    });
+  };
+
   const handleMoveToPending = async (id: string) => {
     Alert.alert(
       'Move to Pending',
@@ -192,7 +211,7 @@ const CompletedServicesScreenUser = () => {
               const movedService = allServices.find(service => service.id === id);
               if (movedService) {
                 router.push({
-                  pathname: '/userapp/home',
+                  pathname: '/userapp/userpending',
                   params: {
                     movedService: JSON.stringify({
                       ...movedService,
@@ -255,18 +274,29 @@ const CompletedServicesScreenUser = () => {
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={16} color="#718096" />
           <Text style={styles.dateText}>
-            {item.serviceDate} • {item.serviceTime}
+            {item.completedAt
+              ? `${formatToAmPm(item.completedAt)}`
+              : 'Completion time not available'}
           </Text>
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.moveToPendingButton}
-        onPress={() => handleMoveToPending(item.id)}
-      >
-        <MaterialIcons name="pending-actions" size={20} color="#FFF" />
-        <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
-      </TouchableOpacity>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.createBillButton}
+          onPress={() => handleCreateBill(item)}
+        >
+          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
+          <Text style={styles.createBillButtonText}>Create Bill</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.moveToPendingButton}
+          onPress={() => handleMoveToPending(item.id)}
+        >
+          <MaterialIcons name="pending-actions" size={20} color="#FFF" />
+          <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -274,7 +304,7 @@ const CompletedServicesScreenUser = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.push('/userapp/home')}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
@@ -338,6 +368,5 @@ const CompletedServicesScreenUser = () => {
     </SafeAreaView>
   );
 };
-
 
 export default CompletedServicesScreenUser;
