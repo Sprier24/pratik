@@ -158,7 +158,7 @@ const PendingServicesScreen = () => {
   }, [params.newService]);
 
   const countPendingByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All Service Engineers': allServices.length };
+    const counts: Record<string, number> = { 'All': allServices.length };
     serviceBoys.forEach(boy => {
       counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
     });
@@ -447,29 +447,38 @@ const PendingServicesScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Service Engineer</Text>
-            <FlatList
-              style={{ maxHeight: '90%' }}
-              contentContainerStyle={styles.scrollContent}
-              data={[{ id: 'all', name: 'All Service Engineers' }, ...serviceBoys]}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.serviceCard}
-                  onPress={() => filterServices(item.name === 'All Service Engineers' ? null : item.name)}
-                >
-                  <View style={styles.serviceHeader}>
-                    <Text style={styles.serviceType}>{item.name}</Text>
-                    <View style={[styles.statusBadge, styles.pendingBadge]}>
-                      <Text style={styles.statusText}>
-                        {countPendingByServiceBoy()[item.name] || 0} Pending
+            <Text style={styles.modalTitle}>Select Service Boy</Text>
+            <View style={styles.modalScrollBox}>
+              <TouchableOpacity
+                style={styles.filterOption}
+                onPress={() => filterServices(null)}
+              >
+                <View style={styles.filterOptionContainer}>
+                  <Text style={styles.filterOptionText}>All Service Boys</Text>
+                  <Text style={styles.countBadge}>
+                    {countPendingByServiceBoy()['All']}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <FlatList
+                data={serviceBoys}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => filterServices(item.name)}
+                  >
+                    <View style={styles.filterOptionContainer}>
+                      <Text style={styles.filterOptionText}>{item.name}</Text>
+                      <Text style={styles.countBadge}>
+                        {countPendingByServiceBoy()[item.name] || 0}
                       </Text>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-              showsVerticalScrollIndicator={true}
-            />
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={true}
+              />
+            </View>
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}

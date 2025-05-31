@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
 import { Query } from 'appwrite';
-import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
+import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -148,6 +148,9 @@ const CompletedServicesScreenUser = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+    if (event.type === 'dismissed') {
+      return;
+    }
     if (selectedDate) {
       setDateFilter(selectedDate);
       filterByDate(selectedDate);
@@ -189,7 +192,7 @@ const CompletedServicesScreenUser = () => {
               const movedService = allServices.find(service => service.id === id);
               if (movedService) {
                 router.push({
-                  pathname: '/userapp/userpending',
+                  pathname: '/userapp/home',
                   params: {
                     movedService: JSON.stringify({
                       ...movedService,
@@ -209,95 +212,100 @@ const CompletedServicesScreenUser = () => {
   };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
-    <TouchableOpacity
-      style={styles.serviceCard}
-      onPress={() => {
-        router.push({
-          pathname: '/userapp/userbill',
-          params: {
-            serviceData: JSON.stringify({
-              serviceType: item.serviceType,
-              serviceBoyName: item.serviceBoy || 'userName',
-              customerName: item.clientName,
-              address: item.address,
-              contactNumber: item.phone,
-              serviceCharge: item.amount
-            }),
-          },
-        });
-      }}
-    >
+    <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
-        <Text style={styles.serviceType}>{item.serviceType}</Text>
+        <View style={styles.serviceTypeContainer}>
+          <MaterialCommunityIcons
+            name="tools"
+            size={20}
+            color="#5E72E4"
+            style={styles.serviceIcon}
+          />
+          <Text style={styles.serviceType}>{item.serviceType}</Text>
+        </View>
         <View style={[styles.statusBadge, styles.completedBadge]}>
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={16} color="#6B7280" />
+          <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={16} color="#6B7280" />
+          <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={16} color="#6B7280" />
+          <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
+          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
-        <Text style={styles.completedTimeText}>
-          {item.completedAt
-            ? `Completed on ${formatToAmPm(item.completedAt)}`
-            : item.serviceDate && item.serviceTime
-              ? `${item.serviceDate} • ${item.serviceTime}`
-              : item.date}
-        </Text>
+        <View style={styles.dateContainer}>
+          <MaterialIcons name="check-circle" size={16} color="#718096" />
+          <Text style={styles.dateText}>
+            {item.serviceDate} • {item.serviceTime}
+          </Text>
+        </View>
       </View>
+
       <TouchableOpacity
         style={styles.moveToPendingButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          handleMoveToPending(item.id);
-        }}
+        onPress={() => handleMoveToPending(item.id)}
       >
+        <MaterialIcons name="pending-actions" size={20} color="#FFF" />
         <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
-          dateFilter && styles.activeFilter
-        ]}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Text style={styles.filterButtonText}>
-          {dateFilter ? format(dateFilter, 'dd/MM/yy') : 'Filter by Date'}
-        </Text>
-        <MaterialIcons name="event" size={20} color="#fff" />
-      </TouchableOpacity>
-      {dateFilter && (
-        <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>Showing: {format(dateFilter, 'MMMM d, yyyy')}</Text>
-          <TouchableOpacity onPress={clearDateFilter}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.push('/userapp/home')}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Completed Services</Text>
+        </View>
+        <View style={styles.headerCount}>
+          <Text style={styles.headerCountText}>{services.length}</Text>
+        </View>
+      </View>
+
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Feather name="calendar" size={18} color="#5E72E4" />
+          <Text style={styles.filterButtonText}>
+            {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
+          </Text>
+        </TouchableOpacity>
+
+        {dateFilter && (
+          <TouchableOpacity
+            style={styles.clearFilterButton}
+            onPress={clearDateFilter}
+          >
+            <Feather name="x" size={16} color="#5E72E4" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
+
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -306,12 +314,7 @@ const CompletedServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Completed Services</Text>
-        <View style={styles.headerCountContainer}>
-          <Text style={styles.headerCountText}>{services.length}</Text>
-        </View>
-      </View>
+
       {services.length > 0 ? (
         <FlatList
           data={services}
@@ -322,7 +325,7 @@ const CompletedServicesScreenUser = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="check-circle" size={48} color="#9CA3AF" />
+          <MaterialIcons name="check-circle" size={48} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {dateFilter
               ? `No services completed on ${format(dateFilter, 'MMMM d, yyyy')}`
@@ -335,5 +338,6 @@ const CompletedServicesScreenUser = () => {
     </SafeAreaView>
   );
 };
+
 
 export default CompletedServicesScreenUser;

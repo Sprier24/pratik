@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { styles } from '../constants/LoginScreen.styles';
@@ -24,6 +24,14 @@ const LoginScreen = () => {
     const [resetConfirmPassword, setResetConfirmPassword] = useState('');
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    const [refreshing, setRefreshing] = useState(false);
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            setRefreshing(false);
+        }, 1000);
+    }, []);
 
     const resetFields = () => {
         setEmail('');
@@ -140,9 +148,16 @@ const LoginScreen = () => {
             style={{ flex: 1 }}
         >
             <ScrollView
-                contentContainerStyle={styles.container}
-                keyboardShouldPersistTaps="handled"
-            >
+                     contentContainerStyle={[styles.scrollContainer, { paddingBottom: 350 }]} 
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#5E72E4']}
+                        tintColor={'#5E72E4'}
+                      />
+                    }
+                  >
                 <View style={styles.brandContainer}>
                     <Image
                         source={require('../assets/images/logo.jpg')}

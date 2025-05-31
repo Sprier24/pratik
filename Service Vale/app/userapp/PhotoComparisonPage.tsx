@@ -21,8 +21,11 @@ import { ID } from 'appwrite';
 import { Query } from 'appwrite';
 import { useRouter } from 'expo-router';
 import mime from 'mime';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
+import { styles } from '../../constants/userapp/Userphoto';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
@@ -67,31 +70,43 @@ const PhotoComparisonPage = () => {
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState('');
+    const [userName, setUserName] = useState('');
 
     const router = useRouter();
 
-    useEffect(() => {
+    const parseNotes = (notes: string) => {
+        if (!notes) return { userName: '', userNotes: '' };
 
-        checkAuthStatus();
+        const [userName, ...rest] = notes.split('\n');
+        return {
+            userName: userName?.trim() || '',
+            userNotes: rest.join('\n').trim(),
+        };
+    };
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            setIsLoading(true);
+            try {
+                const user = await account.get();
+                setIsAuthenticated(!!user?.$id);
+                setUserEmail(user.email);
+                setUserName(user.name);
+                if (!notes.startsWith(user.name)) {
+                    setNotes(`${user.name}\n${notes}`);
+                }
+            } catch (error) {
+                setIsAuthenticated(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        checkAuth();
     }, []);
 
     useEffect(() => {
         if (isAuthenticated) fetchPhotoSets();
     }, [isAuthenticated]);
-
-    const checkAuthStatus = async () => {
-        setIsLoading(true);
-        try {
-            const user = await account.get();
-            setIsAuthenticated(!!user?.$id);
-            setUserEmail(user.email);
-        } catch (error) {
-            setIsAuthenticated(false);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
 
     const fetchPhotoSets = async () => {
         setIsLoading(true);
@@ -117,7 +132,6 @@ const PhotoComparisonPage = () => {
             setIsLoading(false);
         }
     };
-
 
     const takePhoto = async (setImage: (image: ImagePickerResult | null) => void) => {
         if (!isAuthenticated) {
@@ -179,26 +193,28 @@ const PhotoComparisonPage = () => {
         }
     };
 
-    const createNotification = async (description: string, documentId: string) => {
+    const createNotification = async (description: string, relatedDocumentId: string) => {
         const notifId = ID.unique();
 
         try {
             await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, notifId, {
                 description,
-
                 isRead: false,
                 createdAt: new Date().toISOString(),
+                relatedDocId: relatedDocumentId, // Changed from documentId to match your schema
+                userEmail,
+                userName: userName || 'Unknown'
             });
-            console.log('Notification created:', notifId);
+            console.log('Notification created successfully:', notifId);
         } catch (error: any) {
-            console.error('Failed to create notification:', error.message || error);
-            Alert.alert(
-                'Notification Error',
-                'Failed to save notification. Please check Appwrite console or database permissions.'
-            );
+            console.error('Failed to create notification:', {
+                message: error.message,
+                code: error.code,
+                type: error.type,
+                response: error.response
+            });
         }
     };
-
 
     const handleSubmit = async () => {
         if (!isAuthenticated) {
@@ -215,6 +231,8 @@ const PhotoComparisonPage = () => {
         setIsUploading(true);
 
         try {
+            const notesWithName = userName ? `${userName}\n${notes}` : notes;
+
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -222,13 +240,13 @@ const PhotoComparisonPage = () => {
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: '',
-                    notes,
+                    notes: notesWithName,
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
 
                 await createNotification(
-                    `Photo added to pending service. Notes: ${notes || 'No notes provided'}`,
+                    `New BEFORE photo added. Notes: ${notesWithName || 'No notes provided'}`,
                     docId
                 );
             } else if (afterImage && !beforeImage) {
@@ -248,11 +266,14 @@ const PhotoComparisonPage = () => {
 
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
-                    notes,
+                    notes: notesWithName,
                     userEmail: userEmail,
                 });
 
-                await createNotification('AFTER photo updated.', docId);
+                await createNotification(
+                    `AFTER photo added to existing set. Notes: ${notesWithName || 'No notes provided'}`,
+                    docId
+                );
             } else {
                 const [beforeFileId, afterFileId] = await Promise.all([
                     uploadImageToStorage(beforeImage!),
@@ -264,18 +285,21 @@ const PhotoComparisonPage = () => {
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: afterFileId,
-                    notes,
+                    notes: notesWithName,
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
 
-                await createNotification('BEFORE and AFTER photos submitted.', docId);
+                await createNotification(
+                    `COMPLETE: BEFORE and AFTER photos submitted! User: ${userName || 'Unknown'}`,
+                    docId
+                );
             }
 
             Alert.alert('Success', 'Photo saved.');
             setBeforeImage(null);
             setAfterImage(null);
-            setNotes('');
+            setNotes(userName ? `${userName}: ` : '');
             fetchPhotoSets();
         } catch (error) {
             Alert.alert('Error', error instanceof Error ? error.message : 'Upload failed');
@@ -283,7 +307,6 @@ const PhotoComparisonPage = () => {
             setIsUploading(false);
         }
     };
-
 
     const openPreview = (imageUrl: string) => {
         setPreviewImageUrl(imageUrl);
@@ -295,53 +318,75 @@ const PhotoComparisonPage = () => {
         setPreviewImageUrl(null);
     };
 
-    const downloadImage = async (fileId: string) => {
-        try {
-            const fileUrl = buildImageUrl(fileId);
-            if (Platform.OS === 'web') {
-                window.open(fileUrl, '_blank');
-            } else {
-                Alert.alert('Download', 'Image download is only supported on web or with custom native code.');
-            }
-        } catch (error) {
-            Alert.alert('Error', 'Failed to download image.');
-        }
-    };
-
-    const deleteImage = async (fileId: string) => {
+    const deletePhotoSet = async (photoSet: PhotoSet) => {
         setIsLoading(true);
         try {
-            await storage.deleteFile(BUCKET_ID, fileId);
-            const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-                Query.or([
-                    Query.equal('beforeImageUrl', fileId),
-                    Query.equal('afterImageUrl', fileId),
-                ]),
-            ]);
-
-            for (const doc of response.documents) {
-                if (
-                    (doc.beforeImageUrl === fileId && (!doc.afterImageUrl || doc.afterImageUrl === '')) ||
-                    (doc.afterImageUrl === fileId && (!doc.beforeImageUrl || doc.beforeImageUrl === ''))
-                ) {
-                    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, doc.$id);
-                } else {
-                    const update: any = {};
-                    if (doc.beforeImageUrl === fileId) update.beforeImageUrl = '';
-                    if (doc.afterImageUrl === fileId) update.afterImageUrl = '';
-                    await databases.updateDocument(DATABASE_ID, COLLECTION_ID, doc.$id, update);
-                }
+            const deletePromises = [];
+            if (photoSet.beforeImageUrl) {
+                deletePromises.push(storage.deleteFile(BUCKET_ID, photoSet.beforeImageUrl));
+            }
+            if (photoSet.afterImageUrl) {
+                deletePromises.push(storage.deleteFile(BUCKET_ID, photoSet.afterImageUrl));
             }
 
-            Alert.alert('Deleted', 'Image deleted successfully.');
+            await Promise.all(deletePromises);
+
+            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
+
+            Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
-            Alert.alert('Error', 'Failed to delete image.');
+            Alert.alert('Error', 'Failed to delete photo set.');
         } finally {
             setIsLoading(false);
         }
     };
 
+    const saveBothImages = async (item: PhotoSet) => {
+        setIsLoading(true);
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permission Needed',
+                    'Allow access to save images to your gallery.',
+                );
+                setIsLoading(false);
+                return;
+            }
+
+            const saveToGallery = async (fileId: string | undefined) => {
+                if (!fileId) return null;
+
+                try {
+                    const uri = buildImageUrl(fileId);
+                    const filename = `photo_${Date.now()}.jpg`;
+                    const localPath = `${FileSystem.cacheDirectory}${filename}`;
+
+                    await FileSystem.downloadAsync(uri, localPath);
+
+                    const asset = await MediaLibrary.createAssetAsync(localPath);
+                    return asset;
+                } catch (error) {
+                    console.error('Save failed:', error);
+                    return null;
+                }
+            };
+
+            await Promise.all([
+                saveToGallery(item.beforeImageUrl),
+                saveToGallery(item.afterImageUrl),
+            ]);
+
+            Alert.alert('Success', 'Images saved to your gallery!');
+            fetchPhotoSets();
+        } catch (error) {
+            console.error('Operation failed:', error);
+            Alert.alert('Error', 'Failed to save images. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -371,13 +416,17 @@ const PhotoComparisonPage = () => {
             style={{ flex: 1 }}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Feather name="arrow-left" size={24} color="#FFF" />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { marginRight: 150 }]}>Photo </Text>
+                <View style={styles.headerIcons}></View>
+            </View>
             <ScrollView
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled"
             >
-                <Text style={styles.title}>Progress Tracker</Text>
-                <Text style={styles.subtitle}>Compare before and after photos</Text>
-
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Capture Photos</Text>
 
@@ -456,11 +505,10 @@ const PhotoComparisonPage = () => {
                     )}
                 </View>
 
-                {/* Notes Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Notes</Text>
                     <TextInput
-                        placeholder="Add any notes about your progress..."
+                        placeholder={`Add your notes about the progress...`}
                         placeholderTextColor="#999"
                         value={notes}
                         onChangeText={setNotes}
@@ -503,51 +551,56 @@ const PhotoComparisonPage = () => {
                                             day: 'numeric',
                                             year: 'numeric',
                                             hour: '2-digit',
-                                            minute: '2-digit'
+                                            minute: '2-digit',
                                         })}
                                     </Text>
+
+                                    <View style={styles.iconContainer}>
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                Alert.alert('Confirm Delete', 'Are you sure you want to delete this photo set?', [
+                                                    { text: 'Cancel', style: 'cancel' },
+                                                    {
+                                                        text: 'Delete',
+                                                        style: 'destructive',
+                                                        onPress: () => deletePhotoSet(item),
+                                                    },
+                                                ])
+                                            }
+                                        >
+                                            <Ionicons name="trash" size={20} color="#DC2626" />
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                Alert.alert('Confirm Download', 'Are you sure you want to download this photo set?', [
+                                                    { text: 'Cancel', style: 'cancel' },
+                                                    {
+                                                        text: 'Download',
+                                                        style: 'destructive',
+                                                        onPress: () => saveBothImages(item),
+                                                    },
+                                                ])
+                                            }
+                                            style={{ marginLeft: 16 }}
+                                        >
+                                            <Ionicons name="download" size={20} color="#3B82F6" />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
 
                                 <View style={styles.comparisonContainer}>
-
                                     <View style={styles.comparisonItem}>
                                         <Text style={styles.comparisonLabel}>Before</Text>
                                         {item.beforeImageUrl ? (
-                                            <>
-                                                <TouchableOpacity
-                                                    onPress={() => openPreview(buildImageUrl(item.beforeImageUrl))}
-                                                >
-                                                    <Image
-                                                        source={{ uri: buildImageUrl(item.beforeImageUrl) }}
-                                                        style={styles.comparisonImage}
-                                                    />
-                                                </TouchableOpacity>
-                                                <View style={styles.actionButtons}>
-                                                    <TouchableOpacity
-                                                        style={styles.actionButton}
-                                                        onPress={() => downloadImage(item.beforeImageUrl)}
-                                                    >
-                                                        <Ionicons name="download" size={16} color="#6B46C1" />
-                                                        <Text style={styles.actionButtonText}>Download</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={[styles.actionButton, styles.deleteButton]}
-                                                        onPress={() =>
-                                                            Alert.alert('Confirm Delete', 'Are you sure?', [
-                                                                { text: 'Cancel', style: 'cancel' },
-                                                                {
-                                                                    text: 'Delete',
-                                                                    style: 'destructive',
-                                                                    onPress: () => deleteImage(item.beforeImageUrl)
-                                                                },
-                                                            ])
-                                                        }
-                                                    >
-                                                        <Ionicons name="trash" size={16} color="#DC2626" />
-                                                        <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </>
+                                            <TouchableOpacity
+                                                onPress={() => openPreview(buildImageUrl(item.beforeImageUrl))}
+                                            >
+                                                <Image
+                                                    source={{ uri: buildImageUrl(item.beforeImageUrl) }}
+                                                    style={styles.comparisonImage}
+                                                />
+                                            </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholderImage}>
                                                 <Ionicons name="image" size={32} color="#D1D5DB" />
@@ -556,45 +609,17 @@ const PhotoComparisonPage = () => {
                                         )}
                                     </View>
 
-
                                     <View style={styles.comparisonItem}>
                                         <Text style={styles.comparisonLabel}>After</Text>
                                         {item.afterImageUrl ? (
-                                            <>
-                                                <TouchableOpacity
-                                                    onPress={() => openPreview(buildImageUrl(item.afterImageUrl))}
-                                                >
-                                                    <Image
-                                                        source={{ uri: buildImageUrl(item.afterImageUrl) }}
-                                                        style={styles.comparisonImage}
-                                                    />
-                                                </TouchableOpacity>
-                                                <View style={styles.actionButtons}>
-                                                    <TouchableOpacity
-                                                        style={styles.actionButton}
-                                                        onPress={() => downloadImage(item.afterImageUrl)}
-                                                    >
-                                                        <Ionicons name="download" size={16} color="#6B46C1" />
-                                                        <Text style={styles.actionButtonText}>Download</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={[styles.actionButton, styles.deleteButton]}
-                                                        onPress={() =>
-                                                            Alert.alert('Confirm Delete', 'Are you sure?', [
-                                                                { text: 'Cancel', style: 'cancel' },
-                                                                {
-                                                                    text: 'Delete',
-                                                                    style: 'destructive',
-                                                                    onPress: () => deleteImage(item.afterImageUrl)
-                                                                },
-                                                            ])
-                                                        }
-                                                    >
-                                                        <Ionicons name="trash" size={16} color="#DC2626" />
-                                                        <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </>
+                                            <TouchableOpacity
+                                                onPress={() => openPreview(buildImageUrl(item.afterImageUrl))}
+                                            >
+                                                <Image
+                                                    source={{ uri: buildImageUrl(item.afterImageUrl) }}
+                                                    style={styles.comparisonImage}
+                                                />
+                                            </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholderImage}>
                                                 <Ionicons name="image" size={32} color="#D1D5DB" />
@@ -606,8 +631,14 @@ const PhotoComparisonPage = () => {
 
                                 {item.notes && (
                                     <View style={styles.notesContainer}>
-                                        <Text style={styles.notesLabel}>Notes:</Text>
-                                        <Text style={styles.notesText}>{item.notes}</Text>
+                                        {parseNotes(item.notes).userName !== '' && (
+                                            <Text style={styles.notesUserName}>
+                                                {parseNotes(item.notes).userName}
+                                            </Text>
+                                        )}
+                                        <Text style={styles.notesText}>
+                                            {parseNotes(item.notes).userNotes || 'No notes provided'}
+                                        </Text>
                                     </View>
                                 )}
                             </View>
@@ -641,302 +672,5 @@ const PhotoComparisonPage = () => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flexGrow: 1,
-        padding: 16,
-        backgroundColor: '#F9FAFB',
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: '#1F2937',
-        marginBottom: 4,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#6B7280',
-        marginBottom: 24,
-        textAlign: 'center',
-    },
-    section: {
-        marginBottom: 24,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1F2937',
-        marginBottom: 16,
-    },
-    photoButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    photoButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 2,
-        borderColor: '#6B46C1',
-        backgroundColor: 'transparent',
-        marginHorizontal: 4,
-    },
-    photoButtonActive: {
-        backgroundColor: '#6B46C1',
-        borderColor: '#6B46C1',
-    },
-    photoButtonText: {
-        marginLeft: 8,
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#6B46C1',
-    },
-    photoButtonTextActive: {
-        color: '#fff',
-    },
-    instructionText: {
-        fontSize: 14,
-        color: '#6B7280',
-        textAlign: 'center',
-        marginTop: 8,
-    },
-    previewContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    imagePreviewWrapper: {
-        flex: 1,
-        marginHorizontal: 4,
-        position: 'relative',
-    },
-    previewLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#4B5563',
-        marginBottom: 4,
-    },
-    imagePreview: {
-        width: '100%',
-        aspectRatio: 3 / 4,
-        borderRadius: 8,
-        backgroundColor: '#E5E7EB',
-    },
-    clearButton: {
-        position: 'absolute',
-        top: 20,
-        right: 4,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 12,
-        width: 24,
-        height: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    notesInput: {
-        minHeight: 100,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        color: '#1F2937',
-        backgroundColor: '#F9FAFB',
-        textAlignVertical: 'top',
-    },
-    submitButton: {
-        backgroundColor: '#6B46C1',
-        paddingVertical: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 24,
-        shadowColor: '#6B46C1',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    submitButtonDisabled: {
-        backgroundColor: '#D1D5DB',
-        shadowColor: 'transparent',
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    uploadCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    uploadHeader: {
-        marginBottom: 12,
-    },
-    uploadDate: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    comparisonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    comparisonItem: {
-        flex: 1,
-        marginHorizontal: 4,
-    },
-    comparisonLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#4B5563',
-        marginBottom: 8,
-        textAlign: 'center',
-    },
-    comparisonImage: {
-        width: '100%',
-        aspectRatio: 3 / 4,
-        borderRadius: 8,
-        backgroundColor: '#E5E7EB',
-    },
-    placeholderImage: {
-        width: '100%',
-        aspectRatio: 3 / 4,
-        borderRadius: 8,
-        backgroundColor: '#F3F4F6',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        borderStyle: 'dashed',
-    },
-    placeholderText: {
-        marginTop: 8,
-        fontSize: 12,
-        color: '#9CA3AF',
-    },
-    actionButtons: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 8,
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#6B46C1',
-        marginHorizontal: 4,
-    },
-    actionButtonText: {
-        marginLeft: 4,
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6B46C1',
-    },
-    deleteButton: {
-        borderColor: '#FECACA',
-    },
-    deleteButtonText: {
-        color: '#DC2626',
-    },
-    notesContainer: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    notesLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#4B5563',
-        marginBottom: 4,
-    },
-    notesText: {
-        fontSize: 14,
-        color: '#4B5563',
-        lineHeight: 20,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F9FAFB',
-    },
-    authContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#F9FAFB',
-    },
-    authText: {
-        fontSize: 18,
-        marginBottom: 20,
-        color: '#1F2937',
-    },
-    loginButton: {
-        backgroundColor: '#6B46C1',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-    },
-    loginButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-    modalBackground: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    fullscreenImage: {
-        width: '100%',
-        height: '80%',
-    },
-    closePreviewButton: {
-        position: 'absolute',
-        top: 60,
-        right: 20,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 20,
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 32,
-    },
-    emptyStateText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: '#9CA3AF',
-    },
-});
 
 export default PhotoComparisonPage;

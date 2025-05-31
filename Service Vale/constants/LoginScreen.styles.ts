@@ -12,6 +12,11 @@ export const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 32,
   },
+  scrollContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
+  },
   logo: {
     width: 150,
     height: 150,

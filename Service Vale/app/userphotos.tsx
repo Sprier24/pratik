@@ -92,49 +92,62 @@ const PhotoComparisonPage: React.FC = () => {
     };
 
     const saveBothImagesAndDelete = async (item: PhotoDocument) => {
-        setIsLoading(true);
+    setIsLoading(true);
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Needed',
+          'Allow access to save images to your gallery.',
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const saveToGallery = async (fileId: string | undefined) => {
+        if (!fileId) return null;
+
         try {
-            const { status } = await MediaLibrary.requestPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'Cannot access gallery.');
-                setIsLoading(false);
-                return;
-            }
+    
+          const uri = buildImageUrl(fileId); 
+          const filename = `photo_${Date.now()}.jpg`; 
+          const localPath = `${FileSystem.cacheDirectory}${filename}`;
 
-            const saveImage = async (fileId: string | undefined) => {
-                if (!fileId) return null;
-                const uri = buildImageUrl(fileId);
-                const localPath = `${FileSystem.cacheDirectory}${fileId}.jpg`;
-                const downloaded = await FileSystem.downloadAsync(uri, localPath);
-                const asset = await MediaLibrary.createAssetAsync(downloaded.uri);
-                return asset;
-            };
+          await FileSystem.downloadAsync(uri, localPath);
 
-            const beforeAsset = await saveImage(item.beforeImageUrl);
-            const afterAsset = await saveImage(item.afterImageUrl);
+    
+          const asset = await MediaLibrary.createAssetAsync(localPath);
 
-            if (beforeAsset || afterAsset) {
-                await MediaLibrary.createAlbumAsync('MyApp Images', beforeAsset ?? afterAsset as MediaLibrary.Asset, false);
-            }
+          await FileSystem.deleteAsync(localPath).catch(() => { });
 
-            if (item.beforeImageUrl) {
-                await storage.deleteFile(BUCKET_ID, item.beforeImageUrl);
-            }
-            if (item.afterImageUrl) {
-                await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
-            }
-
-            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
-
-            Alert.alert('Success', 'Images saved to gallery and deleted from backend.');
-            fetchPhotoSets();
-        } catch (err) {
-            console.error(err);
-            Alert.alert('Error', 'Something went wrong.');
-        } finally {
-            setIsLoading(false);
+          return asset;
+        } catch (error) {
+          console.error('Save failed:', error);
+          return null;
         }
-    };
+      };
+
+    
+      await Promise.all([
+        saveToGallery(item.beforeImageUrl),
+        saveToGallery(item.afterImageUrl),
+      ]);
+
+      await Promise.all([
+        item.beforeImageUrl && storage.deleteFile(BUCKET_ID, item.beforeImageUrl),
+        item.afterImageUrl && storage.deleteFile(BUCKET_ID, item.afterImageUrl),
+        databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id),
+      ]);
+
+      Alert.alert('Success', 'Images saved to your gallery!');
+      fetchPhotoSets();
+    } catch (error) {
+      console.error('Operation failed:', error);
+      Alert.alert('Error', 'Failed to save images. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     if (isLoading) {
         return (

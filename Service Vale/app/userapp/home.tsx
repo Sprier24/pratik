@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
 import { account, databases } from '../../lib/appwrite';
 import { RefreshControl } from 'react-native';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = ' note_id';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const { width } = Dimensions.get('window');
 
 const HomeScreenuser = () => {
@@ -21,6 +22,7 @@ const HomeScreenuser = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
     try {
@@ -139,128 +141,139 @@ const HomeScreenuser = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
+        <ActivityIndicator size="large" color="#5E72E4" />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Engineer Dashboard</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            style={styles.notificationIcon}
+            onPress={() => router.push('/userapp/notificationpage')}
+          >
+            <MaterialIcons name="notifications" size={24} color="#FFF" />
+            {unreadCount > 0 && (
+              <View style={styles.redDot} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.logoutIcon}
+            onPress={handleLogout}
+          >
+            <Feather name="log-out" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#3498db']}
-            tintColor={'#3498db'}
+            colors={['#5E72E4']}
+            tintColor={'#5E72E4'}
           />
         }
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>User Dashboard</Text>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity
-              style={[styles.notificationIcon, { marginRight: 10 }]}
-              onPress={() => router.push('/notification')}
-            >
-              <MaterialIcons name="notifications" size={24} color="#fff" />
-              {unreadCount > 0 && <View style={styles.redDot} />}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.logoutIcon}
-              onPress={handleLogout}
-            >
-              <MaterialIcons name="logout" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.revenueContainer}>
-          <View style={[styles.revenueCard, styles.dailyRevenue]}>
-            <Text style={[styles.cardTitle, styles.revenueCardTitle]}>Daily Revenue</Text>
+        {/* Revenue Cards */}
+        <View style={styles.revenueRow}>
+          <View style={[styles.revenueCard, styles.dailyCard]}>
+            <View style={styles.cardIconContainer}>
+              <MaterialIcons name="today" size={24} color="#FFF" />
+            </View>
+            <Text style={styles.cardTitle}>Today's Revenue</Text>
             <Text style={styles.cardAmount}>
               ₹{dailyRevenue.toLocaleString('en-IN', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </Text>
-            <View style={styles.cardTrend}>
-              <AntDesign name="arrowup" size={14} color="#fff" />
-              <Text style={styles.trendText}>Today</Text>
-            </View>
           </View>
-          <View style={[styles.revenueCard, styles.monthlyRevenue]}>
-            <Text style={[styles.cardTitle, styles.revenueCardTitle]}>Monthly Revenue</Text>
+
+          <View style={[styles.revenueCard, styles.monthlyCard]}>
+            <View style={styles.cardIconContainer}>
+              <MaterialIcons name="date-range" size={24} color="#FFF" />
+            </View>
+            <Text style={styles.cardTitle}>Monthly Revenue</Text>
             <Text style={styles.cardAmount}>
               ₹{monthlyRevenue.toLocaleString('en-IN', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
             </Text>
-            <View style={styles.cardTrend}>
-              <AntDesign name="arrowup" size={14} color="#fff" />
-              <Text style={styles.trendText}>This Month</Text>
-            </View>
           </View>
         </View>
-        <View style={styles.servicesContainer}>
+
+        <View style={styles.servicesRow}>
           <View style={[styles.serviceCard, styles.pendingCard]}>
-            <View style={styles.cardHeader}>
-              <MaterialIcons
-                name="pending-actions"
-                size={24}
-                color="#e67e22"
-                style={styles.icon}
-              />
-              <Text style={[styles.cardTitle, styles.serviceCardTitle]}>
-                Pending Services
-              </Text>
+            <View style={styles.serviceCardHeader}>
+              <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
+                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
+              </View>
+              <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>
-            <Text style={styles.cardCount}>{pendingCount}</Text>
+            <Text style={styles.serviceCardCount}>{pendingCount}</Text>
             <TouchableOpacity
-              style={styles.viewButton}
+              style={styles.serviceCardButton}
               onPress={() => router.push('/userapp/userpending')}
             >
-              <Text style={styles.viewButtonText}>View All</Text>
-              <AntDesign name="right" size={16} color="#3498db" />
+              <Text style={styles.serviceCardButtonText}>View All</Text>
+              <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
+
           <View style={[styles.serviceCard, styles.completedCard]}>
-            <View style={styles.cardHeader}>
-              <MaterialIcons
-                name="check-circle"
-                size={24}
-                color="#27ae60"
-                style={styles.icon}
-              />
-              <Text style={[styles.cardTitle, styles.serviceCardTitle]}>
-                Completed Services
-              </Text>
+            <View style={styles.serviceCardHeader}>
+              <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
+                <MaterialIcons name="check-circle" size={24} color="#38A169" />
+              </View>
+              <Text style={styles.serviceCardTitle}>Completed Services</Text>
             </View>
-            <Text style={styles.cardCount}>{completedCount}</Text>
+            <Text style={styles.serviceCardCount}>{completedCount}</Text>
             <TouchableOpacity
-              style={styles.viewButton}
+              style={styles.serviceCardButton}
               onPress={() => router.push('/userapp/usercompleted')}
             >
-              <Text style={styles.viewButtonText}>View All</Text>
-              <AntDesign name="right" size={16} color="#3498db" />
+              <Text style={styles.serviceCardButtonText}>View All</Text>
+              <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-      <View style={styles.bottomBar}>
+
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity
           style={styles.bottomButton}
           onPress={() => router.push('/userapp/userprofile')}
         >
-          <MaterialIcons name="people" size={24} color="#3498db" />
+          <View style={styles.bottomButtonIcon}>
+            <Feather name="user" size={20} color="#5E72E4" />
+          </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.bottomButton, styles.bottomButtonActive]}
+          // onPress={() => router.push('/userapp/home')}
+        >
+          <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
+            <Feather name="home" size={20} color="#FFF" />
+          </View>
+          <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Home</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.bottomButton}
           onPress={() => router.push('/userapp/userbill')}
         >
-          <MaterialIcons name="receipt" size={24} color="#3498db" />
+          <View style={styles.bottomButtonIcon}>
+            <Feather name="file-text" size={20} color="#5E72E4" />
+          </View>
           <Text style={styles.bottomButtonText}>Bills</Text>
         </TouchableOpacity>
       </View>
@@ -268,6 +281,6 @@ const HomeScreenuser = () => {
   );
 };
 
+
+
 export default HomeScreenuser;
-
-

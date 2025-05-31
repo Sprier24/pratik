@@ -14,6 +14,7 @@ const ServicePage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string, phone: string }[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceKey>('AC');
+  const [selectedServiceboyName, setSelectedServiceboyName] = useState<string>('');
   const router = useRouter();
   useEffect(() => {
     const fetchAllUsers = async () => {
@@ -71,7 +72,7 @@ const ServicePage = () => {
 
     // Send a notification
     await createNotification(
-      ` assigned a new ${selectedServiceType} service.`,
+      ` ${applicantName} has been assigned a new ${selectedServiceType} service.`,
       applicantEmail
     );
 
@@ -80,7 +81,7 @@ const ServicePage = () => {
       pathname: '/order',
       params: {
         applicantId,
-        applicantName,
+        applicantName : selectedServiceboyName,
         serviceType: selectedServiceType,
         applicantEmail,
         applicantPhone
