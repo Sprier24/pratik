@@ -474,7 +474,7 @@ const UserBill = () => {
                 </div>
               </div>
             </body>
-      b
+          </html>
     `;
   };
 
