@@ -568,4 +568,24 @@ export const styles = StyleSheet.create({
   bottomButtonTextActive: {
     color: "#FFF",
   },
+  paymentSummary: {
+    backgroundColor: "#F7FAFC",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: "#4A5568",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2D3748",
+  },
 });

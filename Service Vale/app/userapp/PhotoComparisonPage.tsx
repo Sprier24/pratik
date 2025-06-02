@@ -1,20 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    ScrollView,
-    Alert,
-    StyleSheet,
-    ActivityIndicator,
-    Platform,
-    KeyboardAvoidingView,
-    Dimensions,
-    TextInput,
-    Modal,
-    Pressable,
-} from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform, KeyboardAvoidingView, Dimensions, TextInput, Modal, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { databases, storage, account } from '../../lib/appwrite';
 import { ID } from 'appwrite';
@@ -31,10 +16,8 @@ const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
 const NOTIFICATIONS_COLLECTION = 'note_id';
 const BUCKET_ID = 'photo_id';
-
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 32;
-
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
 const PROJECT_ID = '681b300f0018fdc27bdd';
 
@@ -60,9 +43,7 @@ const PhotoComparisonPage = () => {
     const [beforeImage, setBeforeImage] = useState<ImagePickerResult | null>(null);
     const [afterImage, setAfterImage] = useState<ImagePickerResult | null>(null);
     const { notes: initialNotes } = useLocalSearchParams();
-    const [notes, setNotes] = useState(
-        Array.isArray(initialNotes) ? initialNotes.join(', ') : initialNotes || ''
-    );
+    const [notes, setNotes] = useState(Array.isArray(initialNotes) ? initialNotes.join('\n') : initialNotes || '');
     const [photoSets, setPhotoSets] = useState<PhotoSet[]>([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -71,12 +52,10 @@ const PhotoComparisonPage = () => {
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [userName, setUserName] = useState('');
-
     const router = useRouter();
 
     const parseNotes = (notes: string) => {
         if (!notes) return { userName: '', userNotes: '' };
-
         const [userName, ...rest] = notes.split('\n');
         return {
             userName: userName?.trim() || '',
@@ -116,7 +95,6 @@ const PhotoComparisonPage = () => {
                 Query.orderDesc('date'),
                 Query.limit(20),
             ]);
-
             const safeDocs: PhotoSet[] = response.documents.map((doc: any) => ({
                 $id: doc.$id,
                 beforeImageUrl: doc.beforeImageUrl,
@@ -124,7 +102,6 @@ const PhotoComparisonPage = () => {
                 notes: doc.notes,
                 date: doc.date,
             }));
-
             setPhotoSets(safeDocs);
         } catch (error) {
             Alert.alert('Error', 'Failed to load photos.');
@@ -139,20 +116,17 @@ const PhotoComparisonPage = () => {
             router.push('/login');
             return;
         }
-
         const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
         if (!cameraPermission.granted) {
             Alert.alert('Permission Denied', 'Camera access is required');
             return;
         }
-
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.8,
             allowsEditing: true,
             aspect: [4, 3],
         });
-
         if (!result.canceled && result.assets.length > 0) {
             const asset = result.assets[0];
             setImage({
@@ -169,24 +143,20 @@ const PhotoComparisonPage = () => {
             const uri = image.uri;
             const name = image.fileName ?? `photo_${Date.now()}.jpg`;
             const type = mime.getType(uri) || 'image/jpeg';
-
             const file = {
                 uri,
                 name,
                 type,
                 size: image.fileSize ?? 0,
             };
-
             const uploadedFile = await storage.createFile(
                 BUCKET_ID,
                 ID.unique(),
                 file
             );
-
             if (!uploadedFile || !uploadedFile.$id) {
                 throw new Error('File upload returned an invalid response');
             }
-
             return uploadedFile.$id;
         } catch (error) {
             throw new Error('Failed to upload image. Check Appwrite settings.');
@@ -195,15 +165,12 @@ const PhotoComparisonPage = () => {
 
     const createNotification = async (description: string, relatedDocumentId: string) => {
         const notifId = ID.unique();
-
         try {
             await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, notifId, {
                 description,
                 isRead: false,
                 createdAt: new Date().toISOString(),
-                relatedDocId: relatedDocumentId, // Changed from documentId to match your schema
                 userEmail,
-                userName: userName || 'Unknown'
             });
             console.log('Notification created successfully:', notifId);
         } catch (error: any) {
@@ -222,21 +189,16 @@ const PhotoComparisonPage = () => {
             router.push('/login');
             return;
         }
-
         if (!beforeImage && !afterImage) {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
-
         setIsUploading(true);
-
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
-
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
-
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: '',
@@ -244,7 +206,6 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-
                 await createNotification(
                     `New BEFORE photo added. Notes: ${notesWithName || 'No notes provided'}`,
                     docId
@@ -257,19 +218,15 @@ const PhotoComparisonPage = () => {
                     Query.equal('userEmail', userEmail),
                     Query.limit(1),
                 ]);
-
                 if (latest.documents.length === 0) {
                     throw new Error('No matching before image found');
                 }
-
                 const docId = latest.documents[0].$id;
-
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
                     userEmail: userEmail,
                 });
-
                 await createNotification(
                     `AFTER photo added to existing set. Notes: ${notesWithName || 'No notes provided'}`,
                     docId
@@ -279,9 +236,7 @@ const PhotoComparisonPage = () => {
                     uploadImageToStorage(beforeImage!),
                     uploadImageToStorage(afterImage!),
                 ]);
-
                 const docId = ID.unique();
-
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: afterFileId,
@@ -289,17 +244,15 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-
                 await createNotification(
                     `COMPLETE: BEFORE and AFTER photos submitted! User: ${userName || 'Unknown'}`,
                     docId
                 );
             }
-
             Alert.alert('Success', 'Photo saved.');
             setBeforeImage(null);
             setAfterImage(null);
-            setNotes(userName ? `${userName}: ` : '');
+            setNotes(userName ? `${userName}\n` : '');
             fetchPhotoSets();
         } catch (error) {
             Alert.alert('Error', error instanceof Error ? error.message : 'Upload failed');
@@ -328,11 +281,8 @@ const PhotoComparisonPage = () => {
             if (photoSet.afterImageUrl) {
                 deletePromises.push(storage.deleteFile(BUCKET_ID, photoSet.afterImageUrl));
             }
-
             await Promise.all(deletePromises);
-
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
-
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
@@ -354,17 +304,13 @@ const PhotoComparisonPage = () => {
                 setIsLoading(false);
                 return;
             }
-
             const saveToGallery = async (fileId: string | undefined) => {
                 if (!fileId) return null;
-
                 try {
                     const uri = buildImageUrl(fileId);
                     const filename = `photo_${Date.now()}.jpg`;
                     const localPath = `${FileSystem.cacheDirectory}${filename}`;
-
                     await FileSystem.downloadAsync(uri, localPath);
-
                     const asset = await MediaLibrary.createAssetAsync(localPath);
                     return asset;
                 } catch (error) {
@@ -372,12 +318,10 @@ const PhotoComparisonPage = () => {
                     return null;
                 }
             };
-
             await Promise.all([
                 saveToGallery(item.beforeImageUrl),
                 saveToGallery(item.afterImageUrl),
             ]);
-
             Alert.alert('Success', 'Images saved to your gallery!');
             fetchPhotoSets();
         } catch (error) {
@@ -416,6 +360,7 @@ const PhotoComparisonPage = () => {
             style={{ flex: 1 }}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Feather name="arrow-left" size={24} color="#FFF" />
@@ -423,13 +368,13 @@ const PhotoComparisonPage = () => {
                 <Text style={[styles.headerTitle, { marginRight: 150 }]}>Photo </Text>
                 <View style={styles.headerIcons}></View>
             </View>
+
             <ScrollView
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Capture Photos</Text>
-
                     <View style={styles.photoButtonsContainer}>
                         <TouchableOpacity
                             style={[styles.photoButton, beforeImage && styles.photoButtonActive]}
@@ -444,7 +389,6 @@ const PhotoComparisonPage = () => {
                                 Before
                             </Text>
                         </TouchableOpacity>
-
                         <TouchableOpacity
                             style={[styles.photoButton, afterImage && styles.photoButtonActive]}
                             onPress={() => takePhoto(setAfterImage)}
@@ -459,7 +403,6 @@ const PhotoComparisonPage = () => {
                             </Text>
                         </TouchableOpacity>
                     </View>
-
                     {beforeImage || afterImage ? (
                         <View style={styles.previewContainer}>
                             <View style={styles.imagePreviewWrapper}>
@@ -479,7 +422,6 @@ const PhotoComparisonPage = () => {
                                     </>
                                 )}
                             </View>
-
                             <View style={styles.imagePreviewWrapper}>
                                 {afterImage && (
                                     <>
@@ -515,6 +457,7 @@ const PhotoComparisonPage = () => {
                         style={styles.notesInput}
                         multiline
                         editable={!isUploading}
+                        textAlignVertical="top"
                     />
                 </View>
 
@@ -554,7 +497,6 @@ const PhotoComparisonPage = () => {
                                             minute: '2-digit',
                                         })}
                                     </Text>
-
                                     <View style={styles.iconContainer}>
                                         <TouchableOpacity
                                             onPress={() =>
@@ -570,7 +512,6 @@ const PhotoComparisonPage = () => {
                                         >
                                             <Ionicons name="trash" size={20} color="#DC2626" />
                                         </TouchableOpacity>
-
                                         <TouchableOpacity
                                             onPress={() =>
                                                 Alert.alert('Confirm Download', 'Are you sure you want to download this photo set?', [
@@ -608,7 +549,6 @@ const PhotoComparisonPage = () => {
                                             </View>
                                         )}
                                     </View>
-
                                     <View style={styles.comparisonItem}>
                                         <Text style={styles.comparisonLabel}>After</Text>
                                         {item.afterImageUrl ? (

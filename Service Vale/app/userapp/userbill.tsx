@@ -242,174 +242,239 @@ const UserBill = () => {
   const generateBillHtml = (bill: Bill) => {
     return `
       <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-              color: #2D3748;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 20px;
-              padding-bottom: 10px;
-              border-bottom: 2px solid #5E72E4;
-            }
-            .company-name {
-              font-size: 24px;
-              font-weight: bold;
-              color: #5E72E4;
-            }
-            .invoice-title {
-              font-size: 28px;
-              font-weight: bold;
-              color: #2D3748;
-            }
-            .invoice-number {
-              font-size: 14px;
-              color: #718096;
-            }
-            .section {
-              margin-bottom: 20px;
-              padding: 15px;
-              background: #F7FAFC;
-              border-radius: 8px;
-            }
-            .section-title {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              color: #2D3748;
-              padding-bottom: 5px;
-              border-bottom: 1px solid #E2E8F0;
-            }
-            .row {
-              display: flex;
-              margin-bottom: 8px;
-            }
-            .label {
-              font-weight: bold;
-              min-width: 150px;
-              color: #4A5568;
-            }
-            .value {
-              flex: 1;
-            }
-            .highlight {
-              color: #5E72E4;
-              font-weight: bold;
-            }
-            .total-row {
-              font-size: 16px;
-              font-weight: bold;
-              margin-top: 10px;
-              padding-top: 10px;
-              border-top: 1px dashed #CBD5E0;
-            }
-            .signature-section {
-              margin-top: 30px;
-              text-align: center;
-              padding: 20px 0;
-              border-top: 2px dashed #5E72E4;
-            }
-            .signature-title {
-              font-weight: bold;
-              margin-bottom: 15px;
-              color: #4A5568;
-            }
-            .signature-image {
-              max-width: 250px;
-              height: 80px;
-              margin: 0 auto;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 30px;
-              font-size: 12px;
-              color: #718096;
-              padding-top: 15px;
-              border-top: 1px solid #E2E8F0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="company-name">Service Vale</div>
-              <div>Quality Service Solutions</div>
-            </div>
-            <div>
-              <div class="invoice-title">INVOICE</div>
-              <div class="invoice-number">Bill No: ${bill.billNumber}</div>
-              <div class="invoice-number">Date: ${new Date(bill.$createdAt).toLocaleDateString()}</div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Customer Details</div>
-            <div class="row">
-              <span class="label">Customer Name:</span>
-              <span class="value">${bill.customerName}</span>
-            </div>
-            <div class="row">
-              <span class="label">Contact Number:</span>
-              <span class="value">${bill.contactNumber}</span>
-            </div>
-            <div class="row">
-              <span class="label">Address:</span>
-              <span class="value">${bill.address}</span>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Service Details</div>
-            <div class="row">
-              <span class="label">Service Type:</span>
-              <span class="value">${bill.serviceType}</span>
-            </div>
-            <div class="row">
-              <span class="label">Service Provider:</span>
-              <span class="value">${bill.serviceBoyName}</span>
-            </div>
-            <div class="row total-row">
-              <span class="label">Service Charge:</span>
-              <span class="value highlight">₹${bill.serviceCharge}</span>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Payment Details</div>
-            <div class="row">
-              <span class="label">Payment Method:</span>
-              <span class="value highlight">${bill.paymentMethod.toUpperCase()}</span>
-            </div>
-            ${bill.paymentMethod === 'cash' ? `
-            <div class="row">
-              <span class="label">Amount Received:</span>
-              <span class="value">₹${bill.cashGiven}</span>
-            </div>
-            <div class="row">
-              <span class="label">Change Returned:</span>
-              <span class="value">₹${bill.change}</span>
-            </div>
-            ` : ''}
-          </div>
-          
-          ${bill?.signature ? `
-            <div class="signature-section">
-              <div class="signature-title">Customer Signature</div>
-              <img src="data:image/png;base64,${bill.signature}" class="signature-image" />
-            </div>
-          ` : ''}
-          
-          <div class="footer">
-            <div>Thank You For Your Business!</div>
-            <div>Contact: +91 635 320 2602 | Email: info@servicevale.com</div>
-          </div>
-        </body>
-      </html>
+            <head>
+              <style>
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Arial', sans-serif;
+                  font-size: 14px;
+                  color: #333;
+                  height: 100%;
+                  box-sizing: border-box;
+                  background-color: #f9f9f9;
+                }
+                body {
+                  display: flex;
+                  flex-direction: column;
+                  padding: 30px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  background: white;
+                  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 25px;
+                  padding-bottom: 20px;
+                  border-bottom: 2px solid #007bff;
+                }
+                .logo-container {
+                  display: flex;
+                  align-items: center;
+                }
+                .logo {
+                  width: 70px;
+                  height: auto;
+                  margin-right: 15px;
+                }
+                .company-info {
+                  text-align: left;
+                }
+                .company-name {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #007bff;
+                  margin: 0;
+                }
+                .company-tagline {
+                  font-size: 12px;
+                  color: #666;
+                  margin: 3px 0 0;
+                }
+                .invoice-info {
+                  text-align: right;
+                }
+                .invoice-title {
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #2c3e50;
+                  margin: 0 0 5px;
+                }
+                .invoice-details {
+                  font-size: 13px;
+                  color: #555;
+                }
+                .section {
+                  margin-bottom: 25px;
+                  padding: 15px;
+                  background: #f5f9ff;
+                  border-radius: 5px;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                .section-title {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #2c3e50;
+                  padding-bottom: 5px;
+                  border-bottom: 1px solid #ddd;
+                }
+                .row {
+                  display: flex;
+                  margin-bottom: 8px;
+                }
+                .label {
+                  font-weight: bold;
+                  min-width: 150px;
+                  color: #555;
+                }
+                .value {
+                  flex: 1;
+                }
+                .highlight {
+                  color: #007bff;
+                  font-weight: bold;
+                }
+                .payment-details {
+                  background: #e8f4ff;
+                }
+                .total-row {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px dashed #ccc;
+                }
+                .notes-section {
+                  background: #fff8e6;
+                  font-style: italic;
+                }
+                .signature-section {
+                  margin-top: 30px;
+                  text-align: center;
+                  padding: 20px 0;
+                  border-top: 2px dashed #007bff;
+                }
+                .signature-title {
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #555;
+                }
+                .signature-image {
+                  max-width: 250px;
+                  height: 80px;
+                  margin: 0 auto;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 30px;
+                  font-size: 12px;
+                  color: #888;
+                  padding-top: 15px;
+                  border-top: 1px solid #eee;
+                }
+                .thank-you {
+                  font-size: 16px;
+                  color: #007bff;
+                  margin-bottom: 10px;
+                  font-weight: bold;
+                }
+                .contact-info {
+                  margin-top: 5px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo-container">
+                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
+                  <div class="company-info">
+                    <h1 class="company-name">Service Vale</h1>
+                    <p class="company-tagline">Quality Service Solutions</p>
+                  </div>
+                </div>
+                <div class="invoice-info">
+                  <h2 class="invoice-title">INVOICE</h2>
+                  <div class="invoice-details">
+                    <div><strong>Bill No : </strong> ${bill.billNumber}</div>
+                    <div><strong>Date : </strong> ${new Date(bill.$createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-title">Customer Details</div>
+                <div class="row">
+                  <span class="label">Customer Name : </span>
+                  <span class="value">${bill.customerName}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Contact Number : </span>
+                  <span class="value">${bill.contactNumber}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Address : </span>
+                  <span class="value">${bill.address}</span>
+                </div>
+              </div>       
+              <div class="section">
+                <div class="section-title">Service Details</div>
+                <div class="row">
+                  <span class="label">Service Type : </span>
+                  <span class="value">${bill.serviceType}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Engineer Name : </span>
+                  <span class="value">${bill.serviceBoyName}</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Service Charge : </span>
+                  <span class="value highlight">₹${bill.serviceCharge}</span>
+                </div>
+              </div>       
+              <div class="section payment-details">
+                <div class="section-title">Payment Details</div>
+                <div class="row">
+                  <span class="label">Payment Method : </span>
+                  <span class="value highlight">${bill.paymentMethod.toUpperCase()}</span>
+                </div>
+                ${bill.paymentMethod === 'cash' ? `
+                <div class="row">
+                  <span class="label">Amount Received : </span>
+                  <span class="value">₹${bill.cashGiven}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Change Returned : </span>
+                  <span class="value">₹${bill.change}</span>
+                </div>
+                ` : ''}
+              </div>       
+              ${bill.notes ? `
+                <div class="section notes-section">
+                  <div class="section-title">Notes</div>
+                  <p>${bill.notes}</p>
+                </div>
+              ` : ''}       
+              ${bill?.signature ? `
+                <div class="signature-section">
+                  <div class="signature-title">Customer Signature</div>
+                  <img src="data:image/png;base64,${bill.signature}" class="signature-image" />
+                </div>
+              ` : ''}       
+              <div class="footer">
+                <div class="thank-you">Thank You For Your Business!</div>
+                <div class="contact-info">
+                  <strong>Contact : </strong> +91 635 320 2602 | 
+                  <strong>Email : </strong> info@servicevale.com
+                </div>
+                <div class="address">
+                  <strong>Address : </strong> Chowk Bazar Nanpura, Khatkiwad Basir, Jhinga Gali Me
+                </div>
+              </div>
+            </body>
+      b
     `;
   };
 
@@ -575,6 +640,13 @@ const UserBill = () => {
               numberOfLines={4}
               maxLength={500}
             />
+
+            <View style={styles.paymentSummary}>
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.summaryLabel}>Total Amount :</Text>
+                <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
+              </View>
+            </View>
 
             <Text style={styles.sectionTitle}>Payment Method</Text>
             <View style={styles.paymentMethodContainer}>

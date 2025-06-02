@@ -265,7 +265,7 @@ const PendingServicesScreenUser = () => {
             onPress={() => router.push({
               pathname: '/userapp/PhotoComparisonPage',
               params: {
-                notes: `Service: ${item.serviceType}\nClient: ${item.clientName}\nAddress: ${item.address}\nPhone: ${item.phone}\nAmount: ₹${item.amount}\nDate: ${item.serviceDate} at ${item.serviceTime}`
+                notes: `Service: ${item.serviceType}\nClient: ${item.clientName}\nDate: ${item.serviceDate} at ${item.serviceTime}`
               }
             })}
           >

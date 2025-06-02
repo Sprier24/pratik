@@ -28,7 +28,6 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -54,8 +53,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
-  // Sections
   section: {
     marginTop: 20,
     marginHorizontal: 16,
@@ -74,8 +71,6 @@ export const styles = StyleSheet.create({
     color: "#374151",
     marginBottom: 12,
   },
-
-  // Photo Capture
   photoButtonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -105,8 +100,6 @@ export const styles = StyleSheet.create({
   photoButtonTextActive: {
     color: "#FFF",
   },
-
-  // Image Previews
   previewContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -144,8 +137,6 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 12,
   },
-
-  // Notes Input
   notesInput: {
     minHeight: 100,
     padding: 12,
@@ -156,8 +147,6 @@ export const styles = StyleSheet.create({
     color: "#374151",
     textAlignVertical: "top",
   },
-
-  // Submit Button
   submitButton: {
     marginHorizontal: 16,
     marginTop: 20,
@@ -180,8 +169,6 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-
-  // History Section
   emptyState: {
     justifyContent: "center",
     alignItems: "center",
@@ -212,8 +199,6 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 14,
   },
-
-  // Comparison Images
   comparisonContainer: {
     flexDirection: "row",
     padding: 16,
@@ -247,8 +232,6 @@ export const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontSize: 12,
   },
-
-  // Action Buttons
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -274,8 +257,6 @@ export const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#DC2626",
   },
-
-  // Notes Display
   notesContainer: {
     padding: 16,
     borderTopWidth: 1,
@@ -290,8 +271,6 @@ export const styles = StyleSheet.create({
     color: "#4B5563",
     lineHeight: 20,
   },
-
-  // Modal
   modalBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.9)",
@@ -310,8 +289,6 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
   },
-
-  // Login Button
   loginButton: {
     marginTop: 20,
     paddingVertical: 12,
