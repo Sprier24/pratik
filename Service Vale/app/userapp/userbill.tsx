@@ -576,17 +576,6 @@ const UserBill = () => {
               maxLength={500}
             />
 
-            <View style={styles.paymentSummary}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Service Charge :</Text>
-                <Text style={styles.summaryValue}>₹{form.serviceCharge || '0.00'}</Text>
-              </View>
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.summaryLabel}>Total Amount :</Text>
-                <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-              </View>
-            </View>
-
             <Text style={styles.sectionTitle}>Payment Method</Text>
             <View style={styles.paymentMethodContainer}>
               <TouchableOpacity
@@ -917,7 +906,7 @@ const UserBill = () => {
 
         <TouchableOpacity
           style={[styles.bottomButton, styles.bottomButtonActive]}
-          // onPress={() => router.push('/userapp/userbill')}
+        // onPress={() => router.push('/userapp/userbill')}
         >
           <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
             <Feather name="file-text" size={20} color="#FFF" />

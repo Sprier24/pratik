@@ -103,7 +103,11 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
-    marginBottom: 15,
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    marginTop: 24,
   },
   formGroup: {
     marginBottom: 15,
@@ -122,36 +126,17 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     color: "#2D3748",
+    marginBottom: 14,
   },
   textArea: {
     height: 100,
     textAlignVertical: "top",
-  },
-  paymentSummary: {
-    backgroundColor: "#F7FAFC",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
   },
   totalRow: {
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
     paddingTop: 10,
     marginTop: 5,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#4A5568",
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2D3748",
   },
   paymentMethodContainer: {
     flexDirection: "row",
