@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
+import { Linking } from 'react-native';
 import { styles } from '../constants/PendingServicesScreen.styles';
-import { Platform, Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -272,9 +272,13 @@ const PendingServicesScreen = () => {
     setDateFilter(null);
     applyFilters(selectedServiceBoy, null);
   };
+  
+  const clearServiceBoyFilter = () => {
+    setSelectedServiceBoy(null);
+    applyFilters(null, dateFilter);
+  };
 
   const sendManualWhatsAppNotification = (service: Service) => {
-    // Format the message (same as scheduled messages)
     const message = `Dear ${service.clientName},\n\n` +
       `Your ${service.serviceType} service is scheduled for:\n` +
       `📅 Date: ${service.serviceDate}\n` +
@@ -286,143 +290,161 @@ const PendingServicesScreen = () => {
       `Please be ready for the service. For any queries, contact us.\n\n` +
       `Thank you for choosing our service!`;
 
-    // Format phone number (remove any non-digit characters)
     const phone = service.phone.replace(/\D/g, '');
-
-    // Create WhatsApp URL
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
 
-    // Try to open WhatsApp
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'WhatsApp is not installed');
-        // Optionally offer to send via SMS instead
       }
     });
   };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
-    <TouchableOpacity style={styles.serviceCard}>
+    <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
-        <Text style={styles.serviceType}>{item.serviceType}</Text>
-        <View style={[styles.statusBadge, styles.pendingBadge]}>
-          <Text style={styles.statusText}>Pending</Text>
+        <View style={styles.serviceTypeContainer}>
+          <MaterialCommunityIcons 
+            name="tools" 
+            size={20} 
+            color="#5E72E4" 
+            style={styles.serviceIcon}
+          />
+          <Text style={styles.serviceType}>{item.serviceType}</Text>
+        </View>
+        <View style={styles.serviceActions}>
+          <View style={[styles.statusBadge, styles.pendingBadge]}>
+            <Text style={styles.statusText}>Pending</Text>
+          </View>
         </View>
       </View>
+      
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={16} color="#6B7280" />
+          <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={16} color="#6B7280" />
+          <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={16} color="#6B7280" />
+          <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
+          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
-        <Text
-          style={styles.serviceBoyText}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          Assigned to: {item.serviceBoy}
-        </Text>
-        <Text style={styles.dateText}>
-          {item.serviceDate} • {item.serviceTime}
+        <View style={styles.dateContainer}>
+          <MaterialIcons name="access-time" size={16} color="#718096" />
+          <Text style={styles.dateText}>
+            {item.serviceDate} • {item.serviceTime}
+          </Text>
+        </View>
+        <Text style={styles.serviceBoyText}>
+          {item.serviceBoy}
         </Text>
       </View>
+      
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={[styles.completeButton, styles.actionButton]}
-          onPress={() => handleComplete(item.id)}
-        >
-          <Text style={styles.completeButtonText}>Complete</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.whatsappButton, styles.actionButton]}
+          style={styles.whatsappButton}
           onPress={() => sendManualWhatsAppNotification(item)}
         >
-          <MaterialCommunityIcons name="whatsapp" size={20} color="#fff" />
+          <MaterialCommunityIcons name="whatsapp" size={20} color="#FFF" />
+          <Text style={styles.whatsappButtonText}>Share</Text>
         </TouchableOpacity>
+        
         <TouchableOpacity
-          style={[styles.deleteButton, styles.actionButton]}
+          style={styles.completeButton}
+          onPress={() => handleComplete(item.id)}
+        >
+          <MaterialIcons name="check-circle" size={20} color="#FFF" />
+          <Text style={styles.completeButtonText}>Complete</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
           onPress={() => handleDelete(item.id)}
         >
-          <Text style={styles.completeButtonText}>Delete</Text>
+          <MaterialIcons name="delete" size={20} color="#FFF" />
+          <Text style={styles.deleteButtonText}>Delete</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
+    
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.filterRow}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.push('/home')}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Pending Services</Text>
+        </View>
+        <View style={styles.headerCount}>
+          <Text style={styles.headerCountText}>{services.length}</Text>
+        </View>
+      </View>
+
+      <View style={styles.filterContainer}>
         <TouchableOpacity
-          style={[
-            styles.filterButton,
-            selectedServiceBoy && styles.activeFilter
-          ]}
+          style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
           onPress={() => {
             setFilterType('serviceBoy');
             setFilterModalVisible(true);
           }}
         >
-          <Text style={styles.filterButtonText}>
-            {selectedServiceBoy ? `Boy: ${selectedServiceBoy}` : 'Filter by Boy'}
+          <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
+          <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
+            {selectedServiceBoy ? selectedServiceBoy : 'Filter by boy'}
           </Text>
-          <MaterialIcons name="filter-list" size={20} color="#fff" />
         </TouchableOpacity>
+        
         <TouchableOpacity
-          style={[
-            styles.filterButton,
-            dateFilter && styles.activeFilter
-          ]}
-          onPress={() => {
-            setFilterType('date');
-            setShowDatePicker(true);
-          }}
+          style={[styles.filterButton, dateFilter && styles.activeFilter]}
+          onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.filterButtonText}>
-            {dateFilter ? format(dateFilter, 'dd/MM/yy') : 'Filter by Date'}
+          <Feather name="calendar" size={18} color={dateFilter ? "#FFF" : "#5E72E4"} />
+          <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
+            {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
-          <MaterialIcons name="event" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {(selectedServiceBoy || dateFilter) && (
-        <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>Active filters:</Text>
-          {selectedServiceBoy && (
-            <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>Boy: {selectedServiceBoy}</Text>
-              <TouchableOpacity onPress={() => filterServices(null)}>
-                <MaterialIcons name="close" size={16} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          )}
-          {dateFilter && (
-            <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>{format(dateFilter, 'dd/MM/yy')}</Text>
-              <TouchableOpacity onPress={clearDateFilter}>
-                <MaterialIcons name="close" size={16} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      )}
+        
+        {(selectedServiceBoy || dateFilter) && (
+          <View style={styles.activeFiltersContainer}>
+            {selectedServiceBoy && (
+              <View style={styles.filterChip}>
+                <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
+                <TouchableOpacity onPress={clearServiceBoyFilter}>
+                  <Feather name="x" size={16} color="#FFF" />
+                </TouchableOpacity>
+              </View>
+            )}
+            {dateFilter && (
+              <View style={styles.filterChip}>
+                <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
+                <TouchableOpacity onPress={clearDateFilter}>
+                  <Feather name="x" size={16} color="#FFF" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -431,14 +453,7 @@ const PendingServicesScreen = () => {
           onChange={handleDateChange}
         />
       )}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Pending Services</Text>
-        <View style={styles.headerCountContainer}>
-          <Text style={styles.headerCountText}>
-            {services.length} {selectedServiceBoy && `of ${countPendingByServiceBoy()[selectedServiceBoy] || 0}`}
-          </Text>
-        </View>
-      </View>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -488,7 +503,8 @@ const PendingServicesScreen = () => {
           </View>
         </View>
       </Modal>
-      {services.length > 0 ? (
+
+      {services.length > 0 ? ( 
         <FlatList
           data={services}
           renderItem={renderServiceItem}
@@ -498,7 +514,7 @@ const PendingServicesScreen = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="pending-actions" size={48} color="#9CA3AF" />
+          <MaterialIcons name="pending-actions" size={48} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {selectedServiceBoy
               ? `No pending services for ${selectedServiceBoy}`
@@ -512,6 +528,6 @@ const PendingServicesScreen = () => {
       )}
     </SafeAreaView>
   );
-};  
+};
 
 export default PendingServicesScreen;
