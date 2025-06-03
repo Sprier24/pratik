@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -33,7 +33,7 @@ type User = {
   name: string;
 };
 
-const CompletedServicesScreen = () => {
+const AdminCompletedServicesScreen = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
@@ -139,8 +139,10 @@ const CompletedServicesScreen = () => {
         };
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
-          if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceBoy) &&
-            (!dateFilter || (newService.completedAt && isSameDay(new Date(newService.completedAt), dateFilter)))) {
+          if (
+            (!selectedServiceBoy || selectedServiceBoy === newService.serviceBoy) &&
+            (!dateFilter || (newService.completedAt && isSameDay(new Date(newService.completedAt), dateFilter)))
+          ) {
             return [formattedService, ...prev];
           }
           return prev;
@@ -207,6 +209,29 @@ const CompletedServicesScreen = () => {
     applyFilters(selectedServiceBoy, null);
   };
 
+  const clearServiceBoyFilter = () => {
+    setSelectedServiceBoy(null);
+    applyFilters(null, dateFilter);
+  };
+
+  const handleCreateBill = (service: Service) => {
+    router.push({
+      pathname: '/bill',
+      params: {
+        serviceData: JSON.stringify({
+          serviceType: service.serviceType,
+          clientName: service.clientName,
+          address: service.address,
+          phone: service.phone,
+          serviceCharge: service.amount,
+          serviceDate: service.serviceDate,
+          serviceTime: service.serviceTime,
+          serviceBoy: service.serviceBoy
+        })
+      }
+    });
+  };
+
   const handleMoveToPending = async (id: string) => {
     Alert.alert(
       'Move to Pending',
@@ -248,128 +273,132 @@ const CompletedServicesScreen = () => {
   };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
-    <TouchableOpacity
-      style={styles.serviceCard}
-      onPress={() => {
-        router.push({
-          pathname: '/bill',
-          params: {
-            serviceData: JSON.stringify({
-              serviceType: item.serviceType,
-              serviceBoyName: item.serviceBoy || 'userName',
-              customerName: item.clientName,
-              address: item.address,
-              contactNumber: item.phone,
-              serviceCharge: item.amount
-            }),
-          },
-        });
-      }}
-    >
+    <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
-        <Text style={styles.serviceType}>{item.serviceType}</Text>
+        <View style={styles.serviceTypeContainer}>
+          <MaterialCommunityIcons 
+            name="tools" 
+            size={20} 
+            color="#5E72E4" 
+            style={styles.serviceIcon}
+          />
+          <Text style={styles.serviceType}>{item.serviceType}</Text>
+        </View>
         <View style={[styles.statusBadge, styles.completedBadge]}>
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
+      
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={16} color="#6B7280" />
+          <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={16} color="#6B7280" />
+          <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={16} color="#6B7280" />
+          <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
+          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
+      
       <View style={styles.serviceFooter}>
-        <Text
-          style={styles.serviceBoyText}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          Assigned to: {item.serviceBoy}
-        </Text>
-        <Text style={styles.completedTimeText}>
-          {item.completedAt
-            ? ` ${formatToAmPm(item.completedAt)}`
-            : item.serviceDate && item.serviceTime
-              ? `${item.serviceDate} • ${item.serviceTime}`
-              : item.date}
+        <View style={styles.dateContainer}>
+          <MaterialIcons name="check-circle" size={16} color="#718096" />
+          <Text style={styles.dateText}>
+            {item.completedAt
+              ? `${formatToAmPm(item.completedAt)}`
+              : 'Completion time not available'}
+          </Text>
+        </View>
+        <Text style={styles.serviceBoyText}>
+          {item.serviceBoy}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.moveToPendingButton}
-        onPress={() => handleMoveToPending(item.id)}
-      >
-        <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+      
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.createBillButton}
+          onPress={() => handleCreateBill(item)}
+        >
+          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
+          <Text style={styles.createBillButtonText}>Create Bill</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.moveToPendingButton}
+          onPress={() => handleMoveToPending(item.id)}
+        >
+          <MaterialIcons name="pending-actions" size={20} color="#FFF" />
+          <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.filterRow}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.push('/home')}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Completed Services</Text>
+        </View>
+        <View style={styles.headerCount}>
+          <Text style={styles.headerCountText}>{services.length}</Text>
+        </View>
+      </View>
+
+      <View style={styles.filterContainer}>
         <TouchableOpacity
-          style={[
-            styles.filterButton,
-            selectedServiceBoy && styles.activeFilter
-          ]}
+          style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
           onPress={() => {
             setFilterType('serviceBoy');
             setFilterModalVisible(true);
           }}
         >
-          <Text style={styles.filterButtonText}>
-            {selectedServiceBoy ? `Boy: ${selectedServiceBoy}` : 'Filter by Boy'}
+          <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
+          <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
+            {selectedServiceBoy ? selectedServiceBoy : 'Filter by boy'}
           </Text>
-          <MaterialIcons name="filter-list" size={20} color="#fff" />
         </TouchableOpacity>
+        
         <TouchableOpacity
-          style={[
-            styles.filterButton,
-            dateFilter && styles.activeFilter
-          ]}
-          onPress={() => {
-            setFilterType('date');
-            setShowDatePicker(true);
-          }}
+          style={[styles.filterButton, dateFilter && styles.activeFilter]}
+          onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.filterButtonText}>
-            {dateFilter ? format(dateFilter, 'dd/MM/yy') : 'Filter by Date'}
+          <Feather name="calendar" size={18} color={dateFilter ? "#FFF" : "#5E72E4"} />
+          <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
+            {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
-          <MaterialIcons name="event" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
       {(selectedServiceBoy || dateFilter) && (
         <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>Active filters:</Text>
           {selectedServiceBoy && (
             <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>Boy: {selectedServiceBoy}</Text>
-              <TouchableOpacity onPress={() => filterServices(null)}>
-                <MaterialIcons name="close" size={16} color="#fff" />
+              <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
+              <TouchableOpacity onPress={clearServiceBoyFilter}>
+                <Feather name="x" size={16} color="#FFF" />
               </TouchableOpacity>
             </View>
           )}
           {dateFilter && (
             <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>{format(dateFilter, 'dd/MM/yy')}</Text>
+              <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
               <TouchableOpacity onPress={clearDateFilter}>
-                <MaterialIcons name="close" size={16} color="#fff" />
+                <Feather name="x" size={16} color="#FFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -384,15 +413,6 @@ const CompletedServicesScreen = () => {
           onChange={handleDateChange}
         />
       )}
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Completed Services</Text>
-        <View style={styles.headerCountContainer}>
-          <Text style={styles.headerCountText}>
-            {services.length} {selectedServiceBoy && `of ${countCompletedByServiceBoy()[selectedServiceBoy] || 0}`}
-          </Text>
-        </View>
-      </View>
 
       <Modal
         animationType="slide"
@@ -452,13 +472,13 @@ const CompletedServicesScreen = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="check-circle" size={48} color="#9CA3AF" />
+          <MaterialIcons name="check-circle" size={48} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {selectedServiceBoy
               ? `No completed services for ${selectedServiceBoy}`
               : dateFilter
                 ? `No services completed on ${format(dateFilter, 'MMMM d, yyyy')}`
-                : 'No completed services'
+                : 'No completed services found'
             }
           </Text>
           <Text style={styles.emptySubtext}>All services are pending</Text>
@@ -468,4 +488,4 @@ const CompletedServicesScreen = () => {
   );
 };
 
-export default CompletedServicesScreen;
+export default AdminCompletedServicesScreen;

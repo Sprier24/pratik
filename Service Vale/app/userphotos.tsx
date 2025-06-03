@@ -10,14 +10,18 @@ import {
     Modal,
     Pressable,
     Dimensions,
+    SafeAreaView,
+    RefreshControl
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { databases, storage, account } from '../lib/appwrite';
 import { Query, Models } from 'appwrite';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/Userphoto';
+import { footerStyles } from '../constants/footer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface PhotoDocument extends Models.Document {
     beforeImageUrl?: string;
@@ -43,7 +47,9 @@ const PhotoComparisonPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [previewVisible, setPreviewVisible] = useState<boolean>(false);
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         checkAuthStatus();
@@ -75,10 +81,16 @@ const PhotoComparisonPage: React.FC = () => {
             );
             setPhotoSets(res.documents);
         } catch {
-            Alert.alert('Error', 'Failed to load data.');
+            Alert.alert('Error', 'Failed to load photos.');
         } finally {
             setIsLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchPhotoSets();
     };
 
     const openPreview = (uri: string) => {
@@ -92,67 +104,54 @@ const PhotoComparisonPage: React.FC = () => {
     };
 
     const saveBothImagesAndDelete = async (item: PhotoDocument) => {
-    setIsLoading(true);
-    try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Needed',
-          'Allow access to save images to your gallery.',
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      const saveToGallery = async (fileId: string | undefined) => {
-        if (!fileId) return null;
-
+        setIsLoading(true);
         try {
-    
-          const uri = buildImageUrl(fileId); 
-          const filename = `photo_${Date.now()}.jpg`; 
-          const localPath = `${FileSystem.cacheDirectory}${filename}`;
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Cannot access gallery.');
+                setIsLoading(false);
+                return;
+            }
 
-          await FileSystem.downloadAsync(uri, localPath);
+            const saveImage = async (fileId: string | undefined) => {
+                if (!fileId) return null;
+                const uri = buildImageUrl(fileId);
+                const localPath = `${FileSystem.cacheDirectory}${fileId}.jpg`;
+                const downloaded = await FileSystem.downloadAsync(uri, localPath);
+                const asset = await MediaLibrary.createAssetAsync(downloaded.uri);
+                return asset;
+            };
 
-    
-          const asset = await MediaLibrary.createAssetAsync(localPath);
+            const beforeAsset = await saveImage(item.beforeImageUrl);
+            const afterAsset = await saveImage(item.afterImageUrl);
 
-          await FileSystem.deleteAsync(localPath).catch(() => { });
+            if (beforeAsset || afterAsset) {
+                await MediaLibrary.createAlbumAsync('Service Photos', beforeAsset ?? afterAsset as MediaLibrary.Asset, false);
+            }
 
-          return asset;
-        } catch (error) {
-          console.error('Save failed:', error);
-          return null;
+            if (item.beforeImageUrl) {
+                await storage.deleteFile(BUCKET_ID, item.beforeImageUrl);
+            }
+            if (item.afterImageUrl) {
+                await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
+            }
+
+            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
+
+            Alert.alert('Success', 'Images saved to gallery and removed from system.');
+            fetchPhotoSets();
+        } catch (err) {
+            console.error(err);
+            Alert.alert('Error', 'Failed to process images.');
+        } finally {
+            setIsLoading(false);
         }
-      };
+    };
 
-    
-      await Promise.all([
-        saveToGallery(item.beforeImageUrl),
-        saveToGallery(item.afterImageUrl),
-      ]);
-
-      await Promise.all([
-        item.beforeImageUrl && storage.deleteFile(BUCKET_ID, item.beforeImageUrl),
-        item.afterImageUrl && storage.deleteFile(BUCKET_ID, item.afterImageUrl),
-        databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id),
-      ]);
-
-      Alert.alert('Success', 'Images saved to your gallery!');
-      fetchPhotoSets();
-    } catch (error) {
-      console.error('Operation failed:', error);
-      Alert.alert('Error', 'Failed to save images. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-    if (isLoading) {
+    if (isLoading && !refreshing) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6B46C1" />
+                <ActivityIndicator size="large" color="#5E72E4" />
             </View>
         );
     }
@@ -160,76 +159,135 @@ const PhotoComparisonPage: React.FC = () => {
     if (!isAuthenticated) {
         return (
             <View style={styles.authContainer}>
-                <Text>Please login to view your progress photos.</Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                    <Text style={{ color: '#3498db' }}>Go to Login</Text>
+                <Text style={styles.authText}>Please login to view service photos</Text>
+                <TouchableOpacity 
+                    style={styles.loginButton}
+                    onPress={() => router.push('/login')}
+                >
+                    <Text style={styles.loginButtonText}>Go to Login</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Progress Tracker</Text>
-            {photoSets.length === 0 ? (
-                <Text style={{ textAlign: 'center', marginTop: 20 }}>No photos yet.</Text>
-            ) : (
-                photoSets.map((item) => (
-                    <View key={item.$id} style={styles.card}>
-                        <Text style={styles.date}>
-                            {new Date(item.date).toLocaleString()}
-                        </Text>
-                        <View style={styles.imageRow}>
-                            <View style={styles.imageContainer}>
-                                <Text>Before</Text>
-                                {item.beforeImageUrl ? (
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            if (item.beforeImageUrl) {
-                                                openPreview(buildImageUrl(item.beforeImageUrl));
-                                            }
-                                        }}
-                                    >
-                                        <Image
-                                            source={{ uri: buildImageUrl(item.beforeImageUrl) }}
-                                            style={styles.image}
-                                        />
-                                    </TouchableOpacity>
-                                ) : (
-                                    <Text>No Image</Text>
-                                )}
-                            </View>
-                            <View style={styles.imageContainer}>
-                                <Text>After</Text>
-                                {item.afterImageUrl ? (
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            if (item.afterImageUrl) {
-                                                openPreview(buildImageUrl(item.afterImageUrl));
-                                            }
-                                        }}
-                                    >
-                                        <Image
-                                            source={{ uri: buildImageUrl(item.afterImageUrl) }}
-                                            style={styles.image}
-                                        />
-                                    </TouchableOpacity>
-                                ) : (
-                                    <Text>No Image</Text>
-                                )}
-                            </View>
-                        </View>
-                        {item.notes && <Text style={styles.notes}>Notes: {item.notes}</Text>}
-                        <TouchableOpacity
-                            style={styles.button}
-                            onPress={() => saveBothImagesAndDelete(item)}
-                        >
-                            <Text style={styles.buttonText}>Save to Gallery & Delete</Text>
-                        </TouchableOpacity>
-                    </View>
-                ))
-            )}
+        <SafeAreaView style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <TouchableOpacity onPress={() => router.push('/home')}>
+                        <Feather name="arrow-left" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Service Photos</Text>
+                </View>
+            </View>
 
+            <ScrollView 
+                contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#5E72E4']}
+                        tintColor={'#5E72E4'}
+                    />
+                }
+            >
+                {photoSets.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
+                        <Text style={styles.emptyText}>No service photos yet</Text>
+                    </View>
+                ) : (
+                    photoSets.map((item) => (
+                        <View key={item.$id} style={styles.photoCard}>
+                            <View style={styles.cardHeader}>
+                                <View style={styles.dateBadge}>
+                                    <MaterialIcons name="date-range" size={16} color="#FFF" />
+                                    <Text style={styles.dateText}>
+                                        {new Date(item.date).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.photoGrid}>
+                                <View style={styles.photoContainer}>
+                                    <Text style={styles.photoLabel}>Before</Text>
+                                    {item.beforeImageUrl ? (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (item.beforeImageUrl) {
+                                                    openPreview(buildImageUrl(item.beforeImageUrl));
+                                                }
+                                            }}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Image
+                                                source={{ uri: buildImageUrl(item.beforeImageUrl) }}
+                                                style={styles.photoImage}
+                                            />
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <View style={styles.placeholder}>
+                                            <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                            <Text style={styles.placeholderText}>No image</Text>
+                                        </View>
+                                    )}
+                                </View>
+
+                                <View style={styles.photoContainer}>
+                                    <Text style={styles.photoLabel}>After</Text>
+                                    {item.afterImageUrl ? (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                if (item.afterImageUrl) {
+                                                    openPreview(buildImageUrl(item.afterImageUrl));
+                                                }
+                                            }}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Image
+                                                source={{ uri: buildImageUrl(item.afterImageUrl) }}
+                                                style={styles.photoImage}
+                                            />
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <View style={styles.placeholder}>
+                                            <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                            <Text style={styles.placeholderText}>No image</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+
+                            <View>
+                                {item.notes && (
+                                    <View style={styles.notesBadge}>
+                                        <Text style={styles.notesText}>{item.notes}</Text>
+                                    </View>
+                                )}
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.actionButton}
+                                onPress={() => saveBothImagesAndDelete(item)}
+                                disabled={isLoading}
+                            >
+                                <MaterialIcons name="save-alt" size={20} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Save & Remove</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
+                )}
+            </ScrollView>
+
+            {/* Image Preview Modal */}
             <Modal visible={previewVisible} transparent animationType="fade">
                 <Pressable style={styles.modalBackground} onPress={closePreview}>
                     {previewImageUrl && (
@@ -244,9 +302,59 @@ const PhotoComparisonPage: React.FC = () => {
                     </TouchableOpacity>
                 </Pressable>
             </Modal>
-        </ScrollView>
+            <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
+                <TouchableOpacity
+                    style={footerStyles.bottomButton}
+                    onPress={() => router.push('/service')}
+                >
+                    <View style={footerStyles.bottomButtonIcon}>
+                        <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+                    </View>
+                    <Text style={footerStyles.bottomButtonText}>Service</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={footerStyles.bottomButton}
+                    onPress={() => router.push('/user')}
+                >
+                    <View style={footerStyles.bottomButtonIcon}>
+                        <MaterialIcons name="person" size={20} color="#5E72E4" />
+                    </View>
+                    <Text style={footerStyles.bottomButtonText}>Users</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[footerStyles.bottomButton]}
+                    onPress={() => router.push('/home')}
+                >
+                    <View style={[footerStyles.bottomButtonIcon]}>
+                        <Feather name="home" size={20} color="#5E72E4" />
+                    </View>
+                    <Text style={[footerStyles.bottomButtonText]}>Home</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
+                    onPress={() => router.push('/userphotos')}
+                >
+                    <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
+                        <MaterialIcons name="photo-library" size={20} color="#FFF" />
+                    </View>
+                    <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Photos</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={footerStyles.bottomButton}
+                    onPress={() => router.push('/bill')}
+                >
+                    <View style={footerStyles.bottomButtonIcon}>
+                        <Feather name="file-text" size={20} color="#5E72E4" />
+                    </View>
+                    <Text style={footerStyles.bottomButtonText}>Bills</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
 };
 
 export default PhotoComparisonPage;
-

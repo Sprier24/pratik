@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { ID } from 'appwrite';
@@ -164,6 +164,7 @@ const OrderScreen = () => {
         pathname: '/pending',
         params: {
           newService: JSON.stringify({
+            $id: response.$id,
             serviceType: formData.serviceType,
             clientName: formData.clientName,
             address: formData.address,
@@ -188,11 +189,16 @@ const OrderScreen = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>New Service Order</Text>
-        <Text style={styles.headerSubtitle}>Fill in the details below</Text>
+      <SafeAreaView style={styles.container1}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.push('/home')}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Service Order</Text>
+        </View>
       </View>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.formContainer}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Service Information</Text>
@@ -324,10 +330,8 @@ const OrderScreen = () => {
             />
           </View>
         </View>
-        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Billing Information</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>Amount</Text>
+            <Text style={styles.label1}>Amount</Text>
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
               <TextInput
@@ -338,8 +342,6 @@ const OrderScreen = () => {
                 keyboardType="numeric"
               />
             </View>
-          </View>
-        </View>
       </View>
       <TouchableOpacity
         style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -351,6 +353,8 @@ const OrderScreen = () => {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+  </SafeAreaView>
+    
   );
 };
 

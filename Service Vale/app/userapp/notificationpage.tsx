@@ -96,9 +96,38 @@ const AdminNotificationPage = () => {
                 Alert.alert('Error', 'Failed to get user data');
             }
         };
-
         getUserAndFetch();
     }, []);
+
+    const deleteAllNotifications = async () => {
+        Alert.alert(
+            'Delete All Notifications',
+            'Are you sure you want to delete all unread notifications?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const deletePromises = notifications.map((notification) =>
+                                databases.deleteDocument(
+                                    DATABASE_ID,
+                                    NOTIFICATIONS_COLLECTION,
+                                    notification.$id
+                                )
+                            );
+                            await Promise.all(deletePromises);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            fetchNotifications(userEmail);
+                        } catch (error) {
+                            Alert.alert('Error', 'Failed to delete notifications');
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const renderItem = ({ item }: { item: any }) => (
         <View style={styles.notificationCard}>
@@ -122,8 +151,15 @@ const AdminNotificationPage = () => {
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Notifications</Text>
-                <View style={{ width: 24 }} />
+                {notifications.length > 0 ? (
+                    <TouchableOpacity onPress={deleteAllNotifications}>
+                        <MaterialIcons name="delete" size={24} color="#fff" />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={{ width: 24 }} />
+                )}
             </View>
+
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={
@@ -138,7 +174,6 @@ const AdminNotificationPage = () => {
                     <View style={styles.emptyState}>
                         <Ionicons name="notifications-off" size={48} color="#ccc" />
                         <Text style={styles.noNotificationText}>No new notifications</Text>
-                        <Text style={styles.emptySubtext}>Pull down to refresh</Text>
                     </View>
                 ) : (
                     <FlatList

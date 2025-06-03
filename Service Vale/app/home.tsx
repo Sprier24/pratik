@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
 import { account, databases } from '../lib/appwrite';
 import { RefreshControl } from 'react-native';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../constants/HomeScreen.styles';
+import { footerStyles } from '../constants/footer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -13,7 +15,7 @@ const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
 const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const { width } = Dimensions.get('window');
 
-const HomeScreen = () => {
+const AdminHomeScreen = () => {
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
@@ -21,16 +23,32 @@ const HomeScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const insets = useSafeAreaInsets();
 
-  const handleLogout = async () => {
-    try {
-      await account.deleteSession('current');
-      Alert.alert('Logged Out', 'You have been successfully logged out');
-      router.replace('/');
-    } catch (error) {
-      console.error('Logout Error:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await account.deleteSession('current');
+              router.replace('/login'); 
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const fetchRevenueData = async () => {
@@ -38,6 +56,7 @@ const HomeScreen = () => {
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -46,6 +65,7 @@ const HomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -54,12 +74,10 @@ const HomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
-      const dailyTotal = dailyBills.documents.reduce((sum, bill) => {
-        return sum + parseFloat(bill.total || 0);
-      }, 0);
-      const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => {
-        return sum + parseFloat(bill.total || 0);
-      }, 0);
+
+      const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
+      const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
+
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
     } catch (error) {
@@ -71,8 +89,13 @@ const HomeScreen = () => {
     try {
       setRefreshing(true);
       const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID);
+
+      // Count pending orders (status === 'pending')
       const pending = orders.documents.filter(o => o.status === 'pending').length;
+
+      // Count completed orders (status !== 'pending' - assuming any other status means completed)
       const completed = orders.documents.filter(o => o.status !== 'pending').length;
+
       setPendingCount(pending);
       setCompletedCount(completed);
     } catch (error) {
@@ -102,7 +125,6 @@ const HomeScreen = () => {
     setIsLoading(false);
   };
 
-
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -115,119 +137,173 @@ const HomeScreen = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
+        <ActivityIndicator size="large" color="#5E72E4" />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            style={styles.notificationIcon}
+            onPress={() => router.push('/notification')}
+          >
+            <MaterialIcons name="notifications" size={24} color="#FFF" />
+            {unreadCount > 0 && <View style={styles.redDot} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutIcon}
+            onPress={handleLogout}
+          >
+            <Feather name="log-out" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Content */}
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#3498db']}
-            tintColor={'#3498db'}
+            colors={['#5E72E4']}
+            tintColor={'#5E72E4'}
           />
         }
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Service Dashboard</Text>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity
-              style={[styles.notificationIcon, { marginRight: 10 }]}
-              onPress={() => router.push('/notification')}
-            >
-              <MaterialIcons name="notifications" size={24} color="#fff" />
-              {unreadCount > 0 && <View style={styles.redDot} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-              <MaterialIcons name="logout" size={24} color="#fff" />
-            </TouchableOpacity>
+        {/* Revenue Cards */}
+        <View style={styles.revenueRow}>
+          <View style={[styles.revenueCard, styles.dailyCard]}>
+            <View style={styles.cardIconContainer}>
+              <MaterialIcons name="today" size={24} color="#FFF" />
+            </View>
+            <Text style={styles.cardTitle}>Today's Revenue</Text>
+            <Text style={styles.cardAmount}>
+              ₹{dailyRevenue.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </Text>
+            <View style={styles.cardFooter}>
+              <AntDesign name="arrowup" size={14} color="#FFF" />
+              <Text style={styles.cardFooterText}>Today</Text>
+            </View>
+          </View>
+
+          <View style={[styles.revenueCard, styles.monthlyCard]}>
+            <View style={styles.cardIconContainer}>
+              <MaterialIcons name="date-range" size={24} color="#FFF" />
+            </View>
+            <Text style={styles.cardTitle}>Monthly Revenue</Text>
+            <Text style={styles.cardAmount}>
+              ₹{monthlyRevenue.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </Text>
+            <View style={styles.cardFooter}>
+              <AntDesign name="arrowup" size={14} color="#FFF" />
+              <Text style={styles.cardFooterText}>This Month</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.revenueContainer}>
-          <View style={[styles.card, styles.dailyRevenue]}>
-            <Text style={styles.cardTitle}>Daily Revenue</Text>
-            <Text style={styles.cardAmount}>₹{dailyRevenue.toLocaleString('en-IN')}</Text>
-            <View style={styles.cardTrend}>
-              <AntDesign name="arrowup" size={14} color="#fff" />
-              <Text style={styles.trendText}>Today</Text>
+        {/* Services Cards */}
+        <View style={styles.servicesRow}>
+          <View style={[styles.serviceCard, styles.pendingCard]}>
+            <View style={styles.serviceCardHeader}>
+              <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
+                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
+              </View>
+              <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>
-          </View>
-          <View style={[styles.card, styles.monthlyRevenue]}>
-            <Text style={styles.cardTitle}>Monthly Revenue</Text>
-            <Text style={styles.cardAmount}>₹{monthlyRevenue.toLocaleString('en-IN')}</Text>
-            <View style={styles.cardTrend}>
-              <AntDesign name="arrowup" size={14} color="#fff" />
-              <Text style={styles.trendText}>This Month</Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.servicesContainer}>
-          <View style={[styles.card, styles.pendingCard]}>
-            <View style={styles.cardHeader}>
-              <MaterialIcons name="pending-actions" size={24} color="#e67e22" />
-              <Text style={styles.cardTitle}>Pending    Services</Text>
-            </View>
-            <Text style={styles.cardCount}>{pendingCount}</Text>
+            <Text style={styles.serviceCardCount}>{pendingCount}</Text>
             <TouchableOpacity
-              style={styles.viewButton}
+              style={styles.serviceCardButton}
               onPress={() => router.push('/pending')}
             >
-              <Text style={styles.viewButtonText}>View All</Text>
-              <AntDesign name="right" size={16} color="#3498db" />
+              <Text style={styles.serviceCardButtonText}>View All</Text>
+              <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
-          <View style={[styles.card, styles.completedCard]}>
-            <View style={styles.cardHeader}>
-              <MaterialIcons name="check-circle" size={24} color="#27ae60" />
-              <Text style={styles.cardTitle}>Completed Services</Text>
+
+          <View style={[styles.serviceCard, styles.completedCard]}>
+            <View style={styles.serviceCardHeader}>
+              <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
+                <MaterialIcons name="check-circle" size={24} color="#38A169" />
+              </View>
+              <Text style={styles.serviceCardTitle}>Completed Services</Text>
             </View>
-            <Text style={styles.cardCount}>{completedCount}</Text>
+            <Text style={styles.serviceCardCount}>{completedCount}</Text>
             <TouchableOpacity
-              style={styles.viewButton}
+              style={styles.serviceCardButton}
               onPress={() => router.push('/completed')}
             >
-              <Text style={styles.viewButtonText}>View All</Text>
-              <AntDesign name="right" size={16} color="#3498db" />
+              <Text style={styles.serviceCardButtonText}>View All</Text>
+              <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.bottomBar}>
+
+      <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity
-          style={styles.bottomButton}
+          style={footerStyles.bottomButton}
           onPress={() => router.push('/service')}
         >
-          <MaterialIcons name="car-repair" size={24} color="#3498db" />
-          <Text style={styles.bottomButtonText}>Service</Text>
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Service</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.bottomButton}
+          style={footerStyles.bottomButton}
           onPress={() => router.push('/user')}
         >
-          <MaterialIcons name="people" size={24} color="#3498db" />
-          <Text style={styles.bottomButtonText}>User</Text>
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="person" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Users</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.bottomButton}
+          style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
+        >
+          <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
+            <Feather name="home" size={20} color="#FFF" />
+          </View>
+          <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/userphotos')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Photos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
           onPress={() => router.push('/bill')}
         >
-          <MaterialIcons name="receipt" size={24} color="#3498db" />
-          <Text style={styles.bottomButtonText}>Bill</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/userphotos')}>
-          <MaterialIcons name="photo-library" size={24} color="#3498db" />
-          <Text style={styles.bottomButtonText}>Photos</Text>
+          <View style={footerStyles.bottomButtonIcon}>
+            <Feather name="file-text" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Bills</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
-
-export default HomeScreen;
+export default AdminHomeScreen;

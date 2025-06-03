@@ -1,21 +1,46 @@
-import { StyleSheet } from "react-native";
+import { Platform, StatusBar, StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  container1: {
+    flex: 1,
+    backgroundColor: "#F7FAFC",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 40,
+    paddingBottom: 20,
+    backgroundColor: "#5E72E4",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFF",
+    marginLeft: 15,
+  },
   container: {
     flexGrow: 1,
     backgroundColor: '#F9FAFB',
     paddingHorizontal: 16,
     paddingBottom: 32,
+    paddingTop: 16,
   },
   headerContainer: {
     paddingVertical: 24,
     paddingHorizontal: 4,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -47,6 +72,12 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 6,
+  },
+  label1: {
     fontSize: 14,
     fontWeight: '500',
     color: '#374151',
@@ -95,7 +126,7 @@ export const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#5E72E4',
     borderRadius: 8,
     padding: 16,
     marginTop: 24,
@@ -150,7 +181,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   timePeriodButtonActive: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#5E72E4',
   },
   timePeriodText: {
     color: '#6B7280',

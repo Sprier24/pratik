@@ -512,6 +512,6 @@ const PendingServicesScreen = () => {
       )}
     </SafeAreaView>
   );
-};
+};  
 
 export default PendingServicesScreen;

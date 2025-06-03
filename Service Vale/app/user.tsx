@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { ID, Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/UserDetailsForm.styles';
+import { footerStyles } from '../constants/footer';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
 
-const cities = [
-  "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad",
-  "Chennai", "Kolkata", "Surat", "Pune", "Jaipur",
-  "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane",
-  "Bhopal", "Visakhapatnam", "Pimpri-Chinchwad", "Patna", "Vadodara"
-];
-
 type User = {
-  $id: string;
+  $id?: string;
   name: string;
   address: string;
   contactNo: string;
@@ -40,6 +35,7 @@ const fieldLabels = {
 
 const UserDetailsForm = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -49,9 +45,6 @@ const UserDetailsForm = () => {
     panNo: '',
     city: '',
   });
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [filteredCities, setFilteredCities] = useState(cities);
-  const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [submittedUsers, setSubmittedUsers] = useState<User[]>([]);
@@ -88,6 +81,20 @@ const UserDetailsForm = () => {
       setIsLoading(false);
     }
   };
+
+  const formatToAmPm = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+  return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+};
 
   const validateForm = () => {
     let valid = true;
@@ -136,16 +143,8 @@ const UserDetailsForm = () => {
     return valid;
   };
 
-  const handleCitySearch = (text: string) => {
-    setSearchQuery(text);
-    const filtered = cities.filter(city =>
-      city.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredCities(filtered);
-  };
-
   const cleanDocumentData = (doc: any) => {
-    const { $collectionId, $databaseId, $createdAt, $updatedAt, $permissions, ...cleanData } = doc;
+    const { $id, $collectionId, $databaseId, $createdAt, $updatedAt, $permissions, ...cleanData } = doc;
     return cleanData;
   };
 
@@ -153,6 +152,10 @@ const UserDetailsForm = () => {
     if (validateForm()) {
       try {
         if (editingIndex !== null) {
+          const userId = submittedUsers[editingIndex].$id;
+          if (!userId) {
+            throw new Error('User ID is missing for update.');
+          }
           const updateData = {
             name: formData.name,
             address: formData.address,
@@ -162,12 +165,15 @@ const UserDetailsForm = () => {
             panNo: formData.panNo,
             city: formData.city,
           };
+
+          // Ensure userId is a string before calling updateDocument
           await databases.updateDocument(
             DATABASE_ID,
             COLLECTION_ID,
-            submittedUsers[editingIndex].$id,
+            userId as string,
             updateData
           );
+          
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
@@ -221,6 +227,9 @@ const UserDetailsForm = () => {
           onPress: async () => {
             try {
               const userId = submittedUsers[index].$id;
+              if (!userId) {
+                throw new Error('User ID is missing for deletion.');
+              }
               await databases.deleteDocument(
                 DATABASE_ID,
                 COLLECTION_ID,
@@ -229,7 +238,6 @@ const UserDetailsForm = () => {
               setSubmittedUsers(prevUsers =>
                 prevUsers.filter(user => user.$id !== userId)
               );
-
               if (editingIndex === index) {
                 setEditingIndex(null);
                 resetForm();
@@ -276,132 +284,87 @@ const UserDetailsForm = () => {
     setSelectedUser(null);
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#5E72E4" />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.mainContainer}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>Engineer Details</Text>
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+         <TouchableOpacity onPress={() => router.push('/home')}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Engineer Management</Text>
+        </View>
+        <View style={styles.headerCount}>
+          <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: insets.bottom + 120 }]}>
         {isFormVisible ? (
-          <>
-            <View style={styles.formHeader}>
-              <Text style={styles.sectionTitle}>
-                {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
-              </Text>
-            </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.sectionTitle}>
+              {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
+            </Text>
+            
             {Object.entries(formData).map(([key, value]) => {
               const currentValue = value || '';
               const label = fieldLabels[key as keyof typeof fieldLabels] || key;
               return (
-                <View key={key}>
-                  <Text style={styles.fieldLabel}>{label}</Text>
-                  {key === 'city' ? (
-                    <View style={styles.inputWrapper}>
-                      <MaterialIcons name="location-city" size={20} color="#666" style={styles.icon} />
-                      <TextInput
-                        placeholder={`Enter ${label.toLowerCase()}`}
-                        style={styles.input}
-                        value={currentValue}
-                        onChangeText={(text) => {
-                          handleChange(key, text);
-                          handleCitySearch(text);
-                        }}
-                        onFocus={() => setShowCityDropdown(true)}
-                      />
-                      <TouchableOpacity
-                        onPress={() => setShowCityDropdown(!showCityDropdown)}
-                        style={styles.searchIcon}
-                      >
-                        <Feather name="search" size={20} color="#666" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.inputWrapper}>
-                      {key === 'name' && <MaterialIcons name="person" size={20} color="#666" style={styles.icon} />}
-                      {key === 'contactNo' && <MaterialIcons name="phone" size={20} color="#666" style={styles.icon} />}
-                      {key === 'email' && <MaterialIcons name="email" size={20} color="#666" style={styles.icon} />}
-                      {key === 'address' && <MaterialIcons name="home" size={20} color="#666" style={styles.icon} />}
-                      {key === 'aadharNo' && <MaterialIcons name="credit-card" size={20} color="#666" style={styles.icon} />}
-                      {key === 'panNo' && <MaterialIcons name="assignment" size={20} color="#666" style={styles.icon} />}
-                      <TextInput
-                        placeholder={`Enter ${label.toLowerCase()}`}
-                        style={key === 'address' ? [styles.input, styles.multilineInput] : styles.input}
-                        value={currentValue}
-                        onChangeText={(text) => handleChange(key, text)}
-                        keyboardType={
-                          key === 'contactNo' || key === 'aadharNo' ? 'numeric' :
-                            key === 'email' ? 'email-address' : 'default'
-                        }
-                        multiline={key === 'address'}
-                        numberOfLines={key === 'address' ? 3 : 1}
-                        maxLength={key === 'panNo' ? 10 : key === 'aadharNo' ? 12 : key === 'contactNo' ? 10 : undefined}
-                        autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
-                      />
-                    </View>
-                  )}
+                <View key={key} style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>{label}</Text>
+                  <TextInput
+                    placeholder={`Enter ${label.toLowerCase()}`}
+                    style={[
+                      styles.input,
+                      key === 'address' && styles.textArea,
+                      errors[key] && styles.inputError
+                    ]}
+                    value={currentValue}
+                    onChangeText={(text) => handleChange(key, text)}
+                    keyboardType={
+                      key === 'contactNo' || key === 'aadharNo' ? 'numeric' :
+                        key === 'email' ? 'email-address' : 'default'
+                    }
+                    multiline={key === 'address'}
+                    numberOfLines={key === 'address' ? 3 : 1}
+                    maxLength={
+                      key === 'panNo' ? 10 : 
+                      key === 'aadharNo' ? 12 : 
+                      key === 'contactNo' ? 10 : undefined
+                    }
+                    autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
+                  />
                   {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-                  {key === 'city' && showCityDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      <ScrollView
-                        style={styles.dropdownScroll}
-                        nestedScrollEnabled={true}
-                        keyboardShouldPersistTaps="handled"
-                      >
-                        {filteredCities.length > 0 ? (
-                          filteredCities.map((city, index) => (
-                            <TouchableOpacity
-                              key={index}
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                handleChange('city', city);
-                                setShowCityDropdown(false);
-                                setSearchQuery('');
-                                setFilteredCities(cities);
-                              }}
-                            >
-                              <Text style={styles.dropdownItemText}>{city}</Text>
-                            </TouchableOpacity>
-                          ))
-                        ) : (
-                          <View style={styles.noResults}>
-                            <Text style={styles.noResultsText}>No cities found</Text>
-                          </View>
-                        )}
-                      </ScrollView>
-                    </View>
-                  )}
                 </View>
               );
             })}
+
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.resetButton]}
-                onPress={resetForm}
-              >
-                <Text style={styles.actionButtonText}>Clear</Text>
-              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionButton, styles.submitButton]}
                 onPress={handleSubmit}
               >
                 <Text style={styles.actionButtonText}>
-                  {editingIndex !== null ? 'Update' : 'Create'}
+                  {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
                 </Text>
               </TouchableOpacity>
             </View>
-          </>
+          </View>
         ) : (
           <View style={styles.usersContainer}>
-            <View style={styles.header}>
-              <Text style={styles.sectionTitle}>Engineers List</Text>
-              <View style={styles.headerCountContainer}>
-                <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
-              </View>
-            </View>
-            {isLoading ? (
-              <Text>Loading engineers...</Text>
-            ) : submittedUsers.length === 0 ? (
+            {submittedUsers.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No engineer added yet</Text>
-                <Text style={styles.emptySubtext}>Tap the + button to add a new engieer</Text>
+                <MaterialIcons name="engineering" size={48} color="#A0AEC0" />
+                <Text style={styles.emptyText}>No engineers added yet</Text>
+                <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
               </View>
             ) : (
               submittedUsers.map((user, index) => (
@@ -411,11 +374,20 @@ const UserDetailsForm = () => {
                   onPress={() => showUserDetails(user)}
                 >
                   <View style={styles.userHeader}>
-                    <Text style={styles.userName}>{user.name}</Text>
-                    <Text style={styles.userDate}>{new Date(user.$createdAt || '').toLocaleDateString()}</Text>
+                    <View style={styles.userAvatar}>
+                      <MaterialIcons name="engineering" size={24} color="#5E72E4" />
+                    </View>
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userName}>{user.name}</Text>
+                      <Text style={styles.userContact}>{user.contactNo}</Text>
+                    </View>
                   </View>
-                  <Text style={styles.userContact}>{user.contactNo}</Text>
-                  <Text style={styles.userEmail}>{user.email}</Text>
+                  <View style={styles.userFooter}>
+                    <Text style={styles.userEmail}>{user.email}</Text>
+                    <Text style={styles.userDate}>
+                      {new Date(user.$createdAt || '').toLocaleDateString()}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))
             )}
@@ -423,6 +395,7 @@ const UserDetailsForm = () => {
         )}
       </ScrollView>
 
+      {/* Engineer Details Modal */}
       <Modal
         visible={isUserDetailVisible}
         animationType="slide"
@@ -436,79 +409,154 @@ const UserDetailsForm = () => {
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Engineer Details</Text>
                   <TouchableOpacity onPress={closeUserDetails}>
-                    <Ionicons name="close" size={24} color="#666" />
+                    <Feather name="x" size={24} color="#718096" />
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={styles.modalContent}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Name :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.name}</Text>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Basic Information</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Name:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.name}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Contact Number:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.contactNo}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Email Address:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.email}</Text>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Contact Number :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.contactNo}</Text>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Address Details</Text>
+                    <View style={styles.detailRow1}>
+                      <Text style={styles.detailLabel}>Address:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.address}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>City:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.city}</Text>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Email Address :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.email}</Text>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Document Details</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Aadhar Number:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>PAN Number:</Text>
+                      <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Address :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.address}</Text>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Additional Information</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Created At:</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedUser.$createdAt ? formatToAmPm(selectedUser.$createdAt) : 'N/A'}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Aadhar Number :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>PAN:</Text>
-                    <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>City :</Text>
-                    <Text style={styles.detailValue}>{selectedUser.city}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Created At :</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(selectedUser.$createdAt || '').toLocaleString()}
-                    </Text>
+
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.editButton]}
+                      onPress={() => {
+                        setFormData(cleanDocumentData(selectedUser));
+                        const index = submittedUsers.findIndex(u => u.$id === selectedUser.$id);
+                        if (index !== -1) {
+                          setEditingIndex(index);
+                        }
+                        setIsFormVisible(true);
+                        closeUserDetails();
+                      }}
+                    >
+                      <Feather name="edit" size={18} color="#FFF" />
+                      <Text style={styles.actionButtonText}>Update</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.deleteButton]}
+                      onPress={() => {
+                        handleDeleteUser(submittedUsers.findIndex(u => u.$id === selectedUser.$id));
+                        closeUserDetails();
+                      }}
+                    >
+                      <Feather name="trash-2" size={18} color="#FFF" />
+                      <Text style={styles.actionButtonText}>Delete</Text>
+                    </TouchableOpacity>
                   </View>
                 </ScrollView>
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setFormData(cleanDocumentData(selectedUser));
-                      const index = submittedUsers.findIndex(u => u.$id === selectedUser.$id);
-                      if (index !== -1) {
-                        setEditingIndex(index);
-                      }
-                      setIsFormVisible(true);
-                      closeUserDetails();
-                    }}
-                  >
-                    <Text style={styles.editButtonText}>Update</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => {
-                      handleDeleteUser(submittedUsers.findIndex(u => u.$id === selectedUser.$id));
-                      closeUserDetails();
-                    }}
-                  >
-                    <Text style={styles.editButtonText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
               </>
             )}
           </View>
         </View>
       </Modal>
-      <TouchableOpacity style={styles.fab} onPress={toggleFormVisibility}>
-        <Ionicons name={isFormVisible ? 'close' : 'add'} size={28} color="white" />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={toggleFormVisibility}
+      >
+        <Feather name={isFormVisible ? 'x' : 'plus'} size={24} color="#FFF" />
       </TouchableOpacity>
-    </View>
+
+      <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/service')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Service</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
+          onPress={() => router.push('/user')}
+        >
+          <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
+            <MaterialIcons name="person" size={20} color="#FFF" />
+          </View>
+          <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Users</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[footerStyles.bottomButton]}
+          onPress={() => router.push('/home')}
+        >
+          <View style={[footerStyles.bottomButtonIcon]}>
+            <Feather name="home" size={20} color="#5E72E4" />
+          </View>
+          <Text style={[footerStyles.bottomButtonText]}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/userphotos')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Photos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/bill')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <Feather name="file-text" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Bills</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
