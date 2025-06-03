@@ -455,9 +455,6 @@ export const styles = StyleSheet.create({
   whatsappButton: {
     backgroundColor: "#25D366",
   },
-  deleteButton: {
-    backgroundColor: "#F56565",
-  },
   actionButtonText: {
     color: "#FFF",
     fontSize: 14,

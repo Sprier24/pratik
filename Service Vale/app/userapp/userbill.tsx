@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
@@ -541,31 +541,6 @@ const UserBill = () => {
     setIsSignatureVisible(false);
   };
 
-  const handleDeleteBill = async (id: string) => {
-    Alert.alert(
-      'Delete Bill',
-      'Are you sure you want to delete this bill?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          onPress: async () => {
-            try {
-              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
-              setBills(prev => prev.filter(bill => bill.$id !== id));
-              setAllBills(prev => prev.filter(bill => bill.$id !== id));
-              closeBillDetails();
-              Alert.alert('Success', 'Bill deleted successfully');
-            } catch (error) {
-              console.error('Error deleting bill:', error);
-              Alert.alert('Error', 'Failed to delete bill');
-            }
-          }
-        }
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -611,164 +586,170 @@ const UserBill = () => {
         />
       )}
 
-      <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}>
-        {isFormVisible ? (
-          <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle}>Service Details</Text>
-            {Object.entries(form).map(([key, value]) => (
-              <View key={key} style={styles.formGroup}>
-                <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
-                <TextInput
-                  placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
-                  style={styles.input}
-                  keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
-                  value={value}
-                  onChangeText={(text) => handleChange(key, text)}
-                  editable={key !== 'serviceBoyName'}
-                  maxLength={key === 'contactNumber' ? 10 : undefined}
-                />
-              </View>
-            ))}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={80}
+      >
+        <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
+          {isFormVisible ? (
+            <View style={styles.formContainer}>
+              <Text style={styles.sectionTitle}>Service Details</Text>
+              {Object.entries(form).map(([key, value]) => (
+                <View key={key} style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
+                  <TextInput
+                    placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
+                    style={styles.input}
+                    keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
+                    value={value}
+                    onChangeText={(text) => handleChange(key, text)}
+                    editable={key !== 'serviceBoyName'}
+                    maxLength={key === 'contactNumber' ? 10 : undefined}
+                  />
+                </View>
+              ))}
 
-            <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
-            <TextInput
-              placeholder="Enter any additional notes"
-              style={[styles.input, styles.textArea]}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-            />
+              <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
+              <TextInput
+                placeholder="Enter any additional notes"
+                style={[styles.input, styles.textArea]}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={4}
+                maxLength={500}
+              />
 
-            <View style={styles.paymentSummary}>
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.summaryLabel}>Total Amount :</Text>
-                <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>Payment Method</Text>
-            <View style={styles.paymentMethodContainer}>
-              <TouchableOpacity
-                style={[styles.methodButton, paymentMethod === 'cash' && styles.methodButtonActive]}
-                onPress={() => setPaymentMethod('cash')}
-              >
-                <MaterialCommunityIcons
-                  name="cash"
-                  size={20}
-                  color={paymentMethod === 'cash' ? '#FFF' : '#5E72E4'}
-                />
-                <Text style={[styles.methodText, paymentMethod === 'cash' && styles.methodTextActive]}>
-                  Cash
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
-                onPress={() => setPaymentMethod('upi')}
-              >
-                <MaterialCommunityIcons
-                  name="bank-transfer"
-                  size={20}
-                  color={paymentMethod === 'upi' ? '#FFF' : '#5E72E4'}
-                />
-                <Text style={[styles.methodText, paymentMethod === 'upi' && styles.methodTextActive]}>
-                  UPI
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {paymentMethod === 'cash' && (
-              <View style={styles.cashPaymentContainer}>
-                <Text style={styles.sectionTitle}>Cash Payment</Text>
-                <TextInput
-                  placeholder="Amount Given by Customer"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={cashGiven}
-                  onChangeText={setCashGiven}
-                />
-                <View style={styles.changeContainer}>
-                  <Text style={styles.changeLabel}>Change Return by Engineer :</Text>
-                  <Text style={styles.changeValue}>₹{calculateChange()}</Text>
+              <View style={styles.paymentSummary}>
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={styles.summaryLabel}>Total Amount :</Text>
+                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
                 </View>
               </View>
-            )}
 
-            {signature ? (
-              <View style={styles.signatureContainer}>
-                <Text style={styles.signatureLabel}>Customer Signature:</Text>
-                <Image
-                  source={{ uri: `data:image/png;base64,${signature}` }}
-                  style={styles.signatureImage}
-                />
+              <Text style={styles.sectionTitle}>Payment Method</Text>
+              <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
-                  style={styles.changeSignatureButton}
+                  style={[styles.methodButton, paymentMethod === 'cash' && styles.methodButtonActive]}
+                  onPress={() => setPaymentMethod('cash')}
+                >
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={20}
+                    color={paymentMethod === 'cash' ? '#FFF' : '#5E72E4'}
+                  />
+                  <Text style={[styles.methodText, paymentMethod === 'cash' && styles.methodTextActive]}>
+                    Cash
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
+                  onPress={() => setPaymentMethod('upi')}
+                >
+                  <MaterialCommunityIcons
+                    name="bank-transfer"
+                    size={20}
+                    color={paymentMethod === 'upi' ? '#FFF' : '#5E72E4'}
+                  />
+                  <Text style={[styles.methodText, paymentMethod === 'upi' && styles.methodTextActive]}>
+                    UPI
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {paymentMethod === 'cash' && (
+                <View style={styles.cashPaymentContainer}>
+                  <Text style={styles.sectionTitle}>Cash Payment</Text>
+                  <TextInput
+                    placeholder="Amount Given by Customer"
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={cashGiven}
+                    onChangeText={setCashGiven}
+                  />
+                  <View style={styles.changeContainer}>
+                    <Text style={styles.changeLabel}>Change Return by Engineer :</Text>
+                    <Text style={styles.changeValue}>₹{calculateChange()}</Text>
+                  </View>
+                </View>
+              )}
+
+              {signature ? (
+                <View style={styles.signatureContainer}>
+                  <Text style={styles.signatureLabel}>Customer Signature:</Text>
+                  <Image
+                    source={{ uri: `data:image/png;base64,${signature}` }}
+                    style={styles.signatureImage}
+                  />
+                  <TouchableOpacity
+                    style={styles.changeSignatureButton}
+                    onPress={() => setIsSignatureVisible(true)}
+                  >
+                    <Text style={styles.changeSignatureText}>Change Signature</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.addSignatureButton}
                   onPress={() => setIsSignatureVisible(true)}
                 >
-                  <Text style={styles.changeSignatureText}>Change Signature</Text>
+                  <Feather name="edit" size={18} color="#5E72E4" />
+                  <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.addSignatureButton}
-                onPress={() => setIsSignatureVisible(true)}
-              >
-                <Feather name="edit" size={18} color="#5E72E4" />
-                <Text style={styles.addSignatureText}>Add Customer Signature</Text>
-              </TouchableOpacity>
-            )}
+              )}
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
-              <Text style={styles.submitText}>Submit Bill</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.billsListContainer}>
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#5E72E4" />
-              </View>
-            ) : bills.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
-                <Text style={styles.emptyText}>
-                  {dateFilter
-                    ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
-                    : 'No bills found'
-                  }
-                </Text>
-                <Text style={styles.emptySubtext}>You haven't created any bills yet</Text>
-              </View>
-            ) : (
-              bills.map((bill) => (
-                <TouchableOpacity
-                  key={bill.$id}
-                  style={styles.billCard}
-                  onPress={() => showBillDetails(bill)}
-                >
-                  <View style={styles.billHeader}>
-                    <View>
-                      <Text style={styles.billCustomer}>{bill.customerName}</Text>
-                      <Text style={styles.billService}>{bill.serviceType}</Text>
-                      <Text style={styles.billNumber}>{bill.billNumber}</Text>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
+                <Text style={styles.submitText}>Submit Bill</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.billsListContainer}>
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#5E72E4" />
+                </View>
+              ) : bills.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
+                  <Text style={styles.emptyText}>
+                    {dateFilter
+                      ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
+                      : 'No bills found'
+                    }
+                  </Text>
+                  <Text style={styles.emptySubtext}>You haven't created any bills yet</Text>
+                </View>
+              ) : (
+                bills.map((bill) => (
+                  <TouchableOpacity
+                    key={bill.$id}
+                    style={styles.billCard}
+                    onPress={() => showBillDetails(bill)}
+                  >
+                    <View style={styles.billHeader}>
+                      <View>
+                        <Text style={styles.billCustomer}>{bill.customerName}</Text>
+                        <Text style={styles.billService}>{bill.serviceType}</Text>
+                        <Text style={styles.billNumber}>{bill.billNumber}</Text>
+                      </View>
+                      <View style={styles.billAmountContainer}>
+                        <Text style={styles.billAmount}>₹{bill.total}</Text>
+                      </View>
                     </View>
-                    <View style={styles.billAmountContainer}>
-                      <Text style={styles.billAmount}>₹{bill.total}</Text>
+                    <View style={styles.billDateContainer}>
+                      <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
+                      <Text style={styles.billDate}>
+                        {formatToAmPm(bill.date)}
+                      </Text>
                     </View>
-                  </View>
-                  <View style={styles.billDateContainer}>
-                    <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
-                    <Text style={styles.billDate}>
-                      {formatToAmPm(bill.date)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
-        )}
-      </ScrollView>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={isBillDetailVisible}
@@ -877,13 +858,6 @@ const UserBill = () => {
                     >
                       <Feather name="printer" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Print</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.deleteButton]}
-                      onPress={() => handleDeleteBill(selectedBill.$id)}
-                    >
-                      <Feather name="trash-2" size={18} color="#FFF" />
-                      <Text style={styles.actionButtonText}>Delete</Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>
