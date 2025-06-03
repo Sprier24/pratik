@@ -158,7 +158,7 @@ const PendingServicesScreen = () => {
   }, [params.newService]);
 
   const countPendingByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All': allServices.length };
+    const counts: Record<string, number> = { 'All Service Engineers': allServices.length };
     serviceBoys.forEach(boy => {
       counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
     });
@@ -272,24 +272,24 @@ const PendingServicesScreen = () => {
     setDateFilter(null);
     applyFilters(selectedServiceBoy, null);
   };
-  
+
   const clearServiceBoyFilter = () => {
     setSelectedServiceBoy(null);
     applyFilters(null, dateFilter);
   };
 
   const sendManualWhatsAppNotification = (service: Service) => {
-    const message = `Dear ${service.clientName},\n\n` +
-      `Your ${service.serviceType} service is scheduled for:\n` +
-      `📅 Date: ${service.serviceDate}\n` +
-      `⏰ Time: ${service.serviceTime}\n\n` +
-      `Service Provider Details:\n` +
-      `👨‍🔧 Name: ${service.serviceBoy}\n` +
-      `📞 Contact: ${service.serviceboyContact}\n\n` +
-      `Service Amount: ₹${service.amount}\n\n` +
-      `Please be ready for the service. For any queries, contact us.\n\n` +
+    const message = `Hello! ${service.clientName},\n\n` +
+      `We are from Service Vale\n\n` +
+      `Your ${service.serviceType} service is scheduled for :\n` +
+      `📅 Date : ${service.serviceDate}\n` +
+      `⏰ Time : ${service.serviceTime}\n\n` +
+      `Service Engineer Details :\n` +
+      `👨‍🔧 Engineer Name : ${service.serviceBoy}\n` +
+      `📞 Contact Number : ${service.serviceboyContact}\n\n` +
+      `Service Charge : ₹${service.amount}\n\n` +
+      `Please be ready for the service. For any queries, contact us : 635-320-2602\n\n` +
       `Thank you for choosing our service!`;
-
     const phone = service.phone.replace(/\D/g, '');
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
 
@@ -306,10 +306,10 @@ const PendingServicesScreen = () => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons 
-            name="tools" 
-            size={20} 
-            color="#5E72E4" 
+          <MaterialCommunityIcons
+            name="tools"
+            size={20}
+            color="#5E72E4"
             style={styles.serviceIcon}
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
@@ -320,7 +320,7 @@ const PendingServicesScreen = () => {
           </View>
         </View>
       </View>
-      
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -355,7 +355,7 @@ const PendingServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
-      
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.whatsappButton}
@@ -364,7 +364,7 @@ const PendingServicesScreen = () => {
           <MaterialCommunityIcons name="whatsapp" size={20} color="#FFF" />
           <Text style={styles.whatsappButtonText}>Share</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.completeButton}
           onPress={() => handleComplete(item.id)}
@@ -382,7 +382,7 @@ const PendingServicesScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
-    
+
   );
 
   return (
@@ -409,10 +409,10 @@ const PendingServicesScreen = () => {
         >
           <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
-            {selectedServiceBoy ? selectedServiceBoy : 'Filter by boy'}
+            {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -423,27 +423,27 @@ const PendingServicesScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
-        
-        {(selectedServiceBoy || dateFilter) && (
-          <View style={styles.activeFiltersContainer}>
-            {selectedServiceBoy && (
-              <View style={styles.filterChip}>
-                <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
-                <TouchableOpacity onPress={clearServiceBoyFilter}>
-                  <Feather name="x" size={16} color="#FFF" />
-                </TouchableOpacity>
-              </View>
-            )}
-            {dateFilter && (
-              <View style={styles.filterChip}>
-                <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
-                <TouchableOpacity onPress={clearDateFilter}>
-                  <Feather name="x" size={16} color="#FFF" />
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
+
+      {(selectedServiceBoy || dateFilter) && (
+        <View style={styles.activeFiltersContainer}>
+          {selectedServiceBoy && (
+            <View style={styles.filterChip}>
+              <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
+              <TouchableOpacity onPress={clearServiceBoyFilter}>
+                <Feather name="x" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {dateFilter && (
+            <View style={styles.filterChip}>
+              <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
+              <TouchableOpacity onPress={clearDateFilter}>
+                <Feather name="x" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
 
       {showDatePicker && (
         <DateTimePicker
@@ -462,38 +462,29 @@ const PendingServicesScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Service Boy</Text>
-            <View style={styles.modalScrollBox}>
-              <TouchableOpacity
-                style={styles.filterOption}
-                onPress={() => filterServices(null)}
-              >
-                <View style={styles.filterOptionContainer}>
-                  <Text style={styles.filterOptionText}>All Service Boys</Text>
-                  <Text style={styles.countBadge}>
-                    {countPendingByServiceBoy()['All']}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <FlatList
-                data={serviceBoys}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => filterServices(item.name)}
-                  >
-                    <View style={styles.filterOptionContainer}>
-                      <Text style={styles.filterOptionText}>{item.name}</Text>
-                      <Text style={styles.countBadge}>
-                        {countPendingByServiceBoy()[item.name] || 0}
+            <Text style={styles.modalTitle}>Select Service Engineer</Text>
+            <FlatList
+              style={{ maxHeight: '90%' }}
+              contentContainerStyle={styles.scrollContent}
+              data={[{ id: 'all', name: 'All Service Engineers' }, ...serviceBoys]}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.serviceCard}
+                  onPress={() => filterServices(item.name === 'All Service Engineers' ? null : item.name)}
+                >
+                  <View style={styles.serviceHeader}>
+                    <Text style={styles.serviceType}>{item.name}</Text>
+                    <View style={[styles.statusBadge, styles.pendingBadge]}>
+                      <Text style={styles.statusText}>
+                        {countPendingByServiceBoy()[item.name] || 0} Pending
                       </Text>
                     </View>
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={true}
-              />
-            </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={true}
+            />
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}
@@ -504,7 +495,7 @@ const PendingServicesScreen = () => {
         </View>
       </Modal>
 
-      {services.length > 0 ? ( 
+      {services.length > 0 ? (
         <FlatList
           data={services}
           renderItem={renderServiceItem}

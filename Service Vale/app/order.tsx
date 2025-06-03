@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -189,7 +189,7 @@ const OrderScreen = () => {
   };
 
   return (
-      <SafeAreaView style={styles.container1}>
+    <SafeAreaView style={styles.container1}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
@@ -198,140 +198,144 @@ const OrderScreen = () => {
           <Text style={styles.headerTitle}>Create Service Order</Text>
         </View>
       </View>
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.formContainer}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Service Information</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Boy</Text>
-            <View style={styles.readOnlyContainer}>
-              <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
-            </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Boy Email</Text>
-            <View style={styles.readOnlyContainer}>
-              <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
-            </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Boy Contact</Text>
-            <View style={styles.readOnlyContainer}>
-              <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
-            </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Type</Text>
-            <View style={styles.readOnlyContainer}>
-              <Text style={styles.readOnlyText}>{serviceType}</Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Service Schedule</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Date <Text style={styles.required}>*</Text></Text>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text>{formData.serviceDate}</Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="default"
-                onChange={handleDateChange}
-                minimumDate={new Date()}
-              />
-            )}
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
-            <View style={styles.timeInputContainer}>
-              <TextInput
-                style={[styles.input, styles.timeInput]}
-                value={formData.serviceTime}
-                onChangeText={handleTimeChange}
-                placeholder="HH:MM"
-                keyboardType="numbers-and-punctuation"
-                maxLength={5}
-              />
-              <View style={styles.timePeriodContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.timePeriodButton,
-                    formData.timePeriod === 'AM' && styles.timePeriodButtonActive
-                  ]}
-                  onPress={() => handleTimePeriodChange('AM')}
-                >
-                  <Text style={[
-                    styles.timePeriodText,
-                    formData.timePeriod === 'AM' && styles.timePeriodTextActive
-                  ]}>
-                    AM
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.timePeriodButton,
-                    formData.timePeriod === 'PM' && styles.timePeriodButtonActive
-                  ]}
-                  onPress={() => handleTimePeriodChange('PM')}
-                >
-                  <Text style={[
-                    styles.timePeriodText,
-                    formData.timePeriod === 'PM' && styles.timePeriodTextActive
-                  ]}>
-                    PM
-                  </Text>
-                </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <View style={styles.formContainer}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Service Information</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>Engineer Name</Text>
+                <View style={styles.readOnlyContainer}>
+                  <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.readOnlyContainer}>
+                  <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Contact Number</Text>
+                <View style={styles.readOnlyContainer}>
+                  <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Service Type</Text>
+                <View style={styles.readOnlyContainer}>
+                  <Text style={styles.readOnlyText}>{serviceType}</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </View>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Client Details</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Full Name <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={formData.clientName}
-              onChangeText={(text) => handleChange('clientName', text)}
-              placeholder="Client name"
-            />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Phone Number <Text style={styles.required}>*</Text></Text>
-            <View style={styles.inputContainer}>
-              <MaterialIcons name="phone" size={20} color="#6B7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.inputWithIcon}
-                placeholder="10-digit mobile number"
-                value={formData.phoneNumber}
-                onChangeText={(text) => handleChange('phoneNumber', text)}
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Service Schedule</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>Service Date <Text style={styles.required}>*</Text></Text>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text>{formData.serviceDate}</Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                    minimumDate={new Date()}
+                  />
+                )}
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
+                <View style={styles.timeInputContainer}>
+                  <TextInput
+                    style={[styles.input, styles.timeInput]}
+                    value={formData.serviceTime}
+                    onChangeText={handleTimeChange}
+                    placeholder="HH:MM"
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={5}
+                  />
+                  <View style={styles.timePeriodContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.timePeriodButton,
+                        formData.timePeriod === 'AM' && styles.timePeriodButtonActive
+                      ]}
+                      onPress={() => handleTimePeriodChange('AM')}
+                    >
+                      <Text style={[
+                        styles.timePeriodText,
+                        formData.timePeriod === 'AM' && styles.timePeriodTextActive
+                      ]}>
+                        AM
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.timePeriodButton,
+                        formData.timePeriod === 'PM' && styles.timePeriodButtonActive
+                      ]}
+                      onPress={() => handleTimePeriodChange('PM')}
+                    >
+                      <Text style={[
+                        styles.timePeriodText,
+                        formData.timePeriod === 'PM' && styles.timePeriodTextActive
+                      ]}>
+                        PM
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
             </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Service Address</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={formData.address}
-              onChangeText={(text) => handleChange('address', text)}
-              placeholder="Full address with landmarks"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-        </View>
-          <Text style={styles.sectionTitle}>Billing Information</Text>
-            <Text style={styles.label1}>Amount</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Customer Details</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  Customer Name <Text style={styles.required}>*</Text>
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.clientName}
+                  onChangeText={(text) => handleChange('clientName', text)}
+                  placeholder="Enter customer name"
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Contact Number <Text style={styles.required}>*</Text></Text>
+                <View style={styles.inputContainer}>
+                  <MaterialIcons name="phone" size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.inputWithIcon}
+                    placeholder="10-digit contact number"
+                    value={formData.phoneNumber}
+                    onChangeText={(text) => handleChange('phoneNumber', text)}
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                  />
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Service Address</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={formData.address}
+                  onChangeText={(text) => handleChange('address', text)}
+                  placeholder="Enter Full address"
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+            </View>
+            <Text style={styles.sectionTitle}>Billing Information</Text>
+            <Text style={styles.label1}>Service Charge</Text>
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
               <TextInput
@@ -342,19 +346,20 @@ const OrderScreen = () => {
                 keyboardType="numeric"
               />
             </View>
-      </View>
-      <TouchableOpacity
-        style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        <Text style={styles.submitButtonText}>
-          {isSubmitting ? 'Creating...' : 'Create Service Order'}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
-  </SafeAreaView>
-    
+          </View>
+          <TouchableOpacity
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.submitButtonText}>
+              {isSubmitting ? 'Creating...' : 'Create Service Order'}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+
   );
 };
 

@@ -105,7 +105,6 @@ const ServicePage = () => {
       </View>
 
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 170 }]}>
-        <Text style={styles.sectionTitle}>Available Services</Text>
         
         <View style={styles.servicesGrid}>
           {/* AC Service */}
@@ -212,7 +211,7 @@ const ServicePage = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Service Technician</Text>
+              <Text style={styles.modalTitle}>Select Service Engineer</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <MaterialIcons name="close" size={24} color="#718096" />
               </TouchableOpacity>
@@ -239,7 +238,7 @@ const ServicePage = () => {
               ) : (
                 <View style={styles.noApplicants}>
                   <MaterialIcons name="people-outline" size={40} color="#CBD5E0" />
-                  <Text style={styles.noApplicantsText}>No technicians available</Text>
+                  <Text style={styles.noApplicantsText}>No engineers available</Text>
                 </View>
               )}
             </ScrollView>

@@ -1,7 +1,7 @@
 import { Platform, StatusBar, StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-    container: {
+  container: {
     flex: 1,
     backgroundColor: "#F7FAFC",
   },
@@ -322,5 +322,8 @@ export const styles = StyleSheet.create({
     color: "#718096",
     marginTop: 8,
     textAlign: "center",
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
 });

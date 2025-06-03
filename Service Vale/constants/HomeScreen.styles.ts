@@ -107,16 +107,6 @@ export const styles = StyleSheet.create({
     color: "#FFF",
     marginBottom: 15,
   },
-  cardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  cardFooterText: {
-    fontSize: 12,
-    color: "#FFF",
-    opacity: 0.8,
-    marginLeft: 5,
-  },
   servicesRow: {
     gap: 15,
     marginBottom: 20,

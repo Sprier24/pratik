@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { ID, Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
@@ -83,18 +83,18 @@ const UserDetailsForm = () => {
   };
 
   const formatToAmPm = (dateString: string) => {
-  const date = new Date(dateString);
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-  return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
-};
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+    return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+  };
 
   const validateForm = () => {
     let valid = true;
@@ -173,7 +173,7 @@ const UserDetailsForm = () => {
             userId as string,
             updateData
           );
-          
+
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
@@ -297,7 +297,7 @@ const UserDetailsForm = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-         <TouchableOpacity onPress={() => router.push('/home')}>
+          <TouchableOpacity onPress={() => router.push('/home')}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Engineer Management</Text>
@@ -307,93 +307,100 @@ const UserDetailsForm = () => {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: insets.bottom + 120 }]}>
-        {isFormVisible ? (
-          <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle}>
-              {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
-            </Text>
-            
-            {Object.entries(formData).map(([key, value]) => {
-              const currentValue = value || '';
-              const label = fieldLabels[key as keyof typeof fieldLabels] || key;
-              return (
-                <View key={key} style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>{label}</Text>
-                  <TextInput
-                    placeholder={`Enter ${label.toLowerCase()}`}
-                    style={[
-                      styles.input,
-                      key === 'address' && styles.textArea,
-                      errors[key] && styles.inputError
-                    ]}
-                    value={currentValue}
-                    onChangeText={(text) => handleChange(key, text)}
-                    keyboardType={
-                      key === 'contactNo' || key === 'aadharNo' ? 'numeric' :
-                        key === 'email' ? 'email-address' : 'default'
-                    }
-                    multiline={key === 'address'}
-                    numberOfLines={key === 'address' ? 3 : 1}
-                    maxLength={
-                      key === 'panNo' ? 10 : 
-                      key === 'aadharNo' ? 12 : 
-                      key === 'contactNo' ? 10 : undefined
-                    }
-                    autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
-                  />
-                  {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-                </View>
-              );
-            })}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: insets.bottom + 120 }]} keyboardShouldPersistTaps="handled">
+          {isFormVisible ? (
+            <View style={styles.formContainer}>
+              <Text style={styles.sectionTitle}>
+                {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
+              </Text>
 
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.submitButton]}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.actionButtonText}>
-                  {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.usersContainer}>
-            {submittedUsers.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="engineering" size={48} color="#A0AEC0" />
-                <Text style={styles.emptyText}>No engineers added yet</Text>
-                <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
-              </View>
-            ) : (
-              submittedUsers.map((user, index) => (
+              {Object.entries(formData).map(([key, value]) => {
+                const currentValue = value || '';
+                const label = fieldLabels[key as keyof typeof fieldLabels] || key;
+                return (
+                  <View key={key} style={styles.formGroup}>
+                    <Text style={styles.inputLabel}>{label}</Text>
+                    <TextInput
+                      placeholder={`Enter ${label.toLowerCase()}`}
+                      style={[
+                        styles.input,
+                        key === 'address' && styles.textArea,
+                        errors[key] && styles.inputError
+                      ]}
+                      value={currentValue}
+                      onChangeText={(text) => handleChange(key, text)}
+                      keyboardType={
+                        key === 'contactNo' || key === 'aadharNo' ? 'numeric' :
+                          key === 'email' ? 'email-address' : 'default'
+                      }
+                      multiline={key === 'address'}
+                      numberOfLines={key === 'address' ? 3 : 1}
+                      maxLength={
+                        key === 'panNo' ? 10 :
+                          key === 'aadharNo' ? 12 :
+                            key === 'contactNo' ? 10 : undefined
+                      }
+                      autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
+                    />
+                    {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
+                  </View>
+                );
+              })}
+
+              <View style={styles.buttonRow}>
                 <TouchableOpacity
-                  key={user.$id}
-                  style={styles.userCard}
-                  onPress={() => showUserDetails(user)}
+                  style={[styles.actionButton, styles.submitButton]}
+                  onPress={handleSubmit}
                 >
-                  <View style={styles.userHeader}>
-                    <View style={styles.userAvatar}>
-                      <MaterialIcons name="engineering" size={24} color="#5E72E4" />
-                    </View>
-                    <View style={styles.userInfo}>
-                      <Text style={styles.userName}>{user.name}</Text>
-                      <Text style={styles.userContact}>{user.contactNo}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.userFooter}>
-                    <Text style={styles.userEmail}>{user.email}</Text>
-                    <Text style={styles.userDate}>
-                      {new Date(user.$createdAt || '').toLocaleDateString()}
-                    </Text>
-                  </View>
+                  <Text style={styles.actionButtonText}>
+                    {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
+                  </Text>
                 </TouchableOpacity>
-              ))
-            )}
-          </View>
-        )}
-      </ScrollView>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.usersContainer}>
+              {submittedUsers.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <MaterialIcons name="engineering" size={48} color="#A0AEC0" />
+                  <Text style={styles.emptyText}>No engineers added yet</Text>
+                  <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
+                </View>
+              ) : (
+                submittedUsers.map((user, index) => (
+                  <TouchableOpacity
+                    key={user.$id}
+                    style={styles.userCard}
+                    onPress={() => showUserDetails(user)}
+                  >
+                    <View style={styles.userHeader}>
+                      <View style={styles.userAvatar}>
+                        <MaterialIcons name="engineering" size={24} color="#5E72E4" />
+                      </View>
+                      <View style={styles.userInfo}>
+                        <Text style={styles.userName}>{user.name}</Text>
+                        <Text style={styles.userContact}>{user.contactNo}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.userFooter}>
+                      <Text style={styles.userEmail}>{user.email}</Text>
+                      <Text style={styles.userDate}>
+                        {new Date(user.$createdAt || '').toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Form Modal */}
 
       {/* Engineer Details Modal */}
       <Modal
@@ -416,15 +423,15 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Name:</Text>
+                      <Text style={styles.detailLabel}>Name :</Text>
                       <Text style={styles.detailValue}>{selectedUser.name}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Contact Number:</Text>
+                      <Text style={styles.detailLabel}>Contact Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.contactNo}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Email Address:</Text>
+                      <Text style={styles.detailLabel}>Email Address :</Text>
                       <Text style={styles.detailValue}>{selectedUser.email}</Text>
                     </View>
                   </View>
@@ -432,11 +439,11 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Address Details</Text>
                     <View style={styles.detailRow1}>
-                      <Text style={styles.detailLabel}>Address:</Text>
+                      <Text style={styles.detailLabel}>Address :</Text>
                       <Text style={styles.detailValue}>{selectedUser.address}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>City:</Text>
+                      <Text style={styles.detailLabel}>City :</Text>
                       <Text style={styles.detailValue}>{selectedUser.city}</Text>
                     </View>
                   </View>
@@ -444,11 +451,11 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Document Details</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Aadhar Number:</Text>
+                      <Text style={styles.detailLabel}>Aadhar Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>PAN Number:</Text>
+                      <Text style={styles.detailLabel}>PAN Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
                     </View>
                   </View>
@@ -456,7 +463,7 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Additional Information</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Created At:</Text>
+                      <Text style={styles.detailLabel}>Engineer Joined Date :</Text>
                       <Text style={styles.detailValue}>
                         {selectedUser.$createdAt ? formatToAmPm(selectedUser.$createdAt) : 'N/A'}
                       </Text>
@@ -498,8 +505,8 @@ const UserDetailsForm = () => {
       </Modal>
 
       {/* Floating Action Button */}
-      <TouchableOpacity 
-        style={styles.fab} 
+      <TouchableOpacity
+        style={styles.fab}
         onPress={toggleFormVisibility}
       >
         <Feather name={isFormVisible ? 'x' : 'plus'} size={24} color="#FFF" />

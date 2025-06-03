@@ -35,12 +35,12 @@ const AdminHomeScreen = () => {
           style: 'cancel',
         },
         {
-          text: 'Logout', 
+          text: 'Logout',
           style: 'destructive',
           onPress: async () => {
             try {
               await account.deleteSession('current');
-              router.replace('/login'); 
+              router.replace('/login');
             } catch (error) {
               Alert.alert('Error', 'Failed to logout');
             }
@@ -190,10 +190,6 @@ const AdminHomeScreen = () => {
                 maximumFractionDigits: 2
               })}
             </Text>
-            <View style={styles.cardFooter}>
-              <AntDesign name="arrowup" size={14} color="#FFF" />
-              <Text style={styles.cardFooterText}>Today</Text>
-            </View>
           </View>
 
           <View style={[styles.revenueCard, styles.monthlyCard]}>
@@ -207,10 +203,6 @@ const AdminHomeScreen = () => {
                 maximumFractionDigits: 2
               })}
             </Text>
-            <View style={styles.cardFooter}>
-              <AntDesign name="arrowup" size={14} color="#FFF" />
-              <Text style={styles.cardFooterText}>This Month</Text>
-            </View>
           </View>
         </View>
 
