@@ -1,7 +1,7 @@
 import { Platform, StatusBar, StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-   container: {
+  container: {
     flex: 1,
     backgroundColor: "#F7FAFC",
   },
@@ -82,6 +82,14 @@ export const styles = StyleSheet.create({
     backgroundColor: "#F7FAFC",
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
+  },
+  activeFiltersText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  clearFilterText: {
+    color: "#EF4444",
+    fontSize: 14,
   },
   filterChip: {
     flexDirection: "row",
@@ -292,5 +300,8 @@ export const styles = StyleSheet.create({
     color: "#718096",
     marginTop: 8,
     textAlign: "center",
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
 });

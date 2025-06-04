@@ -241,6 +241,9 @@ const PendingServicesScreen = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+    if (event.type === 'dismissed') {
+      return;
+    }
     if (selectedDate) {
       setDateFilter(selectedDate);
       applyFilters(selectedServiceBoy, selectedDate);

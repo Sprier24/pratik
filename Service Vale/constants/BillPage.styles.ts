@@ -119,12 +119,6 @@ export const styles = StyleSheet.create({
     marginRight: 6,
   },
 
-
-
-
-
-
-
   modalContainer1: {
     flex: 1,
     justifyContent: "center",
@@ -184,13 +178,6 @@ export const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-
-
-
-
-
-
-
   formContainer: {
     backgroundColor: "#FFF",
     borderRadius: 15,
@@ -209,7 +196,7 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   sectionTitle: {
     fontSize: 16,
@@ -218,8 +205,8 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    marginTop: 24
+    borderBottomColor: "#E5E7EB",
+    marginTop: 24,
   },
   formGroup: {
     marginBottom: 15,
@@ -271,7 +258,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 15,
-
   },
   methodButton: {
     flexDirection: "row",
@@ -337,7 +323,6 @@ export const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     borderRadius: 5,
     marginBottom: 10,
-
   },
   changeSignatureButton: {
     marginBottom: 10,
@@ -731,5 +716,52 @@ export const styles = StyleSheet.create({
   },
   bottomButtonTextActive: {
     color: "#FFF",
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  serviceCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  serviceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDF2F7",
+  },
+  serviceType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2D3748",
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pendingBadge: {
+    backgroundColor: "#FEF3C7",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#92400E",
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    paddingTop: 10,
+    marginTop: 5,
   },
 });

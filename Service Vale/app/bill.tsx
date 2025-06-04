@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
@@ -55,7 +55,7 @@ const BillPage = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
+
   const [form, setForm] = useState({
     serviceType: '',
     serviceBoyName: '',
@@ -154,7 +154,7 @@ const BillPage = () => {
   };
 
   const countBillsByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All': allBills.length };
+    const counts: Record<string, number> = { 'All Service Engineers': allBills.length };
     serviceBoys.forEach(boy => {
       counts[boy.name] = allBills.filter(bill => bill.serviceBoyName === boy.name).length;
     });
@@ -163,6 +163,9 @@ const BillPage = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+    if (event.type === 'dismissed') {
+      return;
+    }
     if (selectedDate) {
       setDateFilter(selectedDate);
       applyFilters(selectedServiceBoy, selectedDate);
@@ -277,175 +280,240 @@ const BillPage = () => {
 
   const generateBillHtml = (bill: Bill) => {
     return `
-      <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-              color: #2D3748;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 20px;
-              padding-bottom: 10px;
-              border-bottom: 2px solid #5E72E4;
-            }
-            .company-name {
-              font-size: 24px;
-              font-weight: bold;
-              color: #5E72E4;
-            }
-            .invoice-title {
-              font-size: 28px;
-              font-weight: bold;
-              color: #2D3748;
-            }
-            .invoice-number {
-              font-size: 14px;
-              color: #718096;
-            }
-            .section {
-              margin-bottom: 20px;
-              padding: 15px;
-              background: #F7FAFC;
-              border-radius: 8px;
-            }
-            .section-title {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              color: #2D3748;
-              padding-bottom: 5px;
-              border-bottom: 1px solid #E2E8F0;
-            }
-            .row {
-              display: flex;
-              margin-bottom: 8px;
-            }
-            .label {
-              font-weight: bold;
-              min-width: 150px;
-              color: #4A5568;
-            }
-            .value {
-              flex: 1;
-            }
-            .highlight {
-              color: #5E72E4;
-              font-weight: bold;
-            }
-            .total-row {
-              font-size: 16px;
-              font-weight: bold;
-              margin-top: 10px;
-              padding-top: 10px;
-              border-top: 1px dashed #CBD5E0;
-            }
-            .signature-section {
-              margin-top: 30px;
-              text-align: center;
-              padding: 20px 0;
-              border-top: 2px dashed #5E72E4;
-            }
-            .signature-title {
-              font-weight: bold;
-              margin-bottom: 15px;
-              color: #4A5568;
-            }
-            .signature-image {
-              max-width: 250px;
-              height: 80px;
-              margin: 0 auto;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 30px;
-              font-size: 12px;
-              color: #718096;
-              padding-top: 15px;
-              border-top: 1px solid #E2E8F0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="company-name">Service Vale</div>
-              <div>Quality Service Solutions</div>
-            </div>
-            <div>
-              <div class="invoice-title">INVOICE</div>
-              <div class="invoice-number">Bill No: ${bill.billNumber}</div>
-              <div class="invoice-number">Date: ${new Date(bill.$createdAt).toLocaleDateString()}</div>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Customer Details</div>
-            <div class="row">
-              <span class="label">Customer Name:</span>
-              <span class="value">${bill.customerName}</span>
-            </div>
-            <div class="row">
-              <span class="label">Contact Number:</span>
-              <span class="value">${bill.contactNumber}</span>
-            </div>
-            <div class="row">
-              <span class="label">Address:</span>
-              <span class="value">${bill.address}</span>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Service Details</div>
-            <div class="row">
-              <span class="label">Service Type:</span>
-              <span class="value">${bill.serviceType}</span>
-            </div>
-            <div class="row">
-              <span class="label">Service Provider:</span>
-              <span class="value">${bill.serviceBoyName}</span>
-            </div>
-            <div class="row total-row">
-              <span class="label">Service Charge:</span>
-              <span class="value highlight">₹${bill.serviceCharge}</span>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">Payment Details</div>
-            <div class="row">
-              <span class="label">Payment Method:</span>
-              <span class="value highlight">${bill.paymentMethod.toUpperCase()}</span>
-            </div>
-            ${bill.paymentMethod === 'cash' ? `
-            <div class="row">
-              <span class="label">Amount Received:</span>
-              <span class="value">₹${bill.cashGiven}</span>
-            </div>
-            <div class="row">
-              <span class="label">Change Returned:</span>
-              <span class="value">₹${bill.change}</span>
-            </div>
-            ` : ''}
-          </div>
-          
-          ${bill?.signature ? `
-            <div class="signature-section">
-              <div class="signature-title">Customer Signature</div>
-              <img src="data:image/png;base64,${bill.signature}" class="signature-image" />
-            </div>
-          ` : ''}
-          
-          <div class="footer">
-            <div>Thank You For Your Business!</div>
-            <div>Contact: +91 635 320 2602 | Email: info@servicevale.com</div>
-          </div>
-        </body>
-      </html>
+     <html>
+            <head>
+              <style>
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Arial', sans-serif;
+                  font-size: 14px;
+                  color: #333;
+                  height: 100%;
+                  box-sizing: border-box;
+                  background-color: #f9f9f9;
+                }
+                body {
+                  display: flex;
+                  flex-direction: column;
+                  padding: 30px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  background: white;
+                  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 25px;
+                  padding-bottom: 20px;
+                  border-bottom: 2px solid #007bff;
+                }
+                .logo-container {
+                  display: flex;
+                  align-items: center;
+                }
+                .logo {
+                  width: 70px;
+                  height: auto;
+                  margin-right: 15px;
+                }
+                .company-info {
+                  text-align: left;
+                }
+                .company-name {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #007bff;
+                  margin: 0;
+                }
+                .company-tagline {
+                  font-size: 12px;
+                  color: #666;
+                  margin: 3px 0 0;
+                }
+                .invoice-info {
+                  text-align: right;
+                }
+                .invoice-title {
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #2c3e50;
+                  margin: 0 0 5px;
+                }
+                .invoice-details {
+                  font-size: 13px;
+                  color: #555;
+                }
+                .section {
+                  margin-bottom: 25px;
+                  padding: 15px;
+                  background: #f5f9ff;
+                  border-radius: 5px;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                .section-title {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #2c3e50;
+                  padding-bottom: 5px;
+                  border-bottom: 1px solid #ddd;
+                }
+                .row {
+                  display: flex;
+                  margin-bottom: 8px;
+                }
+                .label {
+                  font-weight: bold;
+                  min-width: 150px;
+                  color: #555;
+                }
+                .value {
+                  flex: 1;
+                }
+                .highlight {
+                  color: #007bff;
+                  font-weight: bold;
+                }
+                .payment-details {
+                  background: #e8f4ff;
+                }
+                .total-row {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px dashed #ccc;
+                }
+                .notes-section {
+                  background: #fff8e6;
+                  font-style: italic;
+                }
+                .signature-section {
+                  margin-top: 30px;
+                  text-align: center;
+                  padding: 20px 0;
+                  border-top: 2px dashed #007bff;
+                }
+                .signature-title {
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  color: #555;
+                }
+                .signature-image {
+                  max-width: 250px;
+                  height: 80px;
+                  margin: 0 auto;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 30px;
+                  font-size: 12px;
+                  color: #888;
+                  padding-top: 15px;
+                  border-top: 1px solid #eee;
+                }
+                .thank-you {
+                  font-size: 16px;
+                  color: #007bff;
+                  margin-bottom: 10px;
+                  font-weight: bold;
+                }
+                .contact-info {
+                  margin-top: 5px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo-container">
+                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
+                  <div class="company-info">
+                    <h1 class="company-name">Service Vale</h1>
+                    <p class="company-tagline">Quality Service Solutions</p>
+                  </div>
+                </div>
+                <div class="invoice-info">
+                  <h2 class="invoice-title">INVOICE</h2>
+                  <div class="invoice-details">
+                    <div><strong>Bill No : </strong> ${bill.billNumber}</div>
+                    <div><strong>Date : </strong> ${new Date(bill.$createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-title">Customer Details</div>
+                <div class="row">
+                  <span class="label">Customer Name : </span>
+                  <span class="value">${bill.customerName}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Contact Number : </span>
+                  <span class="value">${bill.contactNumber}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Address : </span>
+                  <span class="value">${bill.address}</span>
+                </div>
+              </div>       
+              <div class="section">
+                <div class="section-title">Service Details</div>
+                <div class="row">
+                  <span class="label">Service Type : </span>
+                  <span class="value">${bill.serviceType}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Engineer Name : </span>
+                  <span class="value">${bill.serviceBoyName}</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Service Charge : </span>
+                  <span class="value highlight">₹${bill.serviceCharge}</span>
+                </div>
+              </div>       
+              <div class="section payment-details">
+                <div class="section-title">Payment Details</div>
+                <div class="row">
+                  <span class="label">Payment Method : </span>
+                  <span class="value highlight">${bill.paymentMethod.toUpperCase()}</span>
+                </div>
+                ${bill.paymentMethod === 'cash' ? `
+                <div class="row">
+                  <span class="label">Amount Received : </span>
+                  <span class="value">₹${bill.cashGiven}</span>
+                </div>
+                <div class="row">
+                  <span class="label">Change Returned : </span>
+                  <span class="value">₹${bill.change}</span>
+                </div>
+                ` : ''}
+              </div>       
+              ${bill.notes ? `
+                <div class="section notes-section">
+                  <div class="section-title">Notes</div>
+                  <p>${bill.notes}</p>
+                </div>
+              ` : ''}       
+              ${bill?.signature ? `
+                <div class="signature-section">
+                  <div class="signature-title">Customer Signature</div>
+                  <img src="data:image/png;base64,${bill.signature}" class="signature-image" />
+                </div>
+              ` : ''}       
+              <div class="footer">
+                <div class="thank-you">Thank You For Your Business!</div>
+                <div class="contact-info">
+                  <strong>Contact : </strong> +91 635 320 2602 | 
+                  <strong>Email : </strong> info@servicevale.com
+                </div>
+                <div class="address">
+                  <strong>Address : </strong> Chowk Bazar Nanpura, Khatkiwad Basir, Jhinga Gali Me
+                </div>
+              </div>
+            </body>
+          </html>
     `;
   };
 
@@ -575,7 +643,7 @@ const BillPage = () => {
           <TouchableOpacity onPress={() => router.push('/home')}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Bills Management</Text>
+          <Text style={styles.headerTitle}>Bill Management</Text>
         </View>
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{bills.length}</Text>
@@ -592,10 +660,10 @@ const BillPage = () => {
         >
           <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
-            {selectedServiceBoy ? selectedServiceBoy : 'Filter by boy'}
+            {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -607,7 +675,7 @@ const BillPage = () => {
         </TouchableOpacity>
       </View>
       ) : null}
-        
+
       {/* Active Filters Chips */}
       {(selectedServiceBoy || dateFilter) && (
         <View style={styles.activeFiltersContainer}>
@@ -649,38 +717,29 @@ const BillPage = () => {
       >
         <View style={styles.modalContainer1}>
           <View style={styles.modalContent1}>
-            <Text style={styles.modalTitle1}>Select Service Boy</Text>
-            <View style={styles.modalScrollBox1}>
-              <TouchableOpacity
-                style={styles.filterOption1}
-                onPress={() => filterServices(null)}
-              >
-                <View style={styles.filterOptionContainer1}>
-                  <Text style={styles.filterOptionText1}>All Service Boys</Text>
-                  <Text style={styles.countBadge1}>
-                    {countBillsByServiceBoy()['All']}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <FlatList
-                data={serviceBoys}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.filterOption1}
-                    onPress={() => filterServices(item.name)}
-                  >
-                    <View style={styles.filterOptionContainer1}>
-                      <Text style={styles.filterOptionText1}>{item.name}</Text>
-                      <Text style={styles.countBadge1}>
-                        {countBillsByServiceBoy()[item.name] || 0}
+            <Text style={styles.modalTitle1}>Select Service Engineer</Text>
+            <FlatList
+              style={{ maxHeight: '90%' }}
+              contentContainerStyle={styles.scrollContent}
+              data={[{ id: 'all', name: 'All Service Engineers' }, ...serviceBoys]}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.serviceCard}
+                  onPress={() => filterServices(item.name === 'All Service Engineers' ? null : item.name)}
+                >
+                  <View style={styles.serviceHeader}>
+                    <Text style={styles.serviceType}>{item.name}</Text>
+                    <View style={[styles.statusBadge, styles.pendingBadge]}>
+                      <Text style={styles.statusText}>
+                        {countBillsByServiceBoy()[item.name] || 0} Bills
                       </Text>
                     </View>
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={true}
-              />
-            </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={true}
+            />
             <TouchableOpacity
               style={styles.modalCloseButton1}
               onPress={() => setFilterModalVisible(false)}
@@ -692,174 +751,169 @@ const BillPage = () => {
       </Modal>
 
       {/* Main Content */}
-      <ScrollView 
-        contentContainerStyle={[styles.scrollContainer, { paddingBottom: 140 }]}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        {isFormVisible ? (
-          <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle1}>Service Details</Text>
-            {Object.entries(form).map(([key, value]) => (
-              <View key={key}>
-                <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
-                <TextInput
-                  placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
-                  style={styles.input}
-                  keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
-                  value={value}
-                  onChangeText={(text) => handleChange(key, text)}
-                  maxLength={key === 'contactNumber' ? 10 : undefined}
-                />
-              </View>
-            ))}
+        <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
+          {isFormVisible ? (
+            <View style={styles.formContainer}>
+              <Text style={styles.sectionTitle}>Service Details</Text>
+              {Object.entries(form).map(([key, value]) => (
+                <View key={key} style={styles.formGroup}>
+                  <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
+                  <TextInput
+                    placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
+                    style={styles.input}
+                    keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
+                    value={value}
+                    onChangeText={(text) => handleChange(key, text)}
+                    editable={true}
+                    maxLength={key === 'contactNumber' ? 10 : undefined}
+                  />
+                </View>
+              ))}
 
-            <Text style={styles.sectionTitle}>Additional Notes</Text>
-            <TextInput
-              placeholder="Enter any additional notes (optional)"
-              style={[styles.input, styles.textArea]}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-            />
+              <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
+              <TextInput
+                placeholder="Enter any additional notes"
+                style={[styles.input, styles.textArea]}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={4}
+                maxLength={500}
+              />
 
-            <View style={styles.paymentSummary}>
-              <View style={[styles.summaryRow]}>
-                <Text style={styles.summaryLabel}>Total Amount:</Text>
-                <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>Payment Method</Text>
-            <View style={styles.paymentMethodContainer}>
-              <TouchableOpacity 
-                style={[styles.methodButton, paymentMethod === 'cash' && styles.methodButtonActive]}
-                onPress={() => setPaymentMethod('cash')}
-              >
-                <MaterialCommunityIcons 
-                  name="cash" 
-                  size={20} 
-                  color={paymentMethod === 'cash' ? '#FFF' : '#5E72E4'} 
-                />
-                <Text style={[styles.methodText, paymentMethod === 'cash' && styles.methodTextActive]}>
-                  Cash
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
-                onPress={() => setPaymentMethod('upi')}
-              >
-                <MaterialCommunityIcons 
-                  name="bank-transfer" 
-                  size={20} 
-                  color={paymentMethod === 'upi' ? '#FFF' : '#5E72E4'} 
-                />
-                <Text style={[styles.methodText, paymentMethod === 'upi' && styles.methodTextActive]}>
-                  UPI
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {paymentMethod === 'cash' && (
-              <View style={styles.cashPaymentContainer}>
-                <Text style={styles.sectionTitle}>Cash Payment</Text>
-                <TextInput
-                  placeholder="Amount Given by Customer"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={cashGiven}
-                  onChangeText={setCashGiven}
-                />
-                <View style={styles.changeContainer}>
-                  <Text style={styles.changeLabel}>Change to Return:</Text>
-                  <Text style={styles.changeValue}>₹{calculateChange()}</Text>
+              <View style={styles.paymentSummary}>
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={styles.summaryLabel}>Total Amount :</Text>
+                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
                 </View>
               </View>
-            )}
 
-            {signature ? (
-              <View style={styles.signatureContainer}>
-                <Text style={styles.signatureLabel}>Customer Signature:</Text>
-                <Image
-                  source={{ uri: `data:image/png;base64,${signature}` }}
-                  style={styles.signatureImage}
-                />
+              <Text style={styles.sectionTitle}>Payment Method</Text>
+              <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
-                  style={styles.changeSignatureButton}
-                  onPress={() => setIsSignatureVisible(true)}
+                  style={[styles.methodButton, paymentMethod === 'cash' && styles.methodButtonActive]}
+                  onPress={() => setPaymentMethod('cash')}
                 >
-                  <Text style={styles.changeSignatureText}>Change Signature</Text>
+                  <MaterialCommunityIcons
+                    name="cash"
+                    size={20}
+                    color={paymentMethod === 'cash' ? '#FFF' : '#5E72E4'}
+                  />
+                  <Text style={[styles.methodText, paymentMethod === 'cash' && styles.methodTextActive]}>
+                    Cash
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
+                  onPress={() => setPaymentMethod('upi')}
+                >
+                  <MaterialCommunityIcons
+                    name="bank-transfer"
+                    size={20}
+                    color={paymentMethod === 'upi' ? '#FFF' : '#5E72E4'}
+                  />
+                  <Text style={[styles.methodText, paymentMethod === 'upi' && styles.methodTextActive]}>
+                    UPI
+                  </Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.addSignatureButton}
-                onPress={() => setIsSignatureVisible(true)}
-              >
-                <Feather name="edit" size={18} color="#5E72E4" />
-                <Text style={styles.addSignatureText}>Add Customer Signature</Text>
-              </TouchableOpacity>
-            )}
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
-              <Text style={styles.submitText}>Submit Bill</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.billsListContainer}>
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#5E72E4" />
-              </View>
-            ) : bills.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
-                <Text style={styles.emptyText}>
-                  {dateFilter || selectedServiceBoy
-                    ? 'No bills match your filters'
-                    : 'No bills created yet'
-                  }
-                </Text>
-                <Text style={styles.emptySubtext}>Tap the + button to create a new bill</Text>
-              </View>
-            ) : (
-              bills.map((bill) => (
-                <TouchableOpacity 
-                  key={bill.$id} 
-                  style={styles.billCard}
-                  onPress={() => showBillDetails(bill)}
-                >
-                  <View style={styles.billHeader}>
-                    <View>
-                      <Text style={styles.billCustomer}>{bill.customerName}</Text>
-                      <Text style={styles.billService}>{bill.serviceType}</Text>
-                      <Text style={styles.billNumber}>{bill.billNumber}</Text>
-                    </View>
-                    <View style={styles.billAmountContainer}>
-                      <Text style={styles.billAmount}>₹{bill.total}</Text>
-                    </View>
+              {paymentMethod === 'cash' && (
+                <View style={styles.cashPaymentContainer}>
+                  <Text style={styles.sectionTitle}>Cash Payment</Text>
+                  <TextInput
+                    placeholder="Amount Given by Customer"
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={cashGiven}
+                    onChangeText={setCashGiven}
+                  />
+                  <View style={styles.changeContainer}>
+                    <Text style={styles.changeLabel}>Change Return by Engineer :</Text>
+                    <Text style={styles.changeValue}>₹{calculateChange()}</Text>
                   </View>
-                  <View style={styles.billFooter}>
-                    <View style={styles.billDateContainer}>
-                      <MaterialCommunityIcons name="account" size={14} color="#718096" />
-                    <Text style={styles.billDate}>
-                      {bill.serviceBoyName}
-                    </Text>
+                </View>
+              )}
+
+              {signature ? (
+                <View style={styles.signatureContainer}>
+                  <Text style={styles.signatureLabel}>Customer Signature:</Text>
+                  <Image
+                    source={{ uri: `data:image/png;base64,${signature}` }}
+                    style={styles.signatureImage}
+                  />
+                  <TouchableOpacity
+                    style={styles.changeSignatureButton}
+                    onPress={() => setIsSignatureVisible(true)}
+                  >
+                    <Text style={styles.changeSignatureText}>Change Signature</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.addSignatureButton}
+                  onPress={() => setIsSignatureVisible(true)}
+                >
+                  <Feather name="edit" size={18} color="#5E72E4" />
+                  <Text style={styles.addSignatureText}>Add Customer Signature</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
+                <Text style={styles.submitText}>Submit Bill</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.billsListContainer}>
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#5E72E4" />
+                </View>
+              ) : bills.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
+                  <Text style={styles.emptyText}>
+                    {dateFilter
+                      ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
+                      : 'No bills found'
+                    }
+                  </Text>
+                  <Text style={styles.emptySubtext}>You haven't created any bills yet</Text>
+                </View>
+              ) : (
+                bills.map((bill) => (
+                  <TouchableOpacity
+                    key={bill.$id}
+                    style={styles.billCard}
+                    onPress={() => showBillDetails(bill)}
+                  >
+                    <View style={styles.billHeader}>
+                      <View>
+                        <Text style={styles.billCustomer}>{bill.customerName}</Text>
+                        <Text style={styles.billService}>{bill.serviceType}</Text>
+                        <Text style={styles.billNumber}>{bill.billNumber}</Text>
+                      </View>
+                      <View style={styles.billAmountContainer}>
+                        <Text style={styles.billAmount}>₹{bill.total}</Text>
+                      </View>
                     </View>
                     <View style={styles.billDateContainer}>
                       <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
-                    <Text style={styles.billDate}>
-                      {formatToAmPm(bill.date)}
-                    </Text>
+                      <Text style={styles.billDate}>
+                        {formatToAmPm(bill.date)}
+                      </Text>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
-        )}
-      </ScrollView>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Bill Details Modal */}
       <Modal
@@ -873,20 +927,20 @@ const BillPage = () => {
             {selectedBill && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Bill Details</Text>
+                  <Text style={styles.modalTitle}>Bill Information</Text>
                   <TouchableOpacity onPress={closeBillDetails}>
                     <Feather name="x" size={24} color="#718096" />
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Bill Information</Text>
+                    <Text style={styles.detailSectionTitle}>Bill Details</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Bill Number:</Text>
+                      <Text style={styles.detailLabel}>Bill Number :</Text>
                       <Text style={styles.detailValue}>{selectedBill.billNumber}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Date:</Text>
+                      <Text style={styles.detailLabel}>Date :</Text>
                       <Text style={styles.detailValue}>
                         {formatToAmPm(selectedBill.$createdAt || '')}
                       </Text>
@@ -896,15 +950,15 @@ const BillPage = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Customer Details</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Name:</Text>
+                      <Text style={styles.detailLabel}>Name :</Text>
                       <Text style={styles.detailValue}>{selectedBill.customerName}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Contact:</Text>
+                      <Text style={styles.detailLabel}>Contact :</Text>
                       <Text style={styles.detailValue}>{selectedBill.contactNumber}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Address:</Text>
+                      <Text style={styles.detailLabel}>Address :</Text>
                       <Text style={styles.detailValue}>{selectedBill.address}</Text>
                     </View>
                   </View>
@@ -912,15 +966,15 @@ const BillPage = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Service Details</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Service Type:</Text>
+                      <Text style={styles.detailLabel}>Service Type :</Text>
                       <Text style={styles.detailValue}>{selectedBill.serviceType}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Service Provider:</Text>
+                      <Text style={styles.detailLabel}>Service Engineer :</Text>
                       <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Service Charge:</Text>
+                      <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
                     </View>
                   </View>
@@ -928,17 +982,17 @@ const BillPage = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Payment Details</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Payment Method:</Text>
+                      <Text style={styles.detailLabel}>Payment Method :</Text>
                       <Text style={styles.detailValue}>{selectedBill.paymentMethod.toUpperCase()}</Text>
                     </View>
                     {selectedBill.paymentMethod === 'cash' && (
                       <>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Cash Received:</Text>
+                          <Text style={styles.detailLabel}>Cash Received :</Text>
                           <Text style={styles.detailValue}>₹{selectedBill.cashGiven}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Change Returned:</Text>
+                          <Text style={styles.detailLabel}>Change Returned :</Text>
                           <Text style={styles.detailValue}>₹{selectedBill.change}</Text>
                         </View>
                       </>
@@ -1049,64 +1103,64 @@ const BillPage = () => {
       </Modal>
 
       {/* Floating Action Button */}
-      <TouchableOpacity 
-        style={styles.fab} 
+      <TouchableOpacity
+        style={styles.fab}
         onPress={toggleFormVisibility}
       >
         <Feather name={isFormVisible ? 'x' : 'plus'} size={24} color="#FFF" />
       </TouchableOpacity>
 
-            <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
-              <TouchableOpacity
-                style={footerStyles.bottomButton}
-                onPress={() => router.push('/service')}
-              >
-                <View style={footerStyles.bottomButtonIcon}>
-                  <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
-                </View>
-                <Text style={footerStyles.bottomButtonText}>Service</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={footerStyles.bottomButton}
-                onPress={() => router.push('/user')}
-              >
-                <View style={footerStyles.bottomButtonIcon}>
-                  <MaterialIcons name="person" size={20} color="#5E72E4" />
-                </View>
-                <Text style={footerStyles.bottomButtonText}>Users</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={[footerStyles.bottomButton]}
-                onPress={() => router.push('/home')}
-              >
-                <View style={[footerStyles.bottomButtonIcon]}>
-                  <Feather name="home" size={20} color="#5E72E4" />
-                </View>
-                <Text style={[footerStyles.bottomButtonText]}>Home</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={footerStyles.bottomButton}
-                onPress={() => router.push('/userphotos')}
-              >
-                <View style={footerStyles.bottomButtonIcon}>
-                  <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
-                </View>
-                <Text style={footerStyles.bottomButtonText}>Photos</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
-                onPress={() => router.push('/bill')}
-              >
-                <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
-                  <Feather name="file-text" size={20} color="#FFF" />
-                </View>
-                <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Bills</Text>
-              </TouchableOpacity>
-            </View>
+      <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/service')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Service</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/user')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="person" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Users</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[footerStyles.bottomButton]}
+          onPress={() => router.push('/home')}
+        >
+          <View style={[footerStyles.bottomButtonIcon]}>
+            <Feather name="home" size={20} color="#5E72E4" />
+          </View>
+          <Text style={[footerStyles.bottomButtonText]}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={footerStyles.bottomButton}
+          onPress={() => router.push('/userphotos')}
+        >
+          <View style={footerStyles.bottomButtonIcon}>
+            <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
+          </View>
+          <Text style={footerStyles.bottomButtonText}>Photos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
+          onPress={() => router.push('/bill')}
+        >
+          <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
+            <Feather name="file-text" size={20} color="#FFF" />
+          </View>
+          <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Bills</Text>
+        </TouchableOpacity>
+      </View>
 
     </SafeAreaView>
   );

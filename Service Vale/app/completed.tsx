@@ -168,7 +168,7 @@ const AdminCompletedServicesScreen = () => {
   };
 
   const countCompletedByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All': allServices.length };
+    const counts: Record<string, number> = { 'All Service Engineers': allServices.length };
     serviceBoys.forEach(boy => {
       counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
     });
@@ -177,6 +177,9 @@ const AdminCompletedServicesScreen = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+    if (event.type === 'dismissed') {
+      return;
+    }
     if (selectedDate) {
       setDateFilter(selectedDate);
       applyFilters(selectedServiceBoy, selectedDate);
@@ -276,10 +279,10 @@ const AdminCompletedServicesScreen = () => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons 
-            name="tools" 
-            size={20} 
-            color="#5E72E4" 
+          <MaterialCommunityIcons
+            name="tools"
+            size={20}
+            color="#5E72E4"
             style={styles.serviceIcon}
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
@@ -288,7 +291,7 @@ const AdminCompletedServicesScreen = () => {
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
-      
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -311,7 +314,7 @@ const AdminCompletedServicesScreen = () => {
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={16} color="#718096" />
@@ -325,7 +328,7 @@ const AdminCompletedServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
-      
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
@@ -369,10 +372,10 @@ const AdminCompletedServicesScreen = () => {
         >
           <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
-            {selectedServiceBoy ? selectedServiceBoy : 'Filter by boy'}
+            {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -422,36 +425,29 @@ const AdminCompletedServicesScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Service Boy</Text>
-            <View style={styles.modalScrollBox}>
-              <TouchableOpacity
-                style={styles.filterOption}
-                onPress={() => filterServices(null)}
-              >
-                <View style={styles.filterOptionContainer}>
-                  <Text style={styles.filterOptionText}>All Service Boys</Text>
-                  <Text style={styles.countBadge}>{countCompletedByServiceBoy()['All']}</Text>
-                </View>
-              </TouchableOpacity>
-              <FlatList
-                data={serviceBoys}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => filterServices(item.name)}
-                  >
-                    <View style={styles.filterOptionContainer}>
-                      <Text style={styles.filterOptionText}>{item.name}</Text>
-                      <Text style={styles.countBadge}>
-                        {countCompletedByServiceBoy()[item.name] || 0}
+            <Text style={styles.modalTitle}>Select Service Engineer</Text>
+            <FlatList
+              style={{ maxHeight: '90%' }}
+              contentContainerStyle={styles.scrollContent}
+              data={[{ id: 'all', name: 'All Service Engineers' }, ...serviceBoys]}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.serviceCard}
+                  onPress={() => filterServices(item.name === 'All Service Engineers' ? null : item.name)}
+                >
+                  <View style={styles.serviceHeader}>
+                    <Text style={styles.serviceType}>{item.name}</Text>
+                    <View style={[styles.statusBadge, styles.completedBadge]}>
+                      <Text style={styles.statusText}>
+                        {countCompletedByServiceBoy()[item.name] || 0} completed
                       </Text>
                     </View>
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={true}
-              />
-            </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={true}
+            />
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}
