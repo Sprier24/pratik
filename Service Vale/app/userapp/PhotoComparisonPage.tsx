@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform, KeyboardAvoidingView, Dimensions, TextInput, Modal, Pressable } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, Pressable, Dimensions, SafeAreaView, RefreshControl, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { databases, storage, account } from '../../lib/appwrite';
-import { ID } from 'appwrite';
-import { Query } from 'appwrite';
-import { useRouter } from 'expo-router';
-import mime from 'mime';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
-import { styles } from '../../constants/userapp/Userphoto';
-import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
+import { databases, storage, account } from '../../lib/appwrite';
+import { ID, Query } from 'appwrite';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import mime from 'mime';
+import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { styles } from '../../constants/userapp/Userphoto';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
 const NOTIFICATIONS_COLLECTION = 'note_id';
 const BUCKET_ID = 'photo_id';
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 32;
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
 const PROJECT_ID = '681b300f0018fdc27bdd';
 
@@ -37,6 +34,7 @@ type PhotoSet = {
     afterImageUrl: string;
     notes?: string;
     date: string;
+    userEmail: string;
 };
 
 const PhotoComparisonPage = () => {
@@ -52,6 +50,7 @@ const PhotoComparisonPage = () => {
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [userName, setUserName] = useState('');
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
     const parseNotes = (notes: string) => {
@@ -101,13 +100,20 @@ const PhotoComparisonPage = () => {
                 afterImageUrl: doc.afterImageUrl,
                 notes: doc.notes,
                 date: doc.date,
+                userEmail: doc.userEmail,
             }));
             setPhotoSets(safeDocs);
         } catch (error) {
             Alert.alert('Error', 'Failed to load photos.');
         } finally {
             setIsLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchPhotoSets();
     };
 
     const takePhoto = async (setImage: (image: ImagePickerResult | null) => void) => {
@@ -124,7 +130,7 @@ const PhotoComparisonPage = () => {
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.8,
-            allowsEditing: true,
+            allowsEditing: false,
             aspect: [4, 3],
         });
         if (!result.canceled && result.assets.length > 0) {
@@ -196,6 +202,7 @@ const PhotoComparisonPage = () => {
         setIsUploading(true);
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
+            const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -206,10 +213,6 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-                await createNotification(
-                    `New BEFORE photo added. Notes: ${notesWithName || 'No notes provided'}`,
-                    docId
-                );
             } else if (afterImage && !beforeImage) {
                 const afterFileId = await uploadImageToStorage(afterImage);
                 const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
@@ -228,7 +231,7 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
                 await createNotification(
-                    `AFTER photo added to existing set. Notes: ${notesWithName || 'No notes provided'}`,
+                    `\nNotes:\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
             } else {
@@ -245,7 +248,7 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
                 await createNotification(
-                    `COMPLETE: BEFORE and AFTER photos submitted! User: ${userName || 'Unknown'}`,
+                    `\nNotes:\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
             }
@@ -310,7 +313,9 @@ const PhotoComparisonPage = () => {
                     const uri = buildImageUrl(fileId);
                     const filename = `photo_${Date.now()}.jpg`;
                     const localPath = `${FileSystem.cacheDirectory}${filename}`;
+
                     await FileSystem.downloadAsync(uri, localPath);
+
                     const asset = await MediaLibrary.createAssetAsync(localPath);
                     return asset;
                 } catch (error) {
@@ -332,10 +337,10 @@ const PhotoComparisonPage = () => {
         }
     };
 
-    if (isLoading) {
+    if (isLoading && !refreshing) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6B46C1" />
+                <ActivityIndicator size="large" color="#5E72E4" />
             </View>
         );
     }
@@ -355,35 +360,39 @@ const PhotoComparisonPage = () => {
     }
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1 }}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-        >
-
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Feather name="arrow-left" size={24} color="#FFF" />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { marginRight: 150 }]}>Photo </Text>
-                <View style={styles.headerIcons}></View>
+                <View style={styles.headerLeft}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Feather name="arrow-left" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Progress Photos</Text>
+                </View>
             </View>
 
             <ScrollView
-                contentContainerStyle={styles.container}
+                contentContainerStyle={styles.scrollContainer}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#5E72E4']}
+                        tintColor={'#5E72E4'}
+                    />
+                }
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Capture Photos</Text>
+                    <Text style={styles.sectionTitle}>Capture Progress</Text>
                     <View style={styles.photoButtonsContainer}>
                         <TouchableOpacity
                             style={[styles.photoButton, beforeImage && styles.photoButtonActive]}
                             onPress={() => takePhoto(setBeforeImage)}
                         >
-                            <Ionicons
-                                name="camera"
+                            <MaterialIcons
+                                name="photo-camera"
                                 size={24}
-                                color={beforeImage ? "#fff" : "#6B46C1"}
+                                color={beforeImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, beforeImage && styles.photoButtonTextActive]}>
                                 Before
@@ -393,52 +402,49 @@ const PhotoComparisonPage = () => {
                             style={[styles.photoButton, afterImage && styles.photoButtonActive]}
                             onPress={() => takePhoto(setAfterImage)}
                         >
-                            <Ionicons
-                                name="camera"
+                            <MaterialIcons
+                                name="photo-camera"
                                 size={24}
-                                color={afterImage ? "#fff" : "#6B46C1"}
+                                color={afterImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, afterImage && styles.photoButtonTextActive]}>
                                 After
                             </Text>
                         </TouchableOpacity>
                     </View>
+
                     {beforeImage || afterImage ? (
                         <View style={styles.previewContainer}>
-                            <View style={styles.imagePreviewWrapper}>
-                                {beforeImage && (
-                                    <>
-                                        <Text style={styles.previewLabel}>Before</Text>
-                                        <Image
-                                            source={{ uri: beforeImage.uri }}
-                                            style={styles.imagePreview}
-                                        />
-                                        <TouchableOpacity
-                                            style={styles.clearButton}
-                                            onPress={() => setBeforeImage(null)}
-                                        >
-                                            <Ionicons name="close" size={20} color="#fff" />
-                                        </TouchableOpacity>
-                                    </>
-                                )}
-                            </View>
-                            <View style={styles.imagePreviewWrapper}>
-                                {afterImage && (
-                                    <>
-                                        <Text style={styles.previewLabel}>After</Text>
-                                        <Image
-                                            source={{ uri: afterImage.uri }}
-                                            style={styles.imagePreview}
-                                        />
-                                        <TouchableOpacity
-                                            style={styles.clearButton}
-                                            onPress={() => setAfterImage(null)}
-                                        >
-                                            <Ionicons name="close" size={20} color="#fff" />
-                                        </TouchableOpacity>
-                                    </>
-                                )}
-                            </View>
+                            {beforeImage && (
+                                <View style={styles.imagePreviewWrapper}>
+                                    <Text style={styles.previewLabel}>Before</Text>
+                                    <Image
+                                        source={{ uri: beforeImage.uri }}
+                                        style={styles.imagePreview}
+                                    />
+                                    <TouchableOpacity
+                                        style={styles.clearButton}
+                                        onPress={() => setBeforeImage(null)}
+                                    >
+                                        <Ionicons name="close" size={20} color="#FFF" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                            {afterImage && (
+                                <View style={styles.imagePreviewWrapper}>
+                                    <Text style={styles.previewLabel}>After</Text>
+                                    <Image
+                                        source={{ uri: afterImage.uri }}
+                                        style={styles.imagePreview}
+                                    />
+                                    <TouchableOpacity
+                                        style={styles.clearButton}
+                                        onPress={() => setAfterImage(null)}
+                                    >
+                                        <Ionicons name="close" size={20} color="#FFF" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
                     ) : (
                         <Text style={styles.instructionText}>
@@ -451,7 +457,7 @@ const PhotoComparisonPage = () => {
                     <Text style={styles.sectionTitle}>Notes</Text>
                     <TextInput
                         placeholder={`Add your notes about the progress...`}
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#A0AEC0"
                         value={notes}
                         onChangeText={setNotes}
                         style={styles.notesInput}
@@ -470,100 +476,76 @@ const PhotoComparisonPage = () => {
                     disabled={isUploading || (!beforeImage && !afterImage)}
                 >
                     {isUploading ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator color="#FFF" />
                     ) : (
-                        <Text style={styles.submitButtonText}>Save Progress</Text>
+                        <>
+                            <MaterialIcons name="save" size={20} color="#FFF" />
+                            <Text style={styles.submitButtonText}>Save Progress</Text>
+                        </>
                     )}
                 </TouchableOpacity>
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Your Progress History</Text>
-
                     {photoSets.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Ionicons name="images" size={48} color="#D1D5DB" />
-                            <Text style={styles.emptyStateText}>No progress photos yet</Text>
+                            <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
+                            <Text style={styles.emptyText}>No progress photos yet</Text>
                         </View>
                     ) : (
                         photoSets.map((item) => (
-                            <View key={item.$id} style={styles.uploadCard}>
-                                <View style={styles.uploadHeader}>
-                                    <Text style={styles.uploadDate}>
-                                        {new Date(item.date).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </Text>
-                                    <View style={styles.iconContainer}>
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                Alert.alert('Confirm Delete', 'Are you sure you want to delete this photo set?', [
-                                                    { text: 'Cancel', style: 'cancel' },
-                                                    {
-                                                        text: 'Delete',
-                                                        style: 'destructive',
-                                                        onPress: () => deletePhotoSet(item),
-                                                    },
-                                                ])
-                                            }
-                                        >
-                                            <Ionicons name="trash" size={20} color="#DC2626" />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                Alert.alert('Confirm Download', 'Are you sure you want to download this photo set?', [
-                                                    { text: 'Cancel', style: 'cancel' },
-                                                    {
-                                                        text: 'Download',
-                                                        style: 'destructive',
-                                                        onPress: () => saveBothImages(item),
-                                                    },
-                                                ])
-                                            }
-                                            style={{ marginLeft: 16 }}
-                                        >
-                                            <Ionicons name="download" size={20} color="#3B82F6" />
-                                        </TouchableOpacity>
+                            <View key={item.$id} style={styles.photoCard}>
+                                <View style={styles.cardHeader}>
+                                    <View style={styles.dateBadge}>
+                                        <MaterialIcons name="date-range" size={16} color="#FFF" />
+                                        <Text style={styles.dateText}>
+                                            {new Date(item.date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </Text>
                                     </View>
                                 </View>
 
-                                <View style={styles.comparisonContainer}>
-                                    <View style={styles.comparisonItem}>
-                                        <Text style={styles.comparisonLabel}>Before</Text>
+                                <View style={styles.photoGrid}>
+                                    <View style={styles.photoContainer}>
+                                        <Text style={styles.photoLabel}>Before</Text>
                                         {item.beforeImageUrl ? (
                                             <TouchableOpacity
                                                 onPress={() => openPreview(buildImageUrl(item.beforeImageUrl))}
+                                                activeOpacity={0.8}
                                             >
                                                 <Image
                                                     source={{ uri: buildImageUrl(item.beforeImageUrl) }}
-                                                    style={styles.comparisonImage}
+                                                    style={styles.photoImage}
                                                 />
                                             </TouchableOpacity>
                                         ) : (
-                                            <View style={styles.placeholderImage}>
-                                                <Ionicons name="image" size={32} color="#D1D5DB" />
-                                                <Text style={styles.placeholderText}>No before image</Text>
+                                            <View style={styles.placeholder}>
+                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                                <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
                                     </View>
-                                    <View style={styles.comparisonItem}>
-                                        <Text style={styles.comparisonLabel}>After</Text>
+                                    <View style={styles.photoContainer}>
+                                        <Text style={styles.photoLabel}>After</Text>
                                         {item.afterImageUrl ? (
                                             <TouchableOpacity
                                                 onPress={() => openPreview(buildImageUrl(item.afterImageUrl))}
+                                                activeOpacity={0.8}
                                             >
                                                 <Image
                                                     source={{ uri: buildImageUrl(item.afterImageUrl) }}
-                                                    style={styles.comparisonImage}
+                                                    style={styles.photoImage}
                                                 />
                                             </TouchableOpacity>
                                         ) : (
-                                            <View style={styles.placeholderImage}>
-                                                <Ionicons name="image" size={32} color="#D1D5DB" />
-                                                <Text style={styles.placeholderText}>No after image</Text>
+                                            <View style={styles.placeholder}>
+                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                                <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
                                     </View>
@@ -571,45 +553,60 @@ const PhotoComparisonPage = () => {
 
                                 {item.notes && (
                                     <View style={styles.notesContainer}>
-                                        {parseNotes(item.notes).userName !== '' && (
-                                            <Text style={styles.notesUserName}>
-                                                {parseNotes(item.notes).userName}
-                                            </Text>
-                                        )}
                                         <Text style={styles.notesText}>
                                             {parseNotes(item.notes).userNotes || 'No notes provided'}
                                         </Text>
                                     </View>
                                 )}
+
+                                <View style={styles.actionButtonsContainer}>
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, styles.saveButton]}
+                                        onPress={() => saveBothImages(item)}
+                                        disabled={isLoading}
+                                    >
+                                        <MaterialIcons name="save-alt" size={20} color="#FFF" />
+                                        <Text style={styles.actionButtonText}>Save to Gallery</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, styles.deleteButton]}
+                                        onPress={() =>
+                                            Alert.alert('Confirm Delete', 'Are you sure?', [
+                                                { text: 'Cancel', style: 'cancel' },
+                                                {
+                                                    text: 'Delete',
+                                                    style: 'destructive',
+                                                    onPress: () => deletePhotoSet(item),
+                                                },
+                                            ])
+                                        }
+                                        disabled={isLoading}
+                                    >
+                                        <MaterialIcons name="delete" size={20} color="#FFF" />
+                                        <Text style={styles.actionButtonText}>Delete</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         ))
                     )}
                 </View>
-
-                <Modal
-                    visible={previewVisible}
-                    transparent={true}
-                    animationType="fade"
-                    onRequestClose={closePreview}
-                >
-                    <Pressable style={styles.modalBackground} onPress={closePreview}>
-                        {previewImageUrl && (
-                            <Image
-                                source={{ uri: previewImageUrl }}
-                                style={styles.fullscreenImage}
-                                resizeMode="contain"
-                            />
-                        )}
-                        <TouchableOpacity
-                            style={styles.closePreviewButton}
-                            onPress={closePreview}
-                        >
-                            <Ionicons name="close" size={28} color="#fff" />
-                        </TouchableOpacity>
-                    </Pressable>
-                </Modal>
             </ScrollView>
-        </KeyboardAvoidingView>
+
+            <Modal visible={previewVisible} transparent animationType="fade">
+                <Pressable style={styles.modalBackground} onPress={closePreview}>
+                    {previewImageUrl && (
+                        <Image
+                            source={{ uri: previewImageUrl }}
+                            style={styles.fullImage}
+                            resizeMode="contain"
+                        />
+                    )}
+                    <TouchableOpacity style={styles.closeButton} onPress={closePreview}>
+                        <Ionicons name="close" size={28} color="#fff" />
+                    </TouchableOpacity>
+                </Pressable>
+            </Modal>
+        </SafeAreaView>
     );
 };
 

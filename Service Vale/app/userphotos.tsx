@@ -160,7 +160,7 @@ const PhotoComparisonPage: React.FC = () => {
         return (
             <View style={styles.authContainer}>
                 <Text style={styles.authText}>Please login to view service photos</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.loginButton}
                     onPress={() => router.push('/login')}
                 >
@@ -182,7 +182,7 @@ const PhotoComparisonPage: React.FC = () => {
                 </View>
             </View>
 
-            <ScrollView 
+            <ScrollView
                 contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
                 refreshControl={
                     <RefreshControl

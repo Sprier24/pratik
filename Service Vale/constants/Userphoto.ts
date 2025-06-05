@@ -161,7 +161,6 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginTop: 10,
-    
   },
   actionButtonText: {
     color: "#FFF",
