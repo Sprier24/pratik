@@ -331,7 +331,7 @@ const PendingServicesScreen = () => {
         </View>
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={18} color="#718096" />
-          <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>

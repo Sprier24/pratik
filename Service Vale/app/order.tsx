@@ -164,7 +164,7 @@ const OrderScreen = () => {
         pathname: '/pending',
         params: {
           newService: JSON.stringify({
-            $id: response.$id,
+            id: response.$id,
             serviceType: formData.serviceType,
             clientName: formData.clientName,
             address: formData.address,

@@ -146,8 +146,9 @@ export const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: "#4A5568",
-    marginLeft: 10,
-    flexShrink: 1,
+    marginLeft: 8,
+    flex: 1,
+    flexWrap: "wrap",
   },
   serviceFooter: {
     marginTop: 10,
