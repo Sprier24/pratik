@@ -138,7 +138,7 @@ const PhotoComparisonPage: React.FC = () => {
 
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
 
-            Alert.alert('Success', 'Images saved to gallery and removed from system.');
+            Alert.alert('Success', 'Images saved to gallery and deleted from system');
             fetchPhotoSets();
         } catch (err) {
             console.error(err);
@@ -266,13 +266,13 @@ const PhotoComparisonPage: React.FC = () => {
                                 </View>
                             </View>
 
-                            <View>
-                                {item.notes && (
-                                    <View style={styles.notesBadge}>
-                                        <Text style={styles.notesText}>{item.notes}</Text>
-                                    </View>
-                                )}
-                            </View>
+                            {item.notes && (
+                                <View style={styles.notesBadge}>
+                                    <Text style={styles.notesText}>
+                                        {[...new Set(item.notes.split('\n'))].join('\n')}
+                                    </Text>
+                                </View>
+                            )}
 
                             <TouchableOpacity
                                 style={styles.actionButton}

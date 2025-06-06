@@ -255,7 +255,7 @@ const PhotoComparisonPage = () => {
             Alert.alert('Success', 'Photo saved.');
             setBeforeImage(null);
             setAfterImage(null);
-            setNotes(userName ? `${userName}\n` : '');
+            setNotes('');
             fetchPhotoSets();
         } catch (error) {
             Alert.alert('Error', error instanceof Error ? error.message : 'Upload failed');
@@ -366,7 +366,7 @@ const PhotoComparisonPage = () => {
                     <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="arrow-left" size={24} color="#FFF" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Progress Photos</Text>
+                    <Text style={styles.headerTitle}>Click Photos</Text>
                 </View>
             </View>
 
@@ -383,7 +383,6 @@ const PhotoComparisonPage = () => {
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Capture Progress</Text>
                     <View style={styles.photoButtonsContainer}>
                         <TouchableOpacity
                             style={[styles.photoButton, beforeImage && styles.photoButtonActive]}
@@ -454,15 +453,13 @@ const PhotoComparisonPage = () => {
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notes</Text>
+                    <Text style={styles.sectionTitle}>Photos Details</Text>
                     <TextInput
-                        placeholder={`Add your notes about the progress...`}
-                        placeholderTextColor="#A0AEC0"
                         value={notes}
-                        onChangeText={setNotes}
                         style={styles.notesInput}
                         multiline
-                        editable={!isUploading}
+                        editable={false}
+                        selectTextOnFocus={false}
                         textAlignVertical="top"
                     />
                 </View>
@@ -480,17 +477,17 @@ const PhotoComparisonPage = () => {
                     ) : (
                         <>
                             <MaterialIcons name="save" size={20} color="#FFF" />
-                            <Text style={styles.submitButtonText}>Save Progress</Text>
+                            <Text style={styles.submitButtonText}>Save Photo</Text>
                         </>
                     )}
                 </TouchableOpacity>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Your Progress History</Text>
+                    <Text style={styles.sectionTitle}>Your History</Text>
                     {photoSets.length === 0 ? (
                         <View style={styles.emptyState}>
                             <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
-                            <Text style={styles.emptyText}>No progress photos yet</Text>
+                            <Text style={styles.emptyText}>No photos yet</Text>
                         </View>
                     ) : (
                         photoSets.map((item) => (

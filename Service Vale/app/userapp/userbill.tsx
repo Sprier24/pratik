@@ -433,6 +433,7 @@ const UserBill = () => {
                   <span class="label">Service Charge : </span>
                   <span class="value highlight">₹${bill.serviceCharge}</span>
                 </div>
+                <div class="row"><span class="label">Commission (25%) : </span><span>₹${(parseFloat(bill.serviceCharge) * 0.25).toFixed(2)}</span></div>
               </div>       
               <div class="section payment-details">
                 <div class="section-title">Payment Details</div>
@@ -810,6 +811,12 @@ const UserBill = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Service Commission :</Text>
+                      <Text style={styles.detailValue}>
+                        ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
+                      </Text>
                     </View>
                   </View>
 

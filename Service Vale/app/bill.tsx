@@ -977,6 +977,12 @@ const BillPage = () => {
                       <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
                     </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Service Commission :</Text>
+                      <Text style={styles.detailValue}>
+                        ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
+                      </Text>
+                    </View>
                   </View>
 
                   <View style={styles.detailSection}>
