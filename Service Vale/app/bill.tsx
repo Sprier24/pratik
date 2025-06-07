@@ -55,7 +55,6 @@ const BillPage = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
   const [form, setForm] = useState({
     serviceType: '',
     serviceBoyName: '',
@@ -637,7 +636,6 @@ const BillPage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
@@ -663,7 +661,6 @@ const BillPage = () => {
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -676,7 +673,6 @@ const BillPage = () => {
       </View>
       ) : null}
 
-      {/* Active Filters Chips */}
       {(selectedServiceBoy || dateFilter) && (
         <View style={styles.activeFiltersContainer}>
           {selectedServiceBoy && (
@@ -698,7 +694,6 @@ const BillPage = () => {
         </View>
       )}
 
-      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -708,7 +703,6 @@ const BillPage = () => {
         />
       )}
 
-      {/* Service Boy Filter Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -750,7 +744,6 @@ const BillPage = () => {
         </View>
       </Modal>
 
-      {/* Main Content */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -862,7 +855,6 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
-
               <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
                 <Text style={styles.submitText}>Submit Bill</Text>
               </TouchableOpacity>
@@ -915,7 +907,6 @@ const BillPage = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Bill Details Modal */}
       <Modal
         visible={isBillDetailVisible}
         animationType="slide"
@@ -1052,7 +1043,6 @@ const BillPage = () => {
         </View>
       </Modal>
 
-      {/* Signature Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -1108,7 +1098,6 @@ const BillPage = () => {
         </View>
       </Modal>
 
-      {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={toggleFormVisibility}

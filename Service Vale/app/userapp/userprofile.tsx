@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { account, databases } from '../../lib/appwrite';
 import { Query } from 'appwrite';
 import { styles } from '../../constants/userapp/ProfileScreen.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
@@ -23,8 +22,6 @@ const ProfileScreen = () => {
     });
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
-
-
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -68,7 +65,6 @@ const ProfileScreen = () => {
             Alert.alert('Error', (error as Error).message || 'Something went wrong');
         }
     };
-
     if (loading) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -98,12 +94,10 @@ const ProfileScreen = () => {
                         color="#5E72E4"
                     />
                 </View>
-
                 <View style={styles.profileInfoContainer}>
                     <View style={styles.infoCard}>
                         <Text style={styles.name}>{user.name}</Text>
                         <Text style={styles.email}>{user.email}</Text>
-
                         <View style={styles.infoSection}>
                             <Text style={styles.sectionTitle}>Contact Information</Text>
                             <View style={styles.infoItem}>
@@ -119,7 +113,6 @@ const ProfileScreen = () => {
                                 <Text style={styles.infoText}>City : {user.city || 'Not provided'}</Text>
                             </View>
                         </View>
-
                         <View style={styles.infoSection}>
                             <Text style={styles.sectionTitle}>Document Information</Text>
                             <View style={styles.infoItem}>
@@ -131,7 +124,6 @@ const ProfileScreen = () => {
                                 <Text style={styles.infoText}>Pan No : {user.panNo || 'Not provided'}</Text>
                             </View>
                         </View>
-
                         <TouchableOpacity
                             style={styles.logoutButton}
                             onPress={handleLogout}
@@ -142,18 +134,16 @@ const ProfileScreen = () => {
                     </View>
                 </View>
             </ScrollView>
+
             <View style={[styles.bottomBar, { paddingBottom: insets.bottom || 40 }]}>
                 <TouchableOpacity
                     style={[styles.bottomButton, styles.bottomButtonActive]}
-                    // onPress={() => router.push('/userapp/userprofile')}
                 >
                     <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
                         <Feather name="user" size={20} color="#FFF" />
                     </View>
                     <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Profile</Text>
                 </TouchableOpacity>
-
-
                 <TouchableOpacity
                     style={[styles.bottomButton]}
                     onPress={() => router.push('/userapp/home')}
@@ -163,7 +153,6 @@ const ProfileScreen = () => {
                     </View>
                     <Text style={styles.bottomButtonText}>Home</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                     style={styles.bottomButton}
                     onPress={() => router.push('/userapp/userbill')}

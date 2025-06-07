@@ -958,7 +958,6 @@ const UserBill = () => {
 
         <TouchableOpacity
           style={[styles.bottomButton, styles.bottomButtonActive]}
-        // onPress={() => router.push('/userapp/userbill')}
         >
           <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
             <Feather name="file-text" size={20} color="#FFF" />

@@ -3,7 +3,6 @@ import { router, useNavigationContainerRef } from 'expo-router';
 
 export default function Index() {
     const navigationRef = useNavigationContainerRef();
-
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (navigationRef.isReady()) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { ID, Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
@@ -165,15 +165,12 @@ const UserDetailsForm = () => {
             panNo: formData.panNo,
             city: formData.city,
           };
-
-          // Ensure userId is a string before calling updateDocument
           await databases.updateDocument(
             DATABASE_ID,
             COLLECTION_ID,
             userId as string,
             updateData
           );
-
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
@@ -294,7 +291,6 @@ const UserDetailsForm = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
@@ -306,7 +302,6 @@ const UserDetailsForm = () => {
           <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
         </View>
       </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -350,7 +345,6 @@ const UserDetailsForm = () => {
                   </View>
                 );
               })}
-
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.submitButton]}
@@ -400,9 +394,6 @@ const UserDetailsForm = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Form Modal */}
-
-      {/* Engineer Details Modal */}
       <Modal
         visible={isUserDetailVisible}
         animationType="slide"
@@ -504,7 +495,6 @@ const UserDetailsForm = () => {
         </View>
       </Modal>
 
-      {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={toggleFormVisibility}

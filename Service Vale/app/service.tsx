@@ -75,12 +75,10 @@ const ServicePage = () => {
   ) => {
     setModalVisible(false);
     setSelectedServiceboyName(applicantName);
-
     await createNotification(
       ` You assigned a new ${selectedServiceType} service.`,
       applicantEmail
     );
-
     router.push({
       pathname: '/order',
       params: {
@@ -97,18 +95,15 @@ const ServicePage = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-         <TouchableOpacity onPress={() => router.push('/home')}>
+          <TouchableOpacity onPress={() => router.push('/home')}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Service Selection</Text>
         </View>
       </View>
-
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 170 }]}>
-        
         <View style={styles.servicesGrid}>
-          {/* AC Service */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('AC')}
           >
@@ -129,9 +124,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
-          {/* Washing Machine Service */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Washing Machine')}
           >
@@ -152,9 +145,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
-          {/* Fridge Service */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Fridge')}
           >
@@ -175,9 +166,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
-          {/* Microwave Service */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Microwave')}
           >
@@ -200,8 +189,6 @@ const ServicePage = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Service Boy Selection Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -216,7 +203,6 @@ const ServicePage = () => {
                 <MaterialIcons name="close" size={24} color="#718096" />
               </TouchableOpacity>
             </View>
-            
             <ScrollView style={styles.modalScroll}>
               {allUsers.length > 0 ? (
                 allUsers.map((user, index) => (
@@ -245,7 +231,6 @@ const ServicePage = () => {
           </View>
         </View>
       </Modal>
-
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity
           style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
@@ -256,7 +241,6 @@ const ServicePage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Service</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/user')}
@@ -266,7 +250,6 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Users</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[footerStyles.bottomButton]}
           onPress={() => router.push('/home')}
@@ -276,7 +259,6 @@ const ServicePage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
@@ -286,7 +268,6 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/bill')}

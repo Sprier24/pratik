@@ -196,23 +196,17 @@ const PhotoComparisonPage = () => {
             router.push('/login');
             return;
         }
-
         if (!beforeImage && !afterImage) {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
-
         setIsUploading(true);
-
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
-
             if (beforeImage && !afterImage) {
-                // Upload ONLY BEFORE photo, no notification here
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
-
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: '',
@@ -221,7 +215,6 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
             } else if (afterImage && !beforeImage) {
-                // Upload ONLY AFTER photo, must find existing BEFORE image
                 const afterFileId = await uploadImageToStorage(afterImage);
                 const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
                     Query.orderDesc('date'),
@@ -229,32 +222,25 @@ const PhotoComparisonPage = () => {
                     Query.equal('userEmail', userEmail),
                     Query.limit(1),
                 ]);
-
                 if (latest.documents.length === 0) {
                     throw new Error('No matching before image found');
                 }
-
                 const docId = latest.documents[0].$id;
-
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
                     userEmail: userEmail,
                 });
-
                 await createNotification(
                     `\Photo Notification\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
             } else {
-                // Upload BOTH BEFORE & AFTER
                 const [beforeFileId, afterFileId] = await Promise.all([
                     uploadImageToStorage(beforeImage!),
                     uploadImageToStorage(afterImage!),
                 ]);
-
                 const docId = ID.unique();
-
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: afterFileId,
@@ -262,7 +248,6 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-
                 await createNotification(
                     `\nNotes:\n ${userNotes || 'No notes provided'}`,
                     docId

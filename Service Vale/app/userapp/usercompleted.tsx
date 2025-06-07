@@ -246,7 +246,6 @@ const CompletedServicesScreenUser = () => {
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -269,7 +268,6 @@ const CompletedServicesScreenUser = () => {
           </Text>
         </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={16} color="#718096" />
@@ -280,7 +278,6 @@ const CompletedServicesScreenUser = () => {
           </Text>
         </View>
       </View>
-
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
@@ -313,7 +310,6 @@ const CompletedServicesScreenUser = () => {
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
-
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
@@ -324,7 +320,6 @@ const CompletedServicesScreenUser = () => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
-
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -335,7 +330,6 @@ const CompletedServicesScreenUser = () => {
           </TouchableOpacity>
         )}
       </View>
-
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -344,7 +338,6 @@ const CompletedServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
-
       {services.length > 0 ? (
         <FlatList
           data={services}

@@ -7,7 +7,7 @@ import { ID, Query } from 'appwrite';
 import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
-import { Platform, Linking } from 'react-native';
+import { Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -169,9 +169,8 @@ const PendingServicesScreenUser = () => {
         ID.unique(),
         {
           description,
-          IsRead: false, // Changed to match collection schema
+          IsRead: false,
           userEmail,
-          // Remove createdAt as Appwrite handles this automatically
         }
       );
       console.log('Notification created successfully');
@@ -191,18 +190,14 @@ const PendingServicesScreenUser = () => {
           text: 'Complete',
           onPress: async () => {
             try {
-              // First update the service status
               await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTION_ID,
                 id,
                 { status: 'completed' }
               );
-
               const completedService = services.find(service => service.id === id);
               if (!completedService) return;
-
-              // Then try to create notification
               try {
                 await createNotification(
                   `Service completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
@@ -211,12 +206,8 @@ const PendingServicesScreenUser = () => {
               } catch (notificationError) {
                 console.warn('Notification failed (service still completed):', notificationError);
               }
-
-              // Update local state
               setServices(prev => prev.filter(service => service.id !== id));
               setAllServices(prev => prev.filter(service => service.id !== id));
-
-              // Navigate with completed service data
               router.push({
                 pathname: '/userapp/usercompleted',
                 params: {
@@ -244,10 +235,8 @@ const PendingServicesScreenUser = () => {
       `Service Amount: ₹${service.amount}\n\n` +
       `Please be ready for the service. For any queries, contact us.\n\n` +
       `Thank you for choosing our service!`;
-
     const phone = service.phone.replace(/\D/g, '');
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
-
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -285,7 +274,6 @@ const PendingServicesScreenUser = () => {
           </View>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -308,7 +296,6 @@ const PendingServicesScreenUser = () => {
           </Text>
         </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={16} color="#718096" />
@@ -317,7 +304,6 @@ const PendingServicesScreenUser = () => {
           </Text>
         </View>
       </View>
-
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.completeButton}
@@ -343,7 +329,6 @@ const PendingServicesScreenUser = () => {
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
-
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
@@ -354,7 +339,6 @@ const PendingServicesScreenUser = () => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
-
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -365,7 +349,6 @@ const PendingServicesScreenUser = () => {
           </TouchableOpacity>
         )}
       </View>
-
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -374,7 +357,6 @@ const PendingServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
-
       {services.length > 0 ? (
         <FlatList
           data={services}

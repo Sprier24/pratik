@@ -40,6 +40,7 @@ const PhotoComparisonPage: React.FC = () => {
     useEffect(() => {
         checkAuthStatus();
     }, []);
+
     useEffect(() => {
         if (isAuthenticated) fetchPhotoSets();
     }, [isAuthenticated]);
@@ -160,7 +161,6 @@ const PhotoComparisonPage: React.FC = () => {
                     <Text style={styles.headerTitle}>Service Photos</Text>
                 </View>
             </View>
-
             <ScrollView
                 contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
                 refreshControl={

@@ -56,7 +56,6 @@ const AdminHomeScreen = () => {
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -65,7 +64,6 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
-
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -74,10 +72,8 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
-
       const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
       const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
-
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
     } catch (error) {
@@ -89,13 +85,8 @@ const AdminHomeScreen = () => {
     try {
       setRefreshing(true);
       const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID);
-
-      // Count pending orders (status === 'pending')
       const pending = orders.documents.filter(o => o.status === 'pending').length;
-
-      // Count completed orders (status !== 'pending' - assuming any other status means completed)
       const completed = orders.documents.filter(o => o.status !== 'pending').length;
-
       setPendingCount(pending);
       setCompletedCount(completed);
     } catch (error) {
@@ -144,7 +135,6 @@ const AdminHomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Admin Dashboard</Text>
         <View style={styles.headerIcons}>
@@ -164,7 +154,6 @@ const AdminHomeScreen = () => {
         </View>
       </View>
 
-      {/* Content */}
       <ScrollView
         contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
         refreshControl={
@@ -176,7 +165,6 @@ const AdminHomeScreen = () => {
           />
         }
       >
-        {/* Revenue Cards */}
         <View style={styles.revenueRow}>
           <View style={[styles.revenueCard, styles.dailyCard]}>
             <View style={styles.cardIconContainer}>
@@ -190,7 +178,6 @@ const AdminHomeScreen = () => {
               })}
             </Text>
           </View>
-
           <View style={[styles.revenueCard, styles.monthlyCard]}>
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="date-range" size={24} color="#FFF" />
@@ -205,7 +192,6 @@ const AdminHomeScreen = () => {
           </View>
         </View>
 
-        {/* Services Cards */}
         <View style={styles.servicesRow}>
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.serviceCardHeader}>
@@ -223,7 +209,6 @@ const AdminHomeScreen = () => {
               <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
-
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
@@ -242,7 +227,6 @@ const AdminHomeScreen = () => {
           </View>
         </View>
       </ScrollView>
-
 
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity

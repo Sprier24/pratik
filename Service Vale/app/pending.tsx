@@ -323,7 +323,6 @@ const PendingServicesScreen = () => {
           </View>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -346,7 +345,6 @@ const PendingServicesScreen = () => {
           </Text>
         </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={16} color="#718096" />
@@ -358,7 +356,6 @@ const PendingServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
-
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.whatsappButton}
@@ -401,7 +398,6 @@ const PendingServicesScreen = () => {
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
-
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
@@ -415,7 +411,6 @@ const PendingServicesScreen = () => {
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}

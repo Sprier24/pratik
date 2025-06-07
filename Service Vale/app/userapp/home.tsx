@@ -177,7 +177,6 @@ const HomeScreenuser = () => {
           />
         }
       >
-        {/* Revenue Cards */}
         <View style={styles.revenueRow}>
           <View style={[styles.revenueCard, styles.dailyCard]}>
             <View style={styles.cardIconContainer}>
@@ -191,7 +190,6 @@ const HomeScreenuser = () => {
               })}
             </Text>
           </View>
-
           <View style={[styles.revenueCard, styles.monthlyCard]}>
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="date-range" size={24} color="#FFF" />
@@ -223,7 +221,6 @@ const HomeScreenuser = () => {
               <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
-
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
@@ -253,17 +250,14 @@ const HomeScreenuser = () => {
           </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.bottomButton, styles.bottomButtonActive]}
-          // onPress={() => router.push('/userapp/home')}
         >
           <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
             <Feather name="home" size={20} color="#FFF" />
           </View>
           <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.bottomButton}
           onPress={() => router.push('/userapp/userbill')}
@@ -277,7 +271,5 @@ const HomeScreenuser = () => {
     </SafeAreaView>
   );
 };
-
-
 
 export default HomeScreenuser;
