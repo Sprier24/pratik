@@ -1,15 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    TouchableOpacity,
-    StyleSheet,
-    SafeAreaView,
-    ScrollView,
-    RefreshControl,
-    Alert
-} from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, Alert } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { databases } from '../lib/appwrite';
@@ -19,7 +9,7 @@ import { Audio } from 'expo-av';
 import styles from '../constants/userapp/notification';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
-const NOTIFICATIONS_COLLECTION = 'note_id';
+const NOTIFICATIONS_COLLECTION = 'admin_id';
 
 const AdminNotificationPage = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -27,7 +17,6 @@ const AdminNotificationPage = () => {
     const [previousCount, setPreviousCount] = useState(0);
     const soundRef = useRef<Audio.Sound | null>(null);
 
-    // Load notification sound
     useEffect(() => {
         const loadSound = async () => {
             const { sound } = await Audio.Sound.createAsync(
@@ -35,9 +24,7 @@ const AdminNotificationPage = () => {
             );
             soundRef.current = sound;
         };
-
         loadSound();
-
         return () => {
             if (soundRef.current) {
                 soundRef.current.unloadAsync();
@@ -45,23 +32,19 @@ const AdminNotificationPage = () => {
         };
     }, []);
 
-    // Fetch notifications
     const fetchNotifications = async () => {
         try {
             const res = await databases.listDocuments(
                 DATABASE_ID,
                 NOTIFICATIONS_COLLECTION,
                 [
-                    Query.orderDesc('createdAt')
+                    Query.orderDesc('$createdAt')
                 ]
             );
-
             const newNotifications = res.documents.filter(doc => !doc.isRead);
-
             if (newNotifications.length > previousCount) {
                 playNotificationSound();
             }
-
             setNotifications(newNotifications);
             setPreviousCount(newNotifications.length);
         } catch (error) {
@@ -128,7 +111,6 @@ const AdminNotificationPage = () => {
         setRefreshing(true);
         fetchNotifications();
     };
-
     useEffect(() => {
         fetchNotifications();
     }, []);
@@ -151,12 +133,10 @@ const AdminNotificationPage = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <TouchableOpacity onPress={() => router.push('/home')}>
-                        <MaterialIcons name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Notifications</Text>
-                </View>
+                <TouchableOpacity onPress={() => router.push('/home')}>
+                    <MaterialIcons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Notifications</Text>
                 {notifications.length > 0 ? (
                     <TouchableOpacity onPress={deleteAllNotifications}>
                         <MaterialIcons name="delete" size={24} color="#fff" />
@@ -165,7 +145,6 @@ const AdminNotificationPage = () => {
                     <View style={{ width: 24 }} />
                 )}
             </View>
-
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={

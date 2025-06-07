@@ -219,14 +219,4 @@ export const styles = StyleSheet.create({
   bottomButtonTextActive: {
     color: "#FFF",
   },
-  redDot: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "red",
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    zIndex: 10,
-  },
 });

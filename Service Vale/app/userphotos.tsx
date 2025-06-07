@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    ScrollView,
-    Alert,
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    Dimensions,
-    SafeAreaView,
-    RefreshControl
-} from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, Pressable, Dimensions, SafeAreaView, RefreshControl } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { databases, storage, account } from '../lib/appwrite';
@@ -33,7 +20,6 @@ interface PhotoDocument extends Models.Document {
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
 const BUCKET_ID = 'photo_id';
-
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
 const PROJECT_ID = '681b300f0018fdc27bdd';
@@ -54,7 +40,6 @@ const PhotoComparisonPage: React.FC = () => {
     useEffect(() => {
         checkAuthStatus();
     }, []);
-
     useEffect(() => {
         if (isAuthenticated) fetchPhotoSets();
     }, [isAuthenticated]);
@@ -112,7 +97,6 @@ const PhotoComparisonPage: React.FC = () => {
                 setIsLoading(false);
                 return;
             }
-
             const saveImage = async (fileId: string | undefined) => {
                 if (!fileId) return null;
                 const uri = buildImageUrl(fileId);
@@ -121,10 +105,8 @@ const PhotoComparisonPage: React.FC = () => {
                 const asset = await MediaLibrary.createAssetAsync(downloaded.uri);
                 return asset;
             };
-
             const beforeAsset = await saveImage(item.beforeImageUrl);
             const afterAsset = await saveImage(item.afterImageUrl);
-
             if (beforeAsset || afterAsset) {
                 await MediaLibrary.createAlbumAsync('Service Photos', beforeAsset ?? afterAsset as MediaLibrary.Asset, false);
             }
@@ -135,9 +117,7 @@ const PhotoComparisonPage: React.FC = () => {
             if (item.afterImageUrl) {
                 await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
             }
-
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
-
             Alert.alert('Success', 'Images saved to gallery and deleted from system');
             fetchPhotoSets();
         } catch (err) {
@@ -172,7 +152,6 @@ const PhotoComparisonPage: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.push('/home')}>
@@ -287,7 +266,6 @@ const PhotoComparisonPage: React.FC = () => {
                 )}
             </ScrollView>
 
-            {/* Image Preview Modal */}
             <Modal visible={previewVisible} transparent animationType="fade">
                 <Pressable style={styles.modalBackground} onPress={closePreview}>
                     {previewImageUrl && (
@@ -302,6 +280,7 @@ const PhotoComparisonPage: React.FC = () => {
                     </TouchableOpacity>
                 </Pressable>
             </Modal>
+
             <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
                 <TouchableOpacity
                     style={footerStyles.bottomButton}

@@ -11,7 +11,7 @@ import { Platform, Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
+const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
 
 type Service = {
   id: string;
@@ -169,14 +169,15 @@ const PendingServicesScreenUser = () => {
         ID.unique(),
         {
           description,
-          isRead: false,
-          createdAt: new Date().toISOString(),
+          IsRead: false, // Changed to match collection schema
           userEmail,
+          // Remove createdAt as Appwrite handles this automatically
         }
       );
-      console.log('Notification sent to:', userEmail);
+      console.log('Notification created successfully');
     } catch (error) {
       console.error('Notification creation failed:', error);
+      throw error;
     }
   };
 
@@ -190,6 +191,7 @@ const PendingServicesScreenUser = () => {
           text: 'Complete',
           onPress: async () => {
             try {
+              // First update the service status
               await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTION_ID,
@@ -198,22 +200,29 @@ const PendingServicesScreenUser = () => {
               );
 
               const completedService = services.find(service => service.id === id);
-              if (completedService) {
+              if (!completedService) return;
+
+              // Then try to create notification
+              try {
                 await createNotification(
-                  `${completedService.clientName}'s ${completedService.serviceType} service has been marked as completed.`,
+                  `Service completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
                   completedService.serviceboyEmail
                 );
-
-
-                setServices(prev => prev.filter(service => service.id !== id));
-
-                router.push({
-                  pathname: '/userapp/usercompleted',
-                  params: {
-                    completedService: JSON.stringify(completedService)
-                  }
-                });
+              } catch (notificationError) {
+                console.warn('Notification failed (service still completed):', notificationError);
               }
+
+              // Update local state
+              setServices(prev => prev.filter(service => service.id !== id));
+              setAllServices(prev => prev.filter(service => service.id !== id));
+
+              // Navigate with completed service data
+              router.push({
+                pathname: '/userapp/usercompleted',
+                params: {
+                  completedService: JSON.stringify(completedService)
+                }
+              });
             } catch (error) {
               console.error('Error completing service:', error);
               Alert.alert('Error', 'Failed to complete service');
@@ -265,7 +274,7 @@ const PendingServicesScreenUser = () => {
             onPress={() => router.push({
               pathname: '/userapp/PhotoComparisonPage',
               params: {
-                notes: `Service Type : ${item.serviceType}\nCustomer : ${item.clientName}\nService Date : ${item.serviceDate} at ${item.serviceTime}`
+                notes: `Service : ${item.serviceType}\n Customer : ${item.clientName}\n Date : ${item.serviceDate} at ${item.serviceTime}`
               }
             })}
           >

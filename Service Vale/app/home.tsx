@@ -153,7 +153,6 @@ const AdminHomeScreen = () => {
             onPress={() => router.push('/notification')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
-            {unreadCount > 0 && <View style={styles.redDot} />}
           </TouchableOpacity>
 
           <TouchableOpacity

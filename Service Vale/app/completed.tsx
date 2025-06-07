@@ -474,10 +474,9 @@ const AdminCompletedServicesScreen = () => {
               ? `No completed services for ${selectedServiceBoy}`
               : dateFilter
                 ? `No services completed on ${format(dateFilter, 'MMMM d, yyyy')}`
-                : 'No completed services found'
+                : 'No completed services'
             }
           </Text>
-          <Text style={styles.emptySubtext}>All services are pending</Text>
         </View>
       )}
     </SafeAreaView>

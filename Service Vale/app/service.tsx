@@ -77,7 +77,7 @@ const ServicePage = () => {
     setSelectedServiceboyName(applicantName);
 
     await createNotification(
-      ` ${applicantName} has been assigned a new ${selectedServiceType} service.`,
+      ` You assigned a new ${selectedServiceType} service.`,
       applicantEmail
     );
 

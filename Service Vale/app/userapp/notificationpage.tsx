@@ -11,7 +11,7 @@ import styles from '../../constants/userapp/notification';
 const DATABASE_ID = '681c428b00159abb5e8b';
 const NOTIFICATIONS_COLLECTION = 'note_id';
 
-const AdminNotificationPage = () => {
+const UserNotificationPage = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [previousCount, setPreviousCount] = useState(0);
@@ -159,7 +159,6 @@ const AdminNotificationPage = () => {
                     <View style={{ width: 24 }} />
                 )}
             </View>
-
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={
@@ -189,4 +188,4 @@ const AdminNotificationPage = () => {
     );
 };
 
-export default AdminNotificationPage;
+export default UserNotificationPage;

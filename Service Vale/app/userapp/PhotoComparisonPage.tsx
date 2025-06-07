@@ -12,7 +12,7 @@ import { styles } from '../../constants/userapp/Userphoto';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
-const NOTIFICATIONS_COLLECTION = 'note_id';
+const NOTIFICATIONS_COLLECTION = 'admin_id';
 const BUCKET_ID = 'photo_id';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
@@ -171,11 +171,12 @@ const PhotoComparisonPage = () => {
 
     const createNotification = async (description: string, relatedDocumentId: string) => {
         const notifId = ID.unique();
+
         try {
             await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, notifId, {
                 description,
-                isRead: false,
-                createdAt: new Date().toISOString(),
+                IsRead: false,
+                createAt: new Date().toISOString(),
                 userEmail,
             });
             console.log('Notification created successfully:', notifId);
@@ -195,17 +196,23 @@ const PhotoComparisonPage = () => {
             router.push('/login');
             return;
         }
+
         if (!beforeImage && !afterImage) {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
+
         setIsUploading(true);
+
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
+
             if (beforeImage && !afterImage) {
+                // Upload ONLY BEFORE photo, no notification here
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
+
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: '',
@@ -214,6 +221,7 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
             } else if (afterImage && !beforeImage) {
+                // Upload ONLY AFTER photo, must find existing BEFORE image
                 const afterFileId = await uploadImageToStorage(afterImage);
                 const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
                     Query.orderDesc('date'),
@@ -221,25 +229,32 @@ const PhotoComparisonPage = () => {
                     Query.equal('userEmail', userEmail),
                     Query.limit(1),
                 ]);
+
                 if (latest.documents.length === 0) {
                     throw new Error('No matching before image found');
                 }
+
                 const docId = latest.documents[0].$id;
+
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
                     userEmail: userEmail,
                 });
+
                 await createNotification(
-                    `\nNotes:\n ${userNotes || 'No notes provided'}`,
+                    `\Photo Notification\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
             } else {
+                // Upload BOTH BEFORE & AFTER
                 const [beforeFileId, afterFileId] = await Promise.all([
                     uploadImageToStorage(beforeImage!),
                     uploadImageToStorage(afterImage!),
                 ]);
+
                 const docId = ID.unique();
+
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: afterFileId,
@@ -247,15 +262,17 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
+
                 await createNotification(
                     `\nNotes:\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
             }
+
             Alert.alert('Success', 'Photo saved.');
             setBeforeImage(null);
             setAfterImage(null);
-            setNotes('');
+            setNotes(userName ? `${userName}\n` : '');
             fetchPhotoSets();
         } catch (error) {
             Alert.alert('Error', error instanceof Error ? error.message : 'Upload failed');

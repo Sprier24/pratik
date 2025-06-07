@@ -517,7 +517,6 @@ const PendingServicesScreen = () => {
                 : 'No pending services'
             }
           </Text>
-          <Text style={styles.emptySubtext}>All services are up to date</Text>
         </View>
       )}
     </SafeAreaView>
