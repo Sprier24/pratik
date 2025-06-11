@@ -118,7 +118,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     marginRight: 6,
   },
-
   modalContainer1: {
     flex: 1,
     justifyContent: "center",
@@ -177,7 +176,6 @@ export const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
   },
-
   formContainer: {
     backgroundColor: "#FFF",
     borderRadius: 15,
@@ -196,7 +194,7 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: '#E5E7EB',
   },
   sectionTitle: {
     fontSize: 16,
@@ -205,8 +203,8 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    marginTop: 24,
+    borderBottomColor: '#E5E7EB',
+    marginTop: 24
   },
   formGroup: {
     marginBottom: 15,
@@ -218,6 +216,15 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
+    backgroundColor: "#F7FAFC",
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    color: "#2D3748",
+  },
+    input1: {
     backgroundColor: "#F7FAFC",
     borderRadius: 10,
     padding: 14,
@@ -244,7 +251,6 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 6,
   },
-
   summaryLabel: {
     fontSize: 14,
     color: "#4A5568",
@@ -290,7 +296,6 @@ export const styles = StyleSheet.create({
   changeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingBottom: 24,
   },
   changeLabel: {
     fontSize: 14,
@@ -323,6 +328,7 @@ export const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     borderRadius: 5,
     marginBottom: 10,
+
   },
   changeSignatureButton: {
     marginBottom: 10,
@@ -724,26 +730,22 @@ export const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#EDF2F7",
   },
   serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDF2F7",
   },
   serviceType: {
     fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
+    maxWidth: '70%',
+    flexShrink: 1,
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -765,3 +767,4 @@ export const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
+

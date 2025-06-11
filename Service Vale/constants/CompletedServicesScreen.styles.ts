@@ -167,25 +167,26 @@ export const styles = StyleSheet.create({
     paddingTop: 15,
     paddingBottom: 100,
   },
-  serviceCard: {
+   serviceCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#EDF2F7",
   },
   serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDF2F7",
+  },
+  serviceType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2D3748",
+    maxWidth: '70%',
+    flexShrink: 1,
   },
   serviceTypeContainer: {
     flexDirection: "row",
@@ -193,11 +194,6 @@ export const styles = StyleSheet.create({
   },
   serviceIcon: {
     marginRight: 8,
-  },
-  serviceType: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#2D3748",
   },
   statusBadge: {
     paddingHorizontal: 10,

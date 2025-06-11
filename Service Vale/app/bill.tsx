@@ -488,13 +488,7 @@ const BillPage = () => {
                   <span class="value">₹${bill.change}</span>
                 </div>
                 ` : ''}
-              </div>       
-              ${bill.notes ? `
-                <div class="section notes-section">
-                  <div class="section-title">Notes</div>
-                  <p>${bill.notes}</p>
-                </div>
-              ` : ''}       
+              </div>          
               ${bill?.signature ? `
                 <div class="signature-section">
                   <div class="signature-title">Customer Signature</div>
@@ -624,16 +618,6 @@ const BillPage = () => {
     );
   };
 
-  const handleLogout = async () => {
-    try {
-      await account.deleteSession('current');
-      router.replace('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to logout');
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -751,7 +735,7 @@ const BillPage = () => {
         <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
           {isFormVisible ? (
             <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Service Details</Text>
+              <Text style={styles.sectionTitle1}>Service Details</Text>
               {Object.entries(form).map(([key, value]) => (
                 <View key={key} style={styles.formGroup}>
                   <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
@@ -770,7 +754,7 @@ const BillPage = () => {
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
-                style={[styles.input, styles.textArea]}
+                style={[styles.input1, styles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -779,7 +763,7 @@ const BillPage = () => {
               />
 
               <View style={styles.paymentSummary}>
-                <View style={[styles.summaryRow, styles.totalRow]}>
+                <View style={[styles.summaryRow]}>
                   <Text style={styles.summaryLabel}>Total Amount :</Text>
                   <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
                 </View>
@@ -820,7 +804,7 @@ const BillPage = () => {
                   <Text style={styles.sectionTitle}>Cash Payment</Text>
                   <TextInput
                     placeholder="Amount Given by Customer"
-                    style={styles.input}
+                    style={styles.input1}
                     keyboardType="numeric"
                     value={cashGiven}
                     onChangeText={setCashGiven}

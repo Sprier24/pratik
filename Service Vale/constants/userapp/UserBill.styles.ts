@@ -50,8 +50,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-  subheader: {},
-  filterContainer: {
+    filterContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -88,6 +87,93 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  activeFilter: {
+    backgroundColor: "#5E72E4",
+  },
+  activeFilterText: {
+    color: "#FFF",
+  },
+  activeFiltersContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#F7FAFC",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#5E72E4",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  filterChipText: {
+    color: "#FFF",
+    fontSize: 12,
+    marginRight: 6,
+  },
+  modalContainer1: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent1: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    maxHeight: "70%",
+  },
+  modalTitle1: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+    color: "#333",
+  },
+  modalScrollBox1: {
+    maxHeight: 300,
+    marginBottom: 10,
+  },
+  filterOption1: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  filterOptionContainer1: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  filterOptionText1: {
+    fontSize: 16,
+    flex: 1,
+    marginRight: 10,
+  },
+  countBadge1: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
+    color: "#4B5563",
+  },
+  modalCloseButton1: {
+    marginTop: 15,
+    backgroundColor: "#5E72E4",
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+  },
+  modalCloseButtonText1: {
+    color: "white",
+    fontSize: 16,
+  },
   formContainer: {
     backgroundColor: "#FFF",
     borderRadius: 15,
@@ -99,6 +185,15 @@ export const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  sectionTitle1: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2D3748",
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -106,8 +201,8 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    marginTop: 24,
+    borderBottomColor: '#E5E7EB',
+    marginTop: 24
   },
   formGroup: {
     marginBottom: 15,
@@ -116,9 +211,18 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#4A5568",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
+    backgroundColor: "#F7FAFC",
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    color: "#2D3748",
+  },
+    input1: {
     backgroundColor: "#F7FAFC",
     borderRadius: 10,
     padding: 14,
@@ -132,11 +236,27 @@ export const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: "top",
   },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-    paddingTop: 10,
-    marginTop: 5,
+  paymentSummary: {
+    backgroundColor: "#F7FAFC",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: "#4A5568",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2D3748",
   },
   paymentMethodContainer: {
     flexDirection: "row",
@@ -174,10 +294,6 @@ export const styles = StyleSheet.create({
   changeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
   },
   changeLabel: {
     fontSize: 14,
@@ -209,9 +325,11 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     borderRadius: 5,
+    marginBottom: 10,
+
   },
   changeSignatureButton: {
-    marginTop: 10,
+    marginBottom: 10,
   },
   changeSignatureText: {
     color: "#5E72E4",
@@ -348,14 +466,11 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
   },
   billDate: {
     fontSize: 12,
     color: "#718096",
+    gap: 5,
   },
   modalOverlay: {
     flex: 1,
@@ -389,6 +504,44 @@ export const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 20,
+  },
+  modalScrollBox: {
+    maxHeight: 300,
+    marginBottom: 10,
+  },
+  filterOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  filterOptionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  filterOptionText: {
+    fontSize: 16,
+    flex: 1,
+    marginRight: 10,
+  },
+  countBadge: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
+    color: "#4B5563",
+  },
+  modalCloseButton: {
+    marginTop: 15,
+    backgroundColor: "#5E72E4",
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+  },
+  modalCloseButtonText: {
+    color: "white",
+    fontSize: 16,
   },
   detailSection: {
     marginBottom: 20,
@@ -454,6 +607,9 @@ export const styles = StyleSheet.create({
   },
   whatsappButton: {
     backgroundColor: "#25D366",
+  },
+  deleteButton: {
+    backgroundColor: "#F56565",
   },
   actionButtonText: {
     color: "#FFF",
@@ -565,24 +721,52 @@ export const styles = StyleSheet.create({
   bottomButtonTextActive: {
     color: "#FFF",
   },
-  paymentSummary: {
-    backgroundColor: "#F7FAFC",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+  scrollContent: {
+    paddingBottom: 20,
   },
-  summaryRow: {
+  serviceCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDF2F7",
   },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#4A5568",
-  },
-  summaryValue: {
-    fontSize: 14,
+  serviceType: {
+    fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
   },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pendingBadge: {
+    backgroundColor: "#FEF3C7",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#92400E",
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    paddingTop: 10,
+    marginTop: 5,
+  },
 });
+

@@ -61,31 +61,39 @@ const LoginScreen = () => {
             setResetModalVisible(true);
             setResetUserId(params.userId as string);
             setResetSecret(params.secret as string);
+        } else {
+            setResetModalVisible(false);
         }
     }, [params]);
 
     useEffect(() => {
         const handleDeepLink = (event: { url: string }) => {
             const url = event.url;
-            console.log('Deep link URL:', url);
             if (url.includes('cloud.appwrite.io/v1/recovery')) {
                 const params = new URLSearchParams(url.split('?')[1]);
-                if (params.get('package') === 'com.markwatson.service_vale') {
+                if (params.get('package') === 'com.purva_galani.service_vale') {
                     const userId = params.get('userId');
                     const secret = params.get('secret');
                     if (userId && secret) {
-                        router.navigate({
-                            pathname: '/reset-password',
-                            params: { userId, secret }
+                        router.replace({
+                            pathname: '/login',
+                            params: {
+                                resetPassword: 'true',
+                                userId,
+                                secret
+                            }
                         });
                     }
                 }
             }
         };
+
         const subscription = Linking.addEventListener('url', handleDeepLink);
+
         Linking.getInitialURL().then(url => {
             if (url) handleDeepLink({ url });
         });
+
         return () => subscription.remove();
     }, []);
 
@@ -96,7 +104,6 @@ const LoginScreen = () => {
             </View>
         );
     }
-
     const handleLogin = async () => {
         if (email === '' || password === '') {
             Alert.alert('Error', 'Please fill in all fields');
@@ -147,8 +154,10 @@ const LoginScreen = () => {
                     Alert.alert('Access Denied', 'You are not authorized to access this system');
                     return;
                 }
-            } catch (error) {
-                Alert.alert('Registration Error', error instanceof Error ? error.message : 'An unknown error occurred');
+            } catch (error: any) {
+                if (error.code === 409) {
+                    Alert.alert('Error', 'Email already exists. Please use a different email.');
+                }
             }
         }
     };
@@ -159,14 +168,12 @@ const LoginScreen = () => {
 
     const handleSendOTP = async () => {
         try {
-            const resetUrl = `https://cloud.appwrite.io/v1/recovery?package=com.markwatson.service_vale`;
-
+            const resetUrl = `https://cloud.appwrite.io/v1/recovery?package=com.purva_galani.service_vale`;
             await account.createRecovery(forgotEmail, resetUrl);
             Alert.alert('Email Sent', 'Check your email for reset instructions');
             setForgotEmail('');
             setForgotModalVisible(false);
         } catch (error: any) {
-            console.error('Recovery Error:', error);
             Alert.alert('Error', error?.message || 'Failed to send recovery email');
         }
     };
@@ -201,12 +208,12 @@ const LoginScreen = () => {
                             setResetSecret('');
                             setResetModalVisible(false);
                             setResetSuccess(true);
+                            router.replace('/login');
                         }
                     }
                 ]
             );
         } catch (error: any) {
-            console.error('Password Reset Error:', error);
             Alert.alert('Error', error?.message || 'Failed to reset password');
         }
     };
@@ -266,38 +273,50 @@ const LoginScreen = () => {
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalCard}>
                             <Text style={styles.modalTitle}>Reset Password</Text>
-                            <View style={styles.passwordInputContainer}>
-                                <TextInput
-                                    style={styles.modalInput}
-                                    placeholder="New Password"
-                                    placeholderTextColor="#999"
-                                    value={newPassword}
-                                    onChangeText={setNewPassword}
-                                    secureTextEntry={!showNewPassword}
-                                />
-                                <TouchableOpacity
-                                    style={styles.eyeIcon}
-                                    onPress={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                    <Ionicons
-                                        name={showNewPassword ? 'eye' : 'eye-off'}
-                                        size={20}
-                                        color="#888"
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>New Password</Text>
+                                <View style={styles.passwordInputContainer}>
+                                    <TextInput
+                                        style={styles.passwordInput}
+                                        placeholder="New Password"
+                                        placeholderTextColor="#999"
+                                        value={newPassword}
+                                        onChangeText={setNewPassword}
+                                        secureTextEntry={!showNewPassword}
                                     />
-                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.eyeIcon}
+                                        onPress={() => setShowNewPassword(!showNewPassword)}
+                                    >
+                                        <Ionicons
+                                            name={showNewPassword ? 'eye' : 'eye-off'}
+                                            size={20}
+                                            color="#888"
+                                        />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Confirm Password"
-                                placeholderTextColor="#999"
-                                value={resetConfirmPassword}
-                                onChangeText={setResetConfirmPassword}
-                                secureTextEntry={true}
-                            />
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>Confirm Password</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Confirm password"
+                                    placeholderTextColor="#999"
+                                    value={resetConfirmPassword}
+                                    onChangeText={setResetConfirmPassword}
+                                    secureTextEntry={true}
+                                />
+                            </View>
+
                             <View style={styles.modalButtonGroup}>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.secondaryButton]}
-                                    onPress={() => setResetModalVisible(false)}
+                                    onPress={() => {
+                                        setResetModalVisible(false);
+                                        router.replace('/login');
+                                    }}
                                 >
                                     <Text style={styles.secondaryButtonText}>Cancel</Text>
                                 </TouchableOpacity>
@@ -305,7 +324,7 @@ const LoginScreen = () => {
                                     style={[styles.modalButton, styles.primaryButton]}
                                     onPress={handleResetPassword}
                                 >
-                                    <Text style={styles.primaryButtonText}>Update Password</Text>
+                                    <Text style={styles.primaryButtonText}>Update</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -328,7 +347,6 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
-
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Email Address</Text>
                         <TextInput
@@ -341,7 +359,6 @@ const LoginScreen = () => {
                             autoCapitalize="none"
                         />
                     </View>
-
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Password</Text>
                         <View style={styles.passwordInputContainer}>
@@ -365,7 +382,6 @@ const LoginScreen = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
-
                     {!isLogin && (
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -379,7 +395,6 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
-
                     {isLogin && (
                         <TouchableOpacity
                             style={styles.forgotPasswordButton}
@@ -388,7 +403,6 @@ const LoginScreen = () => {
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     )}
-
                     <TouchableOpacity
                         style={styles.authButton}
                         onPress={isLogin ? handleLogin : handleRegister}
@@ -397,7 +411,6 @@ const LoginScreen = () => {
                             {isLogin ? 'Sign In' : 'Sign Up'}
                         </Text>
                     </TouchableOpacity>
-
                     <View style={styles.authFooter}>
                         <Text style={styles.authFooterText}>
                             {isLogin ? "Don't have an account?" : "Already have an account?"}

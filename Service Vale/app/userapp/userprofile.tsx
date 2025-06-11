@@ -55,26 +55,6 @@ const ProfileScreen = () => {
         fetchUserData();
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await account.deleteSession('current');
-            Alert.alert('Logged out');
-            router.replace('/');
-        } catch (error) {
-            console.error('Logout Error:', error);
-            Alert.alert('Error', (error as Error).message || 'Something went wrong');
-        }
-    };
-    if (loading) {
-        return (
-            <SafeAreaView style={styles.safeArea}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#5E72E4" />
-                </View>
-            </SafeAreaView>
-        );
-    }
-
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
@@ -124,13 +104,6 @@ const ProfileScreen = () => {
                                 <Text style={styles.infoText}>Pan No : {user.panNo || 'Not provided'}</Text>
                             </View>
                         </View>
-                        <TouchableOpacity
-                            style={styles.logoutButton}
-                            onPress={handleLogout}
-                        >
-                            <Feather name="log-out" size={20} color="#FFF" />
-                            <Text style={styles.logoutButtonText}>Logout</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>

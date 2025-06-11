@@ -594,7 +594,7 @@ const UserBill = () => {
         <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
           {isFormVisible ? (
             <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Service Details</Text>
+              <Text style={styles.sectionTitle1}>Service Details</Text>
               {Object.entries(form).map(([key, value]) => (
                 <View key={key} style={styles.formGroup}>
                   <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
@@ -613,7 +613,7 @@ const UserBill = () => {
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
-                style={[styles.input, styles.textArea]}
+                style={[styles.input1, styles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -622,7 +622,7 @@ const UserBill = () => {
               />
 
               <View style={styles.paymentSummary}>
-                <View style={[styles.summaryRow, styles.totalRow]}>
+                <View style={[styles.summaryRow]}>
                   <Text style={styles.summaryLabel}>Total Amount :</Text>
                   <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
                 </View>
@@ -663,7 +663,7 @@ const UserBill = () => {
                   <Text style={styles.sectionTitle}>Cash Payment</Text>
                   <TextInput
                     placeholder="Amount Given by Customer"
-                    style={styles.input}
+                    style={styles.input1}
                     keyboardType="numeric"
                     value={cashGiven}
                     onChangeText={setCashGiven}
