@@ -149,7 +149,7 @@ const HomeScreenuser = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Engineer Dashboard</Text>
+        <Text style={styles.headerTitle}>Service Vale</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.notificationIcon}

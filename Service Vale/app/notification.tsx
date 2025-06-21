@@ -7,8 +7,6 @@ import { Query } from 'appwrite';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import styles from '../constants/userapp/notification';
-import messaging from '@react-native-firebase/messaging';
-import { PermissionsAndroid } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const NOTIFICATIONS_COLLECTION = 'admin_id';
@@ -18,52 +16,6 @@ const AdminNotificationPage = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [previousCount, setPreviousCount] = useState(0);
     const soundRef = useRef<Audio.Sound | null>(null);
-
-    async function requestUserPermission() {
-        const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        );
-
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            console.log('Notification permission granted');
-        } else {
-            console.log('Notification permission denied');
-        }
-    }
-
-    async function onAppBootstrap() {
-        // Register the device with FCM
-        await messaging().registerDeviceForRemoteMessages();
-
-        // Get the token
-        const token = await messaging().getToken();
-        console.log('Device FCM token:', token);
-
-        // Save this token to your server for sending targeted messages
-    }
-
-    // Handle notifications when the app is in the foreground
-    messaging().onMessage(async remoteMessage => {
-        console.log('Foreground notification:', remoteMessage);
-        // You can display the notification here
-    });
-
-    // Handle notification when the app is in the background or closed
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-        console.log('Background notification:', remoteMessage);
-    });
-
-    // Handle notification taps when the app is closed
-    messaging().getInitialNotification().then(remoteMessage => {
-        if (remoteMessage) {
-            console.log('Notification caused app to open:', remoteMessage);
-        }
-    });
-
-    // Handle notification taps when the app is in the background
-    messaging().onNotificationOpenedApp(remoteMessage => {
-        console.log('Notification opened app from background:', remoteMessage);
-    });
 
     useEffect(() => {
         const loadSound = async () => {
