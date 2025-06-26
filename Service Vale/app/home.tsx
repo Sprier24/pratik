@@ -9,10 +9,10 @@ import { styles } from '../constants/HomeScreen.styles';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = 'service-vale';
-const BILLS_COLLECTION_ID = 'bill';
-const ORDERS_COLLECTION_ID = 'order';
-const ENGINEERS_NOTIFICATIONS_COLLECTION_ID = 'engineer-notifications-token';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = 'bill_ID';
+const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const { width } = Dimensions.get('window');
 
 const AdminHomeScreen = () => {
@@ -58,7 +58,7 @@ const AdminHomeScreen = () => {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
-        BILLS_COLLECTION_ID,
+        COLLECTION_ID,
         [
           Query.greaterThanEqual('date', startOfDay),
           Query.orderDesc('date')
@@ -66,7 +66,7 @@ const AdminHomeScreen = () => {
       );
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
-        BILLS_COLLECTION_ID,
+        COLLECTION_ID,
         [
           Query.greaterThanEqual('date', startOfMonth),
           Query.orderDesc('date')
@@ -101,7 +101,7 @@ const AdminHomeScreen = () => {
     try {
       const res = await databases.listDocuments(
         DATABASE_ID,
-        ENGINEERS_NOTIFICATIONS_COLLECTION_ID,
+        NOTIFICATIONS_COLLECTION_ID,
         [Query.equal('isRead', false)]
       );
       setUnreadCount(res.total);
@@ -136,7 +136,7 @@ const AdminHomeScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Service Vale</Text>
+        <Text style={styles.headerTitle}>Admin Dashboard</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.notificationIcon}

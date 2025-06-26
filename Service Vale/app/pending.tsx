@@ -9,9 +9,9 @@ import { format, isSameDay } from 'date-fns';
 import { Linking } from 'react-native';
 import { styles } from '../constants/PendingServicesScreen.styles';
 
-const DATABASE_ID = 'service-vale';
-const ORDERS_COLLECTION_ID = 'order';
-const USERS_COLLECTION_ID = 'user';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681d92600018a87c1478';
+const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Service = {
   id: string;
@@ -69,7 +69,7 @@ const PendingServicesScreen = () => {
     try {
       const response = await databases.listDocuments(
         DATABASE_ID,
-        ORDERS_COLLECTION_ID,
+        COLLECTION_ID,
         [
           Query.equal('status', 'pending'),
           Query.orderAsc('serviceDate'),
@@ -178,7 +178,7 @@ const PendingServicesScreen = () => {
               const completedAt = new Date().toISOString();
               await databases.updateDocument(
                 DATABASE_ID,
-                ORDERS_COLLECTION_ID,
+                COLLECTION_ID,
                 id,
                 {
                   status: 'completed',
@@ -223,7 +223,7 @@ const PendingServicesScreen = () => {
             try {
               await databases.deleteDocument(
                 DATABASE_ID,
-                ORDERS_COLLECTION_ID,
+                COLLECTION_ID,
                 id
               );
               setAllServices(prev => prev.filter(service => service.id !== id));

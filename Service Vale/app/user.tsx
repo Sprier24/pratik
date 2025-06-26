@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/UserDetailsForm.styles';
 import { footerStyles } from '../constants/footer';
 
-const DATABASE_ID = 'service-vale';
-const USERS_COLLECTION_ID = 'user';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681c429800281e8a99bd';
 
 type User = {
   $id?: string;
@@ -64,7 +64,7 @@ const UserDetailsForm = () => {
       console.log('Authenticated as:', user.email);
       const response = await databases.listDocuments(
         DATABASE_ID,
-        USERS_COLLECTION_ID,
+        COLLECTION_ID,
         [Query.orderDesc('$createdAt')]
       );
       setSubmittedUsers(response.documents as unknown as User[]);
@@ -167,7 +167,7 @@ const UserDetailsForm = () => {
           };
           await databases.updateDocument(
             DATABASE_ID,
-            USERS_COLLECTION_ID,
+            COLLECTION_ID,
             userId as string,
             updateData
           );
@@ -181,7 +181,7 @@ const UserDetailsForm = () => {
         } else {
           const response = await databases.createDocument(
             DATABASE_ID,
-            USERS_COLLECTION_ID,
+            COLLECTION_ID,
             ID.unique(),
             formData
           );
@@ -229,7 +229,7 @@ const UserDetailsForm = () => {
               }
               await databases.deleteDocument(
                 DATABASE_ID,
-                USERS_COLLECTION_ID,
+                COLLECTION_ID,
                 userId
               );
               setSubmittedUsers(prevUsers =>

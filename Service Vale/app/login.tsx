@@ -8,8 +8,8 @@ import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
-const DATABASE_ID = 'service-vale';
-const USERS_COLLECTION_ID = 'user';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = '681c429800281e8a99bd';
 
 const LoginScreen = () => {
     const params = useLocalSearchParams();
@@ -146,7 +146,7 @@ const LoginScreen = () => {
                 setIsLogin(true);
                 const response = await databases.listDocuments(
                     DATABASE_ID,
-                    USERS_COLLECTION_ID,
+                    COLLECTION_ID,
                     [Query.equal('email', email)]
                 );
                 if (response.documents.length === 0) {

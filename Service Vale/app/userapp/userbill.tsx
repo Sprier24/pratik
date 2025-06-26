@@ -11,8 +11,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = 'service-vale';
-const BILLS_COLLECTION_ID = 'bill';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = 'bill_ID';
 
 type Bill = {
   $id: string;
@@ -77,7 +77,7 @@ const UserBill = () => {
         const currentUser = await account.get();
         const userResponse = await databases.listDocuments(
           DATABASE_ID,
-          'service-vale',
+          '681c429800281e8a99bd',
           [Query.equal('email', currentUser.email)]
         );
         if (userResponse.documents.length > 0) {
@@ -101,7 +101,7 @@ const UserBill = () => {
           }
           const billsResponse = await databases.listDocuments(
             DATABASE_ID,
-            BILLS_COLLECTION_ID,
+            COLLECTION_ID,
             [
               Query.equal('serviceBoyName', name),
               Query.orderDesc('$createdAt')
@@ -216,14 +216,14 @@ const UserBill = () => {
     try {
       await databases.createDocument(
         DATABASE_ID,
-        BILLS_COLLECTION_ID,
+        COLLECTION_ID,
         billNumber,
         billData
       );
       Alert.alert('Success', 'Bill saved successfully!');
       const response = await databases.listDocuments(
         DATABASE_ID,
-        BILLS_COLLECTION_ID,
+        COLLECTION_ID,
         [
           Query.equal('serviceBoyName', userName),
           Query.orderDesc('$createdAt')

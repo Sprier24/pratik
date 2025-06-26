@@ -16,7 +16,7 @@
         "foregroundImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.purva_galani.service_vale",
+      "package": "com.service_app.service_vale",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -57,7 +57,6 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cb480fdb-83ea-4275-bd1d-1d98e2c8f29e"
       }
     }
   }

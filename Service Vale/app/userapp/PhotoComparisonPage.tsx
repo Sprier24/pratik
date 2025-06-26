@@ -10,13 +10,13 @@ import mime from 'mime';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/userapp/Userphoto';
 
-const DATABASE_ID = 'service-vale';
-const PHOTOS_COLLECTION_ID = 'photo';
-const ADMIN_NOTIFICATIONS_COLLECTION = 'admin-notifications-token';
-const BUCKET_ID = 'photo';
+const DATABASE_ID = '681c428b00159abb5e8b';
+const COLLECTION_ID = 'photo_id';
+const NOTIFICATIONS_COLLECTION = 'admin_id';
+const BUCKET_ID = 'photo_id';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
-const PROJECT_ID = '685520ca0036a8808244';
+const PROJECT_ID = '681b300f0018fdc27bdd';
 
 const buildImageUrl = (fileId: string) =>
     `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;
@@ -89,7 +89,7 @@ const PhotoComparisonPage = () => {
     const fetchPhotoSets = async () => {
         setIsLoading(true);
         try {
-            const response = await databases.listDocuments(DATABASE_ID, PHOTOS_COLLECTION_ID, [
+            const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
                 Query.equal('userEmail', userEmail),
                 Query.orderDesc('date'),
                 Query.limit(20),
@@ -173,7 +173,7 @@ const PhotoComparisonPage = () => {
         const notifId = ID.unique();
 
         try {
-            await databases.createDocument(DATABASE_ID, ADMIN_NOTIFICATIONS_COLLECTION, notifId, {
+            await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, notifId, {
                 description,
                 IsRead: false,
                 createAt: new Date().toISOString(),
@@ -207,7 +207,7 @@ const PhotoComparisonPage = () => {
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
-                await databases.createDocument(DATABASE_ID, PHOTOS_COLLECTION_ID, docId, {
+                await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: '',
                     notes: notesWithName,
@@ -216,7 +216,7 @@ const PhotoComparisonPage = () => {
                 });
             } else if (afterImage && !beforeImage) {
                 const afterFileId = await uploadImageToStorage(afterImage);
-                const latest = await databases.listDocuments(DATABASE_ID, PHOTOS_COLLECTION_ID, [
+                const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
                     Query.orderDesc('date'),
                     Query.equal('afterImageUrl', ''),
                     Query.equal('userEmail', userEmail),
@@ -226,7 +226,7 @@ const PhotoComparisonPage = () => {
                     throw new Error('No matching before image found');
                 }
                 const docId = latest.documents[0].$id;
-                await databases.updateDocument(DATABASE_ID, PHOTOS_COLLECTION_ID, docId, {
+                await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
                     userEmail: userEmail,
@@ -241,7 +241,7 @@ const PhotoComparisonPage = () => {
                     uploadImageToStorage(afterImage!),
                 ]);
                 const docId = ID.unique();
-                await databases.createDocument(DATABASE_ID, PHOTOS_COLLECTION_ID, docId, {
+                await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
@@ -287,7 +287,7 @@ const PhotoComparisonPage = () => {
                 deletePromises.push(storage.deleteFile(BUCKET_ID, photoSet.afterImageUrl));
             }
             await Promise.all(deletePromises);
-            await databases.deleteDocument(DATABASE_ID, PHOTOS_COLLECTION_ID, photoSet.$id);
+            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
