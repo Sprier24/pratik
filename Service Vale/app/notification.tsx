@@ -8,8 +8,8 @@ import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import styles from '../constants/userapp/notification';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const NOTIFICATIONS_COLLECTION = 'admin_id';
+const DATABASE_ID = 'service-vale';
+const ADMIN_NOTIFICATIONS_COLLECTION = 'admin-notifications-token';
 
 const AdminNotificationPage = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -36,7 +36,7 @@ const AdminNotificationPage = () => {
         try {
             const res = await databases.listDocuments(
                 DATABASE_ID,
-                NOTIFICATIONS_COLLECTION,
+                ADMIN_NOTIFICATIONS_COLLECTION,
                 [
                     Query.orderDesc('$createdAt')
                 ]
@@ -68,7 +68,7 @@ const AdminNotificationPage = () => {
     const markAsRead = async (id: string) => {
         try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            await databases.updateDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, id, {
+            await databases.updateDocument(DATABASE_ID, ADMIN_NOTIFICATIONS_COLLECTION, id, {
                 isRead: true
             });
             fetchNotifications();
@@ -91,7 +91,7 @@ const AdminNotificationPage = () => {
                             const deletePromises = notifications.map((notification) =>
                                 databases.deleteDocument(
                                     DATABASE_ID,
-                                    NOTIFICATIONS_COLLECTION,
+                                    ADMIN_NOTIFICATIONS_COLLECTION,
                                     notification.$id
                                 )
                             );

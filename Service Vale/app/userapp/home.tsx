@@ -8,10 +8,10 @@ import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
+const DATABASE_ID = 'service-vale';
+const BILLS_COLLECTION_ID = 'bill';
+const ORDERS_COLLECTION_ID = 'order';
+const ENGINEERS_NOTIFICATIONS_COLLECTION_ID = 'engineer-notifications-token';
 const { width } = Dimensions.get('window');
 
 const HomeScreenuser = () => {
@@ -40,7 +40,7 @@ const HomeScreenuser = () => {
       const currentUser = await account.get();
       const userResponse = await databases.listDocuments(
         DATABASE_ID,
-        '681c429800281e8a99bd',
+        'service-vale',
         [Query.equal('email', currentUser.email)]
       );
       if (userResponse.documents.length === 0) return;
@@ -50,7 +50,7 @@ const HomeScreenuser = () => {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
-        COLLECTION_ID,
+        BILLS_COLLECTION_ID,
         [
           Query.greaterThanEqual('date', startOfDay),
           Query.equal('serviceBoyName', userName),
@@ -59,7 +59,7 @@ const HomeScreenuser = () => {
       );
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
-        COLLECTION_ID,
+        BILLS_COLLECTION_ID,
         [
           Query.greaterThanEqual('date', startOfMonth),
           Query.equal('serviceBoyName', userName),
@@ -114,7 +114,7 @@ const HomeScreenuser = () => {
     try {
       const res = await databases.listDocuments(
         DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
+        ENGINEERS_NOTIFICATIONS_COLLECTION_ID,
         [Query.equal('isRead', false)]
       );
       setUnreadCount(res.total);

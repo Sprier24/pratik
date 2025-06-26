@@ -9,9 +9,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { Linking } from 'react-native';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
+const DATABASE_ID = 'service-vale';
+const ORDERS_COLLECTION_ID = 'order';
+const ADMIN_NOTIFICATIONS_COLLECTION_ID = 'admin-notifications-token';
 
 type Service = {
   id: string;
@@ -48,7 +48,7 @@ const PendingServicesScreenUser = () => {
       setUserEmail(email);
       const response = await databases.listDocuments(
         DATABASE_ID,
-        COLLECTION_ID,
+        ORDERS_COLLECTION_ID,
         [
           Query.equal('status', 'pending'),
           Query.equal('serviceboyEmail', email),
@@ -165,7 +165,7 @@ const PendingServicesScreenUser = () => {
     try {
       await databases.createDocument(
         DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
+        ADMIN_NOTIFICATIONS_COLLECTION_ID,
         ID.unique(),
         {
           description,
@@ -192,7 +192,7 @@ const PendingServicesScreenUser = () => {
             try {
               await databases.updateDocument(
                 DATABASE_ID,
-                COLLECTION_ID,
+                ORDERS_COLLECTION_ID,
                 id,
                 { status: 'completed' }
               );

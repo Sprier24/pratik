@@ -13,9 +13,9 @@ import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const USERS_COLLECTION_ID = '681c429800281e8a99bd';
+const DATABASE_ID = 'service-vale';
+const BILLS_COLLECTION_ID = 'bill';
+const USERS_COLLECTION_ID = 'user';
 
 type Bill = {
   $id: string;
@@ -138,7 +138,7 @@ const BillPage = () => {
     try {
       const response = await databases.listDocuments(
         DATABASE_ID,
-        COLLECTION_ID,
+        BILLS_COLLECTION_ID,
         [Query.orderDesc('$createdAt')]
       );
       const formattedBills = response.documents as unknown as Bill[];
@@ -262,7 +262,7 @@ const BillPage = () => {
     try {
       await databases.createDocument(
         DATABASE_ID,
-        COLLECTION_ID,
+        BILLS_COLLECTION_ID,
         billNumber,
         billData
       );
@@ -428,7 +428,6 @@ const BillPage = () => {
             <body>
               <div class="header">
                 <div class="logo-container">
-                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
                   <div class="company-info">
                     <h1 class="company-name">Service Vale</h1>
                     <p class="company-tagline">Quality Service Solutions</p>
@@ -603,7 +602,7 @@ const BillPage = () => {
           text: 'Delete',
           onPress: async () => {
             try {
-              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+              await databases.deleteDocument(DATABASE_ID, BILLS_COLLECTION_ID, id);
               setBills(prev => prev.filter(bill => bill.$id !== id));
               setAllBills(prev => prev.filter(bill => bill.$id !== id));
               closeBillDetails();

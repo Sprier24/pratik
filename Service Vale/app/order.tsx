@@ -8,8 +8,8 @@ import { ID } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681d92600018a87c1478';
+const DATABASE_ID = 'service-vale';
+const ORDERS_COLLECTION_ID = 'order';
 
 type FormData = {
   serviceboyName: string;
@@ -143,7 +143,7 @@ const OrderScreen = () => {
     try {
       const response = await databases.createDocument(
         DATABASE_ID,
-        COLLECTION_ID,
+        ORDERS_COLLECTION_ID,
         ID.unique(),
         {
           serviceboyName: formData.serviceboyName,

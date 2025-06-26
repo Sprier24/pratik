@@ -17,12 +17,12 @@ interface PhotoDocument extends Models.Document {
     notes?: string;
 }
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'photo_id';
-const BUCKET_ID = 'photo_id';
+const DATABASE_ID = 'service-vale';
+const PHOTOS_COLLECTION_ID = 'photo';
+const BUCKET_ID = 'photo';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
-const PROJECT_ID = '681b300f0018fdc27bdd';
+const PROJECT_ID = '685520ca0036a8808244';
 
 const buildImageUrl = (fileId: string) =>
     `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;
@@ -62,7 +62,7 @@ const PhotoComparisonPage: React.FC = () => {
         try {
             const res = await databases.listDocuments<PhotoDocument>(
                 DATABASE_ID,
-                COLLECTION_ID,
+                PHOTOS_COLLECTION_ID,
                 [Query.orderDesc('date'), Query.limit(50)]
             );
             setPhotoSets(res.documents);
@@ -118,7 +118,7 @@ const PhotoComparisonPage: React.FC = () => {
             if (item.afterImageUrl) {
                 await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
             }
-            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
+            await databases.deleteDocument(DATABASE_ID, PHOTOS_COLLECTION_ID, item.$id);
             Alert.alert('Success', 'Images saved to gallery and deleted from system');
             fetchPhotoSets();
         } catch (err) {

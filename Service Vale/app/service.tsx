@@ -8,9 +8,9 @@ import { styles } from '../constants/ServicePage.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681c429800281e8a99bd';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
+const DATABASE_ID = 'service-vale';
+const USERS_COLLECTION_ID = 'user';
+const ENGINEERS_NOTIFICATIONS_COLLECTION_ID = 'engineer-notifications-token';
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
@@ -26,7 +26,7 @@ const ServicePage = () => {
       try {
         const response = await databases.listDocuments(
           DATABASE_ID,
-          COLLECTION_ID,
+          USERS_COLLECTION_ID,
           [Query.orderDesc('$createdAt')]
         );
         const users = response.documents.map(doc => ({
@@ -47,7 +47,7 @@ const ServicePage = () => {
     try {
       await databases.createDocument(
         DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
+        ENGINEERS_NOTIFICATIONS_COLLECTION_ID,
         ID.unique(),
         {
           description,

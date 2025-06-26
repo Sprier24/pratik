@@ -8,8 +8,8 @@ import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681c429800281e8a99bd';
+const DATABASE_ID = 'service-vale';
+const USERS_COLLECTION_ID = 'user';
 
 const LoginScreen = () => {
     const params = useLocalSearchParams();
@@ -71,7 +71,7 @@ const LoginScreen = () => {
             const url = event.url;
             if (url.includes('cloud.appwrite.io/v1/recovery')) {
                 const params = new URLSearchParams(url.split('?')[1]);
-                if (params.get('package') === 'com.purva_galani.service_vale') {
+                if (params.get('package') === 'com.service_app.service_vale') {
                     const userId = params.get('userId');
                     const secret = params.get('secret');
                     if (userId && secret) {
@@ -146,7 +146,7 @@ const LoginScreen = () => {
                 setIsLogin(true);
                 const response = await databases.listDocuments(
                     DATABASE_ID,
-                    COLLECTION_ID,
+                    USERS_COLLECTION_ID,
                     [Query.equal('email', email)]
                 );
                 if (response.documents.length === 0) {
@@ -168,7 +168,7 @@ const LoginScreen = () => {
 
     const handleSendOTP = async () => {
         try {
-            const resetUrl = `https://cloud.appwrite.io/v1/recovery?package=com.purva_galani.service_vale`;
+            const resetUrl = `https://cloud.appwrite.io/v1/recovery?package=com.service_app.service_vale`;
             await account.createRecovery(forgotEmail, resetUrl);
             Alert.alert('Email Sent', 'Check your email for reset instructions');
             setForgotEmail('');
