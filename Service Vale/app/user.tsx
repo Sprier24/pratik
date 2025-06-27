@@ -33,6 +33,20 @@ const fieldLabels = {
   city: 'Hometown',
 };
 
+function formatToAmPm(dateString: string): string {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Invalid date';
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  };
+  return date.toLocaleString(undefined, options);
+}
+
 const UserDetailsForm = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -61,91 +75,26 @@ const UserDetailsForm = () => {
     setIsLoading(true);
     try {
       const user = await account.get();
-      console.log('Authenticated as:', user.email);
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.orderDesc('$createdAt')]
       );
       setSubmittedUsers(response.documents as unknown as User[]);
-    } catch (error: unknown) {
-      console.error('Error fetching engineers:', error);
-      if (error instanceof Error && 'code' in error && error.code === 401) {
-        Alert.alert(
-          'Session Expired',
-          'Please log in again',
-          [{ text: 'OK', onPress: () => router.replace('/') }]
-        );
+    } catch (error: any) {
+      if (error?.code === 401) {
+        Alert.alert('Session Expired', 'Please log in again', [
+          { text: 'OK', onPress: () => router.replace('/') }
+        ]);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formatToAmPm = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-    return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
-  };
-
-  const validateForm = () => {
-    let valid = true;
-    const newErrors: { [key: string]: string } = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'Engineer Name is required';
-      valid = false;
-    }
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-      valid = false;
-    }
-    if (!formData.contactNo.trim()) {
-      newErrors.contactNo = 'Contact number is required';
-      valid = false;
-    } else if (!/^[0-9]{10}$/.test(formData.contactNo)) {
-      newErrors.contactNo = 'Invalid contact number (10 digits required)';
-      valid = false;
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email Address is required';
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
-      valid = false;
-    }
-    if (!formData.aadharNo.trim()) {
-      newErrors.aadharNo = 'Aadhar number is required';
-      valid = false;
-    } else if (!/^[0-9]{12}$/.test(formData.aadharNo)) {
-      newErrors.aadharNo = 'Invalid Aadhar number (12 digits required)';
-      valid = false;
-    }
-    if (!formData.panNo.trim()) {
-      newErrors.panNo = 'PAN number is required';
-      valid = false;
-    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
-      newErrors.panNo = 'Invalid PAN number (format: ABCDE1234F)';
-      valid = false;
-    }
-    if (!formData.city.trim()) {
-      newErrors.city = 'Hometown is required';
-      valid = false;
-    }
-    setErrors(newErrors);
-    return valid;
-  };
-
   const cleanDocumentData = (doc: any) => {
-    const { $id, $collectionId, $databaseId, $createdAt, $updatedAt, $permissions, ...cleanData } = doc;
-    return cleanData;
+    const { name, address, contactNo, email, aadharNo, panNo, city } = doc;
+    return { name, address, contactNo, email, aadharNo, panNo, city };
   };
 
   const handleSubmit = async () => {
@@ -153,24 +102,9 @@ const UserDetailsForm = () => {
       try {
         if (editingIndex !== null) {
           const userId = submittedUsers[editingIndex].$id;
-          if (!userId) {
-            throw new Error('User ID is missing for update.');
-          }
-          const updateData = {
-            name: formData.name,
-            address: formData.address,
-            contactNo: formData.contactNo,
-            email: formData.email,
-            aadharNo: formData.aadharNo,
-            panNo: formData.panNo,
-            city: formData.city,
-          };
-          await databases.updateDocument(
-            DATABASE_ID,
-            COLLECTION_ID,
-            userId as string,
-            updateData
-          );
+          if (!userId) throw new Error('User ID is missing for update.');
+          const updateData = cleanDocumentData(formData);
+          await databases.updateDocument(DATABASE_ID, COLLECTION_ID, userId, updateData);
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
@@ -185,69 +119,44 @@ const UserDetailsForm = () => {
             ID.unique(),
             formData
           );
-          setSubmittedUsers(prevUsers => [response as unknown as User, ...prevUsers]);
+          setSubmittedUsers(prev => [response as unknown as User, ...prev]);
         }
         Alert.alert('Success', 'Engineer details saved successfully!');
         resetForm();
         setIsFormVisible(false);
-      } catch (error: unknown) {
-        console.error('Error saving engineer:', error);
-        Alert.alert(
-          'Error',
-          error instanceof Error ? error.message : 'Failed to save engineer details'
-        );
+      } catch (error: any) {
+        Alert.alert('Error', error?.message || 'Failed to save engineer details');
       }
     }
   };
 
   const handleChange = (name: string, value: string) => {
-    if (name === 'panNo') {
-      value = value.toUpperCase();
-    }
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    if (name === 'panNo') value = value.toUpperCase();
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleDeleteUser = async (index: number) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this engineer?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Delete",
-          onPress: async () => {
-            try {
-              const userId = submittedUsers[index].$id;
-              if (!userId) {
-                throw new Error('User ID is missing for deletion.');
-              }
-              await databases.deleteDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                userId
-              );
-              setSubmittedUsers(prevUsers =>
-                prevUsers.filter(user => user.$id !== userId)
-              );
-              if (editingIndex === index) {
-                setEditingIndex(null);
-                resetForm();
-              }
-              Alert.alert('Success', 'Engineer deleted successfully');
-            } catch (error) {
-              console.error('Error deleting engineer:', error);
-              Alert.alert('Error', (error as Error).message || 'Failed to delete engineer');
+    Alert.alert('Confirm Delete', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        onPress: async () => {
+          try {
+            const userId = submittedUsers[index].$id;
+            if (!userId) throw new Error('Missing User ID.');
+            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, userId);
+            setSubmittedUsers(users => users.filter(user => user.$id !== userId));
+            if (editingIndex === index) {
+              setEditingIndex(null);
+              resetForm();
             }
+            Alert.alert('Success', 'Engineer deleted successfully.');
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to delete engineer.');
           }
         }
-      ]
-    );
+      }
+    ]);
   };
 
   const resetForm = () => {
@@ -263,12 +172,39 @@ const UserDetailsForm = () => {
     setErrors({});
   };
 
-  const toggleFormVisibility = () => {
-    setIsFormVisible(!isFormVisible);
-    if (!isFormVisible) {
-      resetForm();
-      setEditingIndex(null);
+  const validateForm = () => {
+    let valid = true;
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.name.trim()) {
+      newErrors.name = 'Engineer Name is required';
+      valid = false;
     }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+      valid = false;
+    }
+    if (!formData.contactNo.trim() || !/^[0-9]{10}$/.test(formData.contactNo)) {
+      newErrors.contactNo = 'Invalid contact number (10 digits required)';
+      valid = false;
+    }
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
+      valid = false;
+    }
+    if (!formData.aadharNo.trim() || !/^[0-9]{12}$/.test(formData.aadharNo)) {
+      newErrors.aadharNo = 'Invalid Aadhar number (12 digits required)';
+      valid = false;
+    }
+    if (!formData.panNo.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
+      newErrors.panNo = 'Invalid PAN number (ABCDE1234F)';
+      valid = false;
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = 'Hometown is required';
+      valid = false;
+    }
+    setErrors(newErrors);
+    return valid;
   };
 
   const showUserDetails = (user: User) => {
@@ -279,6 +215,14 @@ const UserDetailsForm = () => {
   const closeUserDetails = () => {
     setIsUserDetailVisible(false);
     setSelectedUser(null);
+  };
+
+  const toggleFormVisibility = () => {
+    setIsFormVisible(!isFormVisible);
+    if (!isFormVisible) {
+      resetForm();
+      setEditingIndex(null);
+    }
   };
 
   if (isLoading) {
