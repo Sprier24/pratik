@@ -90,7 +90,7 @@ const ProfileScreen = () => {
                             </View>
                             <View style={styles.infoItem}>
                                 <MaterialIcons name="location-city" size={20} color="#5E72E4" />
-                                <Text style={styles.infoText}>City : {user.city || 'Not provided'}</Text>
+                                <Text style={styles.infoText}>Hometown : {user.city || 'Not provided'}</Text>
                             </View>
                         </View>
                         <View style={styles.infoSection}>

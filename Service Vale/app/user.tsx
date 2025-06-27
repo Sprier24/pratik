@@ -30,7 +30,7 @@ const fieldLabels = {
   address: 'Address',
   panNo: 'PAN Number',
   aadharNo: 'Aadhar Number',
-  city: 'City',
+  city: 'Hometown',
 };
 
 const UserDetailsForm = () => {
@@ -136,7 +136,7 @@ const UserDetailsForm = () => {
       valid = false;
     }
     if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
+      newErrors.city = 'Hometown is required';
       valid = false;
     }
     setErrors(newErrors);
@@ -434,7 +434,7 @@ const UserDetailsForm = () => {
                       <Text style={styles.detailValue}>{selectedUser.address}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>City :</Text>
+                      <Text style={styles.detailLabel}>Hometown :</Text>
                       <Text style={styles.detailValue}>{selectedUser.city}</Text>
                     </View>
                   </View>
