@@ -68,12 +68,10 @@ const AdminNotificationPage = () => {
     const markAsRead = async (id: string) => {
         try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            await databases.updateDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, id, {
-                isRead: true
-            });
+            await databases.deleteDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, id);
             fetchNotifications();
         } catch (error) {
-            Alert.alert('Error', 'Failed to mark as read');
+            Alert.alert('Error', 'Failed to delete notification');
         }
     };
 

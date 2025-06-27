@@ -98,20 +98,15 @@ const PhotoComparisonPage: React.FC = () => {
                 setIsLoading(false);
                 return;
             }
-            const saveImage = async (fileId: string | undefined) => {
-                if (!fileId) return null;
-                const uri = buildImageUrl(fileId);
+            const saveImageToGallery = async (fileId?: string) => {
+                if (!fileId) return;
+                const fileUrl = buildImageUrl(fileId);
                 const localPath = `${FileSystem.cacheDirectory}${fileId}.jpg`;
-                const downloaded = await FileSystem.downloadAsync(uri, localPath);
-                const asset = await MediaLibrary.createAssetAsync(downloaded.uri);
-                return asset;
+                const downloadResult = await FileSystem.downloadAsync(fileUrl, localPath);
+                await MediaLibrary.createAssetAsync(downloadResult.uri);
             };
-            const beforeAsset = await saveImage(item.beforeImageUrl);
-            const afterAsset = await saveImage(item.afterImageUrl);
-            if (beforeAsset || afterAsset) {
-                await MediaLibrary.createAlbumAsync('Service Photos', beforeAsset ?? afterAsset as MediaLibrary.Asset, false);
-            }
-
+            await saveImageToGallery(item.beforeImageUrl);
+            await saveImageToGallery(item.afterImageUrl);
             if (item.beforeImageUrl) {
                 await storage.deleteFile(BUCKET_ID, item.beforeImageUrl);
             }
@@ -119,11 +114,11 @@ const PhotoComparisonPage: React.FC = () => {
                 await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
             }
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
-            Alert.alert('Success', 'Images saved to gallery and deleted from system');
+            Alert.alert('Success', 'Images saved to Gallery (DCIM) and deleted from backend.');
             fetchPhotoSets();
-        } catch (err) {
-            console.error(err);
-            Alert.alert('Error', 'Failed to process images.');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to save or delete images.');
         } finally {
             setIsLoading(false);
         }
