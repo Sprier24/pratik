@@ -200,7 +200,7 @@ const PendingServicesScreenUser = () => {
               if (!completedService) return;
               try {
                 await createNotification(
-                  `Service completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
+                  `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
                   completedService.serviceboyEmail
                 );
               } catch (notificationError) {
@@ -371,10 +371,9 @@ const PendingServicesScreenUser = () => {
           <Text style={styles.emptyText}>
             {dateFilter
               ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`
-              : 'No pending services assigned to you'
+              : 'No pending services'
             }
           </Text>
-          <Text style={styles.emptySubtext}>All your assigned services are completed</Text>
         </View>
       )}
     </SafeAreaView>

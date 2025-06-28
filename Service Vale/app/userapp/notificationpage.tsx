@@ -173,6 +173,7 @@ const UserNotificationPage = () => {
                     <View style={styles.emptyState}>
                         <Ionicons name="notifications-off" size={48} color="#ccc" />
                         <Text style={styles.noNotificationText}>No new notifications</Text>
+                        <Text style={styles.emptySubtext}>Pull down to refresh</Text>
                     </View>
                 ) : (
                     <FlatList

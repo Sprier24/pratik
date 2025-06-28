@@ -136,7 +136,7 @@ const UserDetailsForm = () => {
   };
 
   const handleDeleteUser = async (index: number) => {
-    Alert.alert('Confirm Delete', 'Are you sure?', [
+    Alert.alert('Confirm Delete', 'Are you sure you want to delete this engineer?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -150,9 +150,9 @@ const UserDetailsForm = () => {
               setEditingIndex(null);
               resetForm();
             }
-            Alert.alert('Success', 'Engineer deleted successfully.');
+            Alert.alert('Success', 'Engineer details deleted successfully!');
           } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to delete engineer.');
+            Alert.alert('Error', error.message || 'Failed to delete engineer details');
           }
         }
       }
@@ -464,7 +464,7 @@ const UserDetailsForm = () => {
           <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
             <MaterialIcons name="person" size={20} color="#FFF" />
           </View>
-          <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Users</Text>
+          <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Engineers</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

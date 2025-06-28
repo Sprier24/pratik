@@ -390,7 +390,6 @@ const UserBill = () => {
             <body>
               <div class="header">
                 <div class="logo-container">
-                  <img src="https://servicevale.com/wp-content/uploads/2024/07/Untitled-design-20-1.png" class="logo" alt="Service Vale Logo" />
                   <div class="company-info">
                     <h1 class="company-name">Service Vale</h1>
                     <p class="company-tagline">Quality Service Solutions</p>
@@ -715,10 +714,10 @@ const UserBill = () => {
                   <Text style={styles.emptyText}>
                     {dateFilter
                       ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
-                      : 'No bills found'
+                      : 'No bills generated'
                     }
                   </Text>
-                  <Text style={styles.emptySubtext}>You haven't created any bills yet</Text>
+                  <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
                 </View>
               ) : (
                 bills.map((bill) => (

@@ -114,7 +114,7 @@ const PhotoComparisonPage: React.FC = () => {
                 await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
             }
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
-            Alert.alert('Success', 'Images saved to Gallery (DCIM) and deleted from backend.');
+            Alert.alert('Success', 'Images saved to Gallery and delete');
             fetchPhotoSets();
         } catch (error) {
             console.error(error);
@@ -294,7 +294,7 @@ const PhotoComparisonPage: React.FC = () => {
                     <View style={footerStyles.bottomButtonIcon}>
                         <MaterialIcons name="person" size={20} color="#5E72E4" />
                     </View>
-                    <Text style={footerStyles.bottomButtonText}>Users</Text>
+                    <Text style={footerStyles.bottomButtonText}>Engineers</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

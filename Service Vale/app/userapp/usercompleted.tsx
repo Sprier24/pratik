@@ -352,10 +352,9 @@ const CompletedServicesScreenUser = () => {
           <Text style={styles.emptyText}>
             {dateFilter
               ? `No services completed on ${format(dateFilter, 'MMMM d, yyyy')}`
-              : 'No completed services found'
+              : 'No completed services'
             }
           </Text>
-          <Text style={styles.emptySubtext}>You haven't completed any services yet</Text>
         </View>
       )}
     </SafeAreaView>

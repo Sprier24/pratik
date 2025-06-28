@@ -214,7 +214,7 @@ const BillPage = () => {
       return false;
     }
     if (!form.serviceBoyName.trim()) {
-      Alert.alert('Error', 'Service provider name is required');
+      Alert.alert('Error', 'Service engineer name is required');
       return false;
     }
     if (!form.customerName.trim()) {
@@ -234,7 +234,7 @@ const BillPage = () => {
       return false;
     }
     if (paymentMethod === 'cash' && (!cashGiven.trim() || isNaN(parseFloat(cashGiven)))) {
-      Alert.alert('Error', 'Valid cash amount is required');
+      Alert.alert('Error', 'Valid payment amount is required');
       return false;
     }
     return true;
@@ -266,14 +266,14 @@ const BillPage = () => {
         billNumber,
         billData
       );
-      Alert.alert('Success', 'Bill saved successfully!');
+      Alert.alert('Success', 'Bill generated successfully!');
       fetchBills();
       setIsFormVisible(false);
       resetForm();
       setSignature(null);
     } catch (error) {
-      console.error('Error saving bill:', error);
-      Alert.alert('Error', 'Failed to save bill');
+      console.error('Error generating bill:', error);
+      Alert.alert('Error', 'Failed to generate bill');
     }
   };
 
@@ -854,10 +854,10 @@ const BillPage = () => {
                   <Text style={styles.emptyText}>
                     {dateFilter
                       ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
-                      : 'No bills found'
+                      : 'No bills generated'
                     }
                   </Text>
-                  <Text style={styles.emptySubtext}>You haven't created any bills yet</Text>
+                  <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
                 </View>
               ) : (
                 bills.map((bill) => (
@@ -1106,7 +1106,7 @@ const BillPage = () => {
           <View style={footerStyles.bottomButtonIcon}>
             <MaterialIcons name="person" size={20} color="#5E72E4" />
           </View>
-          <Text style={footerStyles.bottomButtonText}>Users</Text>
+          <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

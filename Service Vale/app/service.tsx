@@ -224,7 +224,8 @@ const ServicePage = () => {
               ) : (
                 <View style={styles.noApplicants}>
                   <MaterialIcons name="people-outline" size={40} color="#CBD5E0" />
-                  <Text style={styles.noApplicantsText}>No engineers available</Text>
+                  <Text style={styles.noApplicantsText}>No engineers added yet</Text>
+                  <Text style={styles.noApplicantsText}>Go to "Engineers" tab and add an engineer</Text>
                 </View>
               )}
             </ScrollView>
@@ -248,7 +249,7 @@ const ServicePage = () => {
           <View style={footerStyles.bottomButtonIcon}>
             <MaterialIcons name="person" size={20} color="#5E72E4" />
           </View>
-          <Text style={footerStyles.bottomButtonText}>Users</Text>
+          <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[footerStyles.bottomButton]}

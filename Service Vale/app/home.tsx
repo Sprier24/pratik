@@ -246,7 +246,7 @@ const AdminHomeScreen = () => {
           <View style={footerStyles.bottomButtonIcon}>
             <MaterialIcons name="person" size={20} color="#5E72E4" />
           </View>
-          <Text style={footerStyles.bottomButtonText}>Users</Text>
+          <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

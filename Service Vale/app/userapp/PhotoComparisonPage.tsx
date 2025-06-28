@@ -254,7 +254,7 @@ const PhotoComparisonPage = () => {
                 );
             }
 
-            Alert.alert('Success', 'Photo saved.');
+            Alert.alert('Success', 'Photo saved successfully!');
             setBeforeImage(null);
             setAfterImage(null);
             setNotes(userName ? `${userName}\n` : '');
@@ -304,7 +304,7 @@ const PhotoComparisonPage = () => {
             if (status !== 'granted') {
                 Alert.alert(
                     'Permission Needed',
-                    'Allow access to save images to your gallery.',
+                    'Allow access to save images to your gallery',
                 );
                 setIsLoading(false);
                 return;
@@ -449,7 +449,7 @@ const PhotoComparisonPage = () => {
                         </View>
                     ) : (
                         <Text style={styles.instructionText}>
-                            Take at least one photo to get started
+                            Click and tap "Save Photo Button"
                         </Text>
                     )}
                 </View>
@@ -570,7 +570,7 @@ const PhotoComparisonPage = () => {
                                     <TouchableOpacity
                                         style={[styles.actionButton, styles.deleteButton]}
                                         onPress={() =>
-                                            Alert.alert('Confirm Delete', 'Are you sure?', [
+                                            Alert.alert('Confirm Delete', 'Are you sure you want to delete this images?', [
                                                 { text: 'Cancel', style: 'cancel' },
                                                 {
                                                     text: 'Delete',

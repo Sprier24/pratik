@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "service_vale",
+    "name": "Service Vale",
     "slug": "service_vale",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo__.png",
     "scheme": "servicevale",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,10 +13,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png"
+        "foregroundImage": "./assets/images/logo__.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.service_app.service_vale",
+      "package": "com.markwatson.service_vale",
       "intentFilters": [
         {
           "action": "VIEW",
