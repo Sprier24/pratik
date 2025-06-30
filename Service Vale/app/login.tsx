@@ -141,23 +141,26 @@ const LoginScreen = () => {
             Alert.alert('Error', 'Passwords do not match');
         } else {
             try {
-                await account.create('unique()', email, password, username);
-                Alert.alert('Success', 'Account created successfully! Go to Sign In');
-                resetFields();
-                setIsLogin(true);
                 const response = await databases.listDocuments(
                     DATABASE_ID,
                     COLLECTION_ID,
-                    [Query.equal('email', email)]
+                    [Query.equal('email', email.toLowerCase())]
                 );
+
                 if (response.documents.length === 0) {
-                    await account.deleteSession('current');
-                    Alert.alert('Access Denied', 'You are not authorized to access this system');
+                    Alert.alert('Access Denied', 'You are not authorized to register.');
                     return;
                 }
+
+                await account.create('unique()', email, password, username);
+                Alert.alert('Success', 'Account created successfully. Please log in.');
+                resetFields();
+                setIsLogin(true);
             } catch (error: any) {
                 if (error.code === 409) {
                     Alert.alert('Error', 'Email already exists. Please use a different email.');
+                } else {
+                    Alert.alert('Error', error.message || 'An unknown error occurred');
                 }
             }
         }
