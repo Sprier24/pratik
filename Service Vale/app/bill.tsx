@@ -18,7 +18,6 @@ const COLLECTION_ID = 'bill_ID';
 const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Bill = {
-  gstPercentage: string;
   $id: string;
   notes: string;
   billNumber: string;
@@ -28,6 +27,7 @@ type Bill = {
   contactNumber: string;
   address: string;
   serviceCharge: string;
+  gstPercentage: string;
   paymentMethod: string;
   cashGiven: string;
   change: string;
