@@ -18,6 +18,7 @@ const COLLECTION_ID = 'bill_ID';
 const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Bill = {
+  gstPercentage: string;
   $id: string;
   notes: string;
   billNumber: string;
@@ -44,7 +45,7 @@ type User = {
 
 const fieldLabels = {
   serviceType: 'Service Type',
-  serviceBoyName: 'Service Engineer Name',
+  serviceBoyName: 'Engineer Name',
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
@@ -63,6 +64,7 @@ const BillPage = () => {
     contactNumber: '',
     serviceCharge: '',
   });
+  const [gstPercentage, setGstPercentage] = useState('0');
   const [bills, setBills] = useState<Bill[]>([]);
   const [allBills, setAllBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -214,7 +216,7 @@ const BillPage = () => {
       return false;
     }
     if (!form.serviceBoyName.trim()) {
-      Alert.alert('Error', 'Service engineer name is required');
+      Alert.alert('Error', 'Engineer name is required');
       return false;
     }
     if (!form.customerName.trim()) {
@@ -250,6 +252,7 @@ const BillPage = () => {
     const billData = {
       ...form,
       paymentMethod,
+      gstPercentage,
       total: calculateTotal(),
       cashGiven: paymentMethod === 'cash' ? cashGiven : null,
       change: paymentMethod === 'cash' ? calculateChange() : null,
@@ -470,6 +473,14 @@ const BillPage = () => {
                   <span class="label">Service Charge : </span>
                   <span class="value highlight">₹${bill.serviceCharge}</span>
                 </div>
+                <div class="row total-row">
+                  <span class="label">GST (%) : </span>
+                  <span class="value highlight">${bill.gstPercentage}%</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Total : </span>
+                  <span class="value highlight">₹${bill.total}</span>
+                </div>
               </div>       
               <div class="section payment-details">
                 <div class="section-title">Payment Details</div>
@@ -560,7 +571,9 @@ const BillPage = () => {
 
   const calculateTotal = () => {
     const charge = parseFloat(form.serviceCharge) || 0;
-    return charge.toFixed(2);
+    const gst = parseFloat(gstPercentage) || 0;
+    const total = charge + (charge * gst / 100);
+    return total.toFixed(2);
   };
 
   const calculateChange = () => {
@@ -750,6 +763,24 @@ const BillPage = () => {
                 </View>
               ))}
 
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>GST (%)</Text>
+                <TextInput
+                  placeholder="Enter GST percentage"
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={gstPercentage}
+                  onChangeText={setGstPercentage}
+                />
+              </View>
+
+              <View style={styles.paymentSummary}>
+                <View style={[styles.summaryRow]}>
+                  <Text style={styles.summaryLabel}>Total Amount :</Text>
+                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
+                </View>
+              </View>
+
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
@@ -761,12 +792,6 @@ const BillPage = () => {
                 maxLength={500}
               />
 
-              <View style={styles.paymentSummary}>
-                <View style={[styles.summaryRow]}>
-                  <Text style={styles.summaryLabel}>Total Amount :</Text>
-                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-                </View>
-              </View>
 
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
@@ -950,6 +975,14 @@ const BillPage = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>GST (%) :</Text>
+                      <Text style={styles.detailValue}>{selectedBill.gstPercentage || '0'}%</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Total :</Text>
+                      <Text style={styles.detailValue}>₹{selectedBill.total}</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Commission :</Text>
