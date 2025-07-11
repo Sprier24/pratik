@@ -226,6 +226,8 @@ const AdminHomeScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        
       </ScrollView>
 
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>

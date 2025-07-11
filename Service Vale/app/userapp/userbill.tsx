@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
@@ -24,7 +24,6 @@ type Bill = {
   contactNumber: string;
   address: string;
   serviceCharge: string;
-  gstPercentage: string;
   paymentMethod: string;
   cashGiven: string;
   change: string;
@@ -55,7 +54,6 @@ const UserBill = () => {
     contactNumber: '',
     serviceCharge: '',
   });
-  const [gstPercentage, setGstPercentage] = useState('0');
   const [bills, setBills] = useState<Bill[]>([]);
   const [allBills, setAllBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +69,8 @@ const UserBill = () => {
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
+
 
   useEffect(() => {
     const fetchUserAndBills = async () => {
@@ -137,6 +137,25 @@ const UserBill = () => {
     return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
   };
 
+  const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
+    if (!query.trim()) return billsToFilter;
+
+    const lowerCaseQuery = query.toLowerCase();
+
+    return billsToFilter.filter(bill => {
+      return (
+        bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.serviceType?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.contactNumber?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.address?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.billNumber?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.total?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.paymentMethod?.toLowerCase().includes(lowerCaseQuery) ||
+        (bill.notes && bill.notes.toLowerCase().includes(lowerCaseQuery))
+      );
+    });
+  };
+
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (event.type === 'dismissed') {
@@ -149,16 +168,18 @@ const UserBill = () => {
   };
 
   const filterByDate = (date: Date) => {
-    const filtered = allBills.filter(bill => {
+    let filtered = allBills.filter(bill => {
       const billDate = new Date(bill.date);
       return isSameDay(billDate, date);
     });
+    filtered = filterBillsBySearch(searchQuery, filtered);
     setBills(filtered);
   };
 
   const clearDateFilter = () => {
     setDateFilter(null);
-    setBills(allBills);
+    const filtered = filterBillsBySearch(searchQuery, allBills);
+    setBills(filtered);
   };
 
   const generateBillNumber = () => {
@@ -206,7 +227,6 @@ const UserBill = () => {
     const billData = {
       ...form,
       paymentMethod,
-      gstPercentage,
       total: calculateTotal(),
       cashGiven: paymentMethod === 'cash' ? cashGiven : null,
       change: paymentMethod === 'cash' ? calculateChange() : null,
@@ -435,14 +455,7 @@ const UserBill = () => {
                   <span class="label">Service Charge : </span>
                   <span class="value highlight">₹${bill.serviceCharge}</span>
                 </div>
-                <div class="row total-row">
-                  <span class="label">GST (%) : </span>
-                  <span class="value highlight">${bill.gstPercentage}%</span>
-                </div>
-                <div class="row total-row">
-                  <span class="label">Total : </span>
-                  <span class="value highlight">₹${bill.total}</span>
-                </div>
+                <div class="row"><span class="label">Commission (25%) : </span><span>₹${(parseFloat(bill.serviceCharge) * 0.25).toFixed(2)}</span></div>
               </div>       
               <div class="section payment-details">
                 <div class="section-title">Payment Details</div>
@@ -519,9 +532,7 @@ const UserBill = () => {
 
   const calculateTotal = () => {
     const charge = parseFloat(form.serviceCharge) || 0;
-    const gst = parseFloat(gstPercentage) || 0;
-    const total = charge + (charge * gst / 100);
-    return total.toFixed(2);
+    return charge.toFixed(2);
   };
 
   const calculateChange = () => {
@@ -589,6 +600,40 @@ const UserBill = () => {
       </View>
       ) : null}
 
+      {/* Search Input Component - appears when form is not visible */}
+      {!isFormVisible && (
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder="Search bills..."
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              if (dateFilter) {
+                filterByDate(dateFilter);
+              } else {
+                setBills(filterBillsBySearch(text, allBills));
+              }
+            }}
+          />
+          <Feather name="search" size={20} color="#A0AEC0" style={styles.searchIcon} />
+          {searchQuery ? (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchQuery('');
+                if (dateFilter) {
+                  filterByDate(dateFilter);
+                } else {
+                  setBills(allBills);
+                }
+              }}
+              style={styles.clearSearchButton}
+            >
+              <Feather name="x" size={18} color="#A0AEC0" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      )}
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -621,24 +666,6 @@ const UserBill = () => {
                 </View>
               ))}
 
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>GST (%)</Text>
-                <TextInput
-                  placeholder="Enter GST percentage"
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={gstPercentage}
-                  onChangeText={setGstPercentage}
-                />
-              </View>
-
-              <View style={styles.paymentSummary}>
-                <View style={[styles.summaryRow]}>
-                  <Text style={styles.summaryLabel}>Total Amount :</Text>
-                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-                </View>
-              </View>
-
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
@@ -649,6 +676,13 @@ const UserBill = () => {
                 numberOfLines={4}
                 maxLength={500}
               />
+
+              <View style={styles.paymentSummary}>
+                <View style={[styles.summaryRow]}>
+                  <Text style={styles.summaryLabel}>Total Amount :</Text>
+                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
+                </View>
+              </View>
 
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
@@ -721,9 +755,27 @@ const UserBill = () => {
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={async () => {
+                  await handleSubmitBill();
+                  let customerPhone = form.contactNumber;
+                  const googleReviewLink = "https://reviewthis.biz/servicevale-2025";
+                  const message = `Thank you for your service!\nPlease take a moment to rate us on Google 🌟:\n${googleReviewLink}`;
+                  if (!customerPhone.startsWith("+")) {
+                    customerPhone = `+91${customerPhone}`;
+                  }
+                  const url = `https://wa.me/${customerPhone.replace("+", "")}?text=${encodeURIComponent(message)}`;
+                  try {
+                    Linking.openURL(url);
+                  } catch (err) {
+                    Alert.alert("Error", "Could not open WhatsApp");
+                  }
+                }}
+              >
                 <Text style={styles.submitText}>Submit Bill</Text>
               </TouchableOpacity>
+
             </View>
           ) : (
             <View style={styles.billsListContainer}>
@@ -735,9 +787,11 @@ const UserBill = () => {
                 <View style={styles.emptyState}>
                   <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
                   <Text style={styles.emptyText}>
-                    {dateFilter
-                      ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
-                      : 'No bills generated'
+                    {searchQuery
+                      ? `No bills found for "${searchQuery}"`
+                      : dateFilter
+                        ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
+                        : 'No bills generated'
                     }
                   </Text>
                   <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
@@ -833,10 +887,6 @@ const UserBill = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>GST (%) :</Text>
-                      <Text style={styles.detailValue}>{selectedBill.gstPercentage || '0'}%</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Commission :</Text>

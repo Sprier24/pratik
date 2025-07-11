@@ -766,5 +766,27 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
     marginTop: 5,
   },
+  searchContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#EDF2F7',
+  borderRadius: 10,
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  marginTop: 10,
+  width: '100%',
+},
+searchInput: {
+  flex: 1,
+  fontSize: 14,
+  color: '#4A5568',
+},
+searchIcon: {
+  marginLeft: 8,
+},
+clearSearchButton: {
+  marginLeft: 8,
+  padding: 4,
+},
 });
 
