@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
         marginLeft: 15,
     },
     container: {
-        paddingBottom: 100, // Added space for footer
+        paddingBottom: 100, 
     },
      scrollContainer: {
     paddingHorizontal: 20,

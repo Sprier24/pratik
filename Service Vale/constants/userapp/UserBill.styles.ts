@@ -769,27 +769,27 @@ export const styles = StyleSheet.create({
     marginTop: 5,
   },
   searchContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#EDF2F7',
-  borderRadius: 10,
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  marginTop: 10,
-  marginHorizontal: 16,
-  marginBottom: 10,
-},
-searchInput: {
-  flex: 1,
-  fontSize: 14,
-  color: '#4A5568',
-},
-searchIcon: {
-  marginLeft: 8,
-},
-clearSearchButton: {
-  marginLeft: 8,
-  padding: 4,
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EDF2F7',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 10,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4A5568',
+  },
+  searchIcon: {
+    marginLeft: 8,
+  },
+  clearSearchButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
 });
 

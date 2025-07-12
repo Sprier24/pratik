@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
-import { databases } from '../lib/appwrite';
+import { databases, account } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -18,9 +18,8 @@ const COLLECTION_ID = 'bill_ID';
 const USERS_COLLECTION_ID = '681c429800281e8a99bd';
 
 type Bill = {
-  $id?: string;
-  $createdAt?: string;
-  notes: string | null;
+  $id: string;
+  notes: string;
   billNumber: string;
   serviceType: string;
   serviceBoyName: string;
@@ -28,9 +27,11 @@ type Bill = {
   contactNumber: string;
   address: string;
   serviceCharge: string;
+  gstPercentage: string;
   paymentMethod: string;
-  cashGiven: string | null;
-  change: string | null;
+  cashGiven: string;
+  change: string;
+  $createdAt: string;
   signature?: string;
   status: string;
   total: string;
@@ -44,7 +45,7 @@ type User = {
 
 const fieldLabels = {
   serviceType: 'Service Type',
-  serviceBoyName: 'Service Engineer Name',
+  serviceBoyName: 'Engineer Name',
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
@@ -63,6 +64,7 @@ const BillPage = () => {
     contactNumber: '',
     serviceCharge: '',
   });
+  const [gstPercentage, setGstPercentage] = useState('0');
   const [bills, setBills] = useState<Bill[]>([]);
   const [allBills, setAllBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,7 +84,6 @@ const BillPage = () => {
   const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
   const [searchQuery, setSearchQuery] = useState('');
 
-
   useEffect(() => {
     fetchBills();
     fetchServiceBoys();
@@ -96,6 +97,7 @@ const BillPage = () => {
           address: serviceData.address || '',
           contactNumber: serviceData.phone || '',
           serviceCharge: serviceData.serviceCharge || '',
+
         });
         setIsFormVisible(true);
       } catch (error) {
@@ -104,7 +106,6 @@ const BillPage = () => {
     }
   }, [params.serviceData]);
 
-  // Add this separate useEffect for filters
   useEffect(() => {
     applyFilters(selectedServiceBoy, dateFilter);
   }, [selectedServiceBoy, dateFilter, searchQuery, allBills]);
@@ -159,7 +160,6 @@ const BillPage = () => {
     });
   };
 
-
   const fetchBills = async () => {
     setIsLoading(true);
     try {
@@ -205,7 +205,7 @@ const BillPage = () => {
     }
     if (date) {
       filtered = filtered.filter(bill => {
-        const billDate = new Date(bill.$createdAt ?? '');
+        const billDate = new Date(bill.$createdAt);
         return isSameDay(billDate, date);
       });
     }
@@ -245,7 +245,7 @@ const BillPage = () => {
       return false;
     }
     if (!form.serviceBoyName.trim()) {
-      Alert.alert('Error', 'Service engineer name is required');
+      Alert.alert('Error', 'Engineer name is required');
       return false;
     }
     if (!form.customerName.trim()) {
@@ -281,6 +281,7 @@ const BillPage = () => {
     const billData = {
       ...form,
       paymentMethod,
+      gstPercentage,
       total: calculateTotal(),
       cashGiven: paymentMethod === 'cash' ? cashGiven : null,
       change: paymentMethod === 'cash' ? calculateChange() : null,
@@ -468,7 +469,7 @@ const BillPage = () => {
                   <h2 class="invoice-title">INVOICE</h2>
                   <div class="invoice-details">
                     <div><strong>Bill No : </strong> ${bill.billNumber}</div>
-                    <div><strong>Date : </strong> ${new Date(bill.$createdAt ?? '').toLocaleDateString()}</div>
+                    <div><strong>Date : </strong> ${new Date(bill.$createdAt).toLocaleDateString()}</div>
                   </div>
                 </div>
               </div>
@@ -500,6 +501,14 @@ const BillPage = () => {
                 <div class="row total-row">
                   <span class="label">Service Charge : </span>
                   <span class="value highlight">₹${bill.serviceCharge}</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">GST (%) : </span>
+                  <span class="value highlight">${bill.gstPercentage}%</span>
+                </div>
+                <div class="row total-row">
+                  <span class="label">Total : </span>
+                  <span class="value highlight">₹${bill.total}</span>
                 </div>
               </div>       
               <div class="section payment-details">
@@ -591,7 +600,9 @@ const BillPage = () => {
 
   const calculateTotal = () => {
     const charge = parseFloat(form.serviceCharge) || 0;
-    return charge.toFixed(2);
+    const gst = parseFloat(gstPercentage) || 0;
+    const total = charge + (charge * gst / 100);
+    return total.toFixed(2);
   };
 
   const calculateChange = () => {
@@ -708,7 +719,6 @@ const BillPage = () => {
         </View>
       )}
 
-
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -717,7 +727,6 @@ const BillPage = () => {
           onChange={handleDateChange}
         />
       )}
-
       {!isFormVisible && (
         <View style={styles.searchContainer}>
           <TextInput
@@ -748,6 +757,7 @@ const BillPage = () => {
           ) : null}
         </View>
       )}
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -812,6 +822,24 @@ const BillPage = () => {
                 </View>
               ))}
 
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>GST (%)</Text>
+                <TextInput
+                  placeholder="Enter GST percentage"
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={gstPercentage}
+                  onChangeText={setGstPercentage}
+                />
+              </View>
+
+              <View style={styles.paymentSummary}>
+                <View style={[styles.summaryRow]}>
+                  <Text style={styles.summaryLabel}>Total Amount :</Text>
+                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
+                </View>
+              </View>
+
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
@@ -823,12 +851,6 @@ const BillPage = () => {
                 maxLength={500}
               />
 
-              <View style={styles.paymentSummary}>
-                <View style={[styles.summaryRow]}>
-                  <Text style={styles.summaryLabel}>Total Amount :</Text>
-                  <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
-                </View>
-              </View>
 
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
@@ -900,60 +922,9 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
-
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={async () => {
-                  if (!validateForm()) return;
-                  if (!signature) {
-                    Alert.alert('Error', 'Customer signature is required');
-                    return;
-                  }
-                  const billNumber = generateBillNumber();
-                  const billData = {
-                    ...form,
-                    paymentMethod,
-                    total: calculateTotal(),
-                    cashGiven: paymentMethod === 'cash' ? cashGiven : null,
-                    change: paymentMethod === 'cash' ? calculateChange() : null,
-                    date: new Date().toISOString(),
-                    billNumber,
-                    status: 'paid',
-                    notes: notes.trim() || null,
-                    signature: signature
-                  };
-                  try {
-                    await databases.createDocument(
-                      DATABASE_ID,
-                      COLLECTION_ID,
-                      billNumber,
-                      billData
-                    );
-                    const htmlContent = generateBillHtml(billData);
-                    const { uri } = await Print.printToFileAsync({
-                      html: htmlContent,
-                      width: 595,
-                      height: 842,
-                    });
-                    await Sharing.shareAsync(uri, {
-                      mimeType: 'application/pdf',
-                      dialogTitle: 'Share Bill',
-                      UTI: 'net.whatsapp.pdf'
-                    });
-                    Alert.alert('Success', 'Bill generated and shared successfully!');
-                    fetchBills();
-                    setIsFormVisible(false);
-                    resetForm();
-                    setSignature(null);
-                  } catch (error) {
-                    console.error('Error generating bill:', error);
-                    Alert.alert('Error', 'Failed to generate bill');
-                  }
-                }}
-              >
-                <Text style={styles.submitText}>Submit & Share Bill</Text>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
+                <Text style={styles.submitText}>Submit Bill</Text>
               </TouchableOpacity>
-
             </View>
           ) : (
             <View style={styles.billsListContainer}>
@@ -965,13 +936,9 @@ const BillPage = () => {
                 <View style={styles.emptyState}>
                   <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
                   <Text style={styles.emptyText}>
-                    {searchQuery
-                      ? `No bills found for "${searchQuery}"`
-                      : dateFilter
-                        ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
-                        : selectedServiceBoy
-                          ? `No bills for ${selectedServiceBoy}`
-                          : 'No bills generated'
+                    {dateFilter
+                      ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
+                      : 'No bills generated'
                     }
                   </Text>
                   <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
@@ -1069,6 +1036,14 @@ const BillPage = () => {
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
                     </View>
                     <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>GST (%) :</Text>
+                      <Text style={styles.detailValue}>{selectedBill.gstPercentage || '0'}%</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Total :</Text>
+                      <Text style={styles.detailValue}>₹{selectedBill.total}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Commission :</Text>
                       <Text style={styles.detailValue}>
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
@@ -1130,7 +1105,7 @@ const BillPage = () => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
-                      onPress={() => selectedBill.$id && handleDeleteBill(selectedBill.$id)}
+                      onPress={() => handleDeleteBill(selectedBill.$id)}
                     >
                       <Feather name="trash-2" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Delete</Text>

@@ -13,11 +13,17 @@ const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
 const NOTIFICATIONS_COLLECTION_ID = 'note_id';
+const PAYMENTS_COLLECTION_ID = 'commission_ID';
 const { width } = Dimensions.get('window');
+const MONTHLY_REVENUE_COLLECTION_ID = 'monthly_revenue';
 
 const AdminHomeScreen = () => {
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [totalCommission, setTotalCommission] = useState(0);
+  const [engineerCommissions, setEngineerCommissions] = useState<{ name: string, amount: number }[]>([]);
+  const [pendingCommission, setPendingCommission] = useState(0);
+  const [pendingEngineersCount, setPendingEngineersCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +62,9 @@ const AdminHomeScreen = () => {
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      const currentMonth = today.toLocaleString('default', { month: 'long' }); // e.g., "July"
+      const currentYear = today.getFullYear().toString();
+
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -72,10 +81,43 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
       const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
+
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
+      // Store or update in monthly_revenue collection
+      const existing = await databases.listDocuments(
+        DATABASE_ID,
+        MONTHLY_REVENUE_COLLECTION_ID,
+        [
+          Query.equal('month', currentMonth),
+          Query.equal('year', currentYear)
+        ]
+      );
+
+      if (existing.total > 0) {
+        // Update the existing document
+        await databases.updateDocument(
+          DATABASE_ID,
+          MONTHLY_REVENUE_COLLECTION_ID,
+          existing.documents[0].$id,
+          { total: monthlyTotal.toString() }
+        );
+      } else {
+        // Create a new document
+        await databases.createDocument(
+          DATABASE_ID,
+          MONTHLY_REVENUE_COLLECTION_ID,
+          'unique()',
+          {
+            month: currentMonth,
+            year: currentYear,
+            total: monthlyTotal.toString()
+          }
+        );
+      }
     } catch (error) {
       console.error('Error fetching revenue data:', error);
     }
@@ -97,6 +139,86 @@ const AdminHomeScreen = () => {
     }
   };
 
+  const fetchCommissionData = async () => {
+    try {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
+      // Fetch bills only from current month for total commission
+      const currentMonthBills = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.greaterThanEqual('date', startOfMonth),
+          Query.orderDesc('date')
+        ]
+      );
+
+      // Fetch ALL bills for pending calculation and engineer count
+      const allBills = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID
+      );
+
+      // Fetch all payments
+      const payments = await databases.listDocuments(
+        DATABASE_ID,
+        PAYMENTS_COLLECTION_ID
+      );
+
+      // Calculate total commission for current month only
+      const total = currentMonthBills.documents.reduce((sum, bill) => {
+        return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
+      }, 0);
+
+      // Calculate total commissions from ALL bills
+      const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
+        return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
+      }, 0);
+
+      // Calculate total payments made to engineers
+      const totalPayments = payments.documents.reduce((sum, payment) => {
+        return sum + parseFloat(payment.amount || '0');
+      }, 0);
+
+      // Calculate pending commission (all unpaid commissions)
+      const pending = totalCommissionsAllTime - totalPayments;
+
+      // Count engineers with pending commissions (from ALL bills)
+      const engineerMap = new Map<string, number>();
+      allBills.documents.forEach(bill => {
+        const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
+        const current = engineerMap.get(bill.serviceBoyName) || 0;
+        engineerMap.set(bill.serviceBoyName, current + commission);
+      });
+
+      const paymentMap = new Map<string, number>();
+      payments.documents.forEach(payment => {
+        const amount = parseFloat(payment.amount || '0');
+        const current = paymentMap.get(payment.engineerName) || 0;
+        paymentMap.set(payment.engineerName, current + amount);
+      });
+
+      let pendingEngineersCount = 0;
+      const sortedEngineers = Array.from(engineerMap.entries())
+        .map(([name, amount]) => {
+          const paid = paymentMap.get(name) || 0;
+          const pending = amount - paid;
+          if (pending > 0) pendingEngineersCount++;
+          return { name, amount, pending };
+        })
+        .sort((a, b) => b.pending - a.pending);
+
+      setTotalCommission(total);
+      setPendingCommission(pending);
+      setPendingEngineersCount(pendingEngineersCount); // This will show all engineers with pending commissions
+      setEngineerCommissions(sortedEngineers);
+
+    } catch (error) {
+      console.error('Error fetching commission data:', error);
+    }
+  };
+
   const fetchUnreadNotifications = async () => {
     try {
       const res = await databases.listDocuments(
@@ -112,7 +234,12 @@ const AdminHomeScreen = () => {
 
   const fetchAllData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchRevenueData(), fetchOrders(), fetchUnreadNotifications()]);
+    await Promise.all([
+      fetchRevenueData(),
+      fetchOrders(),
+      fetchUnreadNotifications(),
+      fetchCommissionData()
+    ]);
     setIsLoading(false);
   };
 
@@ -178,7 +305,10 @@ const AdminHomeScreen = () => {
               })}
             </Text>
           </View>
-          <View style={[styles.revenueCard, styles.monthlyCard]}>
+          <TouchableOpacity
+            style={[styles.revenueCard, styles.monthlyCard]}
+            onPress={() => router.push('/revenuehistory')}
+          >
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="date-range" size={24} color="#FFF" />
             </View>
@@ -189,7 +319,53 @@ const AdminHomeScreen = () => {
                 maximumFractionDigits: 2
               })}
             </Text>
-          </View>
+            <View style={styles.viewHistoryLink}>
+              <Text style={styles.viewHistoryText}>View History</Text>
+              <AntDesign name="right" size={14} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.revenueRow}>
+          <TouchableOpacity
+            style={styles.commissionCard}
+            onPress={() => router.push('/EngineerCommissions')}
+          >
+            <View style={styles.commissionCardHeader}>
+              <View style={styles.cardIconContainer}>
+                <MaterialIcons name="engineering" size={24} color="#FFF" />
+              </View>
+              <Text style={styles.commissionCardTitle}>Engineer Commissions</Text>
+            </View>
+
+            <View style={styles.commissionStatsContainer}>
+              <View style={styles.commissionStat}>
+                <Text style={styles.commissionStatLabel}>Total</Text>
+                <Text style={styles.commissionStatValue}>
+                  ₹{totalCommission.toLocaleString('en-IN')}
+                </Text>
+              </View>
+
+              <View style={styles.commissionStat}>
+                <Text style={styles.commissionStatLabel}>Pending</Text>
+                <Text style={[styles.commissionStatValue, styles.commissionStatPending]}>
+                  ₹{pendingCommission.toLocaleString('en-IN')}
+                </Text>
+              </View>
+
+              <View style={styles.commissionStat}>
+                <Text style={styles.commissionStatLabel}>Engineers Due</Text>
+                <Text style={styles.commissionStatValue}>
+                  {pendingEngineersCount}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.commissionCardFooter}>
+              <Text style={styles.commissionCardFooterText}>View all commissions</Text>
+              <Feather name="chevron-right" size={18} color="#FFF" />
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.servicesRow}>
@@ -226,8 +402,6 @@ const AdminHomeScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        
       </ScrollView>
 
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
