@@ -97,7 +97,6 @@ const BillPage = () => {
           address: serviceData.address || '',
           contactNumber: serviceData.phone || '',
           serviceCharge: serviceData.serviceCharge || '',
-
         });
         setIsFormVisible(true);
       } catch (error) {
@@ -269,44 +268,6 @@ const BillPage = () => {
       return false;
     }
     return true;
-  };
-
-  const handleSubmitBill = async () => {
-    if (!validateForm()) return;
-    if (!signature) {
-      Alert.alert('Error', 'Customer signature is required');
-      return;
-    }
-    const billNumber = generateBillNumber();
-    const billData = {
-      ...form,
-      paymentMethod,
-      gstPercentage,
-      total: calculateTotal(),
-      cashGiven: paymentMethod === 'cash' ? cashGiven : null,
-      change: paymentMethod === 'cash' ? calculateChange() : null,
-      date: new Date().toISOString(),
-      billNumber,
-      status: 'paid',
-      notes: notes.trim() || null,
-      signature: signature
-    };
-    try {
-      await databases.createDocument(
-        DATABASE_ID,
-        COLLECTION_ID,
-        billNumber,
-        billData
-      );
-      Alert.alert('Success', 'Bill generated successfully!');
-      fetchBills();
-      setIsFormVisible(false);
-      resetForm();
-      setSignature(null);
-    } catch (error) {
-      console.error('Error generating bill:', error);
-      Alert.alert('Error', 'Failed to generate bill');
-    }
   };
 
   const generateBillHtml = (bill: Bill) => {
@@ -668,8 +629,10 @@ const BillPage = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bill Management</Text>
         </View>
-        <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{bills.length}</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.headerCount}>
+            <Text style={styles.headerCountText}>{bills.length}</Text>
+          </View>
         </View>
       </View>
 
@@ -782,7 +745,7 @@ const BillPage = () => {
                     <View style={[styles.statusBadge, styles.pendingBadge]}>
                       <Text style={styles.statusText}>
                         {countBillsByServiceBoy()[item.name] || 0} Bills
-                      </Text>
+                      </Text>333333333333333333333333333333333333333
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -922,8 +885,67 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
-                <Text style={styles.submitText}>Submit Bill</Text>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={async () => {
+                  if (!validateForm()) return;
+                  if (!signature) {
+                    Alert.alert('Error', 'Customer signature is required');
+                    return;
+                  }
+                  const billNumber = generateBillNumber();
+                  const now = new Date();
+                  const billData: Bill = {
+                    $id: billNumber,
+                    notes: notes.trim() || '',
+                    billNumber,
+                    serviceType: form.serviceType,
+                    serviceBoyName: form.serviceBoyName,
+                    customerName: form.customerName,
+                    contactNumber: form.contactNumber,
+                    address: form.address,
+                    serviceCharge: form.serviceCharge,
+                    gstPercentage: gstPercentage,
+                    paymentMethod,
+                    cashGiven: paymentMethod === 'cash' ? cashGiven : '',
+                    change: paymentMethod === 'cash' ? calculateChange() : '',
+                    $createdAt: now.toISOString(),
+                    signature: signature,
+                    status: 'paid',
+                    total: calculateTotal(),
+                    date: now.toISOString(),
+                  };
+                  try {
+                    await databases.createDocument(
+                      DATABASE_ID,
+                      COLLECTION_ID,
+                      billNumber,
+                      billData
+                    );
+                    const htmlContent = generateBillHtml(billData);
+                    const { uri } = await Print.printToFileAsync({
+                      html: htmlContent,
+                      width: 595,
+                      height: 842,
+                    });
+                    await Sharing.shareAsync(uri, {
+                      mimeType: 'application/pdf',
+                      dialogTitle: 'Share Bill',
+                      UTI: 'net.whatsapp.pdf'
+                    });
+                    fetchBills();
+
+                    router.push('/rating');
+                    setIsFormVisible(false);
+                    resetForm();
+                    setSignature(null);
+                  } catch (error) {
+                    console.error('Error generating bill:', error);
+                    Alert.alert('Error', 'Failed to generate bill');
+                  }
+                }}
+              >
+                <Text style={styles.submitText}>Submit & Share Bill</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -1102,6 +1124,13 @@ const BillPage = () => {
                     >
                       <Feather name="share-2" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Share</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.rateButton]}
+                      onPress={() => router.push('/rating')}
+                    >
+                      <Feather name="star" size={18} color="#FFF" />
+                      <Text style={styles.actionButtonText}>Rate</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}

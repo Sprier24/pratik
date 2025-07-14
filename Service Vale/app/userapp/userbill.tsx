@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
 import { databases, account } from '../../lib/appwrite';
 import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
 import { styles } from '../../constants/userapp/UserBill.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -775,8 +776,66 @@ const UserBill = () => {
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmitBill}>
-                <Text style={styles.submitText}>Submit Bill</Text>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={async () => {
+                  if (!validateForm()) return;
+                  if (!signature) {
+                    Alert.alert('Error', 'Customer signature is required');
+                    return;
+                  }
+                  const billNumber = generateBillNumber();
+                  const now = new Date();
+                  const billData: Bill = {
+                    $id: billNumber,
+                    notes: notes.trim() || '',
+                    billNumber,
+                    serviceType: form.serviceType,
+                    serviceBoyName: form.serviceBoyName,
+                    customerName: form.customerName,
+                    contactNumber: form.contactNumber,
+                    address: form.address,
+                    serviceCharge: form.serviceCharge,
+                    gstPercentage: gstPercentage,
+                    paymentMethod,
+                    cashGiven: paymentMethod === 'cash' ? cashGiven : '',
+                    change: paymentMethod === 'cash' ? calculateChange() : '',
+                    $createdAt: now.toISOString(),
+                    signature: signature,
+                    status: 'paid',
+                    total: calculateTotal(),
+                    date: now.toISOString(),
+                  };
+                  try {
+                    await databases.createDocument(
+                      DATABASE_ID,
+                      COLLECTION_ID,
+                      billNumber,
+                      billData
+                    );
+                    const htmlContent = generateBillHtml(billData);
+                    const { uri } = await Print.printToFileAsync({
+                      html: htmlContent,
+                      width: 595,
+                      height: 842,
+                    });
+                    await Sharing.shareAsync(uri, {
+                      mimeType: 'application/pdf',
+                      dialogTitle: 'Share Bill',
+                      UTI: 'net.whatsapp.pdf'
+                    });
+
+                    router.push('/rating');
+                    setIsFormVisible(false);
+                    resetForm();
+                    setSignature(null);
+                  } catch (error) {
+                    console.error('Error generating bill:', error);
+                    Alert.alert('Error', 'Failed to generate bill');
+                  }
+                }}
+              >
+                <Text style={styles.submitText}>Submit & Share Bill</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -944,6 +1003,13 @@ const UserBill = () => {
                     >
                       <Feather name="printer" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Print</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.rateButton]}
+                      onPress={() => router.push('/rating')}
+                    >
+                      <Feather name="star" size={18} color="#FFF" />
+                      <Text style={styles.actionButtonText}>Rate</Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>

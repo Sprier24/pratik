@@ -602,14 +602,14 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 1,
   },
+  rateButton: {
+    backgroundColor: "#F6AD55",
+  },
   printButton: {
     backgroundColor: "#5E72E4",
   },
   whatsappButton: {
     backgroundColor: "#25D366",
-  },
-  deleteButton: {
-    backgroundColor: "#F56565",
   },
   actionButtonText: {
     color: "#FFF",

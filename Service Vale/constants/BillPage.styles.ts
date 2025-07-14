@@ -30,6 +30,14 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: 15,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  starButton: {
+    padding: 5,
+  },
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
@@ -594,6 +602,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     gap: 5,
     marginBottom: 40,
+    flexWrap: 'wrap',
   },
   actionButton: {
     flexDirection: "row",
@@ -603,6 +612,12 @@ export const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     flex: 1,
+    minWidth: '45%',
+    marginHorizontal: 2,
+    marginBottom: 7,
+  },
+  rateButton: {
+    backgroundColor: "#F6AD55",
   },
   printButton: {
     backgroundColor: "#5E72E4",

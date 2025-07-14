@@ -8,6 +8,7 @@ import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import registerNNPushToken from 'native-notify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
@@ -449,3 +450,4 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
+ registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
