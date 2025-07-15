@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "24570824708",
+    "project_id": "servicevale-3bf4a",
+    "storage_bucket": "servicevale-3bf4a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:24570824708:android:25b9f8c0969e208941cd51",
+        "android_client_info": {
+          "package_name": "com.markwatson.service_vale"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcr6Bht8hfwE0JyuS-Le3QQ7l2uzZN9Vs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

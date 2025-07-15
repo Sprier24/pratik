@@ -13,6 +13,8 @@ import registerNNPushToken from 'native-notify';
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
 
+registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+
 const LoginScreen = () => {
     const params = useLocalSearchParams();
     const [isLogin, setIsLogin] = useState(true);
@@ -450,4 +452,3 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
- registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
