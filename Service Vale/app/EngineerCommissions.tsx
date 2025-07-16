@@ -150,7 +150,7 @@ const EngineerCommissionsScreen = () => {
           {/* Total Commission Card */}
           <View style={[styles.summaryCard, styles.totalCommissionCard]}>
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="attach-money" size={24} color="#FFF" />
+              <MaterialIcons name="currency-rupee" size={24} color="#FFF" />
             </View>
             <Text style={styles.cardTitle}>Total Commission</Text>
             <Text style={styles.cardAmount}>

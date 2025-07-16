@@ -180,6 +180,39 @@ const PendingServicesScreenUser = () => {
     }
   };
 
+const sendNativeNotifyPush = async (title: string, message: string) => {
+  console.log('📲 Attempting push...');
+
+  try {
+    const response = await fetch('https://app.nativenotify.com/api/notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        appId: 31214   , // Replace with your real App ID
+        appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Replace with your real App Token
+        title,
+        body: message,
+        to: 'all', // or 'admin'
+      }),
+    });
+
+    const resultText = await response.text(); // 👈 FIXED: Use text()
+    console.log('✅ Native Notify response text:', resultText);
+
+    if (!response.ok) {
+      console.error('❌ Push failed:', response.status, resultText);
+      Alert.alert('Push Failed', resultText);
+    } else {
+      Alert.alert('Push Sent', resultText);
+    }
+  } catch (err) {
+    console.error('❌ Network error:', err);
+    Alert.alert('Error', 'Network error. Check logs.');
+  }
+};
+
   const handleComplete = async (id: string) => {
     Alert.alert(
       'Complete Service',
@@ -203,6 +236,13 @@ const PendingServicesScreenUser = () => {
                   `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
                   completedService.serviceboyEmail
                 );
+
+                // Send Native Notify Push
+                await sendNativeNotifyPush(
+                  'Service Completed',
+                  `Engineer ${completedService.serviceBoy} completed ${completedService.serviceType} for ${completedService.clientName} on ${completedService.serviceDate} at ${completedService.serviceTime}`
+                );
+
               } catch (notificationError) {
                 console.warn('Notification failed (service still completed):', notificationError);
               }
@@ -325,6 +365,7 @@ const PendingServicesScreenUser = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>

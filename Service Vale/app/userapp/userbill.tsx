@@ -613,7 +613,7 @@ const UserBill = () => {
       {!isFormVisible && (
         <View style={styles.searchContainer}>
           <TextInput
-            placeholder="Search bills..."
+            placeholder="Search"
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={(text) => {

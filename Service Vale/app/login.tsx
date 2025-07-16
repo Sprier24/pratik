@@ -9,11 +9,11 @@ import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import registerNNPushToken from 'native-notify';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
-
-registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
 
 const LoginScreen = () => {
     const params = useLocalSearchParams();
@@ -108,6 +108,7 @@ const LoginScreen = () => {
             </View>
         );
     }
+
     const handleLogin = async () => {
         if (email === '' || password === '') {
             Alert.alert('Error', 'Please enter email address and password both');
@@ -120,6 +121,15 @@ const LoginScreen = () => {
                 await account.createEmailPasswordSession(email, password);
                 const user = await account.get();
                 const isAdmin = user.labels?.includes('admin');
+
+                // Register device for Indie push notifications
+                try {
+                    await registerIndieID(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+                    console.log('Registered for Indie push notifications');
+                } catch (pushError) {
+                    console.warn('Push notification registration failed:', pushError);
+                }
+
                 Alert.alert('Success', `Welcome to Service Vale`);
                 resetFields();
                 if (isAdmin) {
@@ -452,3 +462,4 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
+registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');

@@ -190,6 +190,39 @@ const PhotoComparisonPage = () => {
         }
     };
 
+    const sendNativeNotifyPush = async (title: string, message: string) => {
+        console.log('📲 Attempting push...');
+
+        try {
+            const response = await fetch('https://app.nativenotify.com/api/notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    appId: 31214, // Replace with your real App ID if different
+                    appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Replace with your real App Token if different
+                    title,
+                    body: message,
+                    to: 'all', // or 'admin'
+                }),
+            });
+
+            const resultText = await response.text();
+            console.log('✅ Native Notify response text:', resultText);
+
+            if (!response.ok) {
+                console.error('❌ Push failed:', response.status, resultText);
+                Alert.alert('Push Failed', resultText);
+            } else {
+                console.log('Push Sent Successfully');
+            }
+        } catch (err) {
+            console.error('❌ Network error:', err);
+            Alert.alert('Error', 'Network error. Check logs.');
+        }
+    };
+
     const handleSubmit = async () => {
         if (!isAuthenticated) {
             Alert.alert('Login Required', 'Please log in first.');
@@ -204,6 +237,7 @@ const PhotoComparisonPage = () => {
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
+
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -214,6 +248,13 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
+
+                // Send Native Notify Push for before image
+                await sendNativeNotifyPush(
+                    'Before Photo Uploaded',
+                    `${parsedUserName} uploaded a before photo with notes: ${userNotes || 'No notes provided'}`
+                );
+
             } else if (afterImage && !beforeImage) {
                 const afterFileId = await uploadImageToStorage(afterImage);
                 const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
@@ -231,10 +272,18 @@ const PhotoComparisonPage = () => {
                     notes: notesWithName,
                     userEmail: userEmail,
                 });
+
                 await createNotification(
-                    `\Photo Notification\n ${userNotes || 'No notes provided'}`,
+                    `Photo Notification\n ${userNotes || 'No notes provided'}`,
                     docId
                 );
+
+                // Send Native Notify Push for after image
+                await sendNativeNotifyPush(
+                    'After Photo Uploaded',
+                    `${parsedUserName} uploaded an after photo with notes: ${userNotes || 'No notes provided'}`
+                );
+
             } else {
                 const [beforeFileId, afterFileId] = await Promise.all([
                     uploadImageToStorage(beforeImage!),
@@ -248,9 +297,16 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
+
                 await createNotification(
                     `\nNotes:\n ${userNotes || 'No notes provided'}`,
                     docId
+                );
+
+                // Send Native Notify Push for both images
+                await sendNativeNotifyPush(
+                    'Photo Comparison Uploaded',
+                    `${parsedUserName} uploaded before & after photos with notes: ${userNotes || 'No notes provided'}`
                 );
             }
 
@@ -288,6 +344,14 @@ const PhotoComparisonPage = () => {
             }
             await Promise.all(deletePromises);
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
+
+            // Send Native Notify Push for deletion
+            const { userName: parsedUserName } = parseNotes(photoSet.notes || '');
+            await sendNativeNotifyPush(
+                'Photo Set Deleted',
+                `${parsedUserName || 'User'} deleted a photo set from ${new Date(photoSet.date).toLocaleDateString()}`
+            );
+
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {

@@ -8,6 +8,10 @@ import { Query } from 'react-native-appwrite';
 import { styles } from '../constants/HomeScreen.styles';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getUnreadNotificationInboxCount } from 'native-notify';
+import { useFocusEffect } from '@react-navigation/native';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -28,33 +32,68 @@ const AdminHomeScreen = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const insets = useSafeAreaInsets();
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await account.deleteSession('current');
-              router.replace('/login');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to logout');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const unreadCount = await getUnreadNotificationInboxCount(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+      console.log("unreadCount: ", unreadCount);
+      setUnreadNotificationCount(unreadCount);
+    };
+    fetchUnread();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUnread = async () => {
+        const unreadCount = await getUnreadNotificationInboxCount(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+        setUnreadNotificationCount(unreadCount);
+      };
+      fetchUnread();
+    }, [])
+  );
+
+  // const handleLogout = () => {
+  //   Alert.alert(
+  //     'Logout',
+  //     'Are you sure you want to logout?',
+  //     [
+  //       {
+  //         text: 'Cancel',
+  //         style: 'cancel',
+  //       },
+  //       {
+  //         text: 'Logout',
+  //         style: 'destructive',
+  //         onPress: async () => {
+  //           try {
+  //             const user = await account.get();
+  //             await unregisterIndieDevice(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+  //             await account.deleteSession('current');
+  //             router.replace('/login');
+  //           } catch (error) {
+  //             Alert.alert('Error', 'Failed to logout');
+  //           }
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: true }
+  //   );
+  // };
+
+  // In your logout function wherever it exists
+  const handleLogout = async () => {
+    try {
+      const user = await account.get();
+      // Unregister device from Indie push notifications
+      await unregisterIndieDevice(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+
+      await account.deleteSession('current');
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const fetchRevenueData = async () => {
@@ -219,25 +258,11 @@ const AdminHomeScreen = () => {
     }
   };
 
-  const fetchUnreadNotifications = async () => {
-    try {
-      const res = await databases.listDocuments(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        [Query.equal('isRead', false)]
-      );
-      setUnreadCount(res.total);
-    } catch (error) {
-      console.error('Notification fetch error:', error);
-    }
-  };
-
   const fetchAllData = async () => {
     setIsLoading(true);
     await Promise.all([
       fetchRevenueData(),
       fetchOrders(),
-      fetchUnreadNotifications(),
       fetchCommissionData()
     ]);
     setIsLoading(false);
@@ -267,9 +292,16 @@ const AdminHomeScreen = () => {
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.notificationIcon}
-            onPress={() => router.push('/notification')}
+            onPress={() => router.push('/NotificationInbox')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
+            {unreadNotificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -329,13 +361,13 @@ const AdminHomeScreen = () => {
         <View style={styles.revenueRow}>
           <TouchableOpacity
             style={styles.commissionCard}
-            onPress={() => router.push('/EngineerCommissions')}
+            onPress={() => router.push('/engineerCommissions')}
           >
             <View style={styles.commissionCardHeader}>
               <View style={styles.cardIconContainer}>
                 <MaterialIcons name="engineering" size={24} color="#FFF" />
               </View>
-              <Text style={styles.commissionCardTitle}>Engineer Commissions</Text>
+              <Text style={styles.commissionCardTitle}>All Engineers Commissions</Text>
             </View>
 
             <View style={styles.commissionStatsContainer}>

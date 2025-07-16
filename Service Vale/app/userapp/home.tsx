@@ -96,7 +96,6 @@ const HomeScreenuser = () => {
     }
   };
 
-  // Update the fetchCommissionData function in HomeScreenuser.tsx
   const fetchCommissionData = async () => {
     try {
       const name = await fetchUserData();
@@ -105,7 +104,6 @@ const HomeScreenuser = () => {
       const today = new Date();
       const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
 
-      // Fetch current month bills for this engineer (for total commission)
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -115,40 +113,34 @@ const HomeScreenuser = () => {
         ]
       );
 
-      // Fetch ALL bills for this engineer (for pending calculation)
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.equal('serviceBoyName', name)]
       );
 
-      // Fetch all payments for this engineer
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
         [Query.equal('engineerName', name)]
       );
 
-      // Calculate total commission for current month only (will reset monthly)
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
 
-      // Calculate total commissions from ALL bills (for pending calculation)
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
 
-      // Calculate total payments made to engineer
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
 
-      // Calculate pending commission (all unpaid commissions)
       const pending = totalCommissionsAllTime - totalPayments;
 
-      setTotalCommission(total); // This will reset monthly
-      setPendingCommission(pending); // This remains all-time pending amount
+      setTotalCommission(total); 
+      setPendingCommission(pending); 
     } catch (error) {
       console.error('Error fetching commission data:', error);
     }
@@ -236,7 +228,7 @@ const HomeScreenuser = () => {
         <Text style={styles.headerTitle}>Service Vale</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity
-            style={styles.notificationIcon}
+            style={styles.notificationIcon} 
             onPress={() => router.push('/userapp/notificationpage')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
@@ -293,7 +285,6 @@ const HomeScreenuser = () => {
           </View>
         </View>
 
-        {/* Add the Commission Card */}
         <TouchableOpacity
           style={styles.commissionCard}
           onPress={() => router.push('/userapp/userengineer-detail')}
@@ -302,7 +293,7 @@ const HomeScreenuser = () => {
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="engineering" size={24} color="#FFF" />
             </View>
-            <Text style={styles.commissionCardTitle}>My Commissions</Text>
+            <Text style={styles.commissionCardTitle}>Commission Details</Text>
           </View>
 
           <View style={styles.commissionStatsContainer}>
@@ -322,7 +313,7 @@ const HomeScreenuser = () => {
           </View>
 
           <View style={styles.commissionCardFooter}>
-            <Text style={styles.commissionCardFooterText}>View my commissions</Text>
+            <Text style={styles.commissionCardFooterText}>View all commissions</Text>
             <Feather name="chevron-right" size={18} color="#FFF" />
           </View>
         </TouchableOpacity>

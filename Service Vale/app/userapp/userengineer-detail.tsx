@@ -317,7 +317,7 @@ const UserEngineerDetail = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Commissions</Text>
+          <Text style={styles.headerTitle}>Commission Details</Text>
         </View>
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}

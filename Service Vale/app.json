@@ -17,7 +17,6 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.markwatson.service_vale",
-      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -59,8 +58,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cb480fdb-83ea-4275-bd1d-1d98e2c8f29e"
+        "projectId": "82646004-be0b-4887-bb51-c40ed7ce8258"
       }
-    }
+    },
+    "owner": "purva_galani"
   }
 }

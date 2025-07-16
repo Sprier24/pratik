@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { ID, Query } from 'appwrite';
@@ -7,6 +7,7 @@ import { MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/ServicePage.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
+import axios from 'axios';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
@@ -62,6 +63,59 @@ const ServicePage = () => {
     }
   };
 
+  const sendNativeNotifyPush = async (title: string, message: string) => {
+    console.log('📲 Attempting push...');
+
+    try {
+      const response = await fetch('https://app.nativenotify.com/api/notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appId: 31214, // Use your NativeNotify App ID
+          appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Use your NativeNotify App Token
+          title,
+          body: message,
+          to: 'all', // or 'admin' depending on who should receive
+        }),
+      });
+
+      const resultText = await response.text();
+      console.log('✅ Native Notify response text:', resultText);
+
+      if (!response.ok) {
+        console.error('❌ Push failed:', response.status, resultText);
+        Alert.alert('Push Failed', resultText);
+      } else {
+        console.log('Push Sent Successfully');
+      }
+    } catch (err) {
+      console.error('❌ Network error:', err);
+      Alert.alert('Error', 'Network error. Check logs.');
+    }
+  };
+
+  const sendIndiePushNotification = async (subID: string, title: string, message: string) => {
+    console.log('📲 Attempting Indie push...');
+
+    try {
+      const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
+        subID: subID,
+        appId: 31214,
+        appToken: 'NaLjQl8mbwbQbKWRlsWgZZ',
+        title: title,
+        message: message
+      });
+
+      console.log('✅ Indie push response:', response.data);
+      return true;
+    } catch (err) {
+      console.error('❌ Indie push failed:', err);
+      return false;
+    }
+  };
+
   const handleImagePress = (serviceKey: ServiceKey) => {
     setSelectedServiceType(serviceKey);
     setModalVisible(true);
@@ -75,20 +129,46 @@ const ServicePage = () => {
   ) => {
     setModalVisible(false);
     setSelectedServiceboyName(applicantName);
-    await createNotification(
-      ` You assigned a new ${selectedServiceType} service.`,
-      applicantEmail
-    );
-    router.push({
-      pathname: '/order',
-      params: {
-        applicantId,
-        applicantName,
-        serviceType: selectedServiceType,
-        applicantEmail,
-        applicantPhone
-      },
-    });
+
+    try {
+      // Create database notification
+      await createNotification(
+        `You assigned a new ${selectedServiceType} service.`,
+        applicantEmail
+      );
+
+      // Send Indie push notification to the specific engineer
+      const pushSuccess = await sendIndiePushNotification(
+        applicantEmail, // Using email as the subID (must match what was registered)
+        'New Service Assignment',
+        `You've been assigned a ${selectedServiceType} service. Please check your pending services.`
+      );
+
+      if (!pushSuccess) {
+        console.log('Falling back to regular push notification');
+        // Fallback to regular notification if Indie push fails
+        await sendNativeNotifyPush(
+          'New Service Assignment',
+          `${applicantName} has been assigned a ${selectedServiceType} service`
+        );
+      }
+
+      // Navigate to order page
+      router.push({
+        pathname: '/order',
+        params: {
+          applicantId,
+          applicantName,
+          serviceType: selectedServiceType,
+          applicantEmail,
+          applicantPhone
+        },
+      });
+
+    } catch (error) {
+      console.error('Error handling applicant press:', error);
+      Alert.alert('Error', 'Failed to assign service engineer');
+    }
   };
 
   return (
