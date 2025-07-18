@@ -9,14 +9,16 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import mime from 'mime';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/userapp/Userphoto';
+import axios from 'axios';
+import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
-const NOTIFICATIONS_COLLECTION = 'admin_id';
 const BUCKET_ID = 'photo_id';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
 const PROJECT_ID = '681b300f0018fdc27bdd';
+const ADMIN_USERS_COLLECTION = '68773d3800020869e8fc';
 
 const buildImageUrl = (fileId: string) =>
     `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;
@@ -169,57 +171,53 @@ const PhotoComparisonPage = () => {
         }
     };
 
-    const createNotification = async (description: string, relatedDocumentId: string) => {
-        const notifId = ID.unique();
-
+    const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
+        console.log('📲 Attempting push...');
         try {
-            await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, notifId, {
-                description,
-                IsRead: false,
-                createAt: new Date().toISOString(),
-                userEmail,
-            });
-            console.log('Notification created successfully:', notifId);
-        } catch (error: any) {
-            console.error('Failed to create notification:', {
-                message: error.message,
-                code: error.code,
-                type: error.type,
-                response: error.response
-            });
+            const endpoint = subIDs
+                ? 'https://app.nativenotify.com/api/indie/group/notification'
+                : 'https://app.nativenotify.com/api/notification';
+
+            const payload = subIDs
+                ? {
+                    subIDs,
+                    appId: APP_ID,
+                    appToken: APP_TOKEN,
+                    title,
+                    message,
+                }
+                : {
+                    appId: APP_ID,
+                    appToken: APP_TOKEN,
+                    title,
+                    body: message,
+                    to: 'all',
+                };
+
+            const response = await axios.post(endpoint, payload);
+            console.log('✅ Native Notify response:', response.data);
+        } catch (error) {
+            console.error('❌ Push failed:', error);
+            Alert.alert('Push Failed', 'Failed to send notification');
         }
     };
 
-    const sendNativeNotifyPush = async (title: string, message: string) => {
-        console.log('📲 Attempting push...');
-
+    const getAdminUsers = async (): Promise<string[]> => {
         try {
-            const response = await fetch('https://app.nativenotify.com/api/notification', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    appId: 31214, // Replace with your real App ID if different
-                    appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Replace with your real App Token if different
-                    title,
-                    body: message,
-                    to: 'all', // or 'admin'
-                }),
-            });
-
-            const resultText = await response.text();
-            console.log('✅ Native Notify response text:', resultText);
-
-            if (!response.ok) {
-                console.error('❌ Push failed:', response.status, resultText);
-                Alert.alert('Push Failed', resultText);
-            } else {
-                console.log('Push Sent Successfully');
-            }
-        } catch (err) {
-            console.error('❌ Network error:', err);
-            Alert.alert('Error', 'Network error. Check logs.');
+            const response = await databases.listDocuments(
+                DATABASE_ID,
+                ADMIN_USERS_COLLECTION,
+                [
+                    Query.equal('isAdmin', true),
+                    Query.limit(100)
+                ]
+            );
+            return response.documents
+                .filter((doc: any) => doc.email)
+                .map((doc: any) => doc.email);
+        } catch (error) {
+            console.error('Error fetching admin users:', error);
+            return [];
         }
     };
 
@@ -237,7 +235,7 @@ const PhotoComparisonPage = () => {
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
-
+            const adminEmails = await getAdminUsers();
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -249,10 +247,10 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
 
-                // Send Native Notify Push for before image
                 await sendNativeNotifyPush(
                     'Before Photo Uploaded',
-                    `${parsedUserName} uploaded a before photo with notes: ${userNotes || 'No notes provided'}`
+                    `${parsedUserName} uploaded a before photo with notes: ${userNotes || 'No notes provided'}`,
+                    adminEmails
                 );
 
             } else if (afterImage && !beforeImage) {
@@ -263,9 +261,11 @@ const PhotoComparisonPage = () => {
                     Query.equal('userEmail', userEmail),
                     Query.limit(1),
                 ]);
+
                 if (latest.documents.length === 0) {
                     throw new Error('No matching before image found');
                 }
+
                 const docId = latest.documents[0].$id;
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
@@ -273,15 +273,10 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
 
-                await createNotification(
-                    `Photo Notification\n ${userNotes || 'No notes provided'}`,
-                    docId
-                );
-
-                // Send Native Notify Push for after image
                 await sendNativeNotifyPush(
                     'After Photo Uploaded',
-                    `${parsedUserName} uploaded an after photo with notes: ${userNotes || 'No notes provided'}`
+                    `${parsedUserName} uploaded an after photo with notes: ${userNotes || 'No notes provided'}`,
+                    adminEmails
                 );
 
             } else {
@@ -289,6 +284,7 @@ const PhotoComparisonPage = () => {
                     uploadImageToStorage(beforeImage!),
                     uploadImageToStorage(afterImage!),
                 ]);
+
                 const docId = ID.unique();
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
@@ -298,18 +294,12 @@ const PhotoComparisonPage = () => {
                     userEmail: userEmail,
                 });
 
-                await createNotification(
-                    `\nNotes:\n ${userNotes || 'No notes provided'}`,
-                    docId
-                );
-
-                // Send Native Notify Push for both images
                 await sendNativeNotifyPush(
                     'Photo Comparison Uploaded',
-                    `${parsedUserName} uploaded before & after photos with notes: ${userNotes || 'No notes provided'}`
+                    `${parsedUserName} uploaded before & after photos with notes: ${userNotes || 'No notes provided'}`,
+                    adminEmails
                 );
             }
-
             Alert.alert('Success', 'Photo saved successfully!');
             setBeforeImage(null);
             setAfterImage(null);
@@ -344,14 +334,11 @@ const PhotoComparisonPage = () => {
             }
             await Promise.all(deletePromises);
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
-
-            // Send Native Notify Push for deletion
             const { userName: parsedUserName } = parseNotes(photoSet.notes || '');
             await sendNativeNotifyPush(
                 'Photo Set Deleted',
                 `${parsedUserName || 'User'} deleted a photo set from ${new Date(photoSet.date).toLocaleDateString()}`
             );
-
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
@@ -593,6 +580,7 @@ const PhotoComparisonPage = () => {
                                             </View>
                                         )}
                                     </View>
+
                                     <View style={styles.photoContainer}>
                                         <Text style={styles.photoLabel}>After</Text>
                                         {item.afterImageUrl ? (

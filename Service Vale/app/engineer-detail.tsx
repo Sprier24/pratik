@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, Modal, TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
 import { Query, ID } from 'react-native-appwrite';
 import { styles } from '../constants/EngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format, isSameDay, startOfMonth } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -52,7 +52,7 @@ const EngineerDetailScreen = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [currentMonthCommission, setCurrentMonthCommission] = useState(0); // New state for current month commission
+  const [currentMonthCommission, setCurrentMonthCommission] = useState(0);
   const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
 
   useEffect(() => {
@@ -65,12 +65,9 @@ const EngineerDetailScreen = () => {
     items.forEach(item => {
       const date = new Date(item.date);
       let key: string;
-
       if (groupByMonth) {
-        // For both commissions and payments, group by month if older than 1 month
         const now = new Date();
         const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
-
         if (date < oneMonthAgo) {
           key = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
         } else {
@@ -82,7 +79,6 @@ const EngineerDetailScreen = () => {
           });
         }
       } else {
-        // For commissions without month grouping
         key = date.toLocaleDateString('en-IN', {
           weekday: 'long',
           day: 'numeric',
@@ -90,11 +86,9 @@ const EngineerDetailScreen = () => {
           year: 'numeric'
         });
       }
-
       if (!grouped[key]) {
         grouped[key] = [];
       }
-
       grouped[key].push(item);
     });
 
@@ -102,8 +96,7 @@ const EngineerDetailScreen = () => {
       .map(key => {
         const dayTransactions = grouped[key].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const totalAmount = dayTransactions.reduce((sum, item) => sum + item.amount, 0);
-        const isMonth = key.split(' ').length === 2; // If it's just month and year
-
+        const isMonth = key.split(' ').length === 2;
         return {
           title: key,
           data: dayTransactions,
@@ -125,15 +118,12 @@ const EngineerDetailScreen = () => {
     try {
       const today = new Date();
       const startOfCurrentMonth = startOfMonth(today).toISOString();
-
-      // Fetch all commissions for this engineer (for all-time data)
       const allCommissionsResponse = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.equal('serviceBoyName', engineerName)]
       );
 
-      // Fetch current month commissions for this engineer
       const currentMonthCommissionsResponse = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -143,7 +133,6 @@ const EngineerDetailScreen = () => {
         ]
       );
 
-      // Calculate current month commission
       const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
         return sum + (parseFloat(doc.serviceCharge) * 0.25);
       }, 0);
@@ -160,14 +149,12 @@ const EngineerDetailScreen = () => {
         selected: false
       }));
 
-      // Fetch all payments for this engineer
       const paymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
         [Query.equal('engineerId', engineerId)]
       );
 
-      // Fetch current month payments for this engineer
       const currentMonthPaymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
@@ -177,7 +164,6 @@ const EngineerDetailScreen = () => {
         ]
       );
 
-      // Calculate current month payments
       const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
         return sum + parseFloat(doc.amount);
       }, 0);
@@ -193,7 +179,6 @@ const EngineerDetailScreen = () => {
 
       const commissionSections = groupByDate(commissionItems, true);
       const paymentSections = groupByDate(paymentItems, true);
-
       const newTransactions = {
         commissions: commissionSections,
         payments: paymentSections
@@ -201,7 +186,6 @@ const EngineerDetailScreen = () => {
 
       setTransactions(newTransactions);
 
-      // If there's an active date filter, reapply it
       if (dateFilter) {
         const startOfDay = new Date(dateFilter);
         startOfDay.setHours(0, 0, 0, 0);
@@ -289,21 +273,14 @@ const EngineerDetailScreen = () => {
     setShowDatePicker(false);
 
     if (event.type === 'dismissed') {
-      // User canceled the picker, don't change anything
       return;
     }
-
     if (selectedDate) {
-      // Set the filter date and apply the filter immediately
       setDateFilter(selectedDate);
-
-      // Create date range for the selected day (from start to end of day)
       const startOfDay = new Date(selectedDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
-
-      // Apply filter immediately
       filterByDateRange(startOfDay, endOfDay);
     }
   };
@@ -386,7 +363,6 @@ const EngineerDetailScreen = () => {
         />
       )}
 
-      {/* Summary Cards */}
       <View style={styles.summaryContainer}>
         <View style={[styles.summaryCard, styles.commissionCard]}>
           <Text style={styles.summaryLabel}>Monthly Commission</Text>
@@ -472,7 +448,7 @@ const EngineerDetailScreen = () => {
             </View>
           </View>
         )}
-        renderItem={({ item, section }) => (
+        renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <View style={styles.itemLeft}>
               <View style={styles.itemIconContainer}>
@@ -520,7 +496,6 @@ const EngineerDetailScreen = () => {
         }
       />
 
-      {/* Payment Modal */}
       <Modal
         visible={showPaymentModal}
         transparent={true}

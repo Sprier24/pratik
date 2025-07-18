@@ -1,6 +1,5 @@
 import { Platform, StatusBar, StyleSheet } from "react-native";
 
-
 export const styles = StyleSheet.create({
   itemDate: {
     fontSize: 12,
@@ -49,7 +48,6 @@ export const styles = StyleSheet.create({
     color: '#718096',
     marginTop: 4,
   },
-  // Add these styles to EngineerDetail.styles.ts
   activeFiltersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -74,7 +72,6 @@ export const styles = StyleSheet.create({
   filterChipClose: {
     marginLeft: 6,
   },
-  // Add these styles
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,7 +97,6 @@ export const styles = StyleSheet.create({
     color: '#718096',
     marginTop: 2,
   },
-    // Add these to EngineerDetail.styles.ts
   summaryContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -122,15 +118,15 @@ export const styles = StyleSheet.create({
   },
   commissionCard: {
     borderTopWidth: 4,
-    borderTopColor: '#4C51BF', // Deep indigo
+    borderTopColor: '#4C51BF',
   },
   paymentCard: {
     borderTopWidth: 4,
-    borderTopColor: '#38A169', // Green
+    borderTopColor: '#38A169',
   },
   pendingCard: {
     borderTopWidth: 4,
-    borderTopColor: '#DD6B20', // Orange
+    borderTopColor: '#DD6B20', 
   },
   summaryLabel: {
     fontSize: 14, 
@@ -143,10 +139,9 @@ export const styles = StyleSheet.create({
     color: '#2D3748',
   },
   pendingValue: {
-    color: '#E53E3E', // Red for pending amounts
-  },
+    color: '#E53E3E',
+  }, 
 
-// Date filter styles
   dateFilterContainer: {
     flexDirection: 'row',
     alignItems: 'center',

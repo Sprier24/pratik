@@ -326,7 +326,6 @@ export const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     borderRadius: 5,
     marginBottom: 10,
-
   },
   changeSignatureButton: {
     marginBottom: 10,

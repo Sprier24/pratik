@@ -10,13 +10,12 @@ import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUnreadNotificationInboxCount } from 'native-notify';
 import { useFocusEffect } from '@react-navigation/native';
-import { registerIndieID, unregisterIndieDevice } from 'native-notify';
-import axios from 'axios';
+import { unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
+import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const PAYMENTS_COLLECTION_ID = 'commission_ID';
 const { width } = Dimensions.get('window');
 const MONTHLY_REVENUE_COLLECTION_ID = 'monthly_revenue';
@@ -34,66 +33,93 @@ const AdminHomeScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [unreadIndieNotificationCount, setUnreadIndieNotificationCount] = useState(0);
+
+  const fetchUnreadIndieCount = async () => {
+    try {
+      const user = await account.get();
+      const userEmail = user.email;
+      const count = await getUnreadIndieNotificationInboxCount(
+        userEmail,
+        APP_ID,
+        APP_TOKEN
+      );
+      console.log("Unread Indie notifications count:", count);
+      setUnreadIndieNotificationCount(count);
+    } catch (error) {
+      console.error("Error fetching unread indie count:", error);
+      try {
+        const regularCount = await getUnreadNotificationInboxCount(APP_ID, APP_TOKEN);
+        setUnreadIndieNotificationCount(regularCount);
+      } catch (fallbackError) {
+        console.error("Fallback count failed:", fallbackError);
+      }
+    }
+  };
 
   useEffect(() => {
-    const fetchUnread = async () => {
-      const unreadCount = await getUnreadNotificationInboxCount(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
-      console.log("unreadCount: ", unreadCount);
-      setUnreadNotificationCount(unreadCount);
-    };
-    fetchUnread();
+    fetchUnreadIndieCount();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchUnread = async () => {
-        const unreadCount = await getUnreadNotificationInboxCount(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
-        setUnreadNotificationCount(unreadCount);
-      };
-      fetchUnread();
+      fetchUnreadIndieCount();
     }, [])
   );
 
-  // const handleLogout = () => {
-  //   Alert.alert(
-  //     'Logout',
-  //     'Are you sure you want to logout?',
-  //     [
-  //       {
-  //         text: 'Cancel',
-  //         style: 'cancel',
-  //       },
-  //       {
-  //         text: 'Logout',
-  //         style: 'destructive',
-  //         onPress: async () => {
-  //           try {
-  //             const user = await account.get();
-  //             await unregisterIndieDevice(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
-  //             await account.deleteSession('current');
-  //             router.replace('/login');
-  //           } catch (error) {
-  //             Alert.alert('Error', 'Failed to logout');
-  //           }
-  //         },
-  //       },
-  //     ],
-  //     { cancelable: true }
-  //   );
-  // };
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = await account.get();
+              const userEmail = user.email;
+              const userId = user.$id;
+              try {
+                await unregisterIndieDevice(userEmail, APP_ID, APP_TOKEN);
+                console.log('Unregistered from Indie push notifications');
+              } catch (unregisterError) {
+                console.warn('Failed to unregister from push notifications:', unregisterError);
+              }
+              try {
+                const result = await databases.listDocuments(
+                  '681c428b00159abb5e8b',
+                  '68773d3800020869e8fc',
+                  [Query.equal('userId', userId)]
+                );
+                if (result.documents.length > 0) {
+                  const documentId = result.documents[0].$id;
 
-  // In your logout function wherever it exists
-  const handleLogout = async () => {
-    try {
-      const user = await account.get();
-      // Unregister device from Indie push notifications
-      await unregisterIndieDevice(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
-
-      await account.deleteSession('current');
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+                  await databases.deleteDocument(
+                    '681c428b00159abb5e8b',
+                    '68773d3800020869e8fc',
+                    documentId
+                  );
+                  console.log('Admin login record deleted');
+                }
+              } catch (deleteError) {
+                console.warn('Failed to delete admin login record:', deleteError);
+              }
+              await account.deleteSession('current');
+              router.replace('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const fetchRevenueData = async () => {
@@ -101,9 +127,8 @@ const AdminHomeScreen = () => {
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-      const currentMonth = today.toLocaleString('default', { month: 'long' }); // e.g., "July"
+      const currentMonth = today.toLocaleString('default', { month: 'long' });
       const currentYear = today.getFullYear().toString();
-
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -112,6 +137,7 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -126,7 +152,6 @@ const AdminHomeScreen = () => {
 
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
-      // Store or update in monthly_revenue collection
       const existing = await databases.listDocuments(
         DATABASE_ID,
         MONTHLY_REVENUE_COLLECTION_ID,
@@ -137,7 +162,6 @@ const AdminHomeScreen = () => {
       );
 
       if (existing.total > 0) {
-        // Update the existing document
         await databases.updateDocument(
           DATABASE_ID,
           MONTHLY_REVENUE_COLLECTION_ID,
@@ -145,7 +169,6 @@ const AdminHomeScreen = () => {
           { total: monthlyTotal.toString() }
         );
       } else {
-        // Create a new document
         await databases.createDocument(
           DATABASE_ID,
           MONTHLY_REVENUE_COLLECTION_ID,
@@ -182,8 +205,6 @@ const AdminHomeScreen = () => {
     try {
       const today = new Date();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
-      // Fetch bills only from current month for total commission
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -193,37 +214,29 @@ const AdminHomeScreen = () => {
         ]
       );
 
-      // Fetch ALL bills for pending calculation and engineer count
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
 
-      // Fetch all payments
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID
       );
 
-      // Calculate total commission for current month only
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
 
-      // Calculate total commissions from ALL bills
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
 
-      // Calculate total payments made to engineers
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
 
-      // Calculate pending commission (all unpaid commissions)
       const pending = totalCommissionsAllTime - totalPayments;
-
-      // Count engineers with pending commissions (from ALL bills)
       const engineerMap = new Map<string, number>();
       allBills.documents.forEach(bill => {
         const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
@@ -250,9 +263,8 @@ const AdminHomeScreen = () => {
 
       setTotalCommission(total);
       setPendingCommission(pending);
-      setPendingEngineersCount(pendingEngineersCount); // This will show all engineers with pending commissions
+      setPendingEngineersCount(pendingEngineersCount);
       setEngineerCommissions(sortedEngineers);
-
     } catch (error) {
       console.error('Error fetching commission data:', error);
     }
@@ -295,15 +307,16 @@ const AdminHomeScreen = () => {
             onPress={() => router.push('/NotificationInbox')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
-            {unreadNotificationCount > 0 && (
+            {(unreadIndieNotificationCount > 0 || unreadNotificationCount > 0) && (
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationBadgeText}>
-                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  {Math.max(unreadIndieNotificationCount, unreadNotificationCount) > 9
+                    ? '9+'
+                    : Math.max(unreadIndieNotificationCount, unreadNotificationCount)}
                 </Text>
               </View>
             )}
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.logoutIcon}
             onPress={handleLogout}
@@ -361,13 +374,13 @@ const AdminHomeScreen = () => {
         <View style={styles.revenueRow}>
           <TouchableOpacity
             style={styles.commissionCard}
-            onPress={() => router.push('/engineerCommissions')}
+            onPress={() => router.push('/EngineerCommissions')}
           >
             <View style={styles.commissionCardHeader}>
               <View style={styles.cardIconContainer}>
                 <MaterialIcons name="engineering" size={24} color="#FFF" />
               </View>
-              <Text style={styles.commissionCardTitle}>All Engineers Commissions</Text>
+              <Text style={styles.commissionCardTitle}>Engineer Commissions</Text>
             </View>
 
             <View style={styles.commissionStatsContainer}>
@@ -417,6 +430,7 @@ const AdminHomeScreen = () => {
               <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
+
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>

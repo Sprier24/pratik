@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/ServicePage.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
-import axios from 'axios';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
@@ -44,78 +42,6 @@ const ServicePage = () => {
     fetchAllUsers();
   }, []);
 
-  const createNotification = async (description: string, userEmail: string) => {
-    try {
-      await databases.createDocument(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        ID.unique(),
-        {
-          description,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          userEmail,
-        }
-      );
-      console.log('Notification sent to:', userEmail);
-    } catch (error) {
-      console.error('Notification creation failed:', error);
-    }
-  };
-
-  const sendNativeNotifyPush = async (title: string, message: string) => {
-    console.log('📲 Attempting push...');
-
-    try {
-      const response = await fetch('https://app.nativenotify.com/api/notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          appId: 31214, // Use your NativeNotify App ID
-          appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Use your NativeNotify App Token
-          title,
-          body: message,
-          to: 'all', // or 'admin' depending on who should receive
-        }),
-      });
-
-      const resultText = await response.text();
-      console.log('✅ Native Notify response text:', resultText);
-
-      if (!response.ok) {
-        console.error('❌ Push failed:', response.status, resultText);
-        Alert.alert('Push Failed', resultText);
-      } else {
-        console.log('Push Sent Successfully');
-      }
-    } catch (err) {
-      console.error('❌ Network error:', err);
-      Alert.alert('Error', 'Network error. Check logs.');
-    }
-  };
-
-  const sendIndiePushNotification = async (subID: string, title: string, message: string) => {
-    console.log('📲 Attempting Indie push...');
-
-    try {
-      const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
-        subID: subID,
-        appId: 31214,
-        appToken: 'NaLjQl8mbwbQbKWRlsWgZZ',
-        title: title,
-        message: message
-      });
-
-      console.log('✅ Indie push response:', response.data);
-      return true;
-    } catch (err) {
-      console.error('❌ Indie push failed:', err);
-      return false;
-    }
-  };
-
   const handleImagePress = (serviceKey: ServiceKey) => {
     setSelectedServiceType(serviceKey);
     setModalVisible(true);
@@ -129,31 +55,7 @@ const ServicePage = () => {
   ) => {
     setModalVisible(false);
     setSelectedServiceboyName(applicantName);
-
     try {
-      // Create database notification
-      await createNotification(
-        `You assigned a new ${selectedServiceType} service.`,
-        applicantEmail
-      );
-
-      // Send Indie push notification to the specific engineer
-      const pushSuccess = await sendIndiePushNotification(
-        applicantEmail, // Using email as the subID (must match what was registered)
-        'New Service Assignment',
-        `You've been assigned a ${selectedServiceType} service. Please check your pending services.`
-      );
-
-      if (!pushSuccess) {
-        console.log('Falling back to regular push notification');
-        // Fallback to regular notification if Indie push fails
-        await sendNativeNotifyPush(
-          'New Service Assignment',
-          `${applicantName} has been assigned a ${selectedServiceType} service`
-        );
-      }
-
-      // Navigate to order page
       router.push({
         pathname: '/order',
         params: {
@@ -181,6 +83,7 @@ const ServicePage = () => {
           <Text style={styles.headerTitle}>Service Selection</Text>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 170 }]}>
         <View style={styles.servicesGrid}>
           <TouchableOpacity
@@ -204,6 +107,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Washing Machine')}
@@ -225,6 +129,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Fridge')}
@@ -246,6 +151,7 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Microwave')}
@@ -267,8 +173,10 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
+
         </View>
       </ScrollView>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -283,6 +191,7 @@ const ServicePage = () => {
                 <MaterialIcons name="close" size={24} color="#718096" />
               </TouchableOpacity>
             </View>
+
             <ScrollView style={styles.modalScroll}>
               {allUsers.length > 0 ? (
                 allUsers.map((user, index) => (
@@ -312,6 +221,7 @@ const ServicePage = () => {
           </View>
         </View>
       </Modal>
+
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity
           style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
@@ -322,6 +232,7 @@ const ServicePage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Service</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/user')}
@@ -331,6 +242,7 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[footerStyles.bottomButton]}
           onPress={() => router.push('/home')}
@@ -340,6 +252,7 @@ const ServicePage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
@@ -349,6 +262,7 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/bill')}
@@ -358,6 +272,7 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Bills</Text>
         </TouchableOpacity>
+        
       </View>
     </SafeAreaView>
   );

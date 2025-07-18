@@ -246,6 +246,7 @@ const UserDetailsForm = () => {
           <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
         </View>
       </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -354,6 +355,7 @@ const UserDetailsForm = () => {
                     <Feather name="x" size={24} color="#718096" />
                   </TouchableOpacity>
                 </View>
+                
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>

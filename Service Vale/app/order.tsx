@@ -7,6 +7,8 @@ import { databases } from '../lib/appwrite';
 import { ID } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
+import axios from 'axios';
+import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -123,11 +125,57 @@ const OrderScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const sendNativeNotifyPush = async (title: string, message: string) => {
+    console.log('📲 Attempting push...');
+    try {
+      const response = await fetch('https://app.nativenotify.com/api/notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appId: APP_ID,
+          appToken: APP_TOKEN,
+          title,
+          body: message,
+          to: 'all',
+        }),
+      });
+      const resultText = await response.text();
+      console.log('✅ Native Notify response:', resultText);
+
+      if (!response.ok) {
+        console.error('❌ Push failed:', response.status, resultText);
+      }
+    } catch (err) {
+      console.error('❌ Network error:', err);
+    }
+  };
+
+  const sendIndiePushNotification = async (subID: string, title: string, message: string) => {
+    console.log('📲 Attempting Indie push to:', subID);
+    try {
+      const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
+        subID,
+        appId: APP_ID,
+        appToken: APP_TOKEN,
+        title,
+        message
+      });
+      console.log('✅ Indie push response:', response.data);
+      return true;
+    } catch (err) {
+      console.error('❌ Indie push failed:', err);
+      return false;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       Alert.alert('Validation Error', 'Please fill all required fields correctly');
       return;
     }
+
     const [hoursStr, minutesStr] = formData.serviceTime.split(':');
     let hours = parseInt(hoursStr, 10);
     const minutes = minutesStr;
@@ -139,7 +187,9 @@ const OrderScreen = () => {
     const sortableTime = `${String(hours).padStart(2, '0')}:${minutes}`;
     const [day, month, year] = formData.serviceDate.split('/');
     const sortableDate = `${year}-${month}-${day}`;
+
     setIsSubmitting(true);
+
     try {
       const response = await databases.createDocument(
         DATABASE_ID,
@@ -159,7 +209,23 @@ const OrderScreen = () => {
           serviceTime: sortableTime
         }
       );
-      Alert.alert('Success', 'Order created successfully!');
+
+      const pushSuccess = await sendIndiePushNotification(
+        formData.serviceboyEmail,
+        'New Service Assignment',
+        `You've been assigned a ${formData.serviceType} service for ${formData.clientName}`
+      );
+
+      if (!pushSuccess) {
+        console.log('Falling back to regular push notification');
+        await sendNativeNotifyPush(
+          'New Service Assignment',
+          `${formData.serviceboyName} has been assigned a ${formData.serviceType} service`
+        );
+      }
+
+      Alert.alert('Success', 'Order created and notification sent!');
+
       router.push({
         pathname: '/pending',
         params: {
@@ -180,6 +246,7 @@ const OrderScreen = () => {
           })
         }
       });
+
     } catch (error) {
       console.error('Error creating order:', error);
       Alert.alert('Error', 'Failed to create order. Please try again.');
@@ -212,18 +279,21 @@ const OrderScreen = () => {
                   <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Email Address</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Type</Text>
                 <View style={styles.readOnlyContainer}>
@@ -231,6 +301,7 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Service Schedule</Text>
               <View style={styles.field}>
@@ -251,6 +322,7 @@ const OrderScreen = () => {
                   />
                 )}
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
                 <View style={styles.timeInputContainer}>
@@ -262,6 +334,7 @@ const OrderScreen = () => {
                     keyboardType="numbers-and-punctuation"
                     maxLength={5}
                   />
+
                   <View style={styles.timePeriodContainer}>
                     <TouchableOpacity
                       style={[
@@ -295,6 +368,7 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Customer Details</Text>
               <View style={styles.field}>
@@ -308,6 +382,7 @@ const OrderScreen = () => {
                   placeholder="Enter customer name"
                 />
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number <Text style={styles.required}>*</Text></Text>
                 <View style={styles.inputContainer}>
@@ -322,6 +397,7 @@ const OrderScreen = () => {
                   />
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Address</Text>
                 <TextInput
@@ -334,8 +410,11 @@ const OrderScreen = () => {
                 />
               </View>
             </View>
+
             <Text style={styles.sectionTitle}>Billing Information</Text>
+
             <Text style={styles.label1}>Service Charge</Text>
+
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
               <TextInput
@@ -347,6 +426,7 @@ const OrderScreen = () => {
               />
             </View>
           </View>
+
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
@@ -356,6 +436,7 @@ const OrderScreen = () => {
               {isSubmitting ? 'Creating...' : 'Create Service Order'}
             </Text>
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

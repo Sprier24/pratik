@@ -16,6 +16,7 @@ export default function ResetPassword() {
             });
         }
     }, [params]);
+
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Processing password reset...</Text>

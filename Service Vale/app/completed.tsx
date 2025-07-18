@@ -291,6 +291,7 @@ const AdminCompletedServicesScreen = () => {
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
@@ -313,6 +314,7 @@ const AdminCompletedServicesScreen = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={16} color="#718096" />
@@ -326,6 +328,7 @@ const AdminCompletedServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
+      
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}

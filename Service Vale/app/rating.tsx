@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { router } from 'expo-router';
+import { View, Image, SafeAreaView } from 'react-native';
 import { styles } from '../constants/Rating.styles';
 
 const RatingScreen = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { Query } from 'react-native-appwrite';
@@ -20,25 +20,19 @@ const RevenueHistoryScreen = () => {
   const [monthlyRevenues, setMonthlyRevenues] = useState<MonthlyRevenue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
-
   const fetchMonthlyRevenueHistory = async () => {
     try {
       setIsLoading(true);
-      
-      // Get all bills grouped by month
       const bills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.orderDesc('date')]
       );
-      
-      // Group by month and year
       const revenueByMonth = bills.documents.reduce((acc, bill) => {
         const date = new Date(bill.date);
         const month = date.getMonth() + 1;
         const year = date.getFullYear();
         const key = `${year}-${month}`;
-        
         if (!acc[key]) {
           acc[key] = {
             month,
@@ -46,12 +40,9 @@ const RevenueHistoryScreen = () => {
             total: 0
           };
         }
-        
         acc[key].total += parseFloat(bill.total || '0');
         return acc;
       }, {} as Record<string, { month: number; year: number; total: number }>);
-      
-      // Convert to array and format
       const formattedRevenues = Object.values(revenueByMonth)
         .map(item => ({
           month: new Date(item.year, item.month - 1, 1).toLocaleString('default', { month: 'long' }),
@@ -61,11 +52,10 @@ const RevenueHistoryScreen = () => {
         .sort((a, b) => {
           if (a.year !== b.year) return parseInt(b.year) - parseInt(a.year);
           return (
-            new Date(parseInt(b.year), getMonthNumber(b.month)).getTime() - 
+            new Date(parseInt(b.year), getMonthNumber(b.month)).getTime() -
             new Date(parseInt(a.year), getMonthNumber(a.month)).getTime()
           );
         });
-      
       setMonthlyRevenues(formattedRevenues);
     } catch (error) {
       console.error('Error fetching revenue history:', error);
@@ -91,16 +81,16 @@ const RevenueHistoryScreen = () => {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 20 }]}
     >
       <View style={styles.header}>
-                <View style={styles.headerLeft}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <AntDesign name="arrowleft" size={24} color="#2D3748" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Monthly Revenue History</Text>
-        <View style={{ width: 24 }} />
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <AntDesign name="arrowleft" size={24} color="#2D3748" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Monthly Revenue History</Text>
+          <View style={{ width: 24 }} />
         </View>
       </View>
 

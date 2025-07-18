@@ -141,9 +141,7 @@ const UserBill = () => {
 
   const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
     if (!query.trim()) return billsToFilter;
-
     const lowerCaseQuery = query.toLowerCase();
-
     return billsToFilter.filter(bill => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||

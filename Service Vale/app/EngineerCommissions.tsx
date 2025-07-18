@@ -32,14 +32,11 @@ const EngineerCommissionsScreen = () => {
     try {
       const today = new Date();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
-      // Fetch all engineers
       const usersResponse = await databases.listDocuments(
         DATABASE_ID,
         USERS_COLLECTION_ID
       );
 
-      // Fetch bills only from current month for total commission
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -49,19 +46,16 @@ const EngineerCommissionsScreen = () => {
         ]
       );
 
-      // Fetch ALL bills for pending calculation
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
 
-      // Fetch all payments
       const paymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID
       );
 
-      // Create maps for current month commissions
       const currentMonthCommissionMap = new Map<string, number>();
       currentMonthBills.documents.forEach(bill => {
         const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
@@ -69,7 +63,6 @@ const EngineerCommissionsScreen = () => {
         currentMonthCommissionMap.set(bill.serviceBoyName, current + commission);
       });
 
-      // Create maps for all-time commissions
       const allTimeCommissionMap = new Map<string, number>();
       allBills.documents.forEach(bill => {
         const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
@@ -77,35 +70,29 @@ const EngineerCommissionsScreen = () => {
         allTimeCommissionMap.set(bill.serviceBoyName, current + commission);
       });
 
-      // Create map of payments made to engineers
       const paymentsMap = new Map<string, number>();
       paymentsResponse.documents.forEach(payment => {
         const amount = parseFloat(payment.amount || '0');
         const current = paymentsMap.get(payment.engineerName) || 0;
         paymentsMap.set(payment.engineerName, current + amount);
       });
-
-      // Combine with all engineers
+      
       const allEngineers = usersResponse.documents.map(user => {
         const currentMonthCommission = currentMonthCommissionMap.get(user.name) || 0;
         const allTimeCommission = allTimeCommissionMap.get(user.name) || 0;
         const payments = paymentsMap.get(user.name) || 0;
         const pending = allTimeCommission - payments;
-
         return {
           id: user.$id,
           name: user.name,
-          commission: currentMonthCommission, // Current month only
+          commission: currentMonthCommission, 
           payments,
-          pending // All unpaid commissions
+          pending 
         };
       });
 
-      // Calculate total pending commission (all unpaid)
       const totalPendingCommission = allEngineers.reduce((sum, e) => sum + e.pending, 0);
       setTotalPending(totalPendingCommission);
-
-      // Sort by pending amount (highest first)
       setEngineers(allEngineers.sort((a, b) => b.pending - a.pending));
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -145,12 +132,10 @@ const EngineerCommissionsScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Summary Cards */}
         <View style={styles.summaryRow}>
-          {/* Total Commission Card */}
           <View style={[styles.summaryCard, styles.totalCommissionCard]}>
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="currency-rupee" size={24} color="#FFF" />
+         <MaterialIcons name="currency-rupee" size={24} color="#FFF" />
             </View>
             <Text style={styles.cardTitle}>Total Commission</Text>
             <Text style={styles.cardAmount}>
@@ -161,7 +146,6 @@ const EngineerCommissionsScreen = () => {
             </Text>
           </View>
 
-          {/* Pending Commission Card */}
           <View style={[styles.summaryCard, styles.pendingCommissionCard]}>
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="pending-actions" size={24} color="#FFF" />
@@ -176,7 +160,6 @@ const EngineerCommissionsScreen = () => {
           </View>
         </View>
 
-        {/* Engineer List */}
         {engineers.map((engineer) => (
           <TouchableOpacity
             key={engineer.id}
@@ -197,6 +180,7 @@ const EngineerCommissionsScreen = () => {
                 </Text>
               </View>
             </View>
+            
             <View style={styles.amountContainer}>
               <Text style={styles.engineerAmount}>
                 ₹{engineer.commission.toLocaleString('en-IN', {

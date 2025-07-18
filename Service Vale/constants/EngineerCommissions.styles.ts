@@ -57,10 +57,10 @@ export const styles = StyleSheet.create({
     elevation: 3,
   },
   totalCommissionCard: {
-    backgroundColor: '#5E72E4', // Primary blue color
+    backgroundColor: '#5E72E4',
   },
   pendingCommissionCard: {
-    backgroundColor: '#6B46C1', // Orange color for pending
+    backgroundColor: '#6B46C1',
   },
   cardIconContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -84,23 +84,9 @@ export const styles = StyleSheet.create({
     marginBottom: 15,
   },
   pendingAmount: {
-    color: '#FEB2B2', // Light red for pending amounts
+    color: '#FEB2B2', 
   },
-  // summaryRow: {
-  //   flexDirection: 'row',
-  //   marginBottom: 20,
-  // },
-  // summaryCard: {
-  //   backgroundColor: '#4C51BF',
-  //   borderRadius: 15,
-  //   padding: 20,
-  //   shadowColor: '#000',
-  //   shadowOffset: { width: 0, height: 2 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 6,
-  //   elevation: 3,
-  //   alignItems: 'center',
-  // },
+  
   summaryTitle: {
     fontSize: 14,
     color: '#FFF',
@@ -112,9 +98,7 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFF',
   },
-  // pendingAmount: {
-  //   color: '#E53E3E',
-  // },
+
   engineerCard: {
     backgroundColor: '#FFF',
     borderRadius: 15,

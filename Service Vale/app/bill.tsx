@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Moda
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
-import { databases, account } from '../lib/appwrite';
+import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -141,9 +141,7 @@ const BillPage = () => {
 
   const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
     if (!query.trim()) return billsToFilter;
-
     const lowerCaseQuery = query.toLowerCase();
-
     return billsToFilter.filter(bill => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
@@ -690,6 +688,7 @@ const BillPage = () => {
           onChange={handleDateChange}
         />
       )}
+
       {!isFormVisible && (
         <View style={styles.searchContainer}>
           <TextInput
@@ -814,7 +813,6 @@ const BillPage = () => {
                 maxLength={500}
               />
 
-
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
@@ -885,6 +883,7 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
+
               <TouchableOpacity
                 style={styles.submitButton}
                 onPress={async () => {

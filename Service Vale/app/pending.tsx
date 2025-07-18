@@ -76,6 +76,7 @@ const PendingServicesScreen = () => {
           Query.orderAsc('serviceTime')
         ]
       );
+
       const formattedServices = response.documents.map(doc => {
         const [year, month, day] = doc.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
@@ -102,12 +103,14 @@ const PendingServicesScreen = () => {
           sortTime: doc.serviceTime
         };
       });
+
       formattedServices.sort((a, b) => {
         if (a.sortDate !== b.sortDate) {
           return a.sortDate.localeCompare(b.sortDate);
         }
         return a.sortTime.localeCompare(b.sortTime);
       });
+
       setAllServices(formattedServices);
       setServices(formattedServices);
     } catch (error) {
@@ -142,6 +145,7 @@ const PendingServicesScreen = () => {
           sortDate: newService.serviceDate || '',
           sortTime: newService.serviceTime || ''
         };
+
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
           if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) &&
@@ -317,27 +321,32 @@ const PendingServicesScreen = () => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={styles.serviceActions}>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
           </View>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
@@ -345,6 +354,7 @@ const PendingServicesScreen = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={16} color="#718096" />
@@ -352,10 +362,12 @@ const PendingServicesScreen = () => {
             {item.serviceDate} • {item.serviceTime}
           </Text>
         </View>
+
         <Text style={styles.serviceBoyText}>
           {item.serviceBoy}
         </Text>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.whatsappButton}
@@ -382,7 +394,6 @@ const PendingServicesScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
-
   );
 
   return (
@@ -394,10 +405,12 @@ const PendingServicesScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
+
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
@@ -411,6 +424,7 @@ const PendingServicesScreen = () => {
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -432,6 +446,7 @@ const PendingServicesScreen = () => {
               </TouchableOpacity>
             </View>
           )}
+
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
@@ -483,6 +498,7 @@ const PendingServicesScreen = () => {
               )}
               showsVerticalScrollIndicator={true}
             />
+
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}

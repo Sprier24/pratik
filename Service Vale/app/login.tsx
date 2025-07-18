@@ -2,15 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Query } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import registerNNPushToken from 'native-notify';
-import { registerIndieID, unregisterIndieDevice } from 'native-notify';
-import axios from 'axios';
+import { registerIndieID } from 'native-notify';
+import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
@@ -91,13 +91,10 @@ const LoginScreen = () => {
                 }
             }
         };
-
         const subscription = Linking.addEventListener('url', handleDeepLink);
-
         Linking.getInitialURL().then(url => {
             if (url) handleDeepLink({ url });
         });
-
         return () => subscription.remove();
     }, []);
 
@@ -121,22 +118,39 @@ const LoginScreen = () => {
                 await account.createEmailPasswordSession(email, password);
                 const user = await account.get();
                 const isAdmin = user.labels?.includes('admin');
-
-                // Register device for Indie push notifications
                 try {
-                    await registerIndieID(user.email, 31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+                    await registerIndieID(user.email, APP_ID, APP_TOKEN);
                     console.log('Registered for Indie push notifications');
                 } catch (pushError) {
                     console.warn('Push notification registration failed:', pushError);
                 }
+                if (isAdmin) {
+                    try {
+                        await databases.createDocument(
+                            '681c428b00159abb5e8b',      
+                            '68773d3800020869e8fc', 
+                            ID.unique(),            
+                            {
+                                userId: user.$id,
+                                email: user.email,
+                                isAdmin: true
+                            }
 
+                        );
+                        console.log('Admin login saved');
+                    } catch (logError) {
+                        console.warn('Failed to save admin login:', logError);
+                    }
+                }
                 Alert.alert('Success', `Welcome to Service Vale`);
                 resetFields();
+
                 if (isAdmin) {
                     router.replace('/home');
                 } else {
                     router.replace('/userapp/home');
                 }
+
             } catch (error: any) {
                 Alert.alert('Login Error', error?.message || 'An unknown error occurred');
             }
@@ -159,12 +173,10 @@ const LoginScreen = () => {
                     COLLECTION_ID,
                     [Query.equal('email', email.toLowerCase())]
                 );
-
                 if (response.documents.length === 0) {
                     Alert.alert('Access Denied', 'You are not authorized to register.');
                     return;
                 }
-
                 await account.create('unique()', email, password, username);
                 Alert.alert('Success', 'Account created successfully. Please log in.');
                 resetFields();
@@ -375,6 +387,7 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Email Address</Text>
                             <TextInput
@@ -387,6 +400,7 @@ const LoginScreen = () => {
                                 autoCapitalize="none"
                             />
                         </View>
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Password</Text>
                             <View style={styles.passwordInputContainer}>
@@ -410,6 +424,7 @@ const LoginScreen = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
+
                         {!isLogin && (
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -423,6 +438,7 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
+
                         {isLogin && (
                             <TouchableOpacity
                                 style={styles.forgotPasswordButton}
@@ -431,6 +447,7 @@ const LoginScreen = () => {
                                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                             </TouchableOpacity>
                         )}
+
                         <TouchableOpacity
                             style={styles.authButton}
                             onPress={isLogin ? handleLogin : handleRegister}
@@ -439,6 +456,7 @@ const LoginScreen = () => {
                                 {isLogin ? 'Sign In' : 'Sign Up'}
                             </Text>
                         </TouchableOpacity>
+                        
                         <View style={styles.authFooter}>
                             <Text style={styles.authFooterText}>
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -462,4 +480,4 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
-registerNNPushToken(31214, 'NaLjQl8mbwbQbKWRlsWgZZ');
+registerNNPushToken(APP_ID, APP_TOKEN);

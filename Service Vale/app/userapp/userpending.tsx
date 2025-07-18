@@ -3,15 +3,17 @@ import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'rea
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { Linking } from 'react-native';
+import axios from 'axios';
+import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
+const ADMIN_USERS_COLLECTION = '68773d3800020869e8fc';
 
 type Service = {
   id: string;
@@ -56,6 +58,7 @@ const PendingServicesScreenUser = () => {
           Query.orderAsc('serviceTime')
         ]
       );
+
       const formattedServices = response.documents.map(doc => {
         const [year, month, day] = doc.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
@@ -82,12 +85,14 @@ const PendingServicesScreenUser = () => {
           sortTime: doc.serviceTime
         };
       });
+
       formattedServices.sort((a, b) => {
         if (a.sortDate !== b.sortDate) {
           return a.sortDate.localeCompare(b.sortDate);
         }
         return a.sortTime.localeCompare(b.sortTime);
       });
+
       setAllServices(formattedServices);
       setServices(formattedServices);
     } catch (error) {
@@ -161,57 +166,54 @@ const PendingServicesScreenUser = () => {
     setServices(allServices);
   };
 
-  const createNotification = async (description: string, userEmail: string) => {
+  const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
+    console.log('📲 Attempting push...');
     try {
-      await databases.createDocument(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        ID.unique(),
-        {
-          description,
-          IsRead: false,
-          userEmail,
+      const endpoint = subIDs
+        ? 'https://app.nativenotify.com/api/indie/group/notification'
+        : 'https://app.nativenotify.com/api/notification';
+      const payload = subIDs
+        ? {
+          subIDs,
+          appId: APP_ID,
+          appToken: APP_TOKEN,
+          title,
+          message,
         }
-      );
-      console.log('Notification created successfully');
+        : {
+          appId: APP_ID,
+          appToken: APP_TOKEN,
+          title,
+          body: message,
+          to: 'all',
+        };
+      const response = await axios.post(endpoint, payload);
+      console.log('✅ Native Notify response:', response.data);
     } catch (error) {
-      console.error('Notification creation failed:', error);
-      throw error;
+      console.error('❌ Push failed:', error);
+      Alert.alert('Push Failed', 'Failed to send notification');
     }
   };
 
-const sendNativeNotifyPush = async (title: string, message: string) => {
-  console.log('📲 Attempting push...');
+  const getAdminUsers = async (): Promise<string[]> => {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        ADMIN_USERS_COLLECTION,
+        [
+          Query.equal('isAdmin', true),
+          Query.limit(100)
+        ]
+      );
 
-  try {
-    const response = await fetch('https://app.nativenotify.com/api/notification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        appId: 31214   , // Replace with your real App ID
-        appToken: 'NaLjQl8mbwbQbKWRlsWgZZ', // Replace with your real App Token
-        title,
-        body: message,
-        to: 'all', // or 'admin'
-      }),
-    });
-
-    const resultText = await response.text(); // 👈 FIXED: Use text()
-    console.log('✅ Native Notify response text:', resultText);
-
-    if (!response.ok) {
-      console.error('❌ Push failed:', response.status, resultText);
-      Alert.alert('Push Failed', resultText);
-    } else {
-      Alert.alert('Push Sent', resultText);
+      return response.documents
+        .filter((doc: any) => doc.email)
+        .map((doc: any) => doc.email);
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      return [];
     }
-  } catch (err) {
-    console.error('❌ Network error:', err);
-    Alert.alert('Error', 'Network error. Check logs.');
-  }
-};
+  };
 
   const handleComplete = async (id: string) => {
     Alert.alert(
@@ -231,21 +233,13 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
               );
               const completedService = services.find(service => service.id === id);
               if (!completedService) return;
-              try {
-                await createNotification(
-                  `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
-                  completedService.serviceboyEmail
-                );
-
-                // Send Native Notify Push
-                await sendNativeNotifyPush(
-                  'Service Completed',
-                  `Engineer ${completedService.serviceBoy} completed ${completedService.serviceType} for ${completedService.clientName} on ${completedService.serviceDate} at ${completedService.serviceTime}`
-                );
-
-              } catch (notificationError) {
-                console.warn('Notification failed (service still completed):', notificationError);
-              }
+              const adminTokens = await getAdminUsers();
+              const message = `Service Completed\nEngineer: ${completedService.serviceBoy}\nService: ${completedService.serviceType}\nCustomer: ${completedService.clientName}\nDate: ${completedService.serviceDate} at ${completedService.serviceTime}`;
+              await sendNativeNotifyPush(
+                'Service Completed',
+                message,
+                adminTokens
+              );
               setServices(prev => prev.filter(service => service.id !== id));
               setAllServices(prev => prev.filter(service => service.id !== id));
               router.push({
@@ -298,6 +292,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={styles.serviceActions}>
           <TouchableOpacity
             onPress={() => router.push({
@@ -314,21 +309,25 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           </View>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
@@ -336,6 +335,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={16} color="#718096" />
@@ -344,6 +344,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           </Text>
         </View>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.completeButton}
@@ -370,6 +371,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
+
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
@@ -380,6 +382,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
+
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -390,6 +393,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           </TouchableOpacity>
         )}
       </View>
+
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -398,6 +402,7 @@ const sendNativeNotifyPush = async (title: string, message: string) => {
           onChange={handleDateChange}
         />
       )}
+
       {services.length > 0 ? (
         <FlatList
           data={services}

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, Platform, StatusBar } from 'react-native';
-import { getNotificationInbox } from 'native-notify';
+import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { getIndieNotificationInbox, deleteIndieNotificationInbox } from 'native-notify';
+import { account } from '../lib/appwrite';
+import { styles } from '../constants/userapp/notification';
+import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 type NotificationInboxProps = {
     navigation: any;
@@ -19,17 +22,44 @@ type NotificationItem = {
 export default function NotificationInbox({ navigation, AppState }: NotificationInboxProps) {
     const [data, setData] = useState<NotificationItem[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [subId, setSubId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const getCurrentUserEmail = async () => {
+        try {
+            const user = await account.get();
+            return user.email;
+        } catch (error) {
+            console.error("Error getting current user:", error);
+            return null;
+        }
+    };
 
     const fetchNotifications = async () => {
         setRefreshing(true);
+        setIsLoading(true);
         try {
-            const notifications = await getNotificationInbox(31214, 'NaLjQl8mbwbQbKWRlsWgZZ', 10, 0);
-            console.log("notifications: ", notifications);
+            const userEmail = await getCurrentUserEmail();
+            if (!userEmail) {
+                Alert.alert("Error", "Could not fetch user information");
+                return;
+            }
+            setSubId(userEmail);
+            const notifications = await getIndieNotificationInbox(
+                userEmail,
+                APP_ID,
+                APP_TOKEN,
+                10,
+                0
+            );
+
+            console.log("Indie notifications: ", notifications);
             setData(notifications);
         } catch (error) {
-            console.error("Error fetching notifications:", error);
+            console.error("Error fetching indie notifications:", error);
+            Alert.alert("Error", "Failed to load notifications");
         } finally {
             setRefreshing(false);
+            setIsLoading(false);
         }
     };
 
@@ -41,21 +71,77 @@ export default function NotificationInbox({ navigation, AppState }: Notification
         fetchNotifications();
     };
 
+    const handleDeleteNotification = async (notificationId: string) => {
+        if (!subId) {
+            Alert.alert("Error", "User not identified");
+            return;
+        }
+        try {
+            const updatedNotifications = await deleteIndieNotificationInbox(
+                subId,
+                notificationId,
+                APP_ID,
+                APP_TOKEN
+            );
+            setData(updatedNotifications);
+            Alert.alert("Success", "Notification deleted");
+        } catch (error) {
+            console.error("Error deleting notification:", error);
+            Alert.alert("Error", "Failed to delete notification");
+        }
+    };
+
+    const clearAllNotifications = async () => {
+        if (!subId) {
+            Alert.alert("Error", "User not identified");
+            return;
+        }
+        try {
+            const deletePromises = data.map((notification) =>
+                deleteIndieNotificationInbox(
+                    subId,
+                    notification.notification_id,
+                    APP_ID,
+                    APP_TOKEN
+                )
+            );
+            await Promise.all(deletePromises);
+            setData([]);
+            Alert.alert("Success", "All notifications cleared");
+        } catch (error) {
+            console.error("Error clearing notifications:", error);
+            Alert.alert("Error", "Failed to clear notifications");
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#5E72E4" />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push('/home')}>
-                    <MaterialIcons name="arrow-back" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <View style={styles.headerLeft}>
+                    <TouchableOpacity onPress={() => router.push('/home')}>
+                        <MaterialIcons name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Notifications</Text>
+                </View>
                 {data.length > 0 ? (
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={clearAllNotifications}>
                         <MaterialIcons name="delete" size={24} color="#fff" />
                     </TouchableOpacity>
                 ) : (
                     <View style={{ width: 24 }} />
                 )}
             </View>
+
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={
@@ -86,7 +172,10 @@ export default function NotificationInbox({ navigation, AppState }: Notification
                                 <Text style={styles.description}>{item.message}</Text>
                                 <View style={styles.footer}>
                                     <Text style={styles.time}>{item.date}</Text>
-                                    <TouchableOpacity style={styles.dismissButton}>
+                                    <TouchableOpacity
+                                        style={styles.dismissButton}
+                                        onPress={() => handleDeleteNotification(item.notification_id)}
+                                    >
                                         <Text style={styles.close}>Dismiss</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -100,104 +189,3 @@ export default function NotificationInbox({ navigation, AppState }: Notification
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#f8f9fa",
-    },
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 40,
-        paddingBottom: 20,
-        backgroundColor: "#5E72E4",
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: "700",
-        color: "#FFF",
-    },
-    scrollContainer: {
-        flexGrow: 1,
-        paddingBottom: 20,
-    },
-    listContainer: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-    },
-    emptyState: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingTop: 100,
-    },
-    notificationCard: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
-        borderLeftWidth: 4,
-        borderLeftColor: "#5E72E4",
-    },
-    notificationHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    title: {
-        fontWeight: "bold",
-        fontSize: 16,
-        color: "#2d3748",
-        marginLeft: 8,
-    },
-    description: {
-        color: "#4a5568",
-        marginBottom: 12,
-        lineHeight: 20,
-    },
-    footer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    time: {
-        fontSize: 12,
-        color: "#718096",
-    },
-    dismissButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
-        backgroundColor: "#fff1f2",
-    },
-    close: {
-        color: "#dc2626",
-        fontWeight: "500",
-    },
-    noNotificationText: {
-        textAlign: "center",
-        color: "#666",
-        marginTop: 16,
-        fontSize: 18,
-        fontWeight: "500",
-    },
-    emptySubtext: {
-        textAlign: "center",
-        color: "#a0aec0",
-        marginTop: 8,
-    },
-});

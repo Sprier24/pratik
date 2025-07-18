@@ -10,7 +10,6 @@ import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styl
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
-const BILLS_COLLECTION_ID = 'bill_ID';
 
 type Service = {
   id: string;
@@ -53,6 +52,7 @@ const CompletedServicesScreenUser = () => {
           Query.orderDesc('completedAt')
         ]
       );
+      
       const formattedServices = response.documents.map(doc => {
         let formattedCompletedAt = '';
         if (doc.completedAt) {

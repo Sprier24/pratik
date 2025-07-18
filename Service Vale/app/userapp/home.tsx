@@ -7,11 +7,14 @@ import { RefreshControl } from 'react-native';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getUnreadNotificationInboxCount } from 'native-notify';
+import { useFocusEffect } from '@react-navigation/native';
+import { unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
+import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const PAYMENTS_COLLECTION_ID = 'commission_ID';
 const { width } = Dimensions.get('window');
 
@@ -22,21 +25,79 @@ const HomeScreenuser = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [totalCommission, setTotalCommission] = useState(0);
   const [pendingCommission, setPendingCommission] = useState(0);
   const [userName, setUserName] = useState('');
   const insets = useSafeAreaInsets();
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [unreadIndieNotificationCount, setUnreadIndieNotificationCount] = useState(0);
 
-  const handleLogout = async () => {
+  const fetchUnreadIndieCount = async () => {
     try {
-      await account.deleteSession('current');
-      Alert.alert('Logged Out', 'You have been successfully logged out');
-      router.replace('/');
+      const user = await account.get();
+      const userEmail = user.email;
+
+      const count = await getUnreadIndieNotificationInboxCount(
+        userEmail, 
+        APP_ID,
+        APP_TOKEN
+      );
+      console.log("Unread Indie notifications count:", count);
+      setUnreadIndieNotificationCount(count);
     } catch (error) {
-      console.error('Logout Error:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
+      console.error("Error fetching unread indie count:", error);
+      try {
+        const regularCount = await getUnreadNotificationInboxCount(APP_ID, APP_TOKEN);
+        setUnreadIndieNotificationCount(regularCount);
+      } catch (fallbackError) {
+        console.error("Fallback count failed:", fallbackError);
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchUnreadIndieCount();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUnreadIndieCount();
+    }, [])
+  );
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = await account.get();
+              const userEmail = user.email;
+              try {
+                await unregisterIndieDevice(userEmail, APP_ID, APP_TOKEN);
+                console.log('Unregistered from Indie push notifications');
+              } catch (unregisterError) {
+                console.warn('Failed to unregister from push notifications:', unregisterError);
+              }
+              await account.deleteSession('current');
+              router.replace('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const fetchUserData = async () => {
@@ -61,11 +122,9 @@ const HomeScreenuser = () => {
     try {
       const name = await fetchUserData();
       if (!name) return;
-
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -75,7 +134,6 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
-
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -85,10 +143,8 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
-
       const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
       const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
-
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
     } catch (error) {
@@ -100,10 +156,8 @@ const HomeScreenuser = () => {
     try {
       const name = await fetchUserData();
       if (!name) return;
-
       const today = new Date();
       const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -112,35 +166,28 @@ const HomeScreenuser = () => {
           Query.greaterThanEqual('date', startOfCurrentMonth)
         ]
       );
-
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.equal('serviceBoyName', name)]
       );
-
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
         [Query.equal('engineerName', name)]
       );
-
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
-
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
-
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
-
       const pending = totalCommissionsAllTime - totalPayments;
-
-      setTotalCommission(total); 
-      setPendingCommission(pending); 
+      setTotalCommission(total);
+      setPendingCommission(pending);
     } catch (error) {
       console.error('Error fetching commission data:', error);
     }
@@ -151,7 +198,6 @@ const HomeScreenuser = () => {
       setRefreshing(true);
       const currentUser = await account.get();
       const email = currentUser.email;
-
       const orders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -160,9 +206,7 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
-
       setPendingCount(orders.total);
-
       const completedOrders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -171,7 +215,6 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
-
       setCompletedCount(completedOrders.total);
     } catch (error) {
       console.error('Appwrite error:', error);
@@ -181,25 +224,11 @@ const HomeScreenuser = () => {
     }
   };
 
-  const fetchUnreadNotifications = async () => {
-    try {
-      const res = await databases.listDocuments(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        [Query.equal('isRead', false)]
-      );
-      setUnreadCount(res.total);
-    } catch (error) {
-      console.error('Notification fetch error:', error);
-    }
-  };
-
   const fetchAllData = async () => {
     setIsLoading(true);
     await Promise.all([
       fetchRevenueData(),
       fetchOrders(),
-      fetchUnreadNotifications(),
       fetchCommissionData()
     ]);
     setIsLoading(false);
@@ -228,13 +257,17 @@ const HomeScreenuser = () => {
         <Text style={styles.headerTitle}>Service Vale</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity
-            style={styles.notificationIcon} 
-            onPress={() => router.push('/userapp/notificationpage')}
+            style={styles.notificationIcon}
+            onPress={() => router.push('/userapp/usernotificationinbox')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
-            {unreadCount > 0 && (
+            {(unreadIndieNotificationCount > 0 || unreadNotificationCount > 0) && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                <Text style={styles.notificationBadgeText}>
+                  {Math.max(unreadIndieNotificationCount, unreadNotificationCount) > 9
+                    ? '9+'
+                    : Math.max(unreadIndieNotificationCount, unreadNotificationCount)}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
