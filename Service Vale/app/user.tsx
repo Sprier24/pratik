@@ -102,7 +102,7 @@ const UserDetailsForm = () => {
       try {
         if (editingIndex !== null) {
           const userId = submittedUsers[editingIndex].$id;
-          if (!userId) throw new Error('User ID is missing for update.');
+          if (!userId) throw new Error('Engineer ID is missing for update');
           const updateData = cleanDocumentData(formData);
           await databases.updateDocument(DATABASE_ID, COLLECTION_ID, userId, updateData);
           const updatedUsers = [...submittedUsers];
@@ -121,7 +121,7 @@ const UserDetailsForm = () => {
           );
           setSubmittedUsers(prev => [response as unknown as User, ...prev]);
         }
-        Alert.alert('Success', 'Engineer details saved successfully!');
+        Alert.alert('Success', 'Engineer details saved successfully.');
         resetForm();
         setIsFormVisible(false);
       } catch (error: any) {
@@ -143,14 +143,14 @@ const UserDetailsForm = () => {
         onPress: async () => {
           try {
             const userId = submittedUsers[index].$id;
-            if (!userId) throw new Error('Missing User ID.');
+            if (!userId) throw new Error('Missing Engineer ID.');
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, userId);
             setSubmittedUsers(users => users.filter(user => user.$id !== userId));
             if (editingIndex === index) {
               setEditingIndex(null);
               resetForm();
             }
-            Alert.alert('Success', 'Engineer details deleted successfully!');
+            Alert.alert('Success', 'Engineer details deleted successfully.');
           } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to delete engineer details');
           }
@@ -179,12 +179,12 @@ const UserDetailsForm = () => {
       newErrors.name = 'Engineer Name is required';
       valid = false;
     }
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-      valid = false;
-    }
     if (!formData.contactNo.trim() || !/^[0-9]{10}$/.test(formData.contactNo)) {
       newErrors.contactNo = 'Invalid contact number (10 digits required)';
+      valid = false;
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
       valid = false;
     }
     if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -196,7 +196,7 @@ const UserDetailsForm = () => {
       valid = false;
     }
     if (!formData.panNo.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
-      newErrors.panNo = 'Invalid PAN number (ABCDE1234F)';
+      newErrors.panNo = 'Invalid PAN number (e.g., ABCDE1234F)';
       valid = false;
     }
     if (!formData.city.trim()) {
@@ -238,7 +238,7 @@ const UserDetailsForm = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <MaterialIcons name="arrow-back" size={25} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Engineer Management</Text>
         </View>
@@ -246,7 +246,6 @@ const UserDetailsForm = () => {
           <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
         </View>
       </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -305,7 +304,7 @@ const UserDetailsForm = () => {
             <View style={styles.usersContainer}>
               {submittedUsers.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <MaterialIcons name="engineering" size={48} color="#A0AEC0" />
+                  <MaterialIcons name="engineering" size={50} color="#A0AEC0" />
                   <Text style={styles.emptyText}>No engineers added yet</Text>
                   <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
                 </View>
@@ -318,7 +317,7 @@ const UserDetailsForm = () => {
                   >
                     <View style={styles.userHeader}>
                       <View style={styles.userAvatar}>
-                        <MaterialIcons name="engineering" size={24} color="#5E72E4" />
+                        <MaterialIcons name="engineering" size={25} color="#5E72E4" />
                       </View>
                       <View style={styles.userInfo}>
                         <Text style={styles.userName}>{user.name}</Text>
@@ -352,10 +351,9 @@ const UserDetailsForm = () => {
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Engineer Details</Text>
                   <TouchableOpacity onPress={closeUserDetails}>
-                    <Feather name="x" size={24} color="#718096" />
+                    <Feather name="x" size={25} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
-                
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>
@@ -420,7 +418,7 @@ const UserDetailsForm = () => {
                         closeUserDetails();
                       }}
                     >
-                      <Feather name="edit" size={18} color="#FFF" />
+                      <Feather name="edit" size={20} color="#FFF" />
                       <Text style={styles.actionButtonText}>Update</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -430,7 +428,7 @@ const UserDetailsForm = () => {
                         closeUserDetails();
                       }}
                     >
-                      <Feather name="trash-2" size={18} color="#FFF" />
+                      <Feather name="trash-2" size={20} color="#FFF" />
                       <Text style={styles.actionButtonText}>Delete</Text>
                     </TouchableOpacity>
                   </View>
@@ -454,7 +452,7 @@ const UserDetailsForm = () => {
           onPress={() => router.push('/service')}
         >
           <View style={footerStyles.bottomButtonIcon}>
-            <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+            <MaterialIcons name="construction" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Service</Text>
         </TouchableOpacity>
@@ -464,7 +462,7 @@ const UserDetailsForm = () => {
           onPress={() => router.push('/user')}
         >
           <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
-            <MaterialIcons name="person" size={20} color="#FFF" />
+            <MaterialIcons name="engineering" size={25} color="#FFF" />
           </View>
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Engineers</Text>
         </TouchableOpacity>

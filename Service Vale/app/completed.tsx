@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal, RefreshControl, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
@@ -44,7 +44,13 @@ const AdminCompletedServicesScreen = () => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const itemsPerPage = 10;
   const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
+  const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
+  const [totalCompleteCount, setTotalCompleteCount] = useState(0);
 
   const fetchServiceBoys = async () => {
     try {
@@ -58,18 +64,25 @@ const AdminCompletedServicesScreen = () => {
       }));
       setServiceBoys(boys);
     } catch (error) {
-      console.error('Error fetching service boys:', error);
+      console.error('Error fetching engineer:', error);
     }
   };
 
-  const fetchServices = async () => {
+  const fetchServices = async (page = 1, isLoadMore = false) => {
     try {
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [
           Query.equal('status', 'completed'),
-          Query.orderDesc('completedAt')
+          Query.orderDesc('completedAt'),
+          Query.limit(itemsPerPage),
+          Query.offset((page - 1) * itemsPerPage)
         ]
       );
       const formattedServices = response.documents.map(doc => {
@@ -106,19 +119,87 @@ const AdminCompletedServicesScreen = () => {
           completedAt: doc.completedAt
         };
       });
-      setAllServices(formattedServices);
-      setServices(formattedServices);
+      if (isLoadMore) {
+        setAllServices(prev => [...prev, ...formattedServices]);
+        setServices(prev => [...prev, ...formattedServices]);
+      } else {
+        setAllServices(formattedServices);
+        setServices(formattedServices);
+      }
+      const totalCount = response.total;
+      setTotalPages(Math.ceil(totalCount / itemsPerPage));
+      setCurrentPage(page);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error('Error fetching services :', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
-      setLoading(false);
+      if (isLoadMore) {
+        setIsLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
+  const fetchEngineerCounts = async () => {
+    try {
+      const boysResponse = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID
+      );
+      const boys = boysResponse.documents.map(doc => doc.name);
+
+      const counts: Record<string, number> = {
+        'All Service Engineers': 0
+      };
+
+      const allResponse = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [Query.equal('status', 'completed')]
+      );
+      counts['All Service Engineers'] = allResponse.total;
+
+      await Promise.all(boys.map(async (name) => {
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTION_ID,
+          [
+            Query.equal('status', 'completed'),
+            Query.equal('serviceboyName', name)
+          ]
+        );
+        counts[name] = response.total;
+      }));
+
+      setEngineerCounts(counts);
+    } catch (error) {
+      console.error('Error fetching engineer counts :', error);
+    }
+  };
+
+  const fetchTotalCompleteCount = async () => {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [Query.equal('status', 'completed')]
+      );
+      setTotalCompleteCount(response.total);
+    } catch (error) {
+      console.error('Error fetching total completed count :', error);
+    }
+  };
   useEffect(() => {
-    fetchServices();
-    fetchServiceBoys();
+    const loadData = async () => {
+      await fetchServiceBoys();
+      await fetchEngineerCounts();
+      fetchServices();
+      fetchTotalCompleteCount();
+    };
+
+    loadData();
+
     if (params.completedService) {
       try {
         const newService = JSON.parse(params.completedService as string);
@@ -148,10 +229,16 @@ const AdminCompletedServicesScreen = () => {
           return prev;
         });
       } catch (error) {
-        console.error('Error parsing completed service:', error);
+        console.error('Error parsing completed service :', error);
       }
     }
   }, [params.completedService]);
+
+  const loadMoreServices = () => {
+    if (!isLoadingMore && currentPage < totalPages) {
+      fetchServices(currentPage + 1, true);
+    }
+  };
 
   const formatToAmPm = (isoString: string) => {
     const date = new Date(isoString);
@@ -168,11 +255,7 @@ const AdminCompletedServicesScreen = () => {
   };
 
   const countCompletedByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All Service Engineers': allServices.length };
-    serviceBoys.forEach(boy => {
-      counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
-    });
-    return counts;
+    return engineerCounts;
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -199,6 +282,7 @@ const AdminCompletedServicesScreen = () => {
       });
     }
     setServices(filtered);
+    setCurrentPage(1);
   };
 
   const filterServices = (serviceBoyName: string | null) => {
@@ -251,6 +335,7 @@ const AdminCompletedServicesScreen = () => {
                 id,
                 { status: 'pending' }
               );
+              await fetchEngineerCounts();
               const serviceToMove = allServices.find(service => service.id === id);
               if (serviceToMove) {
                 setAllServices(prev => prev.filter(service => service.id !== id));
@@ -266,7 +351,7 @@ const AdminCompletedServicesScreen = () => {
                 });
               }
             } catch (error) {
-              console.error('Error moving service:', error);
+              console.error('Error moving service :', error);
               Alert.alert('Error', 'Failed to move service to pending');
             }
           }
@@ -275,12 +360,18 @@ const AdminCompletedServicesScreen = () => {
     );
   };
 
+  const onRefresh = () => {
+    fetchServices(1);
+    fetchEngineerCounts();
+    fetchTotalCompleteCount();
+  };
+
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons
-            name="tools"
+          <MaterialIcons
+            name="construction"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
@@ -291,33 +382,31 @@ const AdminCompletedServicesScreen = () => {
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={18} color="#718096" />
+          <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={18} color="#718096" />
+          <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={18} color="#718096" />
+          <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="check-circle" size={16} color="#718096" />
+          <MaterialIcons name="check-circle" size={18} color="#718096" />
           <Text style={styles.dateText}>
             {item.completedAt
               ? `${formatToAmPm(item.completedAt)}`
@@ -328,13 +417,12 @@ const AdminCompletedServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
-      
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
           onPress={() => handleCreateBill(item)}
         >
-          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
+          <MaterialIcons name="receipt-long" size={20} color="#FFF" />
           <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -342,7 +430,7 @@ const AdminCompletedServicesScreen = () => {
           onPress={() => handleMoveToPending(item.id)}
         >
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
-          <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
+          <Text style={styles.moveToPendingButtonText}>Back to Pending</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -353,12 +441,12 @@ const AdminCompletedServicesScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{services.length}</Text>
+          <Text style={styles.headerCountText}>{totalCompleteCount}</Text>
         </View>
       </View>
 
@@ -370,7 +458,7 @@ const AdminCompletedServicesScreen = () => {
             setFilterModalVisible(true);
           }}
         >
-          <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
+          <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
@@ -379,7 +467,7 @@ const AdminCompletedServicesScreen = () => {
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
         >
-          <Feather name="calendar" size={18} color={dateFilter ? "#FFF" : "#5E72E4"} />
+          <MaterialIcons name="today" size={20} color={dateFilter ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -445,6 +533,12 @@ const AdminCompletedServicesScreen = () => {
                   </View>
                 </TouchableOpacity>
               )}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading}
+                  onRefresh={fetchEngineerCounts}
+                />
+              }
               showsVerticalScrollIndicator={true}
             />
             <TouchableOpacity
@@ -464,10 +558,26 @@ const AdminCompletedServicesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          onEndReached={loadMoreServices}
+          onEndReachedThreshold={0.5}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading && !isLoadingMore}
+              onRefresh={onRefresh}
+            />
+          }
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#5E72E4" />
+                <Text style={styles.loadingMoreText}>Loading more services...</Text>
+              </View>
+            ) : null
+          }
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="check-circle" size={48} color="#A0AEC0" />
+          <MaterialIcons name="check-circle" size={50} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {selectedServiceBoy
               ? `No completed services for ${selectedServiceBoy}`

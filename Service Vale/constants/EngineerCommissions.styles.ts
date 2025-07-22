@@ -72,13 +72,13 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#FFF',
     opacity: 0.9,
     marginBottom: 5,
   },
   cardAmount: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     color: '#FFF',
     marginBottom: 15,
@@ -130,7 +130,7 @@ export const styles = StyleSheet.create({
     marginLeft: 12,
   },
   engineerName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#2D3748',
   },
@@ -148,7 +148,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   engineerAmount: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2D3748',
   },

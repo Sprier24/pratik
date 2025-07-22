@@ -74,6 +74,39 @@ const UserBill = () => {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchAllBills = async (serviceBoyName: string, cursor: string | null = null, accumulatedBills: Bill[] = []): Promise<Bill[]> => {
+    try {
+      const queries = [
+        Query.equal('serviceBoyName', serviceBoyName),
+        Query.orderDesc('$createdAt'),
+      ];
+
+      if (cursor) {
+        queries.push(Query.cursorAfter(cursor));
+      }
+
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        queries
+      );
+
+      const newBills = response.documents as unknown as Bill[];
+      const allBills = [...accumulatedBills, ...newBills];
+
+      if (response.documents.length >= 25) { 
+        const lastId = response.documents[response.documents.length - 1].$id;
+        return fetchAllBills(serviceBoyName, lastId, allBills);
+      }
+
+      return allBills;
+    } catch (error) {
+      console.error('Error fetching bills:', error);
+      return accumulatedBills; 
+    }
+  };
+
+
   useEffect(() => {
     const fetchUserAndBills = async () => {
       try {
@@ -84,9 +117,11 @@ const UserBill = () => {
           '681c429800281e8a99bd',
           [Query.equal('email', currentUser.email)]
         );
+
         if (userResponse.documents.length > 0) {
           const name = userResponse.documents[0].name;
           setUserName(name);
+
           if (params.serviceData) {
             try {
               const serviceData = JSON.parse(params.serviceData as string);
@@ -103,17 +138,9 @@ const UserBill = () => {
               console.error('Error parsing service data:', error);
             }
           }
-          const billsResponse = await databases.listDocuments(
-            DATABASE_ID,
-            COLLECTION_ID,
-            [
-              Query.equal('serviceBoyName', name),
-              Query.orderDesc('$createdAt')
-            ]
-          );
-          const formattedBills = billsResponse.documents as unknown as Bill[];
-          setAllBills(formattedBills);
-          setBills(formattedBills);
+          const allBills = await fetchAllBills(name);
+          setAllBills(allBills);
+          setBills(allBills);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -122,6 +149,7 @@ const UserBill = () => {
         setIsLoading(false);
       }
     };
+
     fetchUserAndBills();
   }, [params.serviceData]);
 
@@ -141,7 +169,9 @@ const UserBill = () => {
 
   const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
     if (!query.trim()) return billsToFilter;
+
     const lowerCaseQuery = query.toLowerCase();
+
     return billsToFilter.filter(bill => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
@@ -221,20 +251,30 @@ const UserBill = () => {
       Alert.alert('Error', 'Customer signature is required');
       return;
     }
+
     const billNumber = generateBillNumber();
-    const billData = {
-      ...form,
-      paymentMethod,
-      gstPercentage,
-      total: calculateTotal(),
-      cashGiven: paymentMethod === 'cash' ? cashGiven : null,
-      change: paymentMethod === 'cash' ? calculateChange() : null,
-      date: new Date().toISOString(),
+    const now = new Date();
+    const billData: Bill = {
+      $id: billNumber,
+      notes: notes.trim() || '',
       billNumber,
+      serviceType: form.serviceType,
+      serviceBoyName: form.serviceBoyName,
+      customerName: form.customerName,
+      contactNumber: form.contactNumber,
+      address: form.address,
+      serviceCharge: form.serviceCharge,
+      gstPercentage: gstPercentage,
+      paymentMethod,
+      cashGiven: paymentMethod === 'cash' ? cashGiven : '',
+      change: paymentMethod === 'cash' ? calculateChange() : '',
+      $createdAt: now.toISOString(),
+      signature: signature,
       status: 'paid',
-      notes: notes.trim() || null,
-      signature: signature
+      total: calculateTotal(),
+      date: now.toISOString(),
     };
+
     try {
       await databases.createDocument(
         DATABASE_ID,
@@ -242,19 +282,29 @@ const UserBill = () => {
         billNumber,
         billData
       );
+
+      setAllBills(prevBills => [billData, ...prevBills]);
+      setBills(prevBills => [billData, ...prevBills]);
+
       Alert.alert('Success', 'Bill saved successfully!');
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', userName),
-          Query.orderDesc('$createdAt')
-        ]
-      );
-      setBills(response.documents as unknown as Bill[]);
+
+      const htmlContent = generateBillHtml(billData);
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        width: 595,
+        height: 842,
+      });
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Bill',
+        UTI: 'net.whatsapp.pdf'
+      });
+
       setIsFormVisible(false);
       resetForm();
       setSignature(null);
+      router.push('/rating');
     } catch (error) {
       console.error('Error saving bill:', error);
       Alert.alert('Error', 'Failed to save bill');
@@ -805,6 +855,9 @@ const UserBill = () => {
                     date: now.toISOString(),
                   };
                   try {
+                    setAllBills(prevBills => [billData, ...prevBills]);
+                    setBills(prevBills => [billData, ...prevBills]);
+
                     await databases.createDocument(
                       DATABASE_ID,
                       COLLECTION_ID,
@@ -817,18 +870,20 @@ const UserBill = () => {
                       width: 595,
                       height: 842,
                     });
+
                     await Sharing.shareAsync(uri, {
                       mimeType: 'application/pdf',
                       dialogTitle: 'Share Bill',
                       UTI: 'net.whatsapp.pdf'
                     });
-
-                    router.push('/rating');
                     setIsFormVisible(false);
                     resetForm();
                     setSignature(null);
+                    router.push('/rating');
                   } catch (error) {
                     console.error('Error generating bill:', error);
+                    setAllBills(prevBills => prevBills.filter(bill => bill.$id !== billNumber));
+                    setBills(prevBills => prevBills.filter(bill => bill.$id !== billNumber));
                     Alert.alert('Error', 'Failed to generate bill');
                   }
                 }}

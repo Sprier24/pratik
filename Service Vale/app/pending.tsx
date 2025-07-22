@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal, ActivityIndicator, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
@@ -48,6 +48,12 @@ const PendingServicesScreen = () => {
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const itemsPerPage = 10;  
+const [totalPendingCount, setTotalPendingCount] = useState(0);
+const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
 
   const fetchServiceBoys = async () => {
     try {
@@ -61,19 +67,27 @@ const PendingServicesScreen = () => {
       }));
       setServiceBoys(boys);
     } catch (error) {
-      console.error('Error fetching service boys:', error);
+      console.error('Error fetching engineer :', error);
     }
   };
 
-  const fetchServices = async () => {
+  const fetchServices = async (page = 1, isLoadMore = false) => {
     try {
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [
           Query.equal('status', 'pending'),
           Query.orderAsc('serviceDate'),
-          Query.orderAsc('serviceTime')
+          Query.orderAsc('serviceTime'),
+          Query.limit(itemsPerPage),
+          Query.offset((page - 1) * itemsPerPage)
         ]
       );
 
@@ -104,26 +118,86 @@ const PendingServicesScreen = () => {
         };
       });
 
-      formattedServices.sort((a, b) => {
-        if (a.sortDate !== b.sortDate) {
-          return a.sortDate.localeCompare(b.sortDate);
-        }
-        return a.sortTime.localeCompare(b.sortTime);
-      });
-
-      setAllServices(formattedServices);
-      setServices(formattedServices);
+      if (isLoadMore) {
+        setAllServices(prev => [...prev, ...formattedServices]);
+        setServices(prev => [...prev, ...formattedServices]);
+      } else {
+        setAllServices(formattedServices);
+        setServices(formattedServices);
+      }
+      const totalCount = response.total;
+      setTotalPages(Math.ceil(totalCount / itemsPerPage));
+      setCurrentPage(page);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error('Error fetching services :', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
-      setLoading(false);
+      if (isLoadMore) {
+        setIsLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
+  const fetchTotalPendingCount = async () => {
+  try {
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      [Query.equal('status', 'pending')]
+    );
+    setTotalPendingCount(response.total);
+  } catch (error) {
+    console.error('Error fetching total pending count :', error);
+  }
+};
+
+const fetchEngineerCounts = async () => {
+  try {
+    const boysResponse = await databases.listDocuments(
+      DATABASE_ID,
+      USERS_COLLECTION_ID
+    );
+    const boys = boysResponse.documents.map(doc => doc.name);
+    const counts: Record<string, number> = { 
+      'All Service Engineers': 0 
+    };
+    
+    const allResponse = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      [Query.equal('status', 'pending')]
+    );
+    counts['All Service Engineers'] = allResponse.total;
+
+    await Promise.all(boys.map(async (name) => {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.equal('status', 'pending'),
+          Query.equal('serviceboyName', name)
+        ]
+      );
+      counts[name] = response.total;
+    }));
+
+    setEngineerCounts(counts);
+  } catch (error) {
+    console.error('Error fetching engineer counts :', error);
+  }
+};
+
   useEffect(() => {
+   const loadData = async () => {
+    await fetchServiceBoys();
+    await fetchEngineerCounts();
     fetchServices();
-    fetchServiceBoys();
+    fetchTotalPendingCount();
+  };
+  
+  loadData();
     if (params.newService) {
       try {
         const newService = JSON.parse(params.newService as string);
@@ -145,7 +219,6 @@ const PendingServicesScreen = () => {
           sortDate: newService.serviceDate || '',
           sortTime: newService.serviceTime || ''
         };
-
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
           if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) &&
@@ -156,18 +229,20 @@ const PendingServicesScreen = () => {
         });
         fetchServices();
       } catch (error) {
-        console.error('Error parsing new service:', error);
+        console.error('Error parsing new service :', error);
       }
     }
   }, [params.newService]);
 
-  const countPendingByServiceBoy = () => {
-    const counts: Record<string, number> = { 'All Service Engineers': allServices.length };
-    serviceBoys.forEach(boy => {
-      counts[boy.name] = allServices.filter(service => service.serviceBoy === boy.name).length;
-    });
-    return counts;
+  const loadMoreServices = () => {
+    if (!isLoadingMore && currentPage < totalPages) {
+      fetchServices(currentPage + 1, true);
+    }
   };
+
+  const countPendingByServiceBoy = () => {
+  return engineerCounts;
+};
 
   const handleComplete = async (id: string) => {
     Alert.alert(
@@ -189,6 +264,8 @@ const PendingServicesScreen = () => {
                   completedAt,
                 }
               );
+              setTotalPendingCount(prev => prev - 1); 
+               await fetchEngineerCounts();
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               const completedService = allServices.find(service => service.id === id);
@@ -205,7 +282,7 @@ const PendingServicesScreen = () => {
                 });
               }
             } catch (error) {
-              console.error('Error completing service:', error);
+              console.error('Error completing service :', error);
               Alert.alert('Error', 'Failed to complete service');
             }
           }
@@ -230,11 +307,13 @@ const PendingServicesScreen = () => {
                 COLLECTION_ID,
                 id
               );
+              setTotalPendingCount(prev => prev - 1); 
+               setTotalPendingCount(prev => prev - 1);
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
-              Alert.alert('Success', 'Service order deleted successfully');
+              Alert.alert('Success', 'Service order deleted successfully.');
             } catch (error) {
-              console.error('Error deleting service:', error);
+              console.error('Error deleting service :', error);
               Alert.alert('Error', 'Failed to delete service order');
             }
           }
@@ -267,6 +346,13 @@ const PendingServicesScreen = () => {
       });
     }
     setServices(filtered);
+    setCurrentPage(1); 
+  };
+
+  const onRefresh = () => {
+    fetchServices(1);
+     fetchTotalPendingCount();
+      fetchEngineerCounts();
   };
 
   const filterServices = (serviceBoyName: string | null) => {
@@ -293,7 +379,6 @@ const PendingServicesScreen = () => {
       `⏰ Time : ${service.serviceTime}\n\n` +
       `Service Engineer Details :\n` +
       `👨‍🔧 Engineer Name : ${service.serviceBoy}\n` +
-      `📞 Contact Number : ${service.serviceboyContact}\n\n` +
       `Service Charge : ₹${service.amount}\n\n` +
       `Please be ready for the service. For any queries, contact us : 635-320-2602\n\n` +
       `Thank you for choosing our service!`;
@@ -313,61 +398,53 @@ const PendingServicesScreen = () => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons
-            name="tools"
+          <MaterialIcons
+            name="construction"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
-
         <View style={styles.serviceActions}>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
           </View>
         </View>
       </View>
-
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={18} color="#718096" />
+          <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
-
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={18} color="#718096" />
+          <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
-
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={18} color="#718096" />
+          <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
-
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
-
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="access-time" size={16} color="#718096" />
+          <MaterialIcons name="access-time" size={18} color="#718096" />
           <Text style={styles.dateText}>
             {item.serviceDate} • {item.serviceTime}
           </Text>
         </View>
-
         <Text style={styles.serviceBoyText}>
           {item.serviceBoy}
         </Text>
       </View>
-
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.whatsappButton}
@@ -394,6 +471,7 @@ const PendingServicesScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
+
   );
 
   return (
@@ -401,16 +479,14 @@ const PendingServicesScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
-
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{services.length}</Text>
+          <Text style={styles.headerCountText}>{totalPendingCount}</Text>
         </View>
       </View>
-
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
@@ -419,17 +495,16 @@ const PendingServicesScreen = () => {
             setFilterModalVisible(true);
           }}
         >
-          <Feather name="user" size={18} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
+          <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
         >
-          <Feather name="calendar" size={18} color={dateFilter ? "#FFF" : "#5E72E4"} />
+          <MaterialIcons name="today" size={20} color={dateFilter ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -442,16 +517,15 @@ const PendingServicesScreen = () => {
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
               <TouchableOpacity onPress={clearServiceBoyFilter}>
-                <Feather name="x" size={16} color="#FFF" />
+                <Feather name="x" size={15} color="#FFF" />
               </TouchableOpacity>
             </View>
           )}
-
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
               <TouchableOpacity onPress={clearDateFilter}>
-                <Feather name="x" size={16} color="#FFF" />
+                <Feather name="x" size={15} color="#FFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -498,7 +572,6 @@ const PendingServicesScreen = () => {
               )}
               showsVerticalScrollIndicator={true}
             />
-
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}
@@ -516,10 +589,26 @@ const PendingServicesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          onEndReached={loadMoreServices}
+          onEndReachedThreshold={0.5}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading && !isLoadingMore}
+              onRefresh={onRefresh}
+            />
+          }
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#5E72E4" />
+                <Text style={styles.loadingMoreText}>Loading more services...</Text>
+              </View>
+            ) : null
+          }
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="pending-actions" size={48} color="#A0AEC0" />
+          <MaterialIcons name="pending-actions" size={50} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {selectedServiceBoy
               ? `No pending services for ${selectedServiceBoy}`

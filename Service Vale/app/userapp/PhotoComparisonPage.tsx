@@ -171,8 +171,11 @@ const PhotoComparisonPage = () => {
         }
     };
 
+   
+
     const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
         console.log('📲 Attempting push...');
+
         try {
             const endpoint = subIDs
                 ? 'https://app.nativenotify.com/api/indie/group/notification'
@@ -208,10 +211,11 @@ const PhotoComparisonPage = () => {
                 DATABASE_ID,
                 ADMIN_USERS_COLLECTION,
                 [
-                    Query.equal('isAdmin', true),
+                    Query.equal('isAdmin', true), 
                     Query.limit(100)
                 ]
             );
+
             return response.documents
                 .filter((doc: any) => doc.email)
                 .map((doc: any) => doc.email);
@@ -231,11 +235,14 @@ const PhotoComparisonPage = () => {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
+
         setIsUploading(true);
+
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
             const adminEmails = await getAdminUsers();
+
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -300,6 +307,7 @@ const PhotoComparisonPage = () => {
                     adminEmails
                 );
             }
+
             Alert.alert('Success', 'Photo saved successfully!');
             setBeforeImage(null);
             setAfterImage(null);
@@ -334,11 +342,13 @@ const PhotoComparisonPage = () => {
             }
             await Promise.all(deletePromises);
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
+
             const { userName: parsedUserName } = parseNotes(photoSet.notes || '');
             await sendNativeNotifyPush(
                 'Photo Set Deleted',
                 `${parsedUserName || 'User'} deleted a photo set from ${new Date(photoSet.date).toLocaleDateString()}`
             );
+
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
@@ -580,7 +590,6 @@ const PhotoComparisonPage = () => {
                                             </View>
                                         )}
                                     </View>
-
                                     <View style={styles.photoContainer}>
                                         <Text style={styles.photoLabel}>After</Text>
                                         {item.afterImageUrl ? (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases, account } from '../../lib/appwrite';
@@ -10,6 +10,7 @@ import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styl
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
+const BILLS_COLLECTION_ID = 'bill_ID';
 
 type Service = {
   id: string;
@@ -37,22 +38,45 @@ const CompletedServicesScreenUser = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const params = useLocalSearchParams();
   const router = useRouter();
+ const [limit] = useState(25); 
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchServices = async () => {
+  const fetchServices = async (loadMore = false) => {
     try {
       const currentUser = await account.get();
       const email = currentUser.email;
       setUserEmail(email);
+      
+      const currentOffset = loadMore ? offset : 0;
+      
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [
           Query.equal('status', 'completed'),
           Query.equal('serviceboyEmail', email),
-          Query.orderDesc('completedAt')
+          Query.orderDesc('completedAt'),
+          Query.limit(limit),
+          Query.offset(currentOffset)
         ]
       );
-      
+
+      if (!loadMore) {
+        const countResponse = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTION_ID,
+          [
+            Query.equal('status', 'completed'),
+            Query.equal('serviceboyEmail', email),
+            Query.select(['$id']) 
+          ]
+        );
+        setTotalCount(countResponse.total);
+      }
+
       const formattedServices = response.documents.map(doc => {
         let formattedCompletedAt = '';
         if (doc.completedAt) {
@@ -88,18 +112,37 @@ const CompletedServicesScreenUser = () => {
           formattedCompletedAt,
         };
       });
-      setAllServices(formattedServices);
-      setServices(formattedServices);
+
+      if (loadMore) {
+        setServices(prev => [...prev, ...formattedServices]);
+        setAllServices(prev => [...prev, ...formattedServices]);
+        setOffset(currentOffset + limit);
+        setHasMore(response.documents.length === limit);
+      } else {
+        setServices(formattedServices);
+        setAllServices(formattedServices);
+        setOffset(limit);
+        setHasMore(response.documents.length === limit);
+      }
     } catch (error) {
       console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchServices();
   };
 
   useEffect(() => {
     fetchServices();
+  }, []);
+
+  useEffect(() => {
     if (params.completedService) {
       try {
         const newService = JSON.parse(params.completedService as string);
@@ -126,6 +169,7 @@ const CompletedServicesScreenUser = () => {
             }
             return prev;
           });
+          setTotalCount(prev => prev + 1);
         }
       } catch (error) {
         console.error('Error parsing completed service:', error);
@@ -190,45 +234,46 @@ const CompletedServicesScreenUser = () => {
     });
   };
 
-  const handleMoveToPending = async (id: string) => {
-    Alert.alert(
-      'Move to Pending',
-      'Are you sure you want to move this service back to pending?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Move',
-          onPress: async () => {
-            try {
-              await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id,
-                { status: 'pending' }
-              );
-              setAllServices(prev => prev.filter(service => service.id !== id));
-              setServices(prev => prev.filter(service => service.id !== id));
-              const movedService = allServices.find(service => service.id === id);
-              if (movedService) {
-                router.push({
-                  pathname: '/userapp/userpending',
-                  params: {
-                    movedService: JSON.stringify({
-                      ...movedService,
-                      status: 'pending'
-                    })
-                  }
-                });
-              }
-            } catch (error) {
-              console.error('Error moving service:', error);
-              Alert.alert('Error', 'Failed to move service to pending');
+ const handleMoveToPending = async (id: string) => {
+  Alert.alert(
+    'Move to Pending',
+    'Are you sure you want to move this service back to pending?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Move',
+        onPress: async () => {
+          try {
+            await databases.updateDocument(
+              DATABASE_ID,
+              COLLECTION_ID,
+              id,
+              { status: 'pending' }
+            );
+            setAllServices(prev => prev.filter(service => service.id !== id));
+            setServices(prev => prev.filter(service => service.id !== id));
+            setTotalCount(prev => prev - 1); 
+            const movedService = allServices.find(service => service.id === id);
+            if (movedService) {
+              router.push({
+                pathname: '/userapp/userpending',
+                params: {
+                  movedService: JSON.stringify({
+                    ...movedService,
+                    status: 'pending'
+                  })
+                }
+              });
             }
+          } catch (error) {
+            console.error('Error moving service:', error);
+            Alert.alert('Error', 'Failed to move service to pending');
           }
         }
-      ]
-    );
-  };
+      }
+    ]
+  );
+};
 
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
@@ -297,6 +342,12 @@ const CompletedServicesScreenUser = () => {
     </View>
   );
 
+  const loadMoreServices = () => {
+    if (!loading && hasMore) {
+      fetchServices(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -306,9 +357,9 @@ const CompletedServicesScreenUser = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
-        <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{services.length}</Text>
-        </View>
+       <View style={styles.headerCount}>
+                 <Text style={styles.headerCountText}>{totalCount}</Text>
+               </View>
       </View>
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -338,13 +389,28 @@ const CompletedServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
-      {services.length > 0 ? (
-        <FlatList
+        {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#5E72E4" />
+        </View>
+      ) : services.length > 0 ? (
+       <FlatList
           data={services}
           renderItem={renderServiceItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          onEndReached={loadMoreServices}
+          onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          ListFooterComponent={
+            hasMore && !refreshing ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#5E72E4" />
+              </View>
+            ) : null
+          }
         />
       ) : (
         <View style={styles.emptyState}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { account, databases } from '../../lib/appwrite';
@@ -74,43 +74,31 @@ const ProfileScreen = () => {
                         color="#5E72E4"
                     />
                 </View>
-
                 <View style={styles.profileInfoContainer}>
                     <View style={styles.infoCard}>
-
                         <Text style={styles.name}>{user.name}</Text>
-
                         <Text style={styles.email}>{user.email}</Text>
-
                         <View style={styles.infoSection}>
-
                             <Text style={styles.sectionTitle}>Contact Information</Text>
-
                             <View style={styles.infoItem}>
                                 <MaterialIcons name="phone" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Contact Number : {user.phone || 'Not provided'}</Text>
                             </View>
-
                             <View style={styles.infoItem}>
                                 <MaterialIcons name="location-on" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Address : {user.address || 'Not provided'}</Text>
                             </View>
-
                             <View style={styles.infoItem}>
                                 <MaterialIcons name="location-city" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Hometown : {user.city || 'Not provided'}</Text>
                             </View>
                         </View>
-
                         <View style={styles.infoSection}>
-
                             <Text style={styles.sectionTitle}>Document Information</Text>
-
                             <View style={styles.infoItem}>
                                 <MaterialCommunityIcons name="card-account-details" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Aadhar No : {user.aadharNo || 'Not provided'}</Text>
                             </View>
-
                             <View style={styles.infoItem}>
                                 <MaterialCommunityIcons name="card-account-details-outline" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Pan No : {user.panNo || 'Not provided'}</Text>
@@ -129,7 +117,6 @@ const ProfileScreen = () => {
                     </View>
                     <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Profile</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                     style={[styles.bottomButton]}
                     onPress={() => router.push('/userapp/home')}
@@ -139,7 +126,6 @@ const ProfileScreen = () => {
                     </View>
                     <Text style={styles.bottomButtonText}>Home</Text>
                 </TouchableOpacity>
-                
                 <TouchableOpacity
                     style={styles.bottomButton}
                     onPress={() => router.push('/userapp/userbill')}

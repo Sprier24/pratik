@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, Platform, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import { getNotificationInbox } from 'native-notify';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getIndieNotificationInbox, deleteIndieNotificationInbox } from 'native-notify';
@@ -24,6 +25,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
     const [refreshing, setRefreshing] = useState(false);
     const [subId, setSubId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
     const getCurrentUserEmail = async () => {
         try {
             const user = await account.get();
@@ -48,8 +50,8 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
                 userEmail,
                 APP_ID,
                 APP_TOKEN,
-                10,
-                0
+                10, 
+                0   
             );
             console.log("Indie notifications: ", notifications);
             setData(notifications);
@@ -75,6 +77,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             Alert.alert("Error", "User not identified");
             return;
         }
+
         try {
             const updatedNotifications = await deleteIndieNotificationInbox(
                 subId,
@@ -96,6 +99,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             Alert.alert("Error", "User not identified");
             return;
         }
+
         try {
             const deletePromises = data.map((notification) =>
                 deleteIndieNotificationInbox(
@@ -105,8 +109,9 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
                     APP_TOKEN
                 )
             );
+
             await Promise.all(deletePromises);
-            setData([]);
+            setData([]); 
             Alert.alert("Success", "All notifications cleared");
         } catch (error) {
             console.error("Error clearing notifications:", error);
@@ -141,7 +146,6 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
                     <View style={{ width: 24 }} />
                 )}
             </View>
-
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={

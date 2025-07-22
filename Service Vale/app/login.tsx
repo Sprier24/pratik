@@ -9,7 +9,8 @@ import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import registerNNPushToken from 'native-notify';
-import { registerIndieID } from 'native-notify';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import axios from 'axios';
 import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
@@ -91,10 +92,13 @@ const LoginScreen = () => {
                 }
             }
         };
+
         const subscription = Linking.addEventListener('url', handleDeepLink);
+
         Linking.getInitialURL().then(url => {
             if (url) handleDeepLink({ url });
         });
+
         return () => subscription.remove();
     }, []);
 
@@ -106,13 +110,14 @@ const LoginScreen = () => {
         );
     }
 
+
     const handleLogin = async () => {
         if (email === '' || password === '') {
             Alert.alert('Error', 'Please enter email address and password both');
         } else if (!emailRegex.test(email)) {
             Alert.alert('Error', 'Please enter a valid email');
         } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
+            Alert.alert('Error', 'Password must contain at least one uppercase letter, one number, and one special character.');
         } else {
             try {
                 await account.createEmailPasswordSession(email, password);
@@ -122,7 +127,7 @@ const LoginScreen = () => {
                     await registerIndieID(user.email, APP_ID, APP_TOKEN);
                     console.log('Registered for Indie push notifications');
                 } catch (pushError) {
-                    console.warn('Push notification registration failed:', pushError);
+                    console.warn('Push notification registration failed :', pushError);
                 }
                 if (isAdmin) {
                     try {
@@ -139,9 +144,10 @@ const LoginScreen = () => {
                         );
                         console.log('Admin login saved');
                     } catch (logError) {
-                        console.warn('Failed to save admin login:', logError);
+                        console.warn('Failed to save admin login :', logError);
                     }
                 }
+
                 Alert.alert('Success', `Welcome to Service Vale`);
                 resetFields();
 
@@ -163,9 +169,9 @@ const LoginScreen = () => {
         } else if (!emailRegex.test(email)) {
             Alert.alert('Error', 'Please enter a valid email');
         } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
+            Alert.alert('Error', 'Password must contain at least one uppercase letter, one number, and one special character.');
         } else if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
+            Alert.alert('Error', 'Password do not match');
         } else {
             try {
                 const response = await databases.listDocuments(
@@ -173,10 +179,12 @@ const LoginScreen = () => {
                     COLLECTION_ID,
                     [Query.equal('email', email.toLowerCase())]
                 );
+
                 if (response.documents.length === 0) {
                     Alert.alert('Access Denied', 'You are not authorized to register.');
                     return;
                 }
+
                 await account.create('unique()', email, password, username);
                 Alert.alert('Success', 'Account created successfully. Please log in.');
                 resetFields();
@@ -213,11 +221,11 @@ const LoginScreen = () => {
             return;
         }
         if (newPassword !== resetConfirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
+            Alert.alert('Error', 'Password do not match');
             return;
         }
         if (!passwordRegex.test(newPassword)) {
-            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
+            Alert.alert('Error', 'Password must contain at least one uppercase letter, one number, and one special character.');
             return;
         }
         try {
@@ -227,7 +235,7 @@ const LoginScreen = () => {
             await account.updateRecovery(resetUserId, resetSecret, newPassword);
             Alert.alert(
                 'Success',
-                'Your password has been reset successfully',
+                'Your password has been reset successfully.',
                 [
                     {
                         text: 'OK',
@@ -387,7 +395,6 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
-
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Email Address</Text>
                             <TextInput
@@ -400,7 +407,6 @@ const LoginScreen = () => {
                                 autoCapitalize="none"
                             />
                         </View>
-
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Password</Text>
                             <View style={styles.passwordInputContainer}>
@@ -424,7 +430,6 @@ const LoginScreen = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-
                         {!isLogin && (
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -438,7 +443,6 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
-
                         {isLogin && (
                             <TouchableOpacity
                                 style={styles.forgotPasswordButton}
@@ -447,7 +451,6 @@ const LoginScreen = () => {
                                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                             </TouchableOpacity>
                         )}
-
                         <TouchableOpacity
                             style={styles.authButton}
                             onPress={isLogin ? handleLogin : handleRegister}
@@ -456,7 +459,6 @@ const LoginScreen = () => {
                                 {isLogin ? 'Sign In' : 'Sign Up'}
                             </Text>
                         </TouchableOpacity>
-                        
                         <View style={styles.authFooter}>
                             <Text style={styles.authFooterText}>
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}

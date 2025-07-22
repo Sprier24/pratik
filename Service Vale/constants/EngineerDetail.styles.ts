@@ -1,5 +1,6 @@
 import { Platform, StatusBar, StyleSheet } from "react-native";
 
+
 export const styles = StyleSheet.create({
   itemDate: {
     fontSize: 12,
@@ -117,24 +118,24 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
   commissionCard: {
-    borderTopWidth: 4,
+    borderTopWidth: 10,
     borderTopColor: '#4C51BF',
   },
   paymentCard: {
-    borderTopWidth: 4,
+    borderTopWidth: 10,
     borderTopColor: '#38A169',
   },
   pendingCard: {
-    borderTopWidth: 4,
+    borderTopWidth: 10,
     borderTopColor: '#DD6B20', 
   },
   summaryLabel: {
-    fontSize: 14, 
+    fontSize: 15, 
     color: '#718096',
     marginBottom: 8,
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2D3748',
   },
@@ -226,7 +227,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#5E72E4',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#718096',
   },
@@ -247,7 +248,7 @@ export const styles = StyleSheet.create({
   payButtonText: {
     color: '#FFF',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 15,
   },
   listContainer: {
     paddingBottom: 20,
@@ -331,8 +332,11 @@ export const styles = StyleSheet.create({
     padding: 40,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#718096',
+    textAlign: "center",
+    color: "#666",
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "500",
   },
   modalOverlay: {
     flex: 1,
@@ -354,7 +358,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#2D3748',
   },
@@ -362,7 +366,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   modalSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#4A5568',
     marginBottom: 15,
   },
@@ -383,7 +387,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     marginBottom: 20,
-    fontSize: 16,
+    fontSize: 15,
     color: '#2D3748',
   },
   submitButton: {
@@ -395,6 +399,6 @@ export const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFF',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
   },
 });

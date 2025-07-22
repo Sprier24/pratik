@@ -46,11 +46,11 @@ export const styles = StyleSheet.create({
     padding: 24,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6C757D',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 24,
+    textAlign: "center",
+    color: "#666",
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "500",
   },
   revenueList: {
     marginTop: 16,
@@ -87,6 +87,7 @@ export const styles = StyleSheet.create({
     color: '#5E72E4',
     letterSpacing: 0.25,
   },
+  // Add these additional styles for more professional touches:
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',

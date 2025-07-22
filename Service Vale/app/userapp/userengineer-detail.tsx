@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList } from 'react-native';
+import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, Modal, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { account, databases } from '../../lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/UserEngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -57,12 +57,15 @@ const UserEngineerDetail = () => {
 
   const groupByDate = (items: TransactionItem[], groupByMonth = false): SectionData[] => {
     const grouped: { [key: string]: TransactionItem[] } = {};
+
     items.forEach(item => {
       const date = new Date(item.date);
       let key: string;
+
       if (groupByMonth) {
         const now = new Date();
         const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
+
         if (date < oneMonthAgo) {
           key = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
         } else {
@@ -81,9 +84,11 @@ const UserEngineerDetail = () => {
           year: 'numeric'
         });
       }
+
       if (!grouped[key]) {
         grouped[key] = [];
       }
+
       grouped[key].push(item);
     });
 
@@ -92,6 +97,7 @@ const UserEngineerDetail = () => {
         const dayTransactions = grouped[key].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const totalAmount = dayTransactions.reduce((sum, item) => sum + item.amount, 0);
         const isMonth = key.split(' ').length === 2;
+
         return {
           title: key,
           data: dayTransactions,
@@ -139,7 +145,6 @@ const UserEngineerDetail = () => {
         COLLECTION_ID,
         [Query.equal('serviceBoyName', name)]
       );
-
       const currentMonthCommissionsResponse = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -148,18 +153,15 @@ const UserEngineerDetail = () => {
           Query.greaterThanEqual('date', startOfCurrentMonth)
         ]
       );
-
       const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
         return sum + (parseFloat(doc.serviceCharge) * 0.25);
       }, 0);
-
       setCurrentMonthCommission(monthCommission);
       const allPaymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
         [Query.equal('engineerName', name)]
       );
-      
       const currentMonthPaymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
@@ -168,7 +170,6 @@ const UserEngineerDetail = () => {
           Query.greaterThanEqual('date', startOfCurrentMonth)
         ]
       );
-
       const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
         return sum + parseFloat(doc.amount);
       }, 0);
@@ -243,9 +244,11 @@ const UserEngineerDetail = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
+
     if (event.type === 'dismissed') {
       return;
     }
+
     if (selectedDate) {
       setDateFilter(selectedDate);
       const startOfDay = new Date(selectedDate);
@@ -264,6 +267,7 @@ const UserEngineerDetail = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
+
     const filteredPayments = transactions.payments.map(section => ({
       ...section,
       data: section.data.filter(item => {
@@ -271,6 +275,7 @@ const UserEngineerDetail = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
+
     setFilteredTransactions({
       commissions: filteredCommissions,
       payments: filteredPayments
@@ -332,6 +337,7 @@ const UserEngineerDetail = () => {
         />
       )}
 
+      {/* Summary Cards */}
       <View style={styles.summaryContainer}>
         <View style={[styles.summaryCard, styles.commissionCard]}>
           <Text style={styles.summaryLabel}>Monthly Commission</Text>
@@ -342,7 +348,6 @@ const UserEngineerDetail = () => {
             })}
           </Text>
         </View>
-
         <View style={[styles.summaryCard, styles.paymentCard]}>
           <Text style={styles.summaryLabel}>Monthly Paid</Text>
           <Text style={styles.summaryValue}>
@@ -352,7 +357,6 @@ const UserEngineerDetail = () => {
             })}
           </Text>
         </View>
-
         <View style={[styles.summaryCard, styles.pendingCard]}>
           <Text style={styles.summaryLabel}>Pending</Text>
           <Text style={[styles.summaryValue, styles.pendingValue]}>
@@ -368,7 +372,6 @@ const UserEngineerDetail = () => {
         >
           <Text style={[styles.tabText, activeTab === 'commissions' && styles.activeTabText]}>Commissions</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'payments' && styles.activeTab]}
           onPress={() => setActiveTab('payments')}
@@ -410,7 +413,6 @@ const UserEngineerDetail = () => {
             </View>
           </View>
         )}
-
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <View style={styles.itemLeft}>
@@ -421,7 +423,6 @@ const UserEngineerDetail = () => {
                   color={item.type === 'commission' ? '#5E72E4' : '#38A169'}
                 />
               </View>
-              
               <View style={styles.itemDetails}>
                 <Text style={styles.itemTitle}>
                   {item.type === 'commission' ?
@@ -440,7 +441,6 @@ const UserEngineerDetail = () => {
                 </View>
               </View>
             </View>
-
             <View style={styles.amountContainer}>
               <Text style={[
                 styles.itemAmount,

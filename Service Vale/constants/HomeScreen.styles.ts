@@ -96,13 +96,13 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   commissionStatLabel: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#FFF',
     opacity: 0.8,
     marginBottom: 4,
   },
   commissionStatValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#FFF',
   },
@@ -155,7 +155,7 @@ export const styles = StyleSheet.create({
   },
   commissionCardFooterText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 15,
     marginRight: 8,
   },
   pendingValue: {

@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
         elevation: 5,
     },
     headerTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "700",
         color: "#FFF",
     },
@@ -43,7 +43,6 @@ export const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        paddingTop: 100,
     },
     notificationCard: {
         backgroundColor: "#fff",

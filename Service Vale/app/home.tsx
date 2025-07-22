@@ -10,7 +10,7 @@ import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUnreadNotificationInboxCount } from 'native-notify';
 import { useFocusEffect } from '@react-navigation/native';
-import { unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
+import { registerIndieID, unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
 import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
@@ -39,11 +39,13 @@ const AdminHomeScreen = () => {
     try {
       const user = await account.get();
       const userEmail = user.email;
+
       const count = await getUnreadIndieNotificationInboxCount(
         userEmail,
         APP_ID,
         APP_TOKEN
       );
+
       console.log("Unread Indie notifications count:", count);
       setUnreadIndieNotificationCount(count);
     } catch (error) {
@@ -90,12 +92,14 @@ const AdminHomeScreen = () => {
               } catch (unregisterError) {
                 console.warn('Failed to unregister from push notifications:', unregisterError);
               }
+
               try {
                 const result = await databases.listDocuments(
                   '681c428b00159abb5e8b',
                   '68773d3800020869e8fc',
                   [Query.equal('userId', userId)]
                 );
+
                 if (result.documents.length > 0) {
                   const documentId = result.documents[0].$id;
 
@@ -122,6 +126,7 @@ const AdminHomeScreen = () => {
     );
   };
 
+
   const fetchRevenueData = async () => {
     try {
       const today = new Date();
@@ -129,6 +134,7 @@ const AdminHomeScreen = () => {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
       const currentMonth = today.toLocaleString('default', { month: 'long' });
       const currentYear = today.getFullYear().toString();
+
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -137,7 +143,6 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
-
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -188,13 +193,32 @@ const AdminHomeScreen = () => {
   const fetchOrders = async () => {
     try {
       setRefreshing(true);
-      const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID);
-      const pending = orders.documents.filter(o => o.status === 'pending').length;
-      const completed = orders.documents.filter(o => o.status !== 'pending').length;
-      setPendingCount(pending);
-      setCompletedCount(completed);
+
+      // Query specifically for pending orders count without pagination
+      const pendingResponse = await databases.listDocuments(
+        DATABASE_ID,
+        ORDERS_COLLECTION_ID,
+        [
+          Query.equal('status', 'pending'),
+          Query.select(['$id']) // Only select IDs to reduce payload
+        ]
+      );
+
+      // Query specifically for completed orders count without pagination
+      const completedResponse = await databases.listDocuments(
+        DATABASE_ID,
+        ORDERS_COLLECTION_ID,
+        [
+          Query.notEqual('status', 'pending'),
+          Query.select(['$id']) // Only select IDs to reduce payload
+        ]
+      );
+
+      setPendingCount(pendingResponse.total);
+      setCompletedCount(completedResponse.total);
     } catch (error) {
       console.error('Appwrite error:', error);
+      Alert.alert('Error', 'Failed to fetch orders');
     } finally {
       setRefreshing(false);
       setIsLoading(false);
@@ -213,29 +237,23 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
-
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
-
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID
       );
-
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
-
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
-
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
-
       const pending = totalCommissionsAllTime - totalPayments;
       const engineerMap = new Map<string, number>();
       allBills.documents.forEach(bill => {
@@ -265,6 +283,7 @@ const AdminHomeScreen = () => {
       setPendingCommission(pending);
       setPendingEngineersCount(pendingEngineersCount);
       setEngineerCommissions(sortedEngineers);
+
     } catch (error) {
       console.error('Error fetching commission data:', error);
     }
@@ -317,6 +336,7 @@ const AdminHomeScreen = () => {
               </View>
             )}
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.logoutIcon}
             onPress={handleLogout}
@@ -340,7 +360,7 @@ const AdminHomeScreen = () => {
         <View style={styles.revenueRow}>
           <View style={[styles.revenueCard, styles.dailyCard]}>
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="today" size={24} color="#FFF" />
+              <MaterialIcons name="today" size={25} color="#FFF" />
             </View>
             <Text style={styles.cardTitle}>Today's Revenue</Text>
             <Text style={styles.cardAmount}>
@@ -355,7 +375,7 @@ const AdminHomeScreen = () => {
             onPress={() => router.push('/revenuehistory')}
           >
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="date-range" size={24} color="#FFF" />
+              <MaterialIcons name="date-range" size={25} color="#FFF" />
             </View>
             <Text style={styles.cardTitle}>Monthly Revenue</Text>
             <Text style={styles.cardAmount}>
@@ -378,7 +398,7 @@ const AdminHomeScreen = () => {
           >
             <View style={styles.commissionCardHeader}>
               <View style={styles.cardIconContainer}>
-                <MaterialIcons name="engineering" size={24} color="#FFF" />
+                <MaterialIcons name="engineering" size={25} color="#FFF" />
               </View>
               <Text style={styles.commissionCardTitle}>Engineer Commissions</Text>
             </View>
@@ -408,7 +428,7 @@ const AdminHomeScreen = () => {
 
             <View style={styles.commissionCardFooter}>
               <Text style={styles.commissionCardFooterText}>View all commissions</Text>
-              <Feather name="chevron-right" size={18} color="#FFF" />
+              <Feather name="chevron-right" size={20} color="#FFF" />
             </View>
           </TouchableOpacity>
         </View>
@@ -430,7 +450,6 @@ const AdminHomeScreen = () => {
               <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
-
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
@@ -456,7 +475,7 @@ const AdminHomeScreen = () => {
           onPress={() => router.push('/service')}
         >
           <View style={footerStyles.bottomButtonIcon}>
-            <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+            <MaterialIcons name="construction" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Service</Text>
         </TouchableOpacity>
@@ -466,7 +485,7 @@ const AdminHomeScreen = () => {
           onPress={() => router.push('/user')}
         >
           <View style={footerStyles.bottomButtonIcon}>
-            <MaterialIcons name="person" size={20} color="#5E72E4" />
+            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
@@ -475,7 +494,7 @@ const AdminHomeScreen = () => {
           style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
         >
           <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
-            <Feather name="home" size={20} color="#FFF" />
+            <Feather name="home" size={25} color="#FFF" />
           </View>
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Home</Text>
         </TouchableOpacity>

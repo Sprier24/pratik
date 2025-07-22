@@ -5,7 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { databases, storage, account } from '../lib/appwrite';
 import { Query, Models } from 'appwrite';
 import { useRouter } from 'expo-router';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/Userphoto';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ interface PhotoDocument extends Models.Document {
     date: string;
     notes?: string;
 }
+
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
 const BUCKET_ID = 'photo_id';
@@ -150,12 +151,11 @@ const PhotoComparisonPage: React.FC = () => {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.push('/home')}>
-                        <Feather name="arrow-left" size={24} color="#FFF" />
+                        <Feather name="arrow-left" size={25} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Service Photos</Text>
                 </View>
             </View>
-            
             <ScrollView
                 contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
                 refreshControl={
@@ -169,7 +169,7 @@ const PhotoComparisonPage: React.FC = () => {
             >
                 {photoSets.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
+                        <MaterialIcons name="photo-library" size={50} color="#A0AEC0" />
                         <Text style={styles.emptyText}>No service photos yet</Text>
                     </View>
                 ) : (
@@ -282,7 +282,7 @@ const PhotoComparisonPage: React.FC = () => {
                     onPress={() => router.push('/service')}
                 >
                     <View style={footerStyles.bottomButtonIcon}>
-                        <MaterialIcons name="car-repair" size={20} color="#5E72E4" />
+                        <MaterialIcons name="construction" size={20} color="#5E72E4" />
                     </View>
                     <Text style={footerStyles.bottomButtonText}>Service</Text>
                 </TouchableOpacity>
@@ -292,7 +292,7 @@ const PhotoComparisonPage: React.FC = () => {
                     onPress={() => router.push('/user')}
                 >
                     <View style={footerStyles.bottomButtonIcon}>
-                        <MaterialIcons name="person" size={20} color="#5E72E4" />
+                        <MaterialIcons name="engineering" size={20} color="#5E72E4" />
                     </View>
                     <Text style={footerStyles.bottomButtonText}>Engineers</Text>
                 </TouchableOpacity>
@@ -312,7 +312,7 @@ const PhotoComparisonPage: React.FC = () => {
                     onPress={() => router.push('/userphotos')}
                 >
                     <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
-                        <MaterialIcons name="photo-library" size={20} color="#FFF" />
+                        <MaterialIcons name="photo-library" size={25} color="#FFF" />
                     </View>
                     <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Photos</Text>
                 </TouchableOpacity>

@@ -9,12 +9,13 @@ import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUnreadNotificationInboxCount } from 'native-notify';
 import { useFocusEffect } from '@react-navigation/native';
-import { unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
+import { registerIndieID, unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
 import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 const PAYMENTS_COLLECTION_ID = 'commission_ID';
 const { width } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ const HomeScreenuser = () => {
         APP_ID,
         APP_TOKEN
       );
+
       console.log("Unread Indie notifications count:", count);
       setUnreadIndieNotificationCount(count);
     } catch (error) {
@@ -122,9 +124,11 @@ const HomeScreenuser = () => {
     try {
       const name = await fetchUserData();
       if (!name) return;
+
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
       const dailyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -134,6 +138,7 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
+
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -143,8 +148,10 @@ const HomeScreenuser = () => {
           Query.orderDesc('date')
         ]
       );
+
       const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
       const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
+
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
     } catch (error) {
@@ -156,8 +163,10 @@ const HomeScreenuser = () => {
     try {
       const name = await fetchUserData();
       if (!name) return;
+
       const today = new Date();
       const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -166,26 +175,33 @@ const HomeScreenuser = () => {
           Query.greaterThanEqual('date', startOfCurrentMonth)
         ]
       );
+
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.equal('serviceBoyName', name)]
       );
+
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID,
         [Query.equal('engineerName', name)]
       );
+
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
+
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
+
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
+
       const pending = totalCommissionsAllTime - totalPayments;
+
       setTotalCommission(total);
       setPendingCommission(pending);
     } catch (error) {
@@ -198,6 +214,7 @@ const HomeScreenuser = () => {
       setRefreshing(true);
       const currentUser = await account.get();
       const email = currentUser.email;
+
       const orders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -206,7 +223,9 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
+
       setPendingCount(orders.total);
+
       const completedOrders = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -215,6 +234,7 @@ const HomeScreenuser = () => {
           Query.equal('serviceboyEmail', email)
         ]
       );
+
       setCompletedCount(completedOrders.total);
     } catch (error) {
       console.error('Appwrite error:', error);

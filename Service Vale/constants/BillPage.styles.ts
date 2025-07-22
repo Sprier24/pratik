@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     color: "#FFF",
   },
@@ -80,7 +80,7 @@ export const styles = StyleSheet.create({
   },
   filterButtonText: {
     color: "#5E72E4",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
     marginLeft: 8,
   },
@@ -140,7 +140,7 @@ export const styles = StyleSheet.create({
     maxHeight: "70%",
   },
   modalTitle1: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
     textAlign: "center",
@@ -182,7 +182,7 @@ export const styles = StyleSheet.create({
   },
   modalCloseButtonText1: {
     color: "white",
-    fontSize: 16,
+    fontSize: 20,
   },
   formContainer: {
     backgroundColor: "#FFF",
@@ -236,7 +236,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#F7FAFC",
     borderRadius: 10,
     padding: 14,
-    fontSize: 16,
+    fontSize: 15,
     borderWidth: 1,
     borderColor: "#E2E8F0",
     color: "#2D3748",
@@ -306,7 +306,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   changeLabel: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#4A5568",
   },
   changeValue: {
@@ -361,7 +361,7 @@ export const styles = StyleSheet.create({
   },
   addSignatureText: {
     color: "#5E72E4",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   submitButton: {
@@ -377,11 +377,13 @@ export const styles = StyleSheet.create({
   },
   submitText: {
     color: "#FFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   billsListContainer: {
-    marginBottom: 20,
+    paddingHorizontal: 10,
+    paddingTop: 15,
+    paddingBottom: 50,
   },
   loadingContainer: {
     flex: 1,
@@ -394,20 +396,22 @@ export const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#4A5568",
-    marginTop: 10,
-    marginBottom: 5,
+    textAlign: "center",
+    color: "#666",
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "500",
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#718096",
+    textAlign: "center",
+    color: "#a0aec0",
+    marginTop: 8,
   },
   billCard: {
     backgroundColor: "#FFF",
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -508,7 +512,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
     color: "#2D3748",
   },
@@ -557,7 +561,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
   detailSectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: "#2D3748",
     marginBottom: 15,
@@ -630,7 +634,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   signatureModalContainer: {
@@ -794,7 +798,7 @@ export const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: '#4A5568',
   },
   searchIcon: {
@@ -804,5 +808,15 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
   }, 
+  loadingMoreContainer: {
+  padding: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+loadingMoreText: {
+  marginLeft: 10,
+  color: '#718096',
+},
 });
 

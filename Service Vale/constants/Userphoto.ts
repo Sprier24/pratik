@@ -1,4 +1,4 @@
-import { StyleSheet, StatusBar, Platform } from "react-native";
+import { StyleSheet, RefreshControl, StatusBar, Platform } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
@@ -71,9 +71,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#A0AEC0",
-    marginTop: 10,
+    textAlign: "center",
+    color: "#666",
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "500",
   },
   photoCard: {
     backgroundColor: "#FFF",

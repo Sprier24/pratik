@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
   filterButtonText: {
     color: "#5E72E4",
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: 15,
     marginLeft: 8,
   },
   clearFilterButton: {
@@ -122,7 +122,7 @@ export const styles = StyleSheet.create({
     maxHeight: "70%",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
     textAlign: "center",
@@ -164,7 +164,7 @@ export const styles = StyleSheet.create({
   },
   modalCloseButtonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 20,
   },
   listContainer: {
     paddingHorizontal: 15,
@@ -190,7 +190,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   serviceIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   serviceType: {
     fontSize: 16,
@@ -250,7 +250,7 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
   },
   serviceBoyText: {
-    fontSize: 13,
+    fontSize: 15,
     color: "#5E72E4",
     fontWeight: "500",
   },
@@ -308,11 +308,11 @@ export const styles = StyleSheet.create({
     padding: 32,
   },
   emptyText: {
+    textAlign: "center",
+    color: "#666",
+    marginTop: 16,
     fontSize: 18,
     fontWeight: "500",
-    color: "#4A5568",
-    marginTop: 16,
-    textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,
@@ -323,4 +323,14 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  loadingMoreContainer: {
+  padding: 20,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+loadingMoreText: {
+  marginLeft: 10,
+  color: '#718096',
+},
 });

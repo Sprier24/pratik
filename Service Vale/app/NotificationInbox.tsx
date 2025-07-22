@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, Platform, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import { getNotificationInbox } from 'native-notify';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getIndieNotificationInbox, deleteIndieNotificationInbox } from 'native-notify';
 import { account } from '../lib/appwrite';
 import { styles } from '../constants/userapp/notification';
 import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
+
 
 type NotificationInboxProps = {
     navigation: any;
@@ -29,7 +31,7 @@ export default function NotificationInbox({ navigation, AppState }: Notification
             const user = await account.get();
             return user.email;
         } catch (error) {
-            console.error("Error getting current user:", error);
+            console.error("Error getting current engineer :", error);
             return null;
         }
     };
@@ -40,7 +42,7 @@ export default function NotificationInbox({ navigation, AppState }: Notification
         try {
             const userEmail = await getCurrentUserEmail();
             if (!userEmail) {
-                Alert.alert("Error", "Could not fetch user information");
+                Alert.alert("Error", "Could not fetch engineer information");
                 return;
             }
             setSubId(userEmail);
@@ -48,14 +50,14 @@ export default function NotificationInbox({ navigation, AppState }: Notification
                 userEmail,
                 APP_ID,
                 APP_TOKEN,
-                10,
-                0
+                10, 
+                0   
             );
 
-            console.log("Indie notifications: ", notifications);
+            console.log("Indie notifications : ", notifications);
             setData(notifications);
         } catch (error) {
-            console.error("Error fetching indie notifications:", error);
+            console.error("Error fetching indie notifications :", error);
             Alert.alert("Error", "Failed to load notifications");
         } finally {
             setRefreshing(false);
@@ -73,9 +75,10 @@ export default function NotificationInbox({ navigation, AppState }: Notification
 
     const handleDeleteNotification = async (notificationId: string) => {
         if (!subId) {
-            Alert.alert("Error", "User not identified");
+            Alert.alert("Error", "Engineer not identified");
             return;
         }
+
         try {
             const updatedNotifications = await deleteIndieNotificationInbox(
                 subId,
@@ -83,19 +86,21 @@ export default function NotificationInbox({ navigation, AppState }: Notification
                 APP_ID,
                 APP_TOKEN
             );
+
             setData(updatedNotifications);
             Alert.alert("Success", "Notification deleted");
         } catch (error) {
-            console.error("Error deleting notification:", error);
+            console.error("Error deleting notification :", error);
             Alert.alert("Error", "Failed to delete notification");
         }
     };
 
     const clearAllNotifications = async () => {
         if (!subId) {
-            Alert.alert("Error", "User not identified");
+            Alert.alert("Error", "Engineer not identified");
             return;
         }
+
         try {
             const deletePromises = data.map((notification) =>
                 deleteIndieNotificationInbox(
@@ -105,12 +110,13 @@ export default function NotificationInbox({ navigation, AppState }: Notification
                     APP_TOKEN
                 )
             );
+
             await Promise.all(deletePromises);
             setData([]);
-            Alert.alert("Success", "All notifications cleared");
+            Alert.alert("Success", "All notifications deleted");
         } catch (error) {
-            console.error("Error clearing notifications:", error);
-            Alert.alert("Error", "Failed to clear notifications");
+            console.error("Error deleting notifications :", error);
+            Alert.alert("Error", "Failed to delete notifications");
         }
     };
 
@@ -129,19 +135,18 @@ export default function NotificationInbox({ navigation, AppState }: Notification
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.push('/home')}>
-                        <MaterialIcons name="arrow-back" size={24} color="#fff" />
+                        <MaterialIcons name="arrow-back" size={25} color="#fff" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Notifications</Text>
                 </View>
                 {data.length > 0 ? (
                     <TouchableOpacity onPress={clearAllNotifications}>
-                        <MaterialIcons name="delete" size={24} color="#fff" />
+                        <MaterialIcons name="delete" size={25} color="#fff" />
                     </TouchableOpacity>
                 ) : (
                     <View style={{ width: 24 }} />
                 )}
             </View>
-
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={
@@ -154,7 +159,7 @@ export default function NotificationInbox({ navigation, AppState }: Notification
             >
                 {data.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <Ionicons name="notifications-off" size={48} color="#ccc" />
+                        <Ionicons name="notifications-off" size={50} color="#A0AEC0" />
                         <Text style={styles.noNotificationText}>No notifications</Text>
                         <Text style={styles.emptySubtext}>Pull down to refresh</Text>
                     </View>

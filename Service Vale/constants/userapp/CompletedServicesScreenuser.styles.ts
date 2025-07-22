@@ -214,4 +214,12 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
+  loadingContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center'
+},
+loadingMoreContainer: {
+  paddingVertical: 20
+}
 });

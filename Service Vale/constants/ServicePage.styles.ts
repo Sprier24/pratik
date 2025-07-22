@@ -66,7 +66,7 @@ export const styles = StyleSheet.create({
     padding: 15,
   },
   serviceTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: "#2D3748",
   },
@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
   },
   serviceButtonText: {
     color: "#5E72E4",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     marginRight: 5,
   },
@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
     color: "#2D3748",
   },

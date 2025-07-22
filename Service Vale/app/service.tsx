@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/ServicePage.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { footerStyles } from '../constants/footer';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {
@@ -42,6 +43,7 @@ const ServicePage = () => {
     fetchAllUsers();
   }, []);
 
+  
   const handleImagePress = (serviceKey: ServiceKey) => {
     setSelectedServiceType(serviceKey);
     setModalVisible(true);
@@ -55,6 +57,7 @@ const ServicePage = () => {
   ) => {
     setModalVisible(false);
     setSelectedServiceboyName(applicantName);
+
     try {
       router.push({
         pathname: '/order',
@@ -78,12 +81,11 @@ const ServicePage = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/home')}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Service Selection</Text>
         </View>
       </View>
-
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 170 }]}>
         <View style={styles.servicesGrid}>
           <TouchableOpacity
@@ -102,12 +104,11 @@ const ServicePage = () => {
                 <Text style={styles.serviceTitle}>AC Service</Text>
                 <View style={styles.serviceButton}>
                   <Text style={styles.serviceButtonText}>Select</Text>
-                  <AntDesign name="right" size={16} color="#5E72E4" />
+                  <AntDesign name="right" size={15} color="#5E72E4" />
                 </View>
               </View>
             </View>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Washing Machine')}
@@ -129,7 +130,6 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Fridge')}
@@ -151,7 +151,6 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.serviceCard}
             onPress={() => handleImagePress('Microwave')}
@@ -173,10 +172,8 @@ const ServicePage = () => {
               </View>
             </View>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
-
       <Modal
         animationType="slide"
         transparent={true}
@@ -188,10 +185,9 @@ const ServicePage = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Service Engineer</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#718096" />
+                <MaterialIcons name="close" size={25} color="#2D3748" />
               </TouchableOpacity>
             </View>
-
             <ScrollView style={styles.modalScroll}>
               {allUsers.length > 0 ? (
                 allUsers.map((user, index) => (
@@ -201,7 +197,7 @@ const ServicePage = () => {
                     style={styles.applicantItem}
                   >
                     <View style={styles.applicantAvatar}>
-                      <MaterialIcons name="person" size={24} color="#5E72E4" />
+                      <MaterialIcons name="engineering" size={25} color="#5E72E4" />
                     </View>
                     <View style={styles.applicantInfo}>
                       <Text style={styles.applicantName}>{user.name}</Text>
@@ -221,28 +217,25 @@ const ServicePage = () => {
           </View>
         </View>
       </Modal>
-
       <View style={[footerStyles.bottomBar, { paddingBottom: insets.bottom || 20, marginTop: 40 }]}>
         <TouchableOpacity
           style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
           onPress={() => router.push('/service')}
         >
           <View style={[footerStyles.bottomButtonIcon, footerStyles.bottomButtonIconActive]}>
-            <MaterialIcons name="car-repair" size={20} color="#FFF" />
+            <MaterialIcons name="construction" size={25} color="#FFF" />
           </View>
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Service</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/user')}
         >
           <View style={footerStyles.bottomButtonIcon}>
-            <MaterialIcons name="person" size={20} color="#5E72E4" />
+            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[footerStyles.bottomButton]}
           onPress={() => router.push('/home')}
@@ -252,7 +245,6 @@ const ServicePage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
@@ -262,7 +254,6 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/bill')}
@@ -272,7 +263,6 @@ const ServicePage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Bills</Text>
         </TouchableOpacity>
-        
       </View>
     </SafeAreaView>
   );

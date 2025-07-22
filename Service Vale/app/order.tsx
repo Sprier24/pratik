@@ -125,8 +125,10 @@ const OrderScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+
   const sendNativeNotifyPush = async (title: string, message: string) => {
     console.log('📲 Attempting push...');
+
     try {
       const response = await fetch('https://app.nativenotify.com/api/notification', {
         method: 'POST',
@@ -141,6 +143,7 @@ const OrderScreen = () => {
           to: 'all',
         }),
       });
+
       const resultText = await response.text();
       console.log('✅ Native Notify response:', resultText);
 
@@ -154,6 +157,7 @@ const OrderScreen = () => {
 
   const sendIndiePushNotification = async (subID: string, title: string, message: string) => {
     console.log('📲 Attempting Indie push to:', subID);
+
     try {
       const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
         subID,
@@ -162,6 +166,7 @@ const OrderScreen = () => {
         title,
         message
       });
+
       console.log('✅ Indie push response:', response.data);
       return true;
     } catch (err) {
@@ -208,7 +213,7 @@ const OrderScreen = () => {
           serviceDate: sortableDate,
           serviceTime: sortableTime
         }
-      );
+      ); 
 
       const pushSuccess = await sendIndiePushNotification(
         formData.serviceboyEmail,
@@ -224,7 +229,7 @@ const OrderScreen = () => {
         );
       }
 
-      Alert.alert('Success', 'Order created and notification sent!');
+      Alert.alert('Success', 'Order created successfully.');
 
       router.push({
         pathname: '/pending',
@@ -279,21 +284,18 @@ const OrderScreen = () => {
                   <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
                 </View>
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Email Address</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
                 </View>
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
                 </View>
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Service Type</Text>
                 <View style={styles.readOnlyContainer}>
@@ -301,7 +303,6 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
-
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Service Schedule</Text>
               <View style={styles.field}>
@@ -322,7 +323,6 @@ const OrderScreen = () => {
                   />
                 )}
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
                 <View style={styles.timeInputContainer}>
@@ -334,7 +334,6 @@ const OrderScreen = () => {
                     keyboardType="numbers-and-punctuation"
                     maxLength={5}
                   />
-
                   <View style={styles.timePeriodContainer}>
                     <TouchableOpacity
                       style={[
@@ -368,7 +367,6 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
-
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Customer Details</Text>
               <View style={styles.field}>
@@ -382,7 +380,6 @@ const OrderScreen = () => {
                   placeholder="Enter customer name"
                 />
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number <Text style={styles.required}>*</Text></Text>
                 <View style={styles.inputContainer}>
@@ -397,7 +394,6 @@ const OrderScreen = () => {
                   />
                 </View>
               </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>Service Address</Text>
                 <TextInput
@@ -410,11 +406,8 @@ const OrderScreen = () => {
                 />
               </View>
             </View>
-
             <Text style={styles.sectionTitle}>Billing Information</Text>
-
             <Text style={styles.label1}>Service Charge</Text>
-
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
               <TextInput
@@ -426,7 +419,6 @@ const OrderScreen = () => {
               />
             </View>
           </View>
-
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
@@ -436,7 +428,6 @@ const OrderScreen = () => {
               {isSubmitting ? 'Creating...' : 'Create Service Order'}
             </Text>
           </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
