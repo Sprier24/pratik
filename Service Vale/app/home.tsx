@@ -437,7 +437,7 @@ const AdminHomeScreen = () => {
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
-                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
+                <MaterialIcons name="pending-actions" size={25} color="#DD6B20" />
               </View>
               <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>

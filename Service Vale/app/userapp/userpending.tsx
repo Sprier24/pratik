@@ -313,8 +313,8 @@ const handleComplete = async (id: string) => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons
-            name="tools"
+          <MaterialIcons
+            name="construction"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
@@ -330,7 +330,7 @@ const handleComplete = async (id: string) => {
               }
             })}
           >
-            <MaterialIcons name="photo-camera" size={24} color="#5E72E4" />
+            <MaterialIcons name="photo-camera" size={25} color="#5E72E4" />
           </TouchableOpacity>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
@@ -339,21 +339,21 @@ const handleComplete = async (id: string) => {
       </View>
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={18} color="#718096" />
+          <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={18} color="#718096" />
+          <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={18} color="#718096" />
+          <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
@@ -361,7 +361,7 @@ const handleComplete = async (id: string) => {
       </View>
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="access-time" size={16} color="#718096" />
+          <MaterialIcons name="access-time" size={18} color="#718096" />
           <Text style={styles.dateText}>
             {item.serviceDate} • {item.serviceTime}
           </Text>
@@ -384,7 +384,7 @@ const handleComplete = async (id: string) => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/userapp/home')}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
@@ -397,7 +397,7 @@ const handleComplete = async (id: string) => {
           style={styles.filterButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <Feather name="calendar" size={18} color="#5E72E4" />
+          <MaterialIcons name="today" size={20} color="#5E72E4" />
           <Text style={styles.filterButtonText}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -407,7 +407,7 @@ const handleComplete = async (id: string) => {
             style={styles.clearFilterButton}
             onPress={clearDateFilter}
           >
-            <Feather name="x" size={16} color="#5E72E4" />
+            <Feather name="x" size={15} color="#5E72E4" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
         )}
@@ -430,7 +430,7 @@ const handleComplete = async (id: string) => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="pending-actions" size={48} color="#A0AEC0" />
+          <MaterialIcons name="pending-actions" size={50} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {dateFilter
               ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`

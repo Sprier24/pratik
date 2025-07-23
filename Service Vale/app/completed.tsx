@@ -321,7 +321,7 @@ const AdminCompletedServicesScreen = () => {
 
   const handleMoveToPending = async (id: string) => {
     Alert.alert(
-      'Move to Pending',
+      'Back to Pending',
       'Are you sure you want to move this service back to pending?',
       [
         { text: 'Cancel', style: 'cancel' },

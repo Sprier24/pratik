@@ -344,7 +344,7 @@ const HomeScreenuser = () => {
         >
           <View style={styles.commissionCardHeader}>
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="engineering" size={24} color="#FFF" />
+              <MaterialIcons name="engineering" size={25} color="#FFF" />
             </View>
             <Text style={styles.commissionCardTitle}>Commission Details</Text>
           </View>
@@ -375,7 +375,7 @@ const HomeScreenuser = () => {
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
-                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
+                <MaterialIcons name="pending-actions" size={25} color="#DD6B20" />
               </View>
               <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>
@@ -413,7 +413,7 @@ const HomeScreenuser = () => {
           onPress={() => router.push('/userapp/userprofile')}
         >
           <View style={styles.bottomButtonIcon}>
-            <Feather name="user" size={20} color="#5E72E4" />
+            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
           </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>
@@ -421,7 +421,7 @@ const HomeScreenuser = () => {
           style={[styles.bottomButton, styles.bottomButtonActive]}
         >
           <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
-            <Feather name="home" size={20} color="#FFF" />
+            <Feather name="home" size={25} color="#FFF" />
           </View>
           <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Home</Text>
         </TouchableOpacity>

@@ -171,7 +171,7 @@ const PhotoComparisonPage = () => {
         }
     };
 
-   
+
 
     const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
         console.log('📲 Attempting push...');
@@ -211,7 +211,7 @@ const PhotoComparisonPage = () => {
                 DATABASE_ID,
                 ADMIN_USERS_COLLECTION,
                 [
-                    Query.equal('isAdmin', true), 
+                    Query.equal('isAdmin', true),
                     Query.limit(100)
                 ]
             );
@@ -427,7 +427,7 @@ const PhotoComparisonPage = () => {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.back()}>
-                        <Feather name="arrow-left" size={24} color="#FFF" />
+                        <Feather name="arrow-left" size={25} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Click Photos</Text>
                 </View>
@@ -453,7 +453,7 @@ const PhotoComparisonPage = () => {
                         >
                             <MaterialIcons
                                 name="photo-camera"
-                                size={24}
+                                size={25}
                                 color={beforeImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, beforeImage && styles.photoButtonTextActive]}>
@@ -466,7 +466,7 @@ const PhotoComparisonPage = () => {
                         >
                             <MaterialIcons
                                 name="photo-camera"
-                                size={24}
+                                size={25}
                                 color={afterImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, afterImage && styles.photoButtonTextActive]}>
@@ -539,7 +539,7 @@ const PhotoComparisonPage = () => {
                         <ActivityIndicator color="#FFF" />
                     ) : (
                         <>
-                            <MaterialIcons name="save" size={20} color="#FFF" />
+                            <MaterialIcons name="photo-library" size={20} color="#FFF" />
                             <Text style={styles.submitButtonText}>Save Photo</Text>
                         </>
                     )}
@@ -549,7 +549,7 @@ const PhotoComparisonPage = () => {
                     <Text style={styles.sectionTitle}>Your History</Text>
                     {photoSets.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
+                            <MaterialIcons name="photo-library" size={50} color="#CBD5E0" />
                             <Text style={styles.emptyText}>No photos yet</Text>
                         </View>
                     ) : (
@@ -585,7 +585,7 @@ const PhotoComparisonPage = () => {
                                             </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholder}>
-                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                                <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
                                                 <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
@@ -604,7 +604,7 @@ const PhotoComparisonPage = () => {
                                             </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholder}>
-                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
+                                                <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
                                                 <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
@@ -625,7 +625,7 @@ const PhotoComparisonPage = () => {
                                         onPress={() => saveBothImages(item)}
                                         disabled={isLoading}
                                     >
-                                        <MaterialIcons name="save-alt" size={20} color="#FFF" />
+                                        <MaterialIcons name="save" size={20} color="#FFF" />
                                         <Text style={styles.actionButtonText}>Save to Gallery</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity

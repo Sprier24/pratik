@@ -131,7 +131,7 @@ export const styles = StyleSheet.create({
     width: "48%",
   },
   photoLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     color: "#4A5568",
     marginBottom: 8,
@@ -151,7 +151,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   placeholderText: {
-    fontSize: 12,
+    fontSize: 15,
     color: "#A0AEC0",
     marginTop: 4,
   },
@@ -166,7 +166,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     marginLeft: 8,
   },

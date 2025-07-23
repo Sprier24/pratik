@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
     gap: 15,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
     color: "#FFF",
   },
@@ -84,7 +84,7 @@ export const styles = StyleSheet.create({
   },
   clearFilterText: {
     color: "#5E72E4",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   activeFilter: {
@@ -351,7 +351,7 @@ export const styles = StyleSheet.create({
   },
   addSignatureText: {
     color: "#5E72E4",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   submitButton: {
@@ -367,7 +367,7 @@ export const styles = StyleSheet.create({
   },
   submitText: {
     color: "#FFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   billsListContainer: {
@@ -498,7 +498,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
     color: "#2D3748",
   },
@@ -547,7 +547,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
   detailSectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: "#2D3748",
     marginBottom: 15,
@@ -613,7 +613,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   signatureModalContainer: {

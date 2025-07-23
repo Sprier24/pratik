@@ -64,14 +64,14 @@ export const styles = StyleSheet.create({
         elevation: 3,
     },
     name: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "600",
         color: "#2D3748",
         marginBottom: 4,
         textAlign: "center",
     },
     email: {
-        fontSize: 16,
+        fontSize: 15,
         color: "#718096",
         marginBottom: 20,
         textAlign: "center",
@@ -80,7 +80,7 @@ export const styles = StyleSheet.create({
         marginBottom: 20,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "600",
         color: "#4A5568",
         marginBottom: 12,

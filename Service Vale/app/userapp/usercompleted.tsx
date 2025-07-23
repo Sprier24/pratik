@@ -279,8 +279,8 @@ const CompletedServicesScreenUser = () => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialCommunityIcons
-            name="tools"
+          <MaterialIcons
+            name="construction"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
@@ -293,21 +293,21 @@ const CompletedServicesScreenUser = () => {
       </View>
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={18} color="#718096" />
+          <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={18} color="#718096" />
+          <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={18} color="#718096" />
+          <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
@@ -315,7 +315,7 @@ const CompletedServicesScreenUser = () => {
       </View>
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="check-circle" size={16} color="#718096" />
+          <MaterialIcons name="check-circle" size={18} color="#718096" />
           <Text style={styles.dateText}>
             {item.completedAt
               ? `${formatToAmPm(item.completedAt)}`
@@ -328,7 +328,7 @@ const CompletedServicesScreenUser = () => {
           style={styles.createBillButton}
           onPress={() => handleCreateBill(item)}
         >
-          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
+          <MaterialIcons name="receipt-long" size={20} color="#FFF" />
           <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -336,7 +336,7 @@ const CompletedServicesScreenUser = () => {
           onPress={() => handleMoveToPending(item.id)}
         >
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
-          <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
+          <Text style={styles.moveToPendingButtonText}>Back to Pending</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -353,7 +353,7 @@ const CompletedServicesScreenUser = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={24} color="#FFF" />
+            <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
@@ -366,7 +366,7 @@ const CompletedServicesScreenUser = () => {
           style={styles.filterButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <Feather name="calendar" size={18} color="#5E72E4" />
+          <MaterialIcons name="today" size={20} color="#5E72E4" />
           <Text style={styles.filterButtonText}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -376,7 +376,7 @@ const CompletedServicesScreenUser = () => {
             style={styles.clearFilterButton}
             onPress={clearDateFilter}
           >
-            <Feather name="x" size={16} color="#5E72E4" />
+            <Feather name="x" size={15} color="#5E72E4" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
         )}

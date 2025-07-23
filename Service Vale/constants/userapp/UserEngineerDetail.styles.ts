@@ -96,12 +96,12 @@ export const styles = StyleSheet.create({
     borderTopColor: '#DD6B20',
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#718096',
     marginBottom: 8,
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2D3748',
   },
@@ -126,7 +126,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#5E72E4',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#718096',
   },

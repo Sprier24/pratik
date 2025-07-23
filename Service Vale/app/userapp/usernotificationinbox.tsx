@@ -31,7 +31,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             const user = await account.get();
             return user.email;
         } catch (error) {
-            console.error("Error getting current user:", error);
+            console.error("Error getting current engineer :", error);
             return null;
         }
     };
@@ -42,7 +42,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
         try {
             const userEmail = await getCurrentUserEmail();
             if (!userEmail) {
-                Alert.alert("Error", "Could not fetch user information");
+                Alert.alert("Error", "Could not fetch engineer information");
                 return;
             }
             setSubId(userEmail);
@@ -53,10 +53,10 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
                 10, 
                 0   
             );
-            console.log("Indie notifications: ", notifications);
+            console.log("Indie notifications : ", notifications);
             setData(notifications);
         } catch (error) {
-            console.error("Error fetching indie notifications:", error);
+            console.error("Error fetching indie notifications :", error);
             Alert.alert("Error", "Failed to load notifications");
         } finally {
             setRefreshing(false);
@@ -74,7 +74,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
 
     const handleDeleteNotification = async (notificationId: string) => {
         if (!subId) {
-            Alert.alert("Error", "User not identified");
+            Alert.alert("Error", "Engineer not identified");
             return;
         }
 
@@ -89,14 +89,14 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             setData(updatedNotifications);
             Alert.alert("Success", "Notification deleted");
         } catch (error) {
-            console.error("Error deleting notification:", error);
+            console.error("Error deleting notification :", error);
             Alert.alert("Error", "Failed to delete notification");
         }
     };
 
     const clearAllNotifications = async () => {
         if (!subId) {
-            Alert.alert("Error", "User not identified");
+            Alert.alert("Error", "Engineer not identified");
             return;
         }
 
@@ -112,9 +112,9 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
 
             await Promise.all(deletePromises);
             setData([]); 
-            Alert.alert("Success", "All notifications cleared");
+            Alert.alert("Success", "All notifications deleted");
         } catch (error) {
-            console.error("Error clearing notifications:", error);
+            console.error("Error deleting notifications :", error);
             Alert.alert("Error", "Failed to clear notifications");
         }
     };
@@ -134,13 +134,13 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.push('/userapp/home')}>
-                        <MaterialIcons name="arrow-back" size={24} color="#fff" />
+                        <MaterialIcons name="arrow-back" size={25} color="#fff" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Notifications</Text>
                 </View>
                 {data.length > 0 ? (
                     <TouchableOpacity onPress={clearAllNotifications}>
-                        <MaterialIcons name="delete" size={24} color="#fff" />
+                        <MaterialIcons name="delete" size={25} color="#fff" />
                     </TouchableOpacity>
                 ) : (
                     <View style={{ width: 24 }} />
@@ -158,7 +158,7 @@ export default function UserNotificationInbox({ navigation, AppState }: Notifica
             >
                 {data.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <Ionicons name="notifications-off" size={48} color="#ccc" />
+                        <Ionicons name="notifications-off" size={50} color="#ccc" />
                         <Text style={styles.noNotificationText}>No notifications</Text>
                         <Text style={styles.emptySubtext}>Pull down to refresh</Text>
                     </View>
