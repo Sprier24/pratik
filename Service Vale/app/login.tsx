@@ -8,10 +8,6 @@ import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import registerNNPushToken from 'native-notify';
-import { registerIndieID, unregisterIndieDevice } from 'native-notify';
-import axios from 'axios';
-import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
@@ -110,53 +106,25 @@ const LoginScreen = () => {
         );
     }
 
-
     const handleLogin = async () => {
         if (email === '' || password === '') {
             Alert.alert('Error', 'Please enter email address and password both');
         } else if (!emailRegex.test(email)) {
             Alert.alert('Error', 'Please enter a valid email');
         } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must contain at least one uppercase letter, one number, and one special character.');
+            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
         } else {
             try {
                 await account.createEmailPasswordSession(email, password);
                 const user = await account.get();
                 const isAdmin = user.labels?.includes('admin');
-                try {
-                    await registerIndieID(user.email, APP_ID, APP_TOKEN);
-                    console.log('Registered for Indie push notifications');
-                } catch (pushError) {
-                    console.warn('Push notification registration failed :', pushError);
-                }
-                if (isAdmin) {
-                    try {
-                        await databases.createDocument(
-                            '681c428b00159abb5e8b',      
-                            '68773d3800020869e8fc', 
-                            ID.unique(),            
-                            {
-                                userId: user.$id,
-                                email: user.email,
-                                isAdmin: true
-                            }
-
-                        );
-                        console.log('Admin login saved');
-                    } catch (logError) {
-                        console.warn('Failed to save admin login :', logError);
-                    }
-                }
-
                 Alert.alert('Success', `Welcome to Service Vale`);
                 resetFields();
-
                 if (isAdmin) {
                     router.replace('/home');
                 } else {
                     router.replace('/userapp/home');
                 }
-
             } catch (error: any) {
                 Alert.alert('Login Error', error?.message || 'An unknown error occurred');
             }
@@ -482,4 +450,3 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
-registerNNPushToken(APP_ID, APP_TOKEN);

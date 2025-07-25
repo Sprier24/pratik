@@ -38,7 +38,7 @@ const CompletedServicesScreenUser = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const params = useLocalSearchParams();
   const router = useRouter();
- const [limit] = useState(25); 
+  const [limit] = useState(25);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,9 +49,9 @@ const CompletedServicesScreenUser = () => {
       const currentUser = await account.get();
       const email = currentUser.email;
       setUserEmail(email);
-      
+
       const currentOffset = loadMore ? offset : 0;
-      
+
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -71,22 +71,22 @@ const CompletedServicesScreenUser = () => {
           [
             Query.equal('status', 'completed'),
             Query.equal('serviceboyEmail', email),
-            Query.select(['$id']) 
+            Query.select(['$id'])
           ]
         );
         setTotalCount(countResponse.total);
       }
 
       const formattedServices = response.documents.map(doc => {
-        let formattedCompletedAt = '';
-        if (doc.completedAt) {
-          formattedCompletedAt = formatToAmPm(doc.completedAt);
-        }
+        const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
+        let formattedCompletedAt = formatToAmPm(rawCompletedAt);
+
         let serviceDateDisplay = '';
         if (doc.serviceDate) {
           const [year, month, day] = doc.serviceDate.split('-');
           serviceDateDisplay = `${day}/${month}/${year}`;
         }
+
         let serviceTimeDisplay = '';
         if (doc.serviceTime) {
           const [hours, minutes] = doc.serviceTime.split(':');
@@ -95,6 +95,7 @@ const CompletedServicesScreenUser = () => {
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
+
         return {
           id: doc.$id,
           serviceType: doc.serviceType,
@@ -103,13 +104,12 @@ const CompletedServicesScreenUser = () => {
           phone: doc.phoneNumber,
           amount: doc.billAmount,
           status: doc.status,
-          date: serviceDateDisplay,
+          date: rawCompletedAt ? new Date(rawCompletedAt).toLocaleString() : '',
           serviceBoy: doc.serviceboyName,
+          serviceboyEmail: doc.serviceboyEmail,
           serviceDate: serviceDateDisplay,
           serviceTime: serviceTimeDisplay,
-          serviceboyEmail: doc.serviceboyEmail,
-          completedAt: doc.completedAt,
-          formattedCompletedAt,
+          completedAt: rawCompletedAt
         };
       });
 
@@ -234,53 +234,53 @@ const CompletedServicesScreenUser = () => {
     });
   };
 
- const handleMoveToPending = async (id: string) => {
-  Alert.alert(
-    'Move to Pending',
-    'Are you sure you want to move this service back to pending?',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Move',
-        onPress: async () => {
-          try {
-            await databases.updateDocument(
-              DATABASE_ID,
-              COLLECTION_ID,
-              id,
-              { status: 'pending' }
-            );
-            setAllServices(prev => prev.filter(service => service.id !== id));
-            setServices(prev => prev.filter(service => service.id !== id));
-            setTotalCount(prev => prev - 1); 
-            const movedService = allServices.find(service => service.id === id);
-            if (movedService) {
-              router.push({
-                pathname: '/userapp/userpending',
-                params: {
-                  movedService: JSON.stringify({
-                    ...movedService,
-                    status: 'pending'
-                  })
-                }
-              });
+  const handleMoveToPending = async (id: string) => {
+    Alert.alert(
+      'Move to Pending',
+      'Are you sure you want to move this service back to pending?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Move',
+          onPress: async () => {
+            try {
+              await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTION_ID,
+                id,
+                { status: 'pending' }
+              );
+              setAllServices(prev => prev.filter(service => service.id !== id));
+              setServices(prev => prev.filter(service => service.id !== id));
+              setTotalCount(prev => prev - 1);
+              const movedService = allServices.find(service => service.id === id);
+              if (movedService) {
+                router.push({
+                  pathname: '/userapp/userpending',
+                  params: {
+                    movedService: JSON.stringify({
+                      ...movedService,
+                      status: 'pending'
+                    })
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error moving service:', error);
+              Alert.alert('Error', 'Failed to move service to pending');
             }
-          } catch (error) {
-            console.error('Error moving service:', error);
-            Alert.alert('Error', 'Failed to move service to pending');
           }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialIcons
-            name="construction"
+          <MaterialCommunityIcons
+            name="tools"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
@@ -293,21 +293,21 @@ const CompletedServicesScreenUser = () => {
       </View>
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={20} color="#718096" />
+          <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={20} color="#718096" />
+          <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={20} color="#718096" />
+          <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
@@ -315,7 +315,7 @@ const CompletedServicesScreenUser = () => {
       </View>
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="check-circle" size={18} color="#718096" />
+          <MaterialIcons name="check-circle" size={16} color="#718096" />
           <Text style={styles.dateText}>
             {item.completedAt
               ? `${formatToAmPm(item.completedAt)}`
@@ -328,7 +328,7 @@ const CompletedServicesScreenUser = () => {
           style={styles.createBillButton}
           onPress={() => handleCreateBill(item)}
         >
-          <MaterialIcons name="receipt-long" size={20} color="#FFF" />
+          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
           <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -336,7 +336,7 @@ const CompletedServicesScreenUser = () => {
           onPress={() => handleMoveToPending(item.id)}
         >
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
-          <Text style={styles.moveToPendingButtonText}>Back to Pending</Text>
+          <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -353,20 +353,20 @@ const CompletedServicesScreenUser = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={25} color="#FFF" />
+            <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
-       <View style={styles.headerCount}>
-                 <Text style={styles.headerCountText}>{totalCount}</Text>
-               </View>
+        <View style={styles.headerCount}>
+          <Text style={styles.headerCountText}>{totalCount}</Text>
+        </View>
       </View>
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <MaterialIcons name="today" size={20} color="#5E72E4" />
+          <Feather name="calendar" size={18} color="#5E72E4" />
           <Text style={styles.filterButtonText}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -376,7 +376,7 @@ const CompletedServicesScreenUser = () => {
             style={styles.clearFilterButton}
             onPress={clearDateFilter}
           >
-            <Feather name="x" size={15} color="#5E72E4" />
+            <Feather name="x" size={16} color="#5E72E4" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
         )}
@@ -389,12 +389,12 @@ const CompletedServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
-        {loading && !refreshing ? (
+      {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5E72E4" />
         </View>
       ) : services.length > 0 ? (
-       <FlatList
+        <FlatList
           data={services}
           renderItem={renderServiceItem}
           keyExtractor={(item) => item.id}

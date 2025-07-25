@@ -60,7 +60,7 @@ const ProfileScreen = () => {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.back()}>
-                        <Feather name="arrow-left" size={25} color="#FFF" />
+                        <Feather name="arrow-left" size={24} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Engineer Profile</Text>
                 </View>
@@ -68,8 +68,8 @@ const ProfileScreen = () => {
 
             <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} >
                 <View style={styles.profileImageContainer}>
-                    <MaterialIcons
-                        name="engineering"
+                    <MaterialCommunityIcons
+                        name="account-circle"
                         size={120}
                         color="#5E72E4"
                     />
@@ -89,7 +89,7 @@ const ProfileScreen = () => {
                                 <Text style={styles.infoText}>Address : {user.address || 'Not provided'}</Text>
                             </View>
                             <View style={styles.infoItem}>
-                                <MaterialIcons name="home" size={20} color="#5E72E4" />
+                                <MaterialIcons name="location-city" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Hometown : {user.city || 'Not provided'}</Text>
                             </View>
                         </View>
@@ -113,7 +113,7 @@ const ProfileScreen = () => {
                     style={[styles.bottomButton, styles.bottomButtonActive]}
                 >
                     <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
-                        <MaterialIcons name="engineering" size={25} color="#FFF" />
+                        <Feather name="user" size={20} color="#FFF" />
                     </View>
                     <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Profile</Text>
                 </TouchableOpacity>

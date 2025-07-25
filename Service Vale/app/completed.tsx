@@ -86,15 +86,15 @@ const AdminCompletedServicesScreen = () => {
         ]
       );
       const formattedServices = response.documents.map(doc => {
-        let formattedCompletedAt = '';
-        if (doc.completedAt) {
-          formattedCompletedAt = formatToAmPm(doc.completedAt);
-        }
+        const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
+        let formattedCompletedAt = formatToAmPm(rawCompletedAt);
+
         let serviceDateDisplay = '';
         if (doc.serviceDate) {
           const [year, month, day] = doc.serviceDate.split('-');
           serviceDateDisplay = `${day}/${month}/${year}`;
         }
+
         let serviceTimeDisplay = '';
         if (doc.serviceTime) {
           const [hours, minutes] = doc.serviceTime.split(':');
@@ -103,6 +103,7 @@ const AdminCompletedServicesScreen = () => {
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
+
         return {
           id: doc.$id,
           serviceType: doc.serviceType,
@@ -111,12 +112,12 @@ const AdminCompletedServicesScreen = () => {
           phone: doc.phoneNumber,
           amount: doc.billAmount,
           status: doc.status,
-          date: doc.completedAt ? new Date(doc.completedAt).toLocaleString() : new Date(doc.$createdAt).toLocaleString(),
+          date: rawCompletedAt ? new Date(rawCompletedAt).toLocaleString() : '',
           serviceBoy: doc.serviceboyName,
           serviceboyEmail: doc.serviceboyEmail,
           serviceDate: serviceDateDisplay,
           serviceTime: serviceTimeDisplay,
-          completedAt: doc.completedAt
+          completedAt: rawCompletedAt
         };
       });
       if (isLoadMore) {
@@ -321,7 +322,7 @@ const AdminCompletedServicesScreen = () => {
 
   const handleMoveToPending = async (id: string) => {
     Alert.alert(
-      'Back to Pending',
+      'Move to Pending',
       'Are you sure you want to move this service back to pending?',
       [
         { text: 'Cancel', style: 'cancel' },

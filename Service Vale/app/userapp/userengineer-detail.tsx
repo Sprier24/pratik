@@ -300,7 +300,7 @@ const UserEngineerDetail = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={25} color="#FFF" />
+            <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
         <Text style={styles.headerTitle}>Commission Details</Text>
         </View>
@@ -308,7 +308,7 @@ const UserEngineerDetail = () => {
           onPress={() => setShowDatePicker(true)}
           style={styles.calendarButton}
         >
-          <MaterialIcons name="calendar-today" size={20} color="#FFF" />
+          <Feather name="calendar" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
 

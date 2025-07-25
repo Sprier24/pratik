@@ -225,7 +225,7 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   detailText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#4A5568",
     marginLeft: 8,
     flex: 1,

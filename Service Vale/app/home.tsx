@@ -8,14 +8,11 @@ import { Query } from 'react-native-appwrite';
 import { styles } from '../constants/HomeScreen.styles';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getUnreadNotificationInboxCount } from 'native-notify';
-import { useFocusEffect } from '@react-navigation/native';
-import { registerIndieID, unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
-import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
 const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
 const PAYMENTS_COLLECTION_ID = 'commission_ID';
 const { width } = Dimensions.get('window');
 const MONTHLY_REVENUE_COLLECTION_ID = 'monthly_revenue';
@@ -31,43 +28,8 @@ const AdminHomeScreen = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const insets = useSafeAreaInsets();
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [unreadIndieNotificationCount, setUnreadIndieNotificationCount] = useState(0);
-
-  const fetchUnreadIndieCount = async () => {
-    try {
-      const user = await account.get();
-      const userEmail = user.email;
-
-      const count = await getUnreadIndieNotificationInboxCount(
-        userEmail,
-        APP_ID,
-        APP_TOKEN
-      );
-
-      console.log("Unread Indie notifications count:", count);
-      setUnreadIndieNotificationCount(count);
-    } catch (error) {
-      console.error("Error fetching unread indie count:", error);
-      try {
-        const regularCount = await getUnreadNotificationInboxCount(APP_ID, APP_TOKEN);
-        setUnreadIndieNotificationCount(regularCount);
-      } catch (fallbackError) {
-        console.error("Fallback count failed:", fallbackError);
-      }
-    }
-  };
-
-  useEffect(() => {
-    fetchUnreadIndieCount();
-  }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchUnreadIndieCount();
-    }, [])
-  );
 
   const handleLogout = () => {
     Alert.alert(
@@ -83,40 +45,9 @@ const AdminHomeScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const user = await account.get();
-              const userEmail = user.email;
-              const userId = user.$id;
-              try {
-                await unregisterIndieDevice(userEmail, APP_ID, APP_TOKEN);
-                console.log('Unregistered from Indie push notifications');
-              } catch (unregisterError) {
-                console.warn('Failed to unregister from push notifications:', unregisterError);
-              }
-
-              try {
-                const result = await databases.listDocuments(
-                  '681c428b00159abb5e8b',
-                  '68773d3800020869e8fc',
-                  [Query.equal('userId', userId)]
-                );
-
-                if (result.documents.length > 0) {
-                  const documentId = result.documents[0].$id;
-
-                  await databases.deleteDocument(
-                    '681c428b00159abb5e8b',
-                    '68773d3800020869e8fc',
-                    documentId
-                  );
-                  console.log('Admin login record deleted');
-                }
-              } catch (deleteError) {
-                console.warn('Failed to delete admin login record:', deleteError);
-              }
               await account.deleteSession('current');
               router.replace('/login');
             } catch (error) {
-              console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout');
             }
           },
@@ -125,7 +56,6 @@ const AdminHomeScreen = () => {
       { cancelable: true }
     );
   };
-
 
   const fetchRevenueData = async () => {
     try {
@@ -194,23 +124,21 @@ const AdminHomeScreen = () => {
     try {
       setRefreshing(true);
 
-      // Query specifically for pending orders count without pagination
       const pendingResponse = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
         [
           Query.equal('status', 'pending'),
-          Query.select(['$id']) // Only select IDs to reduce payload
+          Query.select(['$id'])
         ]
       );
 
-      // Query specifically for completed orders count without pagination
       const completedResponse = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
         [
           Query.notEqual('status', 'pending'),
-          Query.select(['$id']) // Only select IDs to reduce payload
+          Query.select(['$id'])
         ]
       );
 
@@ -289,11 +217,25 @@ const AdminHomeScreen = () => {
     }
   };
 
+  const fetchUnreadNotifications = async () => {
+    try {
+      const res = await databases.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        [Query.equal('isRead', false)]
+      );
+      setUnreadCount(res.total);
+    } catch (error) {
+      console.error('Notification fetch error:', error);
+    }
+  };
+
   const fetchAllData = async () => {
     setIsLoading(true);
     await Promise.all([
       fetchRevenueData(),
       fetchOrders(),
+      fetchUnreadNotifications(),
       fetchCommissionData()
     ]);
     setIsLoading(false);
@@ -323,16 +265,12 @@ const AdminHomeScreen = () => {
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.notificationIcon}
-            onPress={() => router.push('/NotificationInbox')}
+            onPress={() => router.push('/notification')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
-            {(unreadIndieNotificationCount > 0 || unreadNotificationCount > 0) && (
+            {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {Math.max(unreadIndieNotificationCount, unreadNotificationCount) > 9
-                    ? '9+'
-                    : Math.max(unreadIndieNotificationCount, unreadNotificationCount)}
-                </Text>
+                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -437,7 +375,7 @@ const AdminHomeScreen = () => {
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
-                <MaterialIcons name="pending-actions" size={25} color="#DD6B20" />
+                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
               </View>
               <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>

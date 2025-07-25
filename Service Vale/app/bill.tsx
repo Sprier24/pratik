@@ -862,12 +862,13 @@ const BillPage = () => {
         </View>
       </Modal>
 
-      <KeyboardAvoidingView
+      
+          {isFormVisible ? (        
+            <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-          {isFormVisible ? (        
-            <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
 
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
@@ -1050,6 +1051,7 @@ const BillPage = () => {
               </TouchableOpacity>
             </View>
             </ScrollView>
+             </KeyboardAvoidingView>
           ) : (
             <View style={styles.billsListContainer}>
               
@@ -1096,6 +1098,8 @@ const BillPage = () => {
                       </View>
                     </TouchableOpacity>
                   )}
+                  style={{ flex: 1 }}
+                  contentContainerStyle={styles.billsListContent} 
                   ListEmptyComponent={
                     <View style={styles.emptyState}>
                       <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
@@ -1125,13 +1129,12 @@ const BillPage = () => {
                   onEndReachedThreshold={0.5}
                   refreshing={isLoading}
                   onRefresh={() => fetchBills(1)}
-                  contentContainerStyle={styles.billsListContainer}
                 />
               )}
             </View>
           )}
         
-      </KeyboardAvoidingView>
+     
 
       <Modal
         visible={isBillDetailVisible}

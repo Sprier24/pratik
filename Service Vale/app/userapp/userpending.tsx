@@ -8,13 +8,10 @@ import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { Linking } from 'react-native';
-import axios from 'axios';
-import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
 const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
-const ADMIN_USERS_COLLECTION = '68773d3800020869e8fc';
 
 type Service = {
   id: string;
@@ -45,123 +42,100 @@ const PendingServicesScreenUser = () => {
   const router = useRouter();
 
   const fetchServices = async () => {
-  try {
-    const currentUser = await account.get();
-    const email = currentUser.email;
-    setUserEmail(email);
-        const response = await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [
-        Query.equal('status', 'pending'),
-        Query.equal('serviceboyEmail', email),
-        Query.orderAsc('serviceDate'),
-        Query.orderAsc('serviceTime'),
-        Query.limit(100) 
-      ]
-    );
-
-    const formattedServices = response.documents.map(doc => {
-      const [year, month, day] = doc.serviceDate.split('-');
-      const displayDate = `${day}/${month}/${year}`;
-      const [hours, minutes] = doc.serviceTime.split(':');
-      const hourNum = parseInt(hours);
-      const ampm = hourNum >= 12 ? 'PM' : 'AM';
-      const displayHour = hourNum % 12 || 12;
-      const displayTime = `${displayHour}:${minutes} ${ampm}`;
-      return {
-        id: doc.$id,
-        serviceType: doc.serviceType,
-        clientName: doc.clientName,
-        address: doc.address,
-        phone: doc.phoneNumber,
-        amount: doc.billAmount,
-        status: doc.status,
-        date: new Date(doc.$createdAt).toLocaleString(),
-        serviceBoy: doc.serviceboyName,
-        serviceDate: displayDate,
-        serviceTime: displayTime,
-        serviceboyEmail: doc.serviceboyEmail,
-        serviceboyContact: doc.serviceboyContact,
-        sortDate: doc.serviceDate,
-        sortTime: doc.serviceTime
-      };
-    });
-    
-    formattedServices.sort((a, b) => {
-      if (a.sortDate !== b.sortDate) {
-        return a.sortDate.localeCompare(b.sortDate);
-      }
-      return a.sortTime.localeCompare(b.sortTime);
-    });
-    
-    setAllServices(formattedServices);
-    setServices(formattedServices);
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    Alert.alert('Error', 'Failed to load services');
-  } finally {
-    setLoading(false);
-  }
-};
-
-useEffect(() => {
-  fetchServices();
-}, []);
-
-useEffect(() => {
-  if (params.newService) {
     try {
-      const newService = JSON.parse(params.newService as string);
-      if (newService.serviceboyEmail === userEmail) {
-        const formattedService = {
-          id: newService.id,
-          serviceType: newService.serviceType,
-          clientName: newService.clientName,
-          address: newService.address,
-          phone: newService.phoneNumber,
-          amount: `₹${newService.billAmount || '0'}`,
-          status: 'pending',
-          date: 'Just now',
-          serviceBoy: newService.serviceboyName,
-          serviceDate: newService.serviceDate ?
-            newService.serviceDate.split('-').reverse().join('/') : '',
-          serviceTime: newService.serviceTime || '',
-          serviceboyEmail: newService.serviceboyEmail || '',
-          serviceboyContact: newService.serviceboyContact || '',
-          sortDate: newService.serviceDate || '',
-          sortTime: newService.serviceTime || ''
+      const currentUser = await account.get();
+      const email = currentUser.email;
+      setUserEmail(email);
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.equal('status', 'pending'),
+          Query.equal('serviceboyEmail', email),
+          Query.orderAsc('serviceDate'),
+          Query.orderAsc('serviceTime'),
+          Query.limit(100),
+        ]
+      );
+      const formattedServices = response.documents.map(doc => {
+        const [year, month, day] = doc.serviceDate.split('-');
+        const displayDate = `${day}/${month}/${year}`;
+        const [hours, minutes] = doc.serviceTime.split(':');
+        const hourNum = parseInt(hours);
+        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+        const displayHour = hourNum % 12 || 12;
+        const displayTime = `${displayHour}:${minutes} ${ampm}`;
+        return {
+          id: doc.$id,
+          serviceType: doc.serviceType,
+          clientName: doc.clientName,
+          address: doc.address,
+          phone: doc.phoneNumber,
+          amount: doc.billAmount,
+          status: doc.status,
+          date: new Date(doc.$createdAt).toLocaleString(),
+          serviceBoy: doc.serviceboyName,
+          serviceDate: displayDate,
+          serviceTime: displayTime,
+          serviceboyEmail: doc.serviceboyEmail,
+          serviceboyContact: doc.serviceboyContact,
+          sortDate: doc.serviceDate,
+          sortTime: doc.serviceTime
         };
-        
-        setAllServices(prev => {
-          const newServices = [formattedService, ...prev];
-          return newServices.sort((a, b) => {
-            if (a.sortDate !== b.sortDate) {
-              return a.sortDate.localeCompare(b.sortDate);
-            }
-            return a.sortTime.localeCompare(b.sortTime);
-          });
-        });
-        
-        setServices(prev => {
-          if (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter)) {
-            const newServices = [formattedService, ...prev];
-            return newServices.sort((a, b) => {
-              if (a.sortDate !== b.sortDate) {
-                return a.sortDate.localeCompare(b.sortDate);
-              }
-              return a.sortTime.localeCompare(b.sortTime);
-            });
-          }
-          return prev;
-        });
-      }
+      });
+      formattedServices.sort((a, b) => {
+        if (a.sortDate !== b.sortDate) {
+          return a.sortDate.localeCompare(b.sortDate);
+        }
+        return a.sortTime.localeCompare(b.sortTime);
+      });
+      setAllServices(formattedServices);
+      setServices(formattedServices);
     } catch (error) {
-      console.error('Error parsing new service:', error);
+      console.error('Error fetching services:', error);
+      Alert.alert('Error', 'Failed to load services');
+    } finally {
+      setLoading(false);
     }
-  }
-}, [params.newService, userEmail, dateFilter]);
+  };
 
+  useEffect(() => {
+    fetchServices();
+    if (params.newService) {
+      try {
+        const newService = JSON.parse(params.newService as string);
+        if (newService.serviceboyEmail === userEmail) {
+          const formattedService = {
+            id: newService.id,
+            serviceType: newService.serviceType,
+            clientName: newService.clientName,
+            address: newService.address,
+            phone: newService.phoneNumber,
+            amount: `₹${newService.billAmount || '0'}`,
+            status: 'pending',
+            date: 'Just now',
+            serviceBoy: newService.serviceboyName,
+            serviceDate: newService.serviceDate ?
+              newService.serviceDate.split('-').reverse().join('/') : '',
+            serviceTime: newService.serviceTime || '',
+            serviceboyEmail: newService.serviceboyEmail || '',
+            serviceboyContact: newService.serviceboyContact || '',
+            sortDate: newService.serviceDate || '',
+            sortTime: newService.serviceTime || ''
+          };
+          setAllServices(prev => [formattedService, ...prev]);
+          setServices(prev => {
+            if (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter)) {
+              return [formattedService, ...prev];
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing new service:', error);
+      }
+    }
+  }, [params.newService, userEmail]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -188,104 +162,68 @@ useEffect(() => {
     setServices(allServices);
   };
 
+  const createNotification = async (description: string, userEmail: string) => {
+    try {
+      await databases.createDocument(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        ID.unique(),
+        {
+          description,
+          isRead: false,
+          userEmail,
+        }
+      );
+      console.log('Notification created successfully');
+    } catch (error) {
+      console.error('Notification creation failed:', error);
+      throw error;
+    }
+  };
 
-
-      const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
-              console.log('📲 Attempting push...');
-      
+  const handleComplete = async (id: string) => {
+    Alert.alert(
+      'Complete Service',
+      'Are you sure this service is completed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Complete',
+          onPress: async () => {
+            try {
+              await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTION_ID,
+                id,
+                { status: 'completed' }
+              );
+              const completedService = services.find(service => service.id === id);
+              if (!completedService) return;
               try {
-                  const endpoint = subIDs
-                      ? 'https://app.nativenotify.com/api/indie/group/notification'
-                      : 'https://app.nativenotify.com/api/notification';
-      
-                  const payload = subIDs
-                      ? {
-                          subIDs,
-                          appId: APP_ID,
-                          appToken: APP_TOKEN,
-                          title,
-                          message,
-                      }
-                      : {
-                          appId: APP_ID,
-                          appToken: APP_TOKEN,
-                          title,
-                          body: message,
-                          to: 'all',
-                      };
-      
-                  const response = await axios.post(endpoint, payload);
-                  console.log('✅ Native Notify response:', response.data);
-              } catch (error) {
-                  console.error('❌ Push failed:', error);
-                  Alert.alert('Push Failed', 'Failed to send notification');
+                await createNotification(
+                  `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
+                  completedService.serviceboyEmail
+                );
+              } catch (notificationError) {
+                console.warn('Notification failed (service still completed):', notificationError);
               }
-          };
-      
-          const getAdminUsers = async (): Promise<string[]> => {
-              try {
-                  const response = await databases.listDocuments(
-                      DATABASE_ID,
-                      ADMIN_USERS_COLLECTION,
-                      [
-                          Query.equal('isAdmin', true),
-                          Query.limit(100)
-                      ]
-                  );
-      
-                  return response.documents
-                      .filter((doc: any) => doc.email)
-                      .map((doc: any) => doc.email);
-              } catch (error) {
-                  console.error('Error fetching admin users:', error);
-                  return [];
-              }
-          };
-
-
-const handleComplete = async (id: string) => {
-  Alert.alert(
-    'Complete Service',
-    'Are you sure this service is completed?',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Complete',
-        onPress: async () => {
-          try {
-            await databases.updateDocument(
-              DATABASE_ID,
-              COLLECTION_ID,
-              id,
-              { status: 'completed' }
-            );
-            const completedService = services.find(service => service.id === id);
-            if (!completedService) return;
-            const adminTokens = await getAdminUsers();
-            const message = `Service Completed\nEngineer: ${completedService.serviceBoy}\nService: ${completedService.serviceType}\nCustomer: ${completedService.clientName}\nDate: ${completedService.serviceDate} at ${completedService.serviceTime}`;
-            await sendNativeNotifyPush(
-              'Service Completed',
-              message,
-              adminTokens
-            );
-            setServices(prev => prev.filter(service => service.id !== id));
-            setAllServices(prev => prev.filter(service => service.id !== id));
-            router.push({
-              pathname: '/userapp/usercompleted',
-              params: {
-                completedService: JSON.stringify(completedService)
-              }
-            });
-          } catch (error) {
-            console.error('Error completing service:', error);
-            Alert.alert('Error', 'Failed to complete service');
+              setServices(prev => prev.filter(service => service.id !== id));
+              setAllServices(prev => prev.filter(service => service.id !== id));
+              router.push({
+                pathname: '/userapp/usercompleted',
+                params: {
+                  completedService: JSON.stringify(completedService)
+                }
+              });
+            } catch (error) {
+              console.error('Error completing service:', error);
+              Alert.alert('Error', 'Failed to complete service');
+            }
           }
         }
-      }
-    ]
-  );
-};
-
+      ]
+    );
+  };
 
   const sendManualWhatsAppNotification = (service: Service) => {
     const message = `Dear ${service.clientName},\n\n` +
@@ -313,8 +251,8 @@ const handleComplete = async (id: string) => {
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
         <View style={styles.serviceTypeContainer}>
-          <MaterialIcons
-            name="construction"
+          <MaterialCommunityIcons
+            name="tools"
             size={20}
             color="#5E72E4"
             style={styles.serviceIcon}
@@ -330,7 +268,7 @@ const handleComplete = async (id: string) => {
               }
             })}
           >
-            <MaterialIcons name="photo-camera" size={25} color="#5E72E4" />
+            <MaterialIcons name="photo-camera" size={24} color="#5E72E4" />
           </TouchableOpacity>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
@@ -339,21 +277,21 @@ const handleComplete = async (id: string) => {
       </View>
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
-          <MaterialIcons name="person" size={20} color="#718096" />
+          <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="location-on" size={20} color="#718096" />
+          <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialIcons name="phone" size={20} color="#718096" />
+          <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
         <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
+          <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
@@ -361,7 +299,7 @@ const handleComplete = async (id: string) => {
       </View>
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
-          <MaterialIcons name="access-time" size={18} color="#718096" />
+          <MaterialIcons name="access-time" size={16} color="#718096" />
           <Text style={styles.dateText}>
             {item.serviceDate} • {item.serviceTime}
           </Text>
@@ -384,7 +322,7 @@ const handleComplete = async (id: string) => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/userapp/home')}>
-            <Feather name="arrow-left" size={25} color="#FFF" />
+            <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
@@ -397,7 +335,7 @@ const handleComplete = async (id: string) => {
           style={styles.filterButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <MaterialIcons name="today" size={20} color="#5E72E4" />
+          <Feather name="calendar" size={18} color="#5E72E4" />
           <Text style={styles.filterButtonText}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -407,7 +345,7 @@ const handleComplete = async (id: string) => {
             style={styles.clearFilterButton}
             onPress={clearDateFilter}
           >
-            <Feather name="x" size={15} color="#5E72E4" />
+            <Feather name="x" size={16} color="#5E72E4" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
         )}
@@ -430,7 +368,7 @@ const handleComplete = async (id: string) => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <MaterialIcons name="pending-actions" size={50} color="#A0AEC0" />
+          <MaterialIcons name="pending-actions" size={48} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {dateFilter
               ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`

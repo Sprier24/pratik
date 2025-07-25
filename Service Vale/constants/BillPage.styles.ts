@@ -380,10 +380,16 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
-  billsListContainer: {
-    paddingHorizontal: 10,
-    paddingTop: 15,
-    paddingBottom: 50,
+ billsListContainer: {
+  flex: 1,
+  paddingHorizontal: 10,
+  paddingTop: 10,
+  paddingRight: 20,
+  paddingLeft: 20,
+  paddingBottom: 80, 
+  },
+  billsListContent: {
+    paddingBottom: 100, 
   },
   loadingContainer: {
     flex: 1,
@@ -818,5 +824,62 @@ loadingMoreText: {
   marginLeft: 10,
   color: '#718096',
 },
+filterItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF2F7',
+  },
+  filterItemText: {
+    fontSize: 16,
+    color: '#4A5568',
+  },
+  filterItemCount: {
+    fontSize: 14,
+    color: '#A0AEC0',
+  },
+   modalSafeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  modalScrollView: {
+    padding: 16,
+  },
+  detailTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+    signatureSection: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  signatureTitle: {
+    fontSize: 16,
+    color: '#4A5568',
+    marginBottom: 8,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+  },
+    signatureWebView: {
+    flex: 1,
+  },
+   totalAmount: {
+    fontWeight: 'bold',
+    color: '#2B6CB0',
+  },
 });
-

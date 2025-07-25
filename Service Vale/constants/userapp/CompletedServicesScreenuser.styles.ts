@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
   filterButtonText: {
     color: "#5E72E4",
     fontWeight: "500",
-    fontSize: 15,
+    fontSize: 14,
     marginLeft: 8,
   },
   clearFilterButton: {
@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
   },
   clearFilterText: {
     color: "#5E72E4",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
     marginLeft: 5,
   },
@@ -110,7 +110,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   serviceIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   serviceType: {
     fontSize: 16,

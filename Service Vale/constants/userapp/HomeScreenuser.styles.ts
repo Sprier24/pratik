@@ -140,13 +140,13 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   commissionStatLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#FFF',
     opacity: 0.8,
     marginBottom: 4,
   },
   commissionStatValue: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFF',
   },
@@ -163,7 +163,7 @@ export const styles = StyleSheet.create({
   },
   commissionCardFooterText: {
     color: '#FFF',
-    fontSize: 15,
+    fontSize: 14,
     marginRight: 8,
   },
   cardFooter: {
@@ -212,12 +212,12 @@ export const styles = StyleSheet.create({
     marginRight: 12,
   },
   serviceCardTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
   },
   serviceCardCount: {
-    fontSize: 25,
+    fontSize: 28,
     fontWeight: "700",
     color: "#2D3748",
     marginBottom: 15,
@@ -228,7 +228,7 @@ export const styles = StyleSheet.create({
   },
   serviceCardButtonText: {
     color: "#5E72E4",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
     marginRight: 5,
   },

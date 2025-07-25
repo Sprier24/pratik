@@ -9,16 +9,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import mime from 'mime';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/userapp/Userphoto';
-import axios from 'axios';
-import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'photo_id';
+const NOTIFICATIONS_COLLECTION = 'admin_id';
 const BUCKET_ID = 'photo_id';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
 const PROJECT_ID = '681b300f0018fdc27bdd';
-const ADMIN_USERS_COLLECTION = '68773d3800020869e8fc';
 
 const buildImageUrl = (fileId: string) =>
     `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;
@@ -42,7 +40,7 @@ type PhotoSet = {
 const PhotoComparisonPage = () => {
     const [beforeImage, setBeforeImage] = useState<ImagePickerResult | null>(null);
     const [afterImage, setAfterImage] = useState<ImagePickerResult | null>(null);
-    const { notes: initialNotes } = useLocalSearchParams();
+    const {notes: initialNotes } = useLocalSearchParams();
     const [notes, setNotes] = useState(Array.isArray(initialNotes) ? initialNotes.join('\n') : initialNotes || '');
     const [photoSets, setPhotoSets] = useState<PhotoSet[]>([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,7 +71,7 @@ const PhotoComparisonPage = () => {
                 setUserEmail(user.email);
                 setUserName(user.name);
                 if (!notes.startsWith(user.name)) {
-                    setNotes(`${user.name}\n${notes}`);
+                    setNotes(` Engineer : ${user.name}\n ${notes}`);
                 }
             } catch (error) {
                 setIsAuthenticated(false);
@@ -171,57 +169,24 @@ const PhotoComparisonPage = () => {
         }
     };
 
-
-
-    const sendNativeNotifyPush = async (title: string, message: string, subIDs?: string[]) => {
-        console.log('📲 Attempting push...');
+    const createNotification = async (description: string, relatedDocumentId: string) => {
+        const notifId = ID.unique();
 
         try {
-            const endpoint = subIDs
-                ? 'https://app.nativenotify.com/api/indie/group/notification'
-                : 'https://app.nativenotify.com/api/notification';
-
-            const payload = subIDs
-                ? {
-                    subIDs,
-                    appId: APP_ID,
-                    appToken: APP_TOKEN,
-                    title,
-                    message,
-                }
-                : {
-                    appId: APP_ID,
-                    appToken: APP_TOKEN,
-                    title,
-                    body: message,
-                    to: 'all',
-                };
-
-            const response = await axios.post(endpoint, payload);
-            console.log('✅ Native Notify response:', response.data);
-        } catch (error) {
-            console.error('❌ Push failed:', error);
-            Alert.alert('Push Failed', 'Failed to send notification');
-        }
-    };
-
-    const getAdminUsers = async (): Promise<string[]> => {
-        try {
-            const response = await databases.listDocuments(
+            await databases.createDocument(
                 DATABASE_ID,
-                ADMIN_USERS_COLLECTION,
-                [
-                    Query.equal('isAdmin', true),
-                    Query.limit(100)
-                ]
+                NOTIFICATIONS_COLLECTION,
+                notifId,
+                {
+                    description: `Photo Notification\n ${description}`,
+                    isRead: false,
+                    userEmail,
+                }
             );
-
-            return response.documents
-                .filter((doc: any) => doc.email)
-                .map((doc: any) => doc.email);
-        } catch (error) {
-            console.error('Error fetching admin users:', error);
-            return [];
+            console.log('Notification created successfully:', notifId);
+        } catch (error: any) {
+            console.error('Failed to create notification:', error);
+            throw error;
         }
     };
 
@@ -235,14 +200,10 @@ const PhotoComparisonPage = () => {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
-
         setIsUploading(true);
-
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
             const { userName: parsedUserName, userNotes } = parseNotes(notesWithName);
-            const adminEmails = await getAdminUsers();
-
             if (beforeImage && !afterImage) {
                 const beforeFileId = await uploadImageToStorage(beforeImage);
                 const docId = ID.unique();
@@ -253,13 +214,6 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-
-                await sendNativeNotifyPush(
-                    'Before Photo Uploaded',
-                    `${parsedUserName} uploaded a before photo with notes: ${userNotes || 'No notes provided'}`,
-                    adminEmails
-                );
-
             } else if (afterImage && !beforeImage) {
                 const afterFileId = await uploadImageToStorage(afterImage);
                 const latest = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
@@ -268,30 +222,24 @@ const PhotoComparisonPage = () => {
                     Query.equal('userEmail', userEmail),
                     Query.limit(1),
                 ]);
-
                 if (latest.documents.length === 0) {
                     throw new Error('No matching before image found');
                 }
-
                 const docId = latest.documents[0].$id;
                 await databases.updateDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     afterImageUrl: afterFileId,
                     notes: notesWithName,
                     userEmail: userEmail,
                 });
-
-                await sendNativeNotifyPush(
-                    'After Photo Uploaded',
-                    `${parsedUserName} uploaded an after photo with notes: ${userNotes || 'No notes provided'}`,
-                    adminEmails
+                await createNotification(
+                    `${userNotes || 'No notes provided'}`,
+                    docId
                 );
-
             } else {
                 const [beforeFileId, afterFileId] = await Promise.all([
                     uploadImageToStorage(beforeImage!),
                     uploadImageToStorage(afterImage!),
                 ]);
-
                 const docId = ID.unique();
                 await databases.createDocument(DATABASE_ID, COLLECTION_ID, docId, {
                     beforeImageUrl: beforeFileId,
@@ -300,11 +248,9 @@ const PhotoComparisonPage = () => {
                     date: new Date().toISOString(),
                     userEmail: userEmail,
                 });
-
-                await sendNativeNotifyPush(
-                    'Photo Comparison Uploaded',
-                    `${parsedUserName} uploaded before & after photos with notes: ${userNotes || 'No notes provided'}`,
-                    adminEmails
+                await createNotification(
+                    `${userNotes || 'No notes provided'}`,
+                    docId
                 );
             }
 
@@ -342,13 +288,6 @@ const PhotoComparisonPage = () => {
             }
             await Promise.all(deletePromises);
             await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, photoSet.$id);
-
-            const { userName: parsedUserName } = parseNotes(photoSet.notes || '');
-            await sendNativeNotifyPush(
-                'Photo Set Deleted',
-                `${parsedUserName || 'User'} deleted a photo set from ${new Date(photoSet.date).toLocaleDateString()}`
-            );
-
             Alert.alert('Deleted', 'Photo set deleted successfully.');
             fetchPhotoSets();
         } catch (error) {
@@ -427,7 +366,7 @@ const PhotoComparisonPage = () => {
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.back()}>
-                        <Feather name="arrow-left" size={25} color="#FFF" />
+                        <Feather name="arrow-left" size={24} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Click Photos</Text>
                 </View>
@@ -453,7 +392,7 @@ const PhotoComparisonPage = () => {
                         >
                             <MaterialIcons
                                 name="photo-camera"
-                                size={25}
+                                size={24}
                                 color={beforeImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, beforeImage && styles.photoButtonTextActive]}>
@@ -466,7 +405,7 @@ const PhotoComparisonPage = () => {
                         >
                             <MaterialIcons
                                 name="photo-camera"
-                                size={25}
+                                size={24}
                                 color={afterImage ? "#FFF" : "#5E72E4"}
                             />
                             <Text style={[styles.photoButtonText, afterImage && styles.photoButtonTextActive]}>
@@ -539,7 +478,7 @@ const PhotoComparisonPage = () => {
                         <ActivityIndicator color="#FFF" />
                     ) : (
                         <>
-                            <MaterialIcons name="photo-library" size={20} color="#FFF" />
+                            <MaterialIcons name="save" size={20} color="#FFF" />
                             <Text style={styles.submitButtonText}>Save Photo</Text>
                         </>
                     )}
@@ -549,7 +488,7 @@ const PhotoComparisonPage = () => {
                     <Text style={styles.sectionTitle}>Your History</Text>
                     {photoSets.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <MaterialIcons name="photo-library" size={50} color="#CBD5E0" />
+                            <MaterialIcons name="photo-library" size={48} color="#CBD5E0" />
                             <Text style={styles.emptyText}>No photos yet</Text>
                         </View>
                     ) : (
@@ -585,7 +524,7 @@ const PhotoComparisonPage = () => {
                                             </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholder}>
-                                                <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
+                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
                                                 <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
@@ -604,7 +543,7 @@ const PhotoComparisonPage = () => {
                                             </TouchableOpacity>
                                         ) : (
                                             <View style={styles.placeholder}>
-                                                <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
+                                                <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
                                                 <Text style={styles.placeholderText}>No image</Text>
                                             </View>
                                         )}
@@ -625,7 +564,7 @@ const PhotoComparisonPage = () => {
                                         onPress={() => saveBothImages(item)}
                                         disabled={isLoading}
                                     >
-                                        <MaterialIcons name="save" size={20} color="#FFF" />
+                                        <MaterialIcons name="save-alt" size={20} color="#FFF" />
                                         <Text style={styles.actionButtonText}>Save to Gallery</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity

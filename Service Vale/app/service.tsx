@@ -10,7 +10,6 @@ import { footerStyles } from '../constants/footer';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681c429800281e8a99bd';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
 
 const ServicePage = () => {

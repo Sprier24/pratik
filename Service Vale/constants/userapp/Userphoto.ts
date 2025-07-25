@@ -66,7 +66,7 @@ export const styles = StyleSheet.create({
     gap: 15,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: "#FFF",
   },
@@ -86,7 +86,7 @@ export const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "600",
     color: "#2D3748",
     marginBottom: 12,
@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
   },
   photoButtonText: {
     marginLeft: 8,
-    fontSize: 15,
+    fontSize: 16,
     color: "#5E72E4",
     fontWeight: "500",
   },
@@ -131,7 +131,7 @@ export const styles = StyleSheet.create({
     position: "relative",
   },
   previewLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#4A5568",
     marginBottom: 4,
   },
@@ -149,7 +149,7 @@ export const styles = StyleSheet.create({
     padding: 4,
   },
   instructionText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#718096",
     textAlign: "center",
     marginVertical: 8,
@@ -179,7 +179,7 @@ export const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
   },
@@ -231,7 +231,7 @@ export const styles = StyleSheet.create({
     width: "48%",
   },
   photoLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#4A5568",
     marginBottom: 4,
   },
@@ -249,7 +249,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   placeholderText: {
-    fontSize: 15,
+    fontSize: 12,
     color: "#A0AEC0",
     marginTop: 4,
   },

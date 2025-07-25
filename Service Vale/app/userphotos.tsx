@@ -177,7 +177,7 @@ const PhotoComparisonPage: React.FC = () => {
                         <View key={item.$id} style={styles.photoCard}>
                             <View style={styles.cardHeader}>
                                 <View style={styles.dateBadge}>
-                                    <MaterialIcons name="date-range" size={15} color="#FFF" />
+                                    <MaterialIcons name="date-range" size={16} color="#FFF" />
                                     <Text style={styles.dateText}>
                                         {new Date(item.date).toLocaleDateString('en-US', {
                                             year: 'numeric',
@@ -209,7 +209,7 @@ const PhotoComparisonPage: React.FC = () => {
                                         </TouchableOpacity>
                                     ) : (
                                         <View style={styles.placeholder}>
-                                            <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
+                                            <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
                                             <Text style={styles.placeholderText}>No image</Text>
                                         </View>
                                     )}
@@ -233,7 +233,7 @@ const PhotoComparisonPage: React.FC = () => {
                                         </TouchableOpacity>
                                     ) : (
                                         <View style={styles.placeholder}>
-                                            <MaterialIcons name="hide-image" size={30} color="#A0AEC0" />
+                                            <MaterialIcons name="image-not-supported" size={32} color="#A0AEC0" />
                                             <Text style={styles.placeholderText}>No image</Text>
                                         </View>
                                     )}
@@ -253,7 +253,7 @@ const PhotoComparisonPage: React.FC = () => {
                                 onPress={() => saveBothImagesAndDelete(item)}
                                 disabled={isLoading}
                             >
-                                <MaterialIcons name="save" size={20} color="#FFF" />
+                                <MaterialIcons name="save-alt" size={20} color="#FFF" />
                                 <Text style={styles.actionButtonText}>Save & Remove</Text>
                             </TouchableOpacity>
                         </View>

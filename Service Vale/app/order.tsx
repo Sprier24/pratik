@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -7,11 +7,10 @@ import { databases } from '../lib/appwrite';
 import { ID } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
-import axios from 'axios';
-import { APP_ID, APP_TOKEN } from '../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
+const NOTIFICATIONS_COLLECTION_ID = 'note_id';
 
 type FormData = {
   serviceboyName: string;
@@ -125,53 +124,54 @@ const OrderScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const sendManualWhatsAppNotification = (service: FormData) => {
+    const message = `Hello! ${service.clientName},\n\n` +
+      `We are from Service Vale\n\n` +
+      `Your ${service.serviceType} service is scheduled for:\n` +
+      `📅 Date: ${service.serviceDate}\n` +
+      `⏰ Time: ${service.serviceTime}\n\n` +
+      `Service Engineer Details:\n` +
+      `👨‍🔧 Engineer Name: ${service.serviceboyName}\n` +
+      `Service Charge: ₹${service.billAmount}\n\n` +
+      `Please be ready for the service. For any queries, contact us: 635-320-2602\n\n` +
+      `Thank you for choosing our service!`;
 
-  const sendNativeNotifyPush = async (title: string, message: string) => {
-    console.log('📲 Attempting push...');
+    let phone = service.phoneNumber.replace(/\D/g, '');
 
-    try {
-      const response = await fetch('https://app.nativenotify.com/api/notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          appId: APP_ID,
-          appToken: APP_TOKEN,
-          title,
-          body: message,
-          to: 'all',
-        }),
-      });
-
-      const resultText = await response.text();
-      console.log('✅ Native Notify response:', resultText);
-
-      if (!response.ok) {
-        console.error('❌ Push failed:', response.status, resultText);
-      }
-    } catch (err) {
-      console.error('❌ Network error:', err);
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
     }
+    if (!phone.startsWith('91')) {
+      phone = '91' + phone;
+    }
+
+    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'WhatsApp is not installed');
+      }
+    });
   };
 
-  const sendIndiePushNotification = async (subID: string, title: string, message: string) => {
-    console.log('📲 Attempting Indie push to:', subID);
-
+  const createNotification = async (description: string, userEmail: string) => {
     try {
-      const response = await axios.post('https://app.nativenotify.com/api/indie/notification', {
-        subID,
-        appId: APP_ID,
-        appToken: APP_TOKEN,
-        title,
-        message
-      });
-
-      console.log('✅ Indie push response:', response.data);
-      return true;
-    } catch (err) {
-      console.error('❌ Indie push failed:', err);
-      return false;
+      await databases.createDocument(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        ID.unique(),
+        {
+          description,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          userEmail,
+        }
+      );
+      console.log('Notification sent to:', userEmail);
+    } catch (error) {
+      console.error('Notification creation failed:', error);
     }
   };
 
@@ -196,6 +196,11 @@ const OrderScreen = () => {
     setIsSubmitting(true);
 
     try {
+      await createNotification(
+        `You’ve received a new "${formData.serviceType}" service on ${formData.serviceDate} at ${formData.serviceTime} ${formData.timePeriod}.`,
+        formData.serviceboyEmail
+      );
+
       const response = await databases.createDocument(
         DATABASE_ID,
         COLLECTION_ID,
@@ -213,21 +218,22 @@ const OrderScreen = () => {
           serviceDate: sortableDate,
           serviceTime: sortableTime
         }
-      ); 
-
-      const pushSuccess = await sendIndiePushNotification(
-        formData.serviceboyEmail,
-        'New Service Assignment',
-        `You've been assigned a ${formData.serviceType} service for ${formData.clientName}`
       );
 
-      if (!pushSuccess) {
-        console.log('Falling back to regular push notification');
-        await sendNativeNotifyPush(
-          'New Service Assignment',
-          `${formData.serviceboyName} has been assigned a ${formData.serviceType} service`
-        );
-      }
+      sendManualWhatsAppNotification({
+        clientName: formData.clientName,
+        serviceType: formData.serviceType,
+        serviceDate: formData.serviceDate,
+        serviceTime: `${formData.serviceTime} ${formData.timePeriod}`,
+        serviceboyName: formData.serviceboyName,
+        billAmount: formData.billAmount,
+        phoneNumber: formData.phoneNumber,
+        serviceboyEmail: '',
+        serviceboyContact: '',
+        address: '',
+        status: '',
+        timePeriod: 'AM'
+      });
 
       Alert.alert('Success', 'Order created successfully.');
 

@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
     gap: 15,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: "#FFF",
   },
@@ -49,6 +49,7 @@ export const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 20,
     paddingTop: 20,
+        paddingBottom: 100,
   },
     filterContainer: {
     flexDirection: "row",
@@ -84,7 +85,7 @@ export const styles = StyleSheet.create({
   },
   clearFilterText: {
     color: "#5E72E4",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
   },
   activeFilter: {
@@ -351,7 +352,7 @@ export const styles = StyleSheet.create({
   },
   addSignatureText: {
     color: "#5E72E4",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
   },
   submitButton: {
@@ -367,11 +368,16 @@ export const styles = StyleSheet.create({
   },
   submitText: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
   },
   billsListContainer: {
-    marginBottom: 20,
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingRight: 20,
+    paddingLeft: 20,
+    paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,
@@ -498,7 +504,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "600",
     color: "#2D3748",
   },
@@ -547,7 +553,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
   detailSectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
     marginBottom: 15,
@@ -613,7 +619,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
   },
   signatureModalContainer: {
@@ -791,5 +797,14 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
   },
+   loadingMoreContainer: {
+  padding: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+loadingMoreText: {
+  marginLeft: 10,
+  color: '#718096',
+},
 });
-

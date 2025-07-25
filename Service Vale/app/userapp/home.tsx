@@ -7,10 +7,6 @@ import { RefreshControl } from 'react-native';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getUnreadNotificationInboxCount } from 'native-notify';
-import { useFocusEffect } from '@react-navigation/native';
-import { registerIndieID, unregisterIndieDevice, getUnreadIndieNotificationInboxCount } from 'native-notify';
-import { APP_ID, APP_TOKEN } from '../../constants/nativeNotify';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -26,80 +22,21 @@ const HomeScreenuser = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [totalCommission, setTotalCommission] = useState(0);
   const [pendingCommission, setPendingCommission] = useState(0);
   const [userName, setUserName] = useState('');
   const insets = useSafeAreaInsets();
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [unreadIndieNotificationCount, setUnreadIndieNotificationCount] = useState(0);
 
-  const fetchUnreadIndieCount = async () => {
+  const handleLogout = async () => {
     try {
-      const user = await account.get();
-      const userEmail = user.email;
-
-      const count = await getUnreadIndieNotificationInboxCount(
-        userEmail, 
-        APP_ID,
-        APP_TOKEN
-      );
-
-      console.log("Unread Indie notifications count:", count);
-      setUnreadIndieNotificationCount(count);
+      await account.deleteSession('current');
+      Alert.alert('Logged Out', 'You have been successfully logged out');
+      router.replace('/');
     } catch (error) {
-      console.error("Error fetching unread indie count:", error);
-      try {
-        const regularCount = await getUnreadNotificationInboxCount(APP_ID, APP_TOKEN);
-        setUnreadIndieNotificationCount(regularCount);
-      } catch (fallbackError) {
-        console.error("Fallback count failed:", fallbackError);
-      }
+      console.error('Logout Error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
     }
-  };
-
-  useEffect(() => {
-    fetchUnreadIndieCount();
-  }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchUnreadIndieCount();
-    }, [])
-  );
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const user = await account.get();
-              const userEmail = user.email;
-              try {
-                await unregisterIndieDevice(userEmail, APP_ID, APP_TOKEN);
-                console.log('Unregistered from Indie push notifications');
-              } catch (unregisterError) {
-                console.warn('Failed to unregister from push notifications:', unregisterError);
-              }
-              await account.deleteSession('current');
-              router.replace('/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
   };
 
   const fetchUserData = async () => {
@@ -244,11 +181,25 @@ const HomeScreenuser = () => {
     }
   };
 
+  const fetchUnreadNotifications = async () => {
+    try {
+      const res = await databases.listDocuments(
+        DATABASE_ID,
+        NOTIFICATIONS_COLLECTION_ID,
+        [Query.equal('isRead', false)]
+      );
+      setUnreadCount(res.total);
+    } catch (error) {
+      console.error('Notification fetch error:', error);
+    }
+  };
+
   const fetchAllData = async () => {
     setIsLoading(true);
     await Promise.all([
       fetchRevenueData(),
       fetchOrders(),
+      fetchUnreadNotifications(),
       fetchCommissionData()
     ]);
     setIsLoading(false);
@@ -278,16 +229,12 @@ const HomeScreenuser = () => {
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.notificationIcon}
-            onPress={() => router.push('/userapp/usernotificationinbox')}
+            onPress={() => router.push('/userapp/usernotification')}
           >
             <MaterialIcons name="notifications" size={24} color="#FFF" />
-            {(unreadIndieNotificationCount > 0 || unreadNotificationCount > 0) && (
+            {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {Math.max(unreadIndieNotificationCount, unreadNotificationCount) > 9
-                    ? '9+'
-                    : Math.max(unreadIndieNotificationCount, unreadNotificationCount)}
-                </Text>
+                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -344,7 +291,7 @@ const HomeScreenuser = () => {
         >
           <View style={styles.commissionCardHeader}>
             <View style={styles.cardIconContainer}>
-              <MaterialIcons name="engineering" size={25} color="#FFF" />
+              <MaterialIcons name="engineering" size={24} color="#FFF" />
             </View>
             <Text style={styles.commissionCardTitle}>Commission Details</Text>
           </View>
@@ -375,7 +322,7 @@ const HomeScreenuser = () => {
           <View style={[styles.serviceCard, styles.pendingCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
-                <MaterialIcons name="pending-actions" size={25} color="#DD6B20" />
+                <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
               </View>
               <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>
@@ -413,7 +360,7 @@ const HomeScreenuser = () => {
           onPress={() => router.push('/userapp/userprofile')}
         >
           <View style={styles.bottomButtonIcon}>
-            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
+            <Feather name="user" size={20} color="#5E72E4" />
           </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>
@@ -421,7 +368,7 @@ const HomeScreenuser = () => {
           style={[styles.bottomButton, styles.bottomButtonActive]}
         >
           <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
-            <Feather name="home" size={25} color="#FFF" />
+            <Feather name="home" size={20} color="#FFF" />
           </View>
           <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Home</Text>
         </TouchableOpacity>

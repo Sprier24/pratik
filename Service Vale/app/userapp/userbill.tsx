@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import { MaterialCommunityIcons, Feather, MaterialIcons } from '@expo/vector-icons';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
+import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
 import { databases, account } from '../../lib/appwrite';
@@ -94,7 +94,7 @@ const UserBill = () => {
       const newBills = response.documents as unknown as Bill[];
       const allBills = [...accumulatedBills, ...newBills];
 
-      if (response.documents.length >= 25) {
+      if (response.documents.length >= 25) { 
         const lastId = response.documents[response.documents.length - 1].$id;
         return fetchAllBills(serviceBoyName, lastId, allBills);
       }
@@ -102,7 +102,7 @@ const UserBill = () => {
       return allBills;
     } catch (error) {
       console.error('Error fetching bills:', error);
-      return accumulatedBills;
+      return accumulatedBills; 
     }
   };
 
@@ -627,9 +627,9 @@ const UserBill = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={25} color="#FFF" />
+            <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Bill Management</Text>
+          <Text style={styles.headerTitle}>My Bills</Text>
         </View>
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{bills.length}</Text>
@@ -641,7 +641,7 @@ const UserBill = () => {
           style={styles.filterButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <MaterialIcons name="today" size={20} color="#5E72E4" />
+          <Feather name="calendar" size={18} color="#5E72E4" />
           <Text style={styles.filterButtonText}>
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
@@ -701,12 +701,12 @@ const UserBill = () => {
         />
       )}
 
-      <KeyboardAvoidingView
+      {isFormVisible ? ( 
+        <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+        style={{ flex: 1, paddingBottom: insets.bottom }}>
         <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
-          {isFormVisible ? (
+        
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
               {Object.entries(form).map(([key, value]) => (
@@ -759,8 +759,8 @@ const UserBill = () => {
                   style={[styles.methodButton, paymentMethod === 'cash' && styles.methodButtonActive]}
                   onPress={() => setPaymentMethod('cash')}
                 >
-                  <MaterialIcons
-                    name="payments"
+                  <MaterialCommunityIcons
+                    name="cash"
                     size={20}
                     color={paymentMethod === 'cash' ? '#FFF' : '#5E72E4'}
                   />
@@ -772,8 +772,8 @@ const UserBill = () => {
                   style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
                   onPress={() => setPaymentMethod('upi')}
                 >
-                  <MaterialIcons
-                    name="qr-code-scanner"
+                  <MaterialCommunityIcons
+                    name="bank-transfer"
                     size={20}
                     color={paymentMethod === 'upi' ? '#FFF' : '#5E72E4'}
                   />
@@ -819,7 +819,7 @@ const UserBill = () => {
                   style={styles.addSignatureButton}
                   onPress={() => setIsSignatureVisible(true)}
                 >
-                  <Feather name="edit" size={20} color="#5E72E4" />
+                  <Feather name="edit" size={18} color="#5E72E4" />
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
@@ -891,6 +891,8 @@ const UserBill = () => {
                 <Text style={styles.submitText}>Submit & Share Bill</Text>
               </TouchableOpacity>
             </View>
+            </ScrollView>
+            </KeyboardAvoidingView>
           ) : (
             <View style={styles.billsListContainer}>
               {isLoading ? (
@@ -909,35 +911,52 @@ const UserBill = () => {
                   <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
                 </View>
               ) : (
-                bills.map((bill) => (
-                  <TouchableOpacity
-                    key={bill.$id}
-                    style={styles.billCard}
-                    onPress={() => showBillDetails(bill)}
-                  >
-                    <View style={styles.billHeader}>
-                      <View>
-                        <Text style={styles.billCustomer}>{bill.customerName}</Text>
-                        <Text style={styles.billService}>{bill.serviceType}</Text>
-                        <Text style={styles.billNumber}>{bill.billNumber}</Text>
-                      </View>
-                      <View style={styles.billAmountContainer}>
-                        <Text style={styles.billAmount}>₹{bill.total}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.billDateContainer}>
-                      <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
-                      <Text style={styles.billDate}>
-                        {formatToAmPm(bill.date)}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )}
+              <FlatList
+        data={bills}
+        keyExtractor={(item) => item.$id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.billCard}
+            onPress={() => showBillDetails(item)}
+          >
+            <View style={styles.billHeader}>
+              <View>
+                <Text style={styles.billCustomer}>{item.customerName}</Text>
+                <Text style={styles.billService}>{item.serviceType}</Text>
+                <Text style={styles.billNumber}>{item.billNumber}</Text>
+              </View>
+              <View style={styles.billAmountContainer}>
+                <Text style={styles.billAmount}>₹{item.total}</Text>
+              </View>
             </View>
+            <View style={styles.billDateContainer}>
+              <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
+              <Text style={styles.billDate}>
+                {formatToAmPm(item.date)}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <MaterialCommunityIcons name="file-document-outline" size={48} color="#A0AEC0" />
+            <Text style={styles.emptyText}>
+              {dateFilter
+                ? `No bills on ${format(dateFilter, 'MMMM d, yyyy')}`
+                : 'No bills generated'
+              }
+            </Text>
+            <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
+          </View>
+        }
+        contentContainerStyle={bills.length === 0 ? { flex: 1, justifyContent: 'center' } : { paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      />
+    )}
+  </View>
+
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+
 
       <Modal
         visible={isBillDetailVisible}
@@ -952,7 +971,7 @@ const UserBill = () => {
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Bill Information</Text>
                   <TouchableOpacity onPress={closeBillDetails}>
-                    <Feather name="x" size={25} color="#2D3748" />
+                    <Feather name="x" size={24} color="#718096" />
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={styles.modalContent}>
@@ -1054,14 +1073,14 @@ const UserBill = () => {
                       style={[styles.actionButton, styles.printButton]}
                       onPress={handlePrint}
                     >
-                      <MaterialIcons name="print" size={20} color="#FFF" />
+                      <Feather name="printer" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Print</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.rateButton]}
                       onPress={() => router.push('/rating')}
                     >
-                      <MaterialIcons name="star" size={20} color="#FFF" />
+                      <Feather name="star" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Rate</Text>
                     </TouchableOpacity>
                   </View>
