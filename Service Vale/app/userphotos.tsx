@@ -10,6 +10,15 @@ import { styles } from '../constants/Userphoto';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const parseNotes = (notes: string) => {
+    if (!notes) return { userName: '', userNotes: '' };
+    const [userName, ...rest] = notes.split('\n');
+    return {
+        userName: userName?.trim() || '',
+        userNotes: rest.join('\n').trim(),
+    };
+};
+
 interface PhotoDocument extends Models.Document {
     beforeImageUrl?: string;
     afterImageUrl?: string;
@@ -241,9 +250,9 @@ const PhotoComparisonPage: React.FC = () => {
                             </View>
 
                             {item.notes && (
-                                <View style={styles.notesBadge}>
+                                <View style={styles.notesContainer}>
                                     <Text style={styles.notesText}>
-                                        {[...new Set(item.notes.split('\n'))].join('\n')}
+                                        {parseNotes(item.notes).userNotes || 'No notes provided'}
                                     </Text>
                                 </View>
                             )}

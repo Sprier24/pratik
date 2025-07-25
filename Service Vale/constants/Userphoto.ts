@@ -1,6 +1,13 @@
 import { StyleSheet, RefreshControl, StatusBar, Platform } from "react-native";
 
 export const styles = StyleSheet.create({
+  notesContainer: {
+    backgroundColor: "#EDF2F7",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: "#F7FAFC",
