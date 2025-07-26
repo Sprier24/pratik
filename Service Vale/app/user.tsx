@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { ID, Query } from 'appwrite';
-import { account, databases } from '../lib/appwrite';
+import { databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/UserDetailsForm.styles';
@@ -74,7 +74,6 @@ const UserDetailsForm = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const user = await account.get();
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -246,6 +245,7 @@ const UserDetailsForm = () => {
           <Text style={styles.headerCountText}>{submittedUsers.length}</Text>
         </View>
       </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -289,6 +289,7 @@ const UserDetailsForm = () => {
                   </View>
                 );
               })}
+
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.submitButton]}
@@ -309,7 +310,7 @@ const UserDetailsForm = () => {
                   <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
                 </View>
               ) : (
-                submittedUsers.map((user, index) => (
+                submittedUsers.map((user) => (
                   <TouchableOpacity
                     key={user.$id}
                     style={styles.userCard}
@@ -354,6 +355,7 @@ const UserDetailsForm = () => {
                     <Feather name="x" size={25} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
+
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>
@@ -361,10 +363,12 @@ const UserDetailsForm = () => {
                       <Text style={styles.detailLabel}>Name :</Text>
                       <Text style={styles.detailValue}>{selectedUser.name}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Contact Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.contactNo}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Email Address :</Text>
                       <Text style={styles.detailValue}>{selectedUser.email}</Text>
@@ -377,6 +381,7 @@ const UserDetailsForm = () => {
                       <Text style={styles.detailLabel}>Address :</Text>
                       <Text style={styles.detailValue}>{selectedUser.address}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Hometown :</Text>
                       <Text style={styles.detailValue}>{selectedUser.city}</Text>
@@ -389,6 +394,7 @@ const UserDetailsForm = () => {
                       <Text style={styles.detailLabel}>Aadhar Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>PAN Number :</Text>
                       <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
@@ -421,6 +427,7 @@ const UserDetailsForm = () => {
                       <Feather name="edit" size={20} color="#FFF" />
                       <Text style={styles.actionButtonText}>Update</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
                       onPress={() => {

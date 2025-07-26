@@ -40,7 +40,7 @@ type PhotoSet = {
 const PhotoComparisonPage = () => {
     const [beforeImage, setBeforeImage] = useState<ImagePickerResult | null>(null);
     const [afterImage, setAfterImage] = useState<ImagePickerResult | null>(null);
-    const {notes: initialNotes } = useLocalSearchParams();
+    const { notes: initialNotes } = useLocalSearchParams();
     const [notes, setNotes] = useState(Array.isArray(initialNotes) ? initialNotes.join('\n') : initialNotes || '');
     const [photoSets, setPhotoSets] = useState<PhotoSet[]>([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -171,7 +171,6 @@ const PhotoComparisonPage = () => {
 
     const createNotification = async (description: string, relatedDocumentId: string) => {
         const notifId = ID.unique();
-
         try {
             await databases.createDocument(
                 DATABASE_ID,
@@ -196,10 +195,12 @@ const PhotoComparisonPage = () => {
             router.push('/login');
             return;
         }
+
         if (!beforeImage && !afterImage) {
             Alert.alert('Missing Image', 'Take at least one photo.');
             return;
         }
+
         setIsUploading(true);
         try {
             const notesWithName = userName ? `${userName}\n${notes}` : notes;
@@ -253,7 +254,6 @@ const PhotoComparisonPage = () => {
                     docId
                 );
             }
-
             Alert.alert('Success', 'Photo saved successfully!');
             setBeforeImage(null);
             setAfterImage(null);
@@ -399,6 +399,7 @@ const PhotoComparisonPage = () => {
                                 Before
                             </Text>
                         </TouchableOpacity>
+
                         <TouchableOpacity
                             style={[styles.photoButton, afterImage && styles.photoButtonActive]}
                             onPress={() => takePhoto(setAfterImage)}
@@ -529,6 +530,7 @@ const PhotoComparisonPage = () => {
                                             </View>
                                         )}
                                     </View>
+
                                     <View style={styles.photoContainer}>
                                         <Text style={styles.photoLabel}>After</Text>
                                         {item.afterImageUrl ? (

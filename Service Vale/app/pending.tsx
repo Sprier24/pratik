@@ -47,13 +47,13 @@ const PendingServicesScreen = () => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
+  const [, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const itemsPerPage = 10;  
-const [totalPendingCount, setTotalPendingCount] = useState(0);
-const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
+  const itemsPerPage = 10;
+  const [totalPendingCount, setTotalPendingCount] = useState(0);
+  const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
 
   const fetchServiceBoys = async () => {
     try {
@@ -125,6 +125,7 @@ const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({})
         setAllServices(formattedServices);
         setServices(formattedServices);
       }
+
       const totalCount = response.total;
       setTotalPages(Math.ceil(totalCount / itemsPerPage));
       setCurrentPage(page);
@@ -141,63 +142,64 @@ const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({})
   };
 
   const fetchTotalPendingCount = async () => {
-  try {
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [Query.equal('status', 'pending')]
-    );
-    setTotalPendingCount(response.total);
-  } catch (error) {
-    console.error('Error fetching total pending count :', error);
-  }
-};
-
-const fetchEngineerCounts = async () => {
-  try {
-    const boysResponse = await databases.listDocuments(
-      DATABASE_ID,
-      USERS_COLLECTION_ID
-    );
-    const boys = boysResponse.documents.map(doc => doc.name);
-    const counts: Record<string, number> = { 
-      'All Service Engineers': 0 
-    };
-    
-    const allResponse = await databases.listDocuments(
-      DATABASE_ID,
-      COLLECTION_ID,
-      [Query.equal('status', 'pending')]
-    );
-    counts['All Service Engineers'] = allResponse.total;
-
-    await Promise.all(boys.map(async (name) => {
+    try {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
-        [
-          Query.equal('status', 'pending'),
-          Query.equal('serviceboyName', name)
-        ]
+        [Query.equal('status', 'pending')]
       );
-      counts[name] = response.total;
-    }));
+      setTotalPendingCount(response.total);
+    } catch (error) {
+      console.error('Error fetching total pending count :', error);
+    }
+  };
 
-    setEngineerCounts(counts);
-  } catch (error) {
-    console.error('Error fetching engineer counts :', error);
-  }
-};
+  const fetchEngineerCounts = async () => {
+    try {
+      const boysResponse = await databases.listDocuments(
+        DATABASE_ID,
+        USERS_COLLECTION_ID
+      );
+
+      const boys = boysResponse.documents.map(doc => doc.name);
+      const counts: Record<string, number> = {
+        'All Service Engineers': 0
+      };
+
+      const allResponse = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [Query.equal('status', 'pending')]
+      );
+
+      counts['All Service Engineers'] = allResponse.total;
+      await Promise.all(boys.map(async (name) => {
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTION_ID,
+          [
+            Query.equal('status', 'pending'),
+            Query.equal('serviceboyName', name)
+          ]
+        );
+        counts[name] = response.total;
+      }));
+
+      setEngineerCounts(counts);
+    } catch (error) {
+      console.error('Error fetching engineer counts :', error);
+    }
+  };
 
   useEffect(() => {
-   const loadData = async () => {
-    await fetchServiceBoys();
-    await fetchEngineerCounts();
-    fetchServices();
-    fetchTotalPendingCount();
-  };
-  
-  loadData();
+    const loadData = async () => {
+      await fetchServiceBoys();
+      await fetchEngineerCounts();
+      fetchServices();
+      fetchTotalPendingCount();
+    };
+
+    loadData();
     if (params.newService) {
       try {
         const newService = JSON.parse(params.newService as string);
@@ -219,6 +221,7 @@ const fetchEngineerCounts = async () => {
           sortDate: newService.serviceDate || '',
           sortTime: newService.serviceTime || ''
         };
+
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
           if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) &&
@@ -241,8 +244,8 @@ const fetchEngineerCounts = async () => {
   };
 
   const countPendingByServiceBoy = () => {
-  return engineerCounts;
-};
+    return engineerCounts;
+  };
 
   const handleComplete = async (id: string) => {
     Alert.alert(
@@ -264,8 +267,8 @@ const fetchEngineerCounts = async () => {
                   completedAt,
                 }
               );
-              setTotalPendingCount(prev => prev - 1); 
-               await fetchEngineerCounts();
+              setTotalPendingCount(prev => prev - 1);
+              await fetchEngineerCounts();
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               const completedService = allServices.find(service => service.id === id);
@@ -307,8 +310,8 @@ const fetchEngineerCounts = async () => {
                 COLLECTION_ID,
                 id
               );
-              setTotalPendingCount(prev => prev - 1); 
-               setTotalPendingCount(prev => prev - 1);
+              setTotalPendingCount(prev => prev - 1);
+              setTotalPendingCount(prev => prev - 1);
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               Alert.alert('Success', 'Service order deleted successfully.');
@@ -346,13 +349,13 @@ const fetchEngineerCounts = async () => {
       });
     }
     setServices(filtered);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const onRefresh = () => {
     fetchServices(1);
-     fetchTotalPendingCount();
-      fetchEngineerCounts();
+    fetchTotalPendingCount();
+    fetchEngineerCounts();
   };
 
   const filterServices = (serviceBoyName: string | null) => {
@@ -384,7 +387,6 @@ const fetchEngineerCounts = async () => {
       `Thank you for choosing our service!`;
     const phone = service.phone.replace(/\D/g, '');
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
-
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -406,27 +408,32 @@ const fetchEngineerCounts = async () => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={styles.serviceActions}>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
           </View>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
@@ -434,6 +441,7 @@ const fetchEngineerCounts = async () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={18} color="#718096" />
@@ -441,10 +449,12 @@ const fetchEngineerCounts = async () => {
             {item.serviceDate} • {item.serviceTime}
           </Text>
         </View>
+
         <Text style={styles.serviceBoyText}>
           {item.serviceBoy}
         </Text>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.whatsappButton}
@@ -471,7 +481,6 @@ const fetchEngineerCounts = async () => {
         </TouchableOpacity>
       </View>
     </View>
-
   );
 
   return (
@@ -483,10 +492,12 @@ const fetchEngineerCounts = async () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{totalPendingCount}</Text>
         </View>
       </View>
+
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
@@ -500,6 +511,7 @@ const fetchEngineerCounts = async () => {
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -521,6 +533,7 @@ const fetchEngineerCounts = async () => {
               </TouchableOpacity>
             </View>
           )}
+
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
@@ -572,6 +585,7 @@ const fetchEngineerCounts = async () => {
               )}
               showsVerticalScrollIndicator={true}
             />
+
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}

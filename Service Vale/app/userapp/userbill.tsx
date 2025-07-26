@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
-import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Feather, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
 import { databases, account } from '../../lib/appwrite';
@@ -56,6 +56,7 @@ const UserBill = () => {
     contactNumber: '',
     serviceCharge: '',
   });
+
   const [gstPercentage, setGstPercentage] = useState('0');
   const [bills, setBills] = useState<Bill[]>([]);
   const [allBills, setAllBills] = useState<Bill[]>([]);
@@ -80,32 +81,26 @@ const UserBill = () => {
         Query.equal('serviceBoyName', serviceBoyName),
         Query.orderDesc('$createdAt'),
       ];
-
       if (cursor) {
         queries.push(Query.cursorAfter(cursor));
       }
-
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         queries
       );
-
       const newBills = response.documents as unknown as Bill[];
       const allBills = [...accumulatedBills, ...newBills];
-
       if (response.documents.length >= 25) {
         const lastId = response.documents[response.documents.length - 1].$id;
         return fetchAllBills(serviceBoyName, lastId, allBills);
       }
-
       return allBills;
     } catch (error) {
       console.error('Error fetching bills:', error);
       return accumulatedBills;
     }
   };
-
 
   useEffect(() => {
     const fetchUserAndBills = async () => {
@@ -117,11 +112,9 @@ const UserBill = () => {
           '681c429800281e8a99bd',
           [Query.equal('email', currentUser.email)]
         );
-
         if (userResponse.documents.length > 0) {
           const name = userResponse.documents[0].name;
           setUserName(name);
-
           if (params.serviceData) {
             try {
               const serviceData = JSON.parse(params.serviceData as string);
@@ -149,7 +142,6 @@ const UserBill = () => {
         setIsLoading(false);
       }
     };
-
     fetchUserAndBills();
   }, [params.serviceData]);
 
@@ -169,9 +161,7 @@ const UserBill = () => {
 
   const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
     if (!query.trim()) return billsToFilter;
-
     const lowerCaseQuery = query.toLowerCase();
-
     return billsToFilter.filter(bill => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
@@ -243,72 +233,6 @@ const UserBill = () => {
       return false;
     }
     return true;
-  };
-
-  const handleSubmitBill = async () => {
-    if (!validateForm()) return;
-    if (!signature) {
-      Alert.alert('Error', 'Customer signature is required');
-      return;
-    }
-
-    const billNumber = generateBillNumber();
-    const now = new Date();
-    const billData: Bill = {
-      $id: billNumber,
-      notes: notes.trim() || '',
-      billNumber,
-      serviceType: form.serviceType,
-      serviceBoyName: form.serviceBoyName,
-      customerName: form.customerName,
-      contactNumber: form.contactNumber,
-      address: form.address,
-      serviceCharge: form.serviceCharge,
-      gstPercentage: gstPercentage,
-      paymentMethod,
-      cashGiven: paymentMethod === 'cash' ? cashGiven : '',
-      change: paymentMethod === 'cash' ? calculateChange() : '',
-      $createdAt: now.toISOString(),
-      signature: signature,
-      status: 'paid',
-      total: calculateTotal(),
-      date: now.toISOString(),
-    };
-
-    try {
-      await databases.createDocument(
-        DATABASE_ID,
-        COLLECTION_ID,
-        billNumber,
-        billData
-      );
-
-      setAllBills(prevBills => [billData, ...prevBills]);
-      setBills(prevBills => [billData, ...prevBills]);
-
-      Alert.alert('Success', 'Bill saved successfully!');
-
-      const htmlContent = generateBillHtml(billData);
-      const { uri } = await Print.printToFileAsync({
-        html: htmlContent,
-        width: 595,
-        height: 842,
-      });
-
-      await Sharing.shareAsync(uri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Share Bill',
-        UTI: 'net.whatsapp.pdf'
-      });
-
-      setIsFormVisible(false);
-      resetForm();
-      setSignature(null);
-      router.push('/rating');
-    } catch (error) {
-      console.error('Error saving bill:', error);
-      Alert.alert('Error', 'Failed to save bill');
-    }
   };
 
   const generateBillHtml = (bill: Bill) => {
@@ -558,6 +482,26 @@ const UserBill = () => {
     `;
   };
 
+  const handleShareViaWhatsApp = async () => {
+    if (!selectedBill) return;
+    try {
+      const htmlContent = generateBillHtml(selectedBill);
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        width: 595,
+        height: 842,
+      });
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Bill via WhatsApp',
+        UTI: 'net.whatsapp.pdf'
+      });
+    } catch (error) {
+      console.error('Error sharing via WhatsApp :', error);
+      Alert.alert('Error', 'Failed to share bill');
+    }
+  };
+
   const handlePrint = async () => {
     if (!selectedBill) return;
     try {
@@ -647,6 +591,7 @@ const UserBill = () => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
+
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -674,6 +619,7 @@ const UserBill = () => {
               }
             }}
           />
+
           <Feather name="search" size={20} color="#A0AEC0" style={styles.searchIcon} />
           {searchQuery ? (
             <TouchableOpacity
@@ -707,7 +653,6 @@ const UserBill = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, paddingBottom: insets.bottom }}>
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
-
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
               {Object.entries(form).map(([key, value]) => (
@@ -769,6 +714,7 @@ const UserBill = () => {
                     Cash
                   </Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={[styles.methodButton, paymentMethod === 'upi' && styles.methodButtonActive]}
                   onPress={() => setPaymentMethod('upi')}
@@ -955,9 +901,7 @@ const UserBill = () => {
             />
           )}
         </View>
-
       )}
-
 
       <Modal
         visible={isBillDetailVisible}
@@ -975,6 +919,7 @@ const UserBill = () => {
                     <Feather name="x" size={24} color="#718096" />
                   </TouchableOpacity>
                 </View>
+
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Bill Details</Text>
@@ -982,6 +927,7 @@ const UserBill = () => {
                       <Text style={styles.detailLabel}>Bill Number :</Text>
                       <Text style={styles.detailValue}>{selectedBill.billNumber}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date :</Text>
                       <Text style={styles.detailValue}>
@@ -996,10 +942,12 @@ const UserBill = () => {
                       <Text style={styles.detailLabel}>Name :</Text>
                       <Text style={styles.detailValue}>{selectedBill.customerName}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Contact :</Text>
                       <Text style={styles.detailValue}>{selectedBill.contactNumber}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Address :</Text>
                       <Text style={styles.detailValue}>{selectedBill.address}</Text>
@@ -1012,18 +960,22 @@ const UserBill = () => {
                       <Text style={styles.detailLabel}>Service Type :</Text>
                       <Text style={styles.detailValue}>{selectedBill.serviceType}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Engineer:</Text>
                       <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Charge :</Text>
                       <Text style={styles.detailValue}>₹{selectedBill.serviceCharge}</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>GST (%) :</Text>
                       <Text style={styles.detailValue}>{selectedBill.gstPercentage || '0'}%</Text>
                     </View>
+
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Commission :</Text>
                       <Text style={styles.detailValue}>
@@ -1077,6 +1029,15 @@ const UserBill = () => {
                       <Feather name="printer" size={18} color="#FFF" />
                       <Text style={styles.actionButtonText}>Print</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.whatsappButton]}
+                      onPress={handleShareViaWhatsApp}
+                    >
+                      <MaterialIcons name="share" size={20} color="#FFF" />
+                      <Text style={styles.actionButtonText}>Share</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                       style={[styles.actionButton, styles.rateButton]}
                       onPress={() => router.push('/rating')}
@@ -1106,6 +1067,7 @@ const UserBill = () => {
                 <Feather name="x" size={24} color="#718096" />
               </TouchableOpacity>
             </View>
+
             <View style={styles.signatureCanvasContainer}>
               <SignatureScreen
                 onOK={handleSignature}

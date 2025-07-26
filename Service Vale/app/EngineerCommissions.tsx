@@ -36,6 +36,7 @@ const EngineerCommissionsScreen = () => {
         DATABASE_ID,
         USERS_COLLECTION_ID
       );
+
       const currentMonthBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -44,44 +45,49 @@ const EngineerCommissionsScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
+
       const paymentsResponse = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID
       );
+
       const currentMonthCommissionMap = new Map<string, number>();
       currentMonthBills.documents.forEach(bill => {
         const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
         const current = currentMonthCommissionMap.get(bill.serviceBoyName) || 0;
         currentMonthCommissionMap.set(bill.serviceBoyName, current + commission);
       });
+
       const allTimeCommissionMap = new Map<string, number>();
       allBills.documents.forEach(bill => {
         const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
         const current = allTimeCommissionMap.get(bill.serviceBoyName) || 0;
         allTimeCommissionMap.set(bill.serviceBoyName, current + commission);
       });
+
       const paymentsMap = new Map<string, number>();
       paymentsResponse.documents.forEach(payment => {
         const amount = parseFloat(payment.amount || '0');
         const current = paymentsMap.get(payment.engineerName) || 0;
         paymentsMap.set(payment.engineerName, current + amount);
       });
+
       const allEngineers = usersResponse.documents.map(user => {
         const currentMonthCommission = currentMonthCommissionMap.get(user.name) || 0;
         const allTimeCommission = allTimeCommissionMap.get(user.name) || 0;
         const payments = paymentsMap.get(user.name) || 0;
         const pending = allTimeCommission - payments;
-
         return {
           id: user.$id,
           name: user.name,
-          commission: currentMonthCommission, 
+          commission: currentMonthCommission,
           payments,
-          pending 
+          pending
         };
       });
 
@@ -127,12 +133,10 @@ const EngineerCommissionsScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Summary Cards */}
         <View style={styles.summaryRow}>
-          {/* Total Commission Card */}
           <View style={[styles.summaryCard, styles.totalCommissionCard]}>
             <View style={styles.cardIconContainer}>
-         <MaterialIcons name="currency-rupee" size={25} color="#FFF" />
+              <MaterialIcons name="currency-rupee" size={25} color="#FFF" />
             </View>
             <Text style={styles.cardTitle}>Total Commission</Text>
             <Text style={styles.cardAmount}>
@@ -143,7 +147,6 @@ const EngineerCommissionsScreen = () => {
             </Text>
           </View>
 
-          {/* Pending Commission Card */}
           <View style={[styles.summaryCard, styles.pendingCommissionCard]}>
             <View style={styles.cardIconContainer}>
               <MaterialIcons name="pending-actions" size={25} color="#FFF" />
@@ -158,7 +161,6 @@ const EngineerCommissionsScreen = () => {
           </View>
         </View>
 
-        {/* Engineer List */}
         {engineers.map((engineer) => (
           <TouchableOpacity
             key={engineer.id}
@@ -179,6 +181,7 @@ const EngineerCommissionsScreen = () => {
                 </Text>
               </View>
             </View>
+
             <View style={styles.amountContainer}>
               <Text style={styles.engineerAmount}>
                 ₹{engineer.commission.toLocaleString('en-IN', {

@@ -1,7 +1,6 @@
 import { StyleSheet, Platform, Dimensions, StatusBar } from "react-native";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = width - 32;
 
 export const styles = StyleSheet.create({
   container: {

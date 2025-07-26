@@ -5,7 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { databases, storage, account } from '../lib/appwrite';
 import { Query, Models } from 'appwrite';
 import { useRouter } from 'expo-router';
-import { Ionicons, MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/Userphoto';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -107,6 +107,7 @@ const PhotoComparisonPage: React.FC = () => {
                 setIsLoading(false);
                 return;
             }
+
             const saveImageToGallery = async (fileId?: string) => {
                 if (!fileId) return;
                 const fileUrl = buildImageUrl(fileId);
@@ -114,6 +115,7 @@ const PhotoComparisonPage: React.FC = () => {
                 const downloadResult = await FileSystem.downloadAsync(fileUrl, localPath);
                 await MediaLibrary.createAssetAsync(downloadResult.uri);
             };
+
             await saveImageToGallery(item.beforeImageUrl);
             await saveImageToGallery(item.afterImageUrl);
             if (item.beforeImageUrl) {
@@ -165,6 +167,7 @@ const PhotoComparisonPage: React.FC = () => {
                     <Text style={styles.headerTitle}>Service Photos</Text>
                 </View>
             </View>
+
             <ScrollView
                 contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]}
                 refreshControl={

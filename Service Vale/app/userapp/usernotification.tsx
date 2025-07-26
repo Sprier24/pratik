@@ -110,6 +110,7 @@ const AdminNotificationPage = () => {
         setRefreshing(true);
         fetchNotifications();
     };
+
     useEffect(() => {
         fetchNotifications();
     }, []);
@@ -119,6 +120,7 @@ const AdminNotificationPage = () => {
             <View style={styles.notificationHeader}>
                 <Ionicons name="notifications" size={20} color="#5E72E4" />
             </View>
+
             <Text style={styles.description}>{item.description}</Text>
             <View style={styles.footer}>
                 <Text style={styles.time}>{new Date(item.$createdAt).toLocaleString()}</Text>
@@ -144,6 +146,7 @@ const AdminNotificationPage = () => {
                     <View style={{ width: 24 }} />
                 )}
             </View>
+
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={

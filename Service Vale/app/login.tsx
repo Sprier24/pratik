@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { account, databases } from '../lib/appwrite';
 import { styles } from '../constants/LoginScreen.styles';
 import { Linking } from 'react-native';
@@ -88,13 +88,10 @@ const LoginScreen = () => {
                 }
             }
         };
-
         const subscription = Linking.addEventListener('url', handleDeepLink);
-
         Linking.getInitialURL().then(url => {
             if (url) handleDeepLink({ url });
         });
-
         return () => subscription.remove();
     }, []);
 
@@ -147,12 +144,10 @@ const LoginScreen = () => {
                     COLLECTION_ID,
                     [Query.equal('email', email.toLowerCase())]
                 );
-
                 if (response.documents.length === 0) {
                     Alert.alert('Access Denied', 'You are not authorized to register.');
                     return;
                 }
-
                 await account.create('unique()', email, password, username);
                 Alert.alert('Success', 'Account created successfully. Please log in.');
                 resetFields();
@@ -289,7 +284,6 @@ const LoginScreen = () => {
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalCard}>
                                 <Text style={styles.modalTitle}>Reset Password</Text>
-
                                 <View style={styles.inputContainer}>
                                     <Text style={styles.inputLabel}>New Password</Text>
                                     <View style={styles.passwordInputContainer}>
@@ -351,6 +345,7 @@ const LoginScreen = () => {
                         <Text style={styles.authTitle}>
                             {isLogin ? 'Sign In as an admin or engineer' : 'Create Account'}
                         </Text>
+
                         {!isLogin && (
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Username</Text>
@@ -363,6 +358,7 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Email Address</Text>
                             <TextInput
@@ -375,6 +371,7 @@ const LoginScreen = () => {
                                 autoCapitalize="none"
                             />
                         </View>
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Password</Text>
                             <View style={styles.passwordInputContainer}>
@@ -386,6 +383,7 @@ const LoginScreen = () => {
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
                                 />
+
                                 <TouchableOpacity
                                     style={styles.eyeIcon}
                                     onPress={() => setShowPassword(!showPassword)}
@@ -398,6 +396,7 @@ const LoginScreen = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
+
                         {!isLogin && (
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -411,6 +410,7 @@ const LoginScreen = () => {
                                 />
                             </View>
                         )}
+
                         {isLogin && (
                             <TouchableOpacity
                                 style={styles.forgotPasswordButton}
@@ -419,6 +419,7 @@ const LoginScreen = () => {
                                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                             </TouchableOpacity>
                         )}
+
                         <TouchableOpacity
                             style={styles.authButton}
                             onPress={isLogin ? handleLogin : handleRegister}
@@ -427,6 +428,7 @@ const LoginScreen = () => {
                                 {isLogin ? 'Sign In' : 'Sign Up'}
                             </Text>
                         </TouchableOpacity>
+
                         <View style={styles.authFooter}>
                             <Text style={styles.authFooterText}>
                                 {isLogin ? "Don't have an account?" : "Already have an account?"}

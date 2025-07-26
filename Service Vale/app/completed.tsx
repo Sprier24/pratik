@@ -87,14 +87,11 @@ const AdminCompletedServicesScreen = () => {
       );
       const formattedServices = response.documents.map(doc => {
         const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
-        let formattedCompletedAt = formatToAmPm(rawCompletedAt);
-
         let serviceDateDisplay = '';
         if (doc.serviceDate) {
           const [year, month, day] = doc.serviceDate.split('-');
           serviceDateDisplay = `${day}/${month}/${year}`;
         }
-
         let serviceTimeDisplay = '';
         if (doc.serviceTime) {
           const [hours, minutes] = doc.serviceTime.split(':');
@@ -103,7 +100,6 @@ const AdminCompletedServicesScreen = () => {
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
-
         return {
           id: doc.$id,
           serviceType: doc.serviceType,
@@ -149,18 +145,15 @@ const AdminCompletedServicesScreen = () => {
         USERS_COLLECTION_ID
       );
       const boys = boysResponse.documents.map(doc => doc.name);
-
       const counts: Record<string, number> = {
         'All Service Engineers': 0
       };
-
       const allResponse = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
         [Query.equal('status', 'completed')]
       );
       counts['All Service Engineers'] = allResponse.total;
-
       await Promise.all(boys.map(async (name) => {
         const response = await databases.listDocuments(
           DATABASE_ID,
@@ -172,7 +165,6 @@ const AdminCompletedServicesScreen = () => {
         );
         counts[name] = response.total;
       }));
-
       setEngineerCounts(counts);
     } catch (error) {
       console.error('Error fetching engineer counts :', error);
@@ -191,6 +183,7 @@ const AdminCompletedServicesScreen = () => {
       console.error('Error fetching total completed count :', error);
     }
   };
+
   useEffect(() => {
     const loadData = async () => {
       await fetchServiceBoys();
@@ -198,9 +191,7 @@ const AdminCompletedServicesScreen = () => {
       fetchServices();
       fetchTotalCompleteCount();
     };
-
     loadData();
-
     if (params.completedService) {
       try {
         const newService = JSON.parse(params.completedService as string);
@@ -379,25 +370,30 @@ const AdminCompletedServicesScreen = () => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={[styles.statusBadge, styles.completedBadge]}>
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={20} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={20} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
@@ -405,6 +401,7 @@ const AdminCompletedServicesScreen = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={18} color="#718096" />
@@ -418,6 +415,7 @@ const AdminCompletedServicesScreen = () => {
           {item.serviceBoy}
         </Text>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
@@ -426,6 +424,7 @@ const AdminCompletedServicesScreen = () => {
           <MaterialIcons name="receipt-long" size={20} color="#FFF" />
           <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.moveToPendingButton}
           onPress={() => handleMoveToPending(item.id)}
@@ -446,6 +445,7 @@ const AdminCompletedServicesScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{totalCompleteCount}</Text>
         </View>
@@ -464,6 +464,7 @@ const AdminCompletedServicesScreen = () => {
             {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.filterButton, dateFilter && styles.activeFilter]}
           onPress={() => setShowDatePicker(true)}
@@ -485,6 +486,7 @@ const AdminCompletedServicesScreen = () => {
               </TouchableOpacity>
             </View>
           )}
+          
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { account, databases } from '../../lib/appwrite';
@@ -20,6 +20,7 @@ const ProfileScreen = () => {
         panNo: '',
         city: '',
     });
+
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
 
@@ -74,6 +75,7 @@ const ProfileScreen = () => {
                         color="#5E72E4"
                     />
                 </View>
+
                 <View style={styles.profileInfoContainer}>
                     <View style={styles.infoCard}>
                         <Text style={styles.name}>{user.name}</Text>
@@ -93,6 +95,7 @@ const ProfileScreen = () => {
                                 <Text style={styles.infoText}>Hometown : {user.city || 'Not provided'}</Text>
                             </View>
                         </View>
+
                         <View style={styles.infoSection}>
                             <Text style={styles.sectionTitle}>Document Information</Text>
                             <View style={styles.infoItem}>
@@ -117,6 +120,7 @@ const ProfileScreen = () => {
                     </View>
                     <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Profile</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                     style={[styles.bottomButton]}
                     onPress={() => router.push('/userapp/home')}
@@ -126,6 +130,7 @@ const ProfileScreen = () => {
                     </View>
                     <Text style={styles.bottomButtonText}>Home</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                     style={styles.bottomButton}
                     onPress={() => router.push('/userapp/userbill')}

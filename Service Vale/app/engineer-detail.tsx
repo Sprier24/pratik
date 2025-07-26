@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, Modal, TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { databases } from '../lib/appwrite';
 import { Query, ID } from 'react-native-appwrite';
 import { styles } from '../constants/EngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format, isSameDay, startOfMonth } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = 'bill_ID';
@@ -52,7 +52,7 @@ const EngineerDetailScreen = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [currentMonthCommission, setCurrentMonthCommission] = useState(0); 
+  const [currentMonthCommission, setCurrentMonthCommission] = useState(0);
   const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
 
   useEffect(() => {
@@ -65,11 +65,9 @@ const EngineerDetailScreen = () => {
     items.forEach(item => {
       const date = new Date(item.date);
       let key: string;
-
       if (groupByMonth) {
         const now = new Date();
         const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
-
         if (date < oneMonthAgo) {
           key = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
         } else {
@@ -88,11 +86,9 @@ const EngineerDetailScreen = () => {
           year: 'numeric'
         });
       }
-
       if (!grouped[key]) {
         grouped[key] = [];
       }
-
       grouped[key].push(item);
     });
 
@@ -100,8 +96,7 @@ const EngineerDetailScreen = () => {
       .map(key => {
         const dayTransactions = grouped[key].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const totalAmount = dayTransactions.reduce((sum, item) => sum + item.amount, 0);
-        const isMonth = key.split(' ').length === 2; 
-
+        const isMonth = key.split(' ').length === 2;
         return {
           title: key,
           data: dayTransactions,
@@ -215,13 +210,11 @@ const EngineerDetailScreen = () => {
       Alert.alert('Error', 'Please enter an amount');
       return;
     }
-
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
-
     try {
       await databases.createDocument(
         DATABASE_ID,
@@ -234,7 +227,6 @@ const EngineerDetailScreen = () => {
           date: new Date().toISOString()
         }
       );
-
       await fetchData();
       setPaymentAmount('');
       setShowPaymentModal(false);
@@ -277,7 +269,6 @@ const EngineerDetailScreen = () => {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
-
     if (event.type === 'dismissed') {
       return;
     }
@@ -299,7 +290,6 @@ const EngineerDetailScreen = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
-
     const filteredPayments = transactions.payments.map(section => ({
       ...section,
       data: section.data.filter(item => {
@@ -307,7 +297,6 @@ const EngineerDetailScreen = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
-
     setFilteredTransactions({
       commissions: filteredCommissions,
       payments: filteredPayments
@@ -369,7 +358,6 @@ const EngineerDetailScreen = () => {
         />
       )}
 
-      {/* Summary Cards */}
       <View style={styles.summaryContainer}>
         <View style={[styles.summaryCard, styles.commissionCard]}>
           <Text style={styles.summaryLabel}>Monthly Commission</Text>
@@ -380,6 +368,7 @@ const EngineerDetailScreen = () => {
             })}
           </Text>
         </View>
+
         <View style={[styles.summaryCard, styles.paymentCard]}>
           <Text style={styles.summaryLabel}>Monthly Paid</Text>
           <Text style={styles.summaryValue}>
@@ -389,6 +378,7 @@ const EngineerDetailScreen = () => {
             })}
           </Text>
         </View>
+
         <View style={[styles.summaryCard, styles.pendingCard]}>
           <Text style={styles.summaryLabel}>Pending</Text>
           <Text style={[styles.summaryValue, styles.pendingValue]}>
@@ -404,6 +394,7 @@ const EngineerDetailScreen = () => {
         >
           <Text style={[styles.tabText, activeTab === 'commissions' && styles.activeTabText]}>Commissions</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'payments' && styles.activeTab]}
           onPress={() => setActiveTab('payments')}
@@ -455,6 +446,7 @@ const EngineerDetailScreen = () => {
             </View>
           </View>
         )}
+
         renderItem={({ item, section }) => (
           <View style={styles.itemContainer}>
             <View style={styles.itemLeft}>
@@ -493,6 +485,7 @@ const EngineerDetailScreen = () => {
             </View>
           </View>
         )}
+
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
@@ -503,7 +496,6 @@ const EngineerDetailScreen = () => {
         }
       />
 
-      {/* Payment Modal */}
       <Modal
         visible={showPaymentModal}
         transparent={true}
@@ -518,10 +510,8 @@ const EngineerDetailScreen = () => {
                 <Feather name="x" size={25} color="2D3748" />
               </TouchableOpacity>
             </View>
-
             <View style={styles.modalContent}>
               <Text style={styles.modalSubtitle}>To : {engineerName}</Text>
-
               <View style={styles.paymentSummary}>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Pending Amount :</Text>
@@ -530,7 +520,6 @@ const EngineerDetailScreen = () => {
                   </Text>
                 </View>
               </View>
-
               <TextInput
                 style={styles.paymentInput}
                 placeholder="Enter amount"
@@ -539,7 +528,6 @@ const EngineerDetailScreen = () => {
                 value={paymentAmount}
                 onChangeText={setPaymentAmount}
               />
-
               <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handlePayment}

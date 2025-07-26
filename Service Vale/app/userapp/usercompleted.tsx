@@ -10,7 +10,6 @@ import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styl
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
-const BILLS_COLLECTION_ID = 'bill_ID';
 
 type Service = {
   id: string;
@@ -79,14 +78,11 @@ const CompletedServicesScreenUser = () => {
 
       const formattedServices = response.documents.map(doc => {
         const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
-        let formattedCompletedAt = formatToAmPm(rawCompletedAt);
-
         let serviceDateDisplay = '';
         if (doc.serviceDate) {
           const [year, month, day] = doc.serviceDate.split('-');
           serviceDateDisplay = `${day}/${month}/${year}`;
         }
-
         let serviceTimeDisplay = '';
         if (doc.serviceTime) {
           const [hours, minutes] = doc.serviceTime.split(':');
@@ -95,7 +91,6 @@ const CompletedServicesScreenUser = () => {
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
-
         return {
           id: doc.$id,
           serviceType: doc.serviceType,
@@ -112,7 +107,6 @@ const CompletedServicesScreenUser = () => {
           completedAt: rawCompletedAt
         };
       });
-
       if (loadMore) {
         setServices(prev => [...prev, ...formattedServices]);
         setAllServices(prev => [...prev, ...formattedServices]);
@@ -287,25 +281,30 @@ const CompletedServicesScreenUser = () => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={[styles.statusBadge, styles.completedBadge]}>
           <Text style={styles.statusText}>Completed</Text>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
@@ -313,6 +312,7 @@ const CompletedServicesScreenUser = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={16} color="#718096" />
@@ -323,6 +323,7 @@ const CompletedServicesScreenUser = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
@@ -331,6 +332,7 @@ const CompletedServicesScreenUser = () => {
           <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
           <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.moveToPendingButton}
           onPress={() => handleMoveToPending(item.id)}
@@ -357,10 +359,12 @@ const CompletedServicesScreenUser = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Completed Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{totalCount}</Text>
         </View>
       </View>
+
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
@@ -371,6 +375,7 @@ const CompletedServicesScreenUser = () => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
+
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -381,6 +386,7 @@ const CompletedServicesScreenUser = () => {
           </TouchableOpacity>
         )}
       </View>
+
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -389,6 +395,7 @@ const CompletedServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
+
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#5E72E4" />

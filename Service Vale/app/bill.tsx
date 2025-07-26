@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Moda
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Query } from 'appwrite';
-import { databases, account } from '../lib/appwrite';
+import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -99,7 +99,6 @@ const BillPage = () => {
       await fetchBills();
       await fetchTotalBillCount();
     };
-
     loadData();
     if (params.serviceData) {
       try {
@@ -155,9 +154,7 @@ const BillPage = () => {
 
   const filterBillsBySearch = (query: string, billsToFilter: Bill[]) => {
     if (!query.trim()) return billsToFilter;
-
     const lowerCaseQuery = query.toLowerCase();
-
     return billsToFilter.filter(bill => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
@@ -173,14 +170,12 @@ const BillPage = () => {
     });
   };
 
-
   const fetchBills = async (page = 1, isLoadMore = false) => {
     if (page === 1) {
       setIsLoading(true);
     } else {
       setIsLoadingMore(true);
     }
-
     try {
       const response = await databases.listDocuments(
         DATABASE_ID,
@@ -191,9 +186,7 @@ const BillPage = () => {
           Query.offset((page - 1) * itemsPerPage)
         ]
       );
-
       const newBills = response.documents as unknown as Bill[];
-
       if (isLoadMore) {
         setAllBills(prev => [...prev, ...newBills]);
         setBills(prev => [...prev, ...newBills]);
@@ -201,7 +194,6 @@ const BillPage = () => {
         setAllBills(newBills);
         setBills(newBills);
       }
-
       const totalCount = response.total;
       setTotalPages(Math.ceil(totalCount / itemsPerPage));
       setCurrentPage(page);
@@ -222,17 +214,14 @@ const BillPage = () => {
         USERS_COLLECTION_ID
       );
       const boys = boysResponse.documents.map(doc => doc.name);
-
       const counts: Record<string, number> = {
         'All Service Engineers': 0
       };
-
       const allResponse = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
       counts['All Service Engineers'] = allResponse.total;
-
       await Promise.all(boys.map(async (name) => {
         const response = await databases.listDocuments(
           DATABASE_ID,
@@ -241,8 +230,6 @@ const BillPage = () => {
         );
         counts[name] = response.total;
       }));
-
-
       return counts;
     } catch (error) {
       console.error('Error fetching engineer bill counts :', error);
@@ -263,7 +250,6 @@ const BillPage = () => {
     }
   };
 
-
   const countBillsByServiceBoy = () => {
     return engineerCounts;
   };
@@ -281,22 +267,18 @@ const BillPage = () => {
 
   const applyFilters = (serviceBoy: string | null, date: Date | null) => {
     let filtered = allBills;
-
     if (serviceBoy) {
       filtered = filtered.filter(bill => bill.serviceBoyName === serviceBoy);
     }
-
     if (date) {
       filtered = filtered.filter(bill => {
         const billDate = new Date(bill.$createdAt);
         return isSameDay(billDate, date);
       });
     }
-
     if (searchQuery.trim()) {
       filtered = filterBillsBySearch(searchQuery, filtered);
     }
-
     setBills(filtered);
   };
 
@@ -355,11 +337,6 @@ const BillPage = () => {
     return true;
   };
 
-  const loadMoreBills = () => {
-    if (!isLoadingMore && currentPage < totalPages) {
-      fetchBills(currentPage + 1);
-    }
-  };
   const generateBillHtml = (bill: Bill) => {
     return `
       <html>
@@ -685,9 +662,7 @@ const BillPage = () => {
     setSignature(base64Data);
     setIsSignatureVisible(false);
   };
-  const onRefresh = () => {
-    fetchTotalBillCount();
-  };
+
   const handleDeleteBill = async (id: string) => {
     Alert.alert(
       'Delete Bill',
@@ -786,6 +761,7 @@ const BillPage = () => {
           onChange={handleDateChange}
         />
       )}
+
       {!isFormVisible && (
         <View style={styles.searchContainer}>
           <TextInput
@@ -834,7 +810,6 @@ const BillPage = () => {
               renderItem={({ item }) => {
                 const billCounts = countBillsByServiceBoy();
                 const count = billCounts[item.name] || 0;
-
                 return (
                   <TouchableOpacity
                     style={styles.serviceCard}
@@ -863,14 +838,12 @@ const BillPage = () => {
         </View>
       </Modal>
 
-
       {isFormVisible ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
-
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
               {Object.entries(form).map(([key, value]) => (
@@ -916,7 +889,6 @@ const BillPage = () => {
                 numberOfLines={4}
                 maxLength={500}
               />
-
 
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
@@ -988,6 +960,7 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
+
               <TouchableOpacity
                 style={styles.submitButton}
                 onPress={async () => {
@@ -1053,11 +1026,10 @@ const BillPage = () => {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+
       ) : (
         <View style={styles.billsListContainer}>
-
           {isLoading ? (
-
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#5E72E4" />
             </View>
@@ -1135,8 +1107,6 @@ const BillPage = () => {
         </View>
       )}
 
-
-
       <Modal
         visible={isBillDetailVisible}
         animationType="slide"
@@ -1153,6 +1123,7 @@ const BillPage = () => {
                     <Feather name="x" size={25} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
+
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Bill Details</Text>

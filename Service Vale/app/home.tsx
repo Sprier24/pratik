@@ -73,6 +73,7 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const monthlyBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
@@ -123,7 +124,6 @@ const AdminHomeScreen = () => {
   const fetchOrders = async () => {
     try {
       setRefreshing(true);
-
       const pendingResponse = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -132,7 +132,6 @@ const AdminHomeScreen = () => {
           Query.select(['$id'])
         ]
       );
-
       const completedResponse = await databases.listDocuments(
         DATABASE_ID,
         ORDERS_COLLECTION_ID,
@@ -141,7 +140,6 @@ const AdminHomeScreen = () => {
           Query.select(['$id'])
         ]
       );
-
       setPendingCount(pendingResponse.total);
       setCompletedCount(completedResponse.total);
     } catch (error) {
@@ -165,23 +163,29 @@ const AdminHomeScreen = () => {
           Query.orderDesc('date')
         ]
       );
+
       const allBills = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID
       );
+
       const payments = await databases.listDocuments(
         DATABASE_ID,
         PAYMENTS_COLLECTION_ID
       );
+
       const total = currentMonthBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
+
       const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
+
       const totalPayments = payments.documents.reduce((sum, payment) => {
         return sum + parseFloat(payment.amount || '0');
       }, 0);
+
       const pending = totalCommissionsAllTime - totalPayments;
       const engineerMap = new Map<string, number>();
       allBills.documents.forEach(bill => {
@@ -206,7 +210,6 @@ const AdminHomeScreen = () => {
           return { name, amount, pending };
         })
         .sort((a, b) => b.pending - a.pending);
-
       setTotalCommission(total);
       setPendingCommission(pending);
       setPendingEngineersCount(pendingEngineersCount);
@@ -308,6 +311,7 @@ const AdminHomeScreen = () => {
               })}
             </Text>
           </View>
+
           <TouchableOpacity
             style={[styles.revenueCard, styles.monthlyCard]}
             onPress={() => router.push('/revenuehistory')}
@@ -379,6 +383,7 @@ const AdminHomeScreen = () => {
               </View>
               <Text style={styles.serviceCardTitle}>Pending Services</Text>
             </View>
+
             <Text style={styles.serviceCardCount}>{pendingCount}</Text>
             <TouchableOpacity
               style={styles.serviceCardButton}
@@ -388,6 +393,7 @@ const AdminHomeScreen = () => {
               <AntDesign name="right" size={16} color="#5E72E4" />
             </TouchableOpacity>
           </View>
+
           <View style={[styles.serviceCard, styles.completedCard]}>
             <View style={styles.serviceCardHeader}>
               <View style={[styles.serviceIconContainer, { backgroundColor: '#C6F6D5' }]}>
@@ -395,6 +401,7 @@ const AdminHomeScreen = () => {
               </View>
               <Text style={styles.serviceCardTitle}>Completed Services</Text>
             </View>
+
             <Text style={styles.serviceCardCount}>{completedCount}</Text>
             <TouchableOpacity
               style={styles.serviceCardButton}

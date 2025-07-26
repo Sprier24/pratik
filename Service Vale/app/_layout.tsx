@@ -4,7 +4,7 @@ export default function UserAppLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false, 
+        headerShown: false,
       }}
     />
   );

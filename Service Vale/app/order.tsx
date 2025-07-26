@@ -34,6 +34,7 @@ const OrderScreen = () => {
     applicantEmail: string;
     applicantPhone: string;
   }>();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -87,7 +88,7 @@ const OrderScreen = () => {
     setFormData(prev => ({ ...prev, timePeriod: period }));
   };
 
-  const handleDateChange = (event: any, date?: Date) => {
+  const handleDateChange = (_event: any, date?: Date) => {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
@@ -135,18 +136,14 @@ const OrderScreen = () => {
       `Service Charge: ₹${service.billAmount}\n\n` +
       `Please be ready for the service. For any queries, contact us: 635-320-2602\n\n` +
       `Thank you for choosing our service!`;
-
     let phone = service.phoneNumber.replace(/\D/g, '');
-
     if (phone.startsWith('0')) {
       phone = phone.substring(1);
     }
     if (!phone.startsWith('91')) {
       phone = '91' + phone;
     }
-
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
-
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
@@ -189,6 +186,7 @@ const OrderScreen = () => {
     } else if (formData.timePeriod === 'AM' && hours === 12) {
       hours = 0;
     }
+
     const sortableTime = `${String(hours).padStart(2, '0')}:${minutes}`;
     const [day, month, year] = formData.serviceDate.split('/');
     const sortableDate = `${year}-${month}-${day}`;
@@ -276,6 +274,7 @@ const OrderScreen = () => {
           <Text style={styles.headerTitle}>Create Service Order</Text>
         </View>
       </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -290,18 +289,21 @@ const OrderScreen = () => {
                   <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Email Address</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number</Text>
                 <View style={styles.readOnlyContainer}>
                   <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Type</Text>
                 <View style={styles.readOnlyContainer}>
@@ -309,6 +311,7 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Service Schedule</Text>
               <View style={styles.field}>
@@ -329,6 +332,7 @@ const OrderScreen = () => {
                   />
                 )}
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
                 <View style={styles.timeInputContainer}>
@@ -340,6 +344,7 @@ const OrderScreen = () => {
                     keyboardType="numbers-and-punctuation"
                     maxLength={5}
                   />
+
                   <View style={styles.timePeriodContainer}>
                     <TouchableOpacity
                       style={[
@@ -355,6 +360,7 @@ const OrderScreen = () => {
                         AM
                       </Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                       style={[
                         styles.timePeriodButton,
@@ -373,6 +379,7 @@ const OrderScreen = () => {
                 </View>
               </View>
             </View>
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Customer Details</Text>
               <View style={styles.field}>
@@ -386,6 +393,7 @@ const OrderScreen = () => {
                   placeholder="Enter customer name"
                 />
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number <Text style={styles.required}>*</Text></Text>
                 <View style={styles.inputContainer}>
@@ -400,6 +408,7 @@ const OrderScreen = () => {
                   />
                 </View>
               </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>Service Address</Text>
                 <TextInput
@@ -412,8 +421,10 @@ const OrderScreen = () => {
                 />
               </View>
             </View>
+
             <Text style={styles.sectionTitle}>Billing Information</Text>
             <Text style={styles.label1}>Service Charge</Text>
+
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
               <TextInput
@@ -424,6 +435,7 @@ const OrderScreen = () => {
                 keyboardType="numeric"
               />
             </View>
+
           </View>
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}

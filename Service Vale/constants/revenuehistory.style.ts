@@ -87,7 +87,6 @@ export const styles = StyleSheet.create({
     color: '#5E72E4',
     letterSpacing: 0.25,
   },
-  // Add these additional styles for more professional touches:
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',

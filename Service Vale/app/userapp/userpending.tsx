@@ -7,7 +7,6 @@ import { ID, Query } from 'appwrite';
 import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
-import { Linking } from 'react-native';
 
 const DATABASE_ID = '681c428b00159abb5e8b';
 const COLLECTION_ID = '681d92600018a87c1478';
@@ -34,7 +33,7 @@ type Service = {
 const PendingServicesScreenUser = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [allServices, setAllServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -225,28 +224,6 @@ const PendingServicesScreenUser = () => {
     );
   };
 
-  const sendManualWhatsAppNotification = (service: Service) => {
-    const message = `Dear ${service.clientName},\n\n` +
-      `Your ${service.serviceType} service is scheduled for:\n` +
-      `📅 Date: ${service.serviceDate}\n` +
-      `⏰ Time: ${service.serviceTime}\n\n` +
-      `Service Provider Details:\n` +
-      `👨‍🔧 Name: ${service.serviceBoy}\n` +
-      `📞 Contact: ${service.serviceboyContact}\n\n` +
-      `Service Amount: ₹${service.amount}\n\n` +
-      `Please be ready for the service. For any queries, contact us.\n\n` +
-      `Thank you for choosing our service!`;
-    const phone = service.phone.replace(/\D/g, '');
-    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'WhatsApp is not installed');
-      }
-    });
-  };
-
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
@@ -259,6 +236,7 @@ const PendingServicesScreenUser = () => {
           />
           <Text style={styles.serviceType}>{item.serviceType}</Text>
         </View>
+
         <View style={styles.serviceActions}>
           <TouchableOpacity
             onPress={() => router.push({
@@ -275,21 +253,25 @@ const PendingServicesScreenUser = () => {
           </View>
         </View>
       </View>
+
       <View style={styles.serviceDetails}>
         <View style={styles.detailRow}>
           <MaterialIcons name="person" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.clientName}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={18} color="#718096" />
           <Text style={styles.detailText}>
             {item.address}
           </Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={18} color="#718096" />
           <Text style={styles.detailText}>{item.phone}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={18} color="#718096" />
           <Text style={styles.detailText}>
@@ -297,6 +279,7 @@ const PendingServicesScreenUser = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.serviceFooter}>
         <View style={styles.dateContainer}>
           <MaterialIcons name="access-time" size={16} color="#718096" />
@@ -305,6 +288,7 @@ const PendingServicesScreenUser = () => {
           </Text>
         </View>
       </View>
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.completeButton}
@@ -326,10 +310,12 @@ const PendingServicesScreenUser = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pending Services</Text>
         </View>
+
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{services.length}</Text>
         </View>
       </View>
+
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={styles.filterButton}
@@ -340,6 +326,7 @@ const PendingServicesScreenUser = () => {
             {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
           </Text>
         </TouchableOpacity>
+
         {dateFilter && (
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -350,6 +337,7 @@ const PendingServicesScreenUser = () => {
           </TouchableOpacity>
         )}
       </View>
+
       {showDatePicker && (
         <DateTimePicker
           value={dateFilter || new Date()}
@@ -358,6 +346,7 @@ const PendingServicesScreenUser = () => {
           onChange={handleDateChange}
         />
       )}
+
       {services.length > 0 ? (
         <FlatList
           data={services}

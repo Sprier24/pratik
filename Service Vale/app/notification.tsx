@@ -110,6 +110,7 @@ const AdminNotificationPage = () => {
         setRefreshing(true);
         fetchNotifications();
     };
+
     useEffect(() => {
         fetchNotifications();
     }, []);
@@ -144,6 +145,7 @@ const AdminNotificationPage = () => {
                     <View style={{ width: 24 }} />
                 )}
             </View>
+
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 refreshControl={
