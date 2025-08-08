@@ -30,71 +30,60 @@ const EngineerCommissionsScreen = () => {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-      const usersResponse = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
+      const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
+      const [usersResponse, paymentsResponse] = await Promise.all([
+        databases.listDocuments(DATABASE_ID, USERS_COLLECTION_ID),
+        databases.listDocuments(DATABASE_ID, PAYMENTS_COLLECTION_ID)
+      ]);
+
+      const engineersWithCommissions = await Promise.all(
+        usersResponse.documents.map(async (user) => {
+          const currentMonthCommissions = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTION_ID,
+            [
+              Query.equal('serviceBoyName', user.name),
+              Query.greaterThanEqual('date', startOfCurrentMonth)
+            ]
+          );
+
+          const monthCommission = currentMonthCommissions.documents.reduce(
+            (sum, doc) => sum + (parseFloat(doc.serviceCharge) * 0.25),
+            0
+          );
+
+          const allCommissions = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTION_ID,
+            [Query.equal('serviceBoyName', user.name)]
+          );
+          const totalCommission = allCommissions.documents.reduce(
+            (sum, doc) => (sum + (parseFloat(doc.serviceCharge) * 0.25)),
+            0
+          );
+
+          const engineerPayments = paymentsResponse.documents
+            .filter(payment => payment.engineerName === user.name)
+            .reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+
+          return {
+            id: user.$id,
+            name: user.name,
+            commission: monthCommission, 
+            payments: engineerPayments,
+            pending: totalCommission - engineerPayments,
+          };
+        })
       );
 
-      const currentMonthBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.greaterThanEqual('date', startOfMonth),
-          Query.orderDesc('date')
-        ]
-      );
+      const sortedEngineers = engineersWithCommissions.sort((a, b) => b.pending - a.pending);
+      setEngineers(sortedEngineers);
 
-      const allBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID
-      );
+      setTotalPending(sortedEngineers.reduce((sum, e) => sum + e.pending, 0));
 
-      const paymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID
-      );
-
-      const currentMonthCommissionMap = new Map<string, number>();
-      currentMonthBills.documents.forEach(bill => {
-        const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
-        const current = currentMonthCommissionMap.get(bill.serviceBoyName) || 0;
-        currentMonthCommissionMap.set(bill.serviceBoyName, current + commission);
-      });
-
-      const allTimeCommissionMap = new Map<string, number>();
-      allBills.documents.forEach(bill => {
-        const commission = parseFloat(bill.serviceCharge || '0') * 0.25;
-        const current = allTimeCommissionMap.get(bill.serviceBoyName) || 0;
-        allTimeCommissionMap.set(bill.serviceBoyName, current + commission);
-      });
-
-      const paymentsMap = new Map<string, number>();
-      paymentsResponse.documents.forEach(payment => {
-        const amount = parseFloat(payment.amount || '0');
-        const current = paymentsMap.get(payment.engineerName) || 0;
-        paymentsMap.set(payment.engineerName, current + amount);
-      });
-
-      const allEngineers = usersResponse.documents.map(user => {
-        const currentMonthCommission = currentMonthCommissionMap.get(user.name) || 0;
-        const allTimeCommission = allTimeCommissionMap.get(user.name) || 0;
-        const payments = paymentsMap.get(user.name) || 0;
-        const pending = allTimeCommission - payments;
-        return {
-          id: user.$id,
-          name: user.name,
-          commission: currentMonthCommission,
-          payments,
-          pending
-        };
-      });
-
-      const totalPendingCommission = allEngineers.reduce((sum, e) => sum + e.pending, 0);
-      setTotalPending(totalPendingCommission);
-
-      setEngineers(allEngineers.sort((a, b) => b.pending - a.pending));
     } catch (error) {
       console.error('Error fetching data:', error);
       Alert.alert('Error', 'Failed to load engineer data');
@@ -191,7 +180,7 @@ const EngineerCommissionsScreen = () => {
               </Text>
               {engineer.pending > 0 && (
                 <Text style={styles.pendingStatus}>
-                  Pending : ₹{engineer.pending.toLocaleString('en-IN', {
+                  Pending: ₹{engineer.pending.toLocaleString('en-IN', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
