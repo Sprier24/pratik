@@ -8,8 +8,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681d92600018a87c1478';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'orders-id';
 
 type Service = {
   id: string;

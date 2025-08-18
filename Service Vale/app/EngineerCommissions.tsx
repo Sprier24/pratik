@@ -6,10 +6,10 @@ import { databases } from '../lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { styles } from '../constants/EngineerCommissions.styles';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const PAYMENTS_COLLECTION_ID = 'commission_ID';
-const USERS_COLLECTION_ID = '681c429800281e8a99bd';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const PAYMENTS_COLLECTION_ID = 'commission-id';
+const USERS_COLLECTION_ID = 'engineer-id';
 
 type Engineer = {
   id: string;

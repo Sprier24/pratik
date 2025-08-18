@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { databases } from '../lib/appwrite';
 import { Query } from 'react-native-appwrite';
-import { MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/revenuehistory.style';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'monthly-id';
 
 type MonthlyRevenue = {
   month: string;
@@ -22,52 +22,32 @@ const RevenueHistoryScreen = () => {
   const insets = useSafeAreaInsets();
 
   const fetchMonthlyRevenueHistory = async () => {
-    try {
-      setIsLoading(true);
-      const bills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.orderDesc('date')]
-      );
+  try {
+    setIsLoading(true);
+    const revenues = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      [Query.orderDesc('$createdAt')] // Sort by creation date
+    );
 
-      const revenueByMonth = bills.documents.reduce((acc, bill) => {
-        const date = new Date(bill.date);
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-        const key = `${year}-${month}`;
-        if (!acc[key]) {
-          acc[key] = {
-            month,
-            year,
-            total: 0
-          };
-        }
-        acc[key].total += parseFloat(bill.total || '0');
-        return acc;
-      }, {} as Record<string, { month: number; year: number; total: number }>);
+    // Transform the data to match your expected format
+    const formattedRevenues = revenues.documents.map(doc => ({
+      month: doc.month,
+      year: doc.year.toString(),
+      total: parseFloat(doc.total) || 0
+    })).sort((a, b) => {
+      // Sort by year and month
+      if (a.year !== b.year) return parseInt(b.year) - parseInt(a.year);
+      return getMonthNumber(b.month) - getMonthNumber(a.month);
+    });
 
-      const formattedRevenues = Object.values(revenueByMonth)
-        .map(item => ({
-          month: new Date(item.year, item.month - 1, 1).toLocaleString('default', { month: 'long' }),
-          year: item.year.toString(),
-          total: item.total
-        }))
-        .sort((a, b) => {
-          if (a.year !== b.year) return parseInt(b.year) - parseInt(a.year);
-          return (
-            new Date(parseInt(b.year), getMonthNumber(b.month)).getTime() -
-            new Date(parseInt(a.year), getMonthNumber(a.month)).getTime()
-          );
-        });
-
-      setMonthlyRevenues(formattedRevenues);
-
-    } catch (error) {
-      console.error('Error fetching revenue history:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setMonthlyRevenues(formattedRevenues);
+  } catch (error) {
+    console.error('Error fetching revenue history:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getMonthNumber = (monthName: string) => {
     return new Date(`${monthName} 1, 2000`).getMonth();

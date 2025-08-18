@@ -12,8 +12,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
 
 type Bill = {
   $id: string;

@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/UserDetailsForm.styles';
 import { footerStyles } from '../constants/footer';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = '681c429800281e8a99bd';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'engineer-id';
 
 type User = {
   $id?: string;

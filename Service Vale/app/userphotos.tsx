@@ -26,12 +26,12 @@ interface PhotoDocument extends Models.Document {
     notes?: string;
 }
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'photo_id';
-const BUCKET_ID = 'photo_id';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'photo-id';
+const BUCKET_ID = 'photo-id';
 const { width } = Dimensions.get('window');
 const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
-const PROJECT_ID = '681b300f0018fdc27bdd';
+const PROJECT_ID = 'servicevale-id';
 
 const buildImageUrl = (fileId: string) =>
     `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;

@@ -8,9 +8,9 @@ import { styles } from '../constants/EngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, startOfMonth } from 'date-fns';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const PAYMENTS_COLLECTION_ID = 'commission_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const PAYMENTS_COLLECTION_ID = 'commission-id';
 
 type TransactionItem = {
   id: string;
@@ -22,6 +22,7 @@ type TransactionItem = {
   serviceType?: string;
   selected?: boolean;
   status?: 'completed' | 'pending';
+  engineerCommission?: number;
 };
 
 type SectionData = {
@@ -47,6 +48,7 @@ const EngineerDetailScreen = () => {
     payments: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'commissions' | 'payments'>('commissions');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -54,10 +56,173 @@ const EngineerDetailScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentMonthCommission, setCurrentMonthCommission] = useState(0);
   const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<TransactionItem[]>([]);
+  const [hasMoreCommissions, setHasMoreCommissions] = useState(true);
+  const [commissionOffset, setCommissionOffset] = useState(0);
+  const batchSize = 50; // Number of items to load at a time
+  const [paymentError, setPaymentError] = useState('');
 
   useEffect(() => {
-    fetchData();
+    fetchAllData();
   }, []);
+
+  const fetchAllData = async () => {
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchCommissions(true), // Reset offset when refreshing
+        fetchPayments()
+      ]);
+    } catch (error) {
+      console.error('Error fetching all data:', error);
+      Alert.alert('Error', 'Failed to load engineer details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCommissions = async (reset = false) => {
+    try {
+      const offset = reset ? 0 : commissionOffset;
+
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.equal('serviceBoyName', engineerName),
+          Query.orderDesc('date'),
+          Query.limit(batchSize),
+          Query.offset(offset)
+        ]
+      );
+
+      const today = new Date();
+      const startOfCurrentMonth = startOfMonth(today).toISOString();
+
+      // Current month commissions
+      const currentMonthCommissionsResponse = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTION_ID,
+        [
+          Query.equal('serviceBoyName', engineerName),
+          Query.greaterThanEqual('date', startOfCurrentMonth)
+        ]
+      );
+
+      const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
+        return sum + parseFloat(doc.engineerCommission || '0');
+      }, 0);
+      setCurrentMonthCommission(monthCommission);
+
+      const commissionItems: TransactionItem[] = response.documents.map(doc => ({
+        id: doc.$id,
+        date: doc.date,
+        amount: parseFloat(doc.engineerCommission || '0'),
+        type: 'commission',
+        customerName: doc.customerName,
+        billNumber: doc.billNumber,
+        serviceType: doc.serviceType,
+        selected: false
+      }));
+
+      // Update transactions state
+      setTransactions(prev => {
+        const existingCommissions = reset ? [] : prev.commissions;
+        const newCommissions = groupByDate([...existingCommissions.flatMap(s => s.data), ...commissionItems], true);
+
+        return {
+          ...prev,
+          commissions: newCommissions
+        };
+      });
+
+      // Update offset and hasMore flag
+      setCommissionOffset(offset + response.documents.length);
+      setHasMoreCommissions(response.documents.length === batchSize);
+
+      // Apply date filter if active
+      if (dateFilter) {
+        const startOfDay = new Date(dateFilter);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateFilter);
+        endOfDay.setHours(23, 59, 59, 999);
+        filterByDateRange(startOfDay, endOfDay);
+      } else {
+        setFilteredTransactions(prev => ({
+          ...prev,
+          commissions: groupByDate([...transactions.commissions.flatMap(s => s.data), ...commissionItems], true)
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching commissions:', error);
+      throw error;
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        PAYMENTS_COLLECTION_ID,
+        [
+          Query.or([
+            Query.equal('engineerId', engineerId),
+            Query.equal('engineerName', engineerName)
+          ]),
+          Query.orderDesc('date')
+        ]
+      );
+
+      const today = new Date();
+      const startOfCurrentMonth = startOfMonth(today).toISOString();
+
+      // Current month payments
+      const currentMonthPaymentsResponse = await databases.listDocuments(
+        DATABASE_ID,
+        PAYMENTS_COLLECTION_ID,
+        [
+          Query.or([
+            Query.equal('engineerId', engineerId),
+            Query.equal('engineerName', engineerName)
+          ]),
+          Query.greaterThanEqual('date', startOfCurrentMonth),
+          Query.orderDesc('date')
+        ]
+      );
+
+      const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
+        return sum + parseFloat(doc.amount);
+      }, 0);
+      setCurrentMonthPayments(monthPayments);
+
+      const paymentItems: TransactionItem[] = response.documents.map(doc => ({
+        id: doc.$id,
+        date: doc.date,
+        amount: parseFloat(doc.amount),
+        type: 'payment',
+        selected: false
+      }));
+
+      const paymentSections = groupByDate(paymentItems, true);
+
+      setTransactions(prev => ({
+        ...prev,
+        payments: paymentSections
+      }));
+
+      if (!dateFilter) {
+        setFilteredTransactions(prev => ({
+          ...prev,
+          payments: paymentSections
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      throw error;
+    }
+  };
+
 
   const groupByDate = (items: TransactionItem[], groupByMonth = false): SectionData[] => {
     const grouped: { [key: string]: TransactionItem[] } = {};
@@ -114,107 +279,24 @@ const EngineerDetailScreen = () => {
       });
   };
 
-  const fetchData = async () => {
-    try {
-      const today = new Date();
-      const startOfCurrentMonth = startOfMonth(today).toISOString();
-      const allCommissionsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('serviceBoyName', engineerName)]
-      );
-
-      const currentMonthCommissionsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', engineerName),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
-      );
-
-      const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
-        return sum + (parseFloat(doc.serviceCharge) * 0.25);
-      }, 0);
-      setCurrentMonthCommission(monthCommission);
-
-      const commissionItems: TransactionItem[] = allCommissionsResponse.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.serviceCharge) * 0.25,
-        type: 'commission',
-        customerName: doc.customerName,
-        billNumber: doc.billNumber,
-        serviceType: doc.serviceType,
-        selected: false
-      }));
-
-      const paymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [Query.equal('engineerId', engineerId)]
-      );
-
-      const currentMonthPaymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [
-          Query.equal('engineerId', engineerId),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
-      );
-
-      const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
-        return sum + parseFloat(doc.amount);
-      }, 0);
-      setCurrentMonthPayments(monthPayments);
-
-      const paymentItems: TransactionItem[] = paymentsResponse.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.amount),
-        type: 'payment',
-        selected: false
-      }));
-
-      const commissionSections = groupByDate(commissionItems, true);
-      const paymentSections = groupByDate(paymentItems, true);
-
-      const newTransactions = {
-        commissions: commissionSections,
-        payments: paymentSections
-      };
-
-      setTransactions(newTransactions);
-
-      if (dateFilter) {
-        const startOfDay = new Date(dateFilter);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(dateFilter);
-        endOfDay.setHours(23, 59, 59, 999);
-        filterByDateRange(startOfDay, endOfDay);
-      } else {
-        setFilteredTransactions(newTransactions);
-      }
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      Alert.alert('Error', 'Failed to load engineer details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handlePayment = async () => {
     if (!paymentAmount) {
-      Alert.alert('Error', 'Please enter an amount');
+      setPaymentError('Please enter an amount');
       return;
     }
+
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Error', 'Please enter a valid amount');
+      setPaymentError('Please enter a valid amount');
       return;
     }
+
+    const pendingAmount = calculatePendingAmount();
+    if (amount > pendingAmount) {
+      setPaymentError(`Amount cannot exceed pending amount (₹${pendingAmount.toLocaleString('en-IN')})`);
+      return;
+    }
+
     try {
       await databases.createDocument(
         DATABASE_ID,
@@ -227,8 +309,9 @@ const EngineerDetailScreen = () => {
           date: new Date().toISOString()
         }
       );
-      await fetchData();
+      await fetchAllData();
       setPaymentAmount('');
+      setPaymentError('');
       setShowPaymentModal(false);
       Alert.alert('Success', `Payment of ₹${amount.toLocaleString('en-IN')} recorded`);
     } catch (error) {
@@ -247,6 +330,28 @@ const EngineerDetailScreen = () => {
     return transactions.payments.reduce((sum: number, section: SectionData) =>
       sum + section.data.reduce((sectionSum: number, item: TransactionItem) =>
         sectionSum + item.amount, 0), 0);
+  };
+
+  const calculatePendingAmount = (): number => {
+    const totalCommission = calculateTotalCommission();
+    const totalPayments = calculateTotalPayments();
+    return totalCommission - totalPayments;
+  };
+
+  const calculateTotalMonthlyCommission = (): number => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    return transactions.commissions.reduce((totalSum, section) => {
+      // Check if section is from the current month
+      const sectionDate = new Date(section.data[0]?.date || 0);
+      if (sectionDate.getMonth() === currentMonth &&
+        sectionDate.getFullYear() === currentYear) {
+        return totalSum + (section.totalAmount || 0);
+      }
+      return totalSum;
+    }, 0);
   };
 
   const formatItemDate = (dateString: string) => {
@@ -308,6 +413,156 @@ const EngineerDetailScreen = () => {
     setFilteredTransactions(transactions);
   };
 
+  const toggleItemSelection = (item: TransactionItem) => {
+    if (activeTab !== 'payments') return;
+
+    const updatedTransactions = { ...filteredTransactions };
+    let found = false;
+
+    // Update the item in filtered transactions
+    updatedTransactions.payments = updatedTransactions.payments.map(section => {
+      const updatedData = section.data.map(i => {
+        if (i.id === item.id) {
+          found = true;
+          return { ...i, selected: !i.selected };
+        }
+        return i;
+      });
+      return { ...section, data: updatedData };
+    });
+
+    if (found) {
+      setFilteredTransactions(updatedTransactions);
+
+      // Update the item in main transactions
+      const updatedMainTransactions = { ...transactions };
+      updatedMainTransactions.payments = updatedMainTransactions.payments.map(section => {
+        const updatedData = section.data.map(i => {
+          if (i.id === item.id) {
+            return { ...i, selected: !i.selected };
+          }
+          return i;
+        });
+        return { ...section, data: updatedData };
+      });
+      setTransactions(updatedMainTransactions);
+
+      // Update selected items list
+      if (item.selected) {
+        setSelectedItems(selectedItems.filter(i => i.id !== item.id));
+      } else {
+        setSelectedItems([...selectedItems, { ...item, selected: true }]);
+      }
+    }
+  };
+
+  const startSelectionMode = () => {
+    setIsSelectionMode(true);
+  };
+
+  const cancelSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedItems([]);
+
+    // Clear all selections in both transaction states
+    const clearSelections = (sections: SectionData[]) =>
+      sections.map(section => ({
+        ...section,
+        data: section.data.map(item => ({ ...item, selected: false }))
+      }));
+
+    setTransactions(prev => ({
+      ...prev,
+      payments: clearSelections(prev.payments)
+    }));
+
+    setFilteredTransactions(prev => ({
+      ...prev,
+      payments: clearSelections(prev.payments)
+    }));
+  };
+
+  const deleteSelectedPayments = async () => {
+    if (selectedItems.length === 0) {
+      Alert.alert('Error', 'No payments selected');
+      return;
+    }
+
+    try {
+      Alert.alert(
+        'Confirm Delete',
+        `Are you sure you want to delete ${selectedItems.length} payment(s)?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              // 1. Get IDs of payments to delete
+              const paymentIdsToDelete = selectedItems.map(item => item.id);
+
+              // 2. Optimistically update UI by removing the payments
+              const updatedPayments = transactions.payments
+                .map(section => ({
+                  ...section,
+                  data: section.data.filter(item => !paymentIdsToDelete.includes(item.id))
+                }))
+                .filter(section => section.data.length > 0);
+
+              const updatedFilteredPayments = dateFilter
+                ? updatedPayments // If date filtered, use same logic
+                : updatedPayments;
+
+              setTransactions({
+                ...transactions,
+                payments: updatedPayments
+              });
+
+              setFilteredTransactions({
+                ...filteredTransactions,
+                payments: updatedFilteredPayments
+              });
+
+              // 3. Update current month payments calculation
+              const deletedAmount = selectedItems.reduce((sum, item) => sum + item.amount, 0);
+              setCurrentMonthPayments(prev => Math.max(0, prev - deletedAmount));
+
+              // 4. Clear selection
+              cancelSelectionMode();
+
+              // 5. Actually delete from database
+              await Promise.all(
+                selectedItems.map(item =>
+                  databases.deleteDocument(DATABASE_ID, PAYMENTS_COLLECTION_ID, item.id)
+                )
+              );
+
+              Alert.alert('Success', 'Payments deleted successfully');
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error deleting payments:', error);
+      Alert.alert('Error', 'Failed to delete payments');
+      // If error occurs, refresh data to sync with server
+      fetchAllData();
+    }
+  };
+
+  const loadMoreCommissions = async () => {
+    if (!hasMoreCommissions || isLoading) return;
+    try {
+      await fetchCommissions();
+    } catch (error) {
+      console.error('Error loading more commissions:', error);
+      Alert.alert('Error', 'Failed to load more commissions');
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -362,7 +617,7 @@ const EngineerDetailScreen = () => {
         <View style={[styles.summaryCard, styles.commissionCard]}>
           <Text style={styles.summaryLabel}>Monthly Commission</Text>
           <Text style={styles.summaryValue}>
-            ₹{currentMonthCommission.toLocaleString('en-IN', {
+            ₹{calculateTotalMonthlyCommission().toLocaleString('en-IN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
             })}
@@ -382,7 +637,7 @@ const EngineerDetailScreen = () => {
         <View style={[styles.summaryCard, styles.pendingCard]}>
           <Text style={styles.summaryLabel}>Pending</Text>
           <Text style={[styles.summaryValue, styles.pendingValue]}>
-            ₹{(calculateTotalCommission() - calculateTotalPayments()).toLocaleString('en-IN')}
+            ₹{calculatePendingAmount().toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
@@ -390,20 +645,62 @@ const EngineerDetailScreen = () => {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'commissions' && styles.activeTab]}
-          onPress={() => setActiveTab('commissions')}
+          onPress={() => {
+            setActiveTab('commissions');
+            if (isSelectionMode) cancelSelectionMode();
+          }}
         >
           <Text style={[styles.tabText, activeTab === 'commissions' && styles.activeTabText]}>Commissions</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'payments' && styles.activeTab]}
-          onPress={() => setActiveTab('payments')}
+          onPress={() => {
+            setActiveTab('payments');
+            if (isSelectionMode) cancelSelectionMode();
+          }}
         >
           <Text style={[styles.tabText, activeTab === 'payments' && styles.activeTabText]}>Payments</Text>
         </TouchableOpacity>
       </View>
 
-      {calculateTotalCommission() - calculateTotalPayments() > 0 && (
+      {activeTab === 'payments' && !isSelectionMode && (
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={startSelectionMode}
+        >
+          <Feather name="trash" size={18} color="#FFF" />
+          <Text style={styles.editButtonText}>delete Payments</Text>
+        </TouchableOpacity>
+      )}
+
+      {isSelectionMode && (
+        <View style={styles.selectionModeContainer}>
+          <TouchableOpacity
+            style={styles.cancelSelectionButton}
+            onPress={cancelSelectionMode}
+          >
+            <Feather name="x" size={18} color="#FFF" />
+            <Text style={styles.cancelSelectionText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.selectedCountText}>
+            {selectedItems.length} selected
+          </Text>
+
+          {selectedItems.length > 0 && (
+            <TouchableOpacity
+              style={styles.deleteSelectionButton}
+              onPress={deleteSelectedPayments}
+            >
+              <Feather name="trash-2" size={18} color="#FFF" />
+              <Text style={styles.deleteSelectionText}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {calculateTotalCommission() - calculateTotalPayments() > 0 && !isSelectionMode && (
         <TouchableOpacity
           style={styles.payButton}
           onPress={() => setShowPaymentModal(true)}
@@ -446,10 +743,29 @@ const EngineerDetailScreen = () => {
             </View>
           </View>
         )}
-
         renderItem={({ item, section }) => (
-          <View style={styles.itemContainer}>
+          <TouchableOpacity
+            style={styles.itemContainer}
+            onLongPress={() => activeTab === 'payments' && !isSelectionMode && startSelectionMode()}
+            onPress={() => {
+              if (isSelectionMode && activeTab === 'payments') {
+                toggleItemSelection(item);
+              }
+            }}
+          >
             <View style={styles.itemLeft}>
+              {isSelectionMode && activeTab === 'payments' && (
+                <View style={styles.checkboxContainer}>
+                  <View style={[
+                    styles.checkbox,
+                    item.selected && styles.checkboxSelected
+                  ]}>
+                    {item.selected && (
+                      <Feather name="check" size={14} color="#FFF" />
+                    )}
+                  </View>
+                </View>
+              )}
               <View style={styles.itemIconContainer}>
                 <MaterialIcons
                   name={item.type === 'commission' ? 'engineering' : 'payment'}
@@ -483,9 +799,8 @@ const EngineerDetailScreen = () => {
                 ₹{item.amount.toLocaleString('en-IN')}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
-
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
@@ -493,6 +808,16 @@ const EngineerDetailScreen = () => {
               {dateFilter && ` on ${format(dateFilter, 'dd MMM yyyy')}`}
             </Text>
           </View>
+        }
+        onEndReached={activeTab === 'commissions' ? loadMoreCommissions : undefined}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          activeTab === 'commissions' && hasMoreCommissions ? (
+            <View style={styles.loadingMoreContainer}>
+              <ActivityIndicator size="small" color="#5E72E4" />
+              <Text style={styles.loadingMoreText}>Loading more transactions...</Text>
+            </View>
+          ) : null
         }
       />
 
@@ -526,11 +851,36 @@ const EngineerDetailScreen = () => {
                 placeholderTextColor="#A0AEC0"
                 keyboardType="numeric"
                 value={paymentAmount}
-                onChangeText={setPaymentAmount}
+                onChangeText={(text) => {
+                  setPaymentAmount(text);
+                  // Clear error when user starts typing
+                  if (paymentError) setPaymentError('');
+
+                  // Validate immediately if there's input
+                  if (text) {
+                    const amount = parseFloat(text);
+                    if (!isNaN(amount)) {
+                      const pendingAmount = calculatePendingAmount();
+                      if (amount > pendingAmount) {
+                        setPaymentError(`Amount cannot exceed pending amount (₹${pendingAmount.toLocaleString('en-IN')})`);
+                      } else {
+                        setPaymentError('');
+                      }
+                    }
+                  }
+                }}
               />
+              {paymentError ? (
+                <Text style={styles.errorText}>{paymentError}</Text>
+              ) : null}
               <TouchableOpacity
-                style={styles.submitButton}
+                style={[
+                  styles.submitButton,
+                  (!!paymentError || !paymentAmount || parseFloat(paymentAmount) > calculatePendingAmount()) &&
+                  styles.disabledButton
+                ]}
                 onPress={handlePayment}
+                disabled={!!paymentError || !paymentAmount || parseFloat(paymentAmount) > calculatePendingAmount()}
               >
                 <Text style={styles.submitButtonText}>Confirm Payment</Text>
               </TouchableOpacity>

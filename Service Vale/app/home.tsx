@@ -9,14 +9,14 @@ import { styles } from '../constants/HomeScreen.styles';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'admin_id';
-const PAYMENTS_COLLECTION_ID = 'commission_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const ORDERS_COLLECTION_ID = 'orders-id';
+const NOTIFICATIONS_COLLECTION_ID = 'adminnotification-id';
+const PAYMENTS_COLLECTION_ID = 'commission-id';
 const { width } = Dimensions.get('window');
-const MONTHLY_REVENUE_COLLECTION_ID = 'monthly_revenue';
-const USERS_COLLECTION_ID = '681c429800281e8a99bd';
+const MONTHLY_REVENUE_COLLECTION_ID = 'monthly-id';
+const USERS_COLLECTION_ID = 'engineer-id';
 
 const AdminHomeScreen = () => {
   const [dailyRevenue, setDailyRevenue] = useState(0);

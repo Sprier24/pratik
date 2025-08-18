@@ -8,9 +8,9 @@ import { styles } from '../../constants/userapp/UserEngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const PAYMENTS_COLLECTION_ID = 'commission_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const PAYMENTS_COLLECTION_ID = 'commission-id';
 
 type TransactionItem = {
   id: string;

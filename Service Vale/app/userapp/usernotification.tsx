@@ -8,8 +8,8 @@ import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import styles from '../../constants/notification';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const NOTIFICATIONS_COLLECTION = 'note_id';
+const DATABASE_ID = 'servicevale-database';
+const NOTIFICATIONS_COLLECTION = 'engineernotification-id';
 
 const AdminNotificationPage = () => {
     const [notifications, setNotifications] = useState<any[]>([]);

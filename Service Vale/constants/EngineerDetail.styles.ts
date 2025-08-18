@@ -5,6 +5,11 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: '#718096',
   },
+  commissionText: {
+    fontSize: 12,
+    color: '#718096',
+    marginLeft: 10,
+  },
   itemDetails: {
     flex: 1,
   },
@@ -233,6 +238,77 @@ export const styles = StyleSheet.create({
   activeTabText: {
     color: '#FFF',
   },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#5E72E4',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  editButtonText: {
+    color: '#FFF',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  selectionModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#4A5568',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  cancelSelectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cancelSelectionText: {
+    color: '#FFF',
+    marginLeft: 8,
+  },
+  selectedCountText: {
+    color: '#FFF',
+    fontWeight: '500',
+  },
+  deleteSelectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E53E3E',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  deleteSelectionText: {
+    color: '#FFF',
+    marginLeft: 8,
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#CBD5E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#5E72E4',
+    borderColor: '#5E72E4',
+  },
   payButton: {
     flexDirection: 'row',
     backgroundColor: '#5E72E4',
@@ -337,6 +413,16 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
+    loadingMoreContainer: {
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    color: '#718096',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -347,7 +433,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 15,
     width: '90%',
-    maxHeight: '75%',
+    maxHeight: '80%',
     padding: 20,
   },
   modalHeader: {
@@ -361,6 +447,11 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2D3748',
   },
+  modalScrollContainer: {
+  flexGrow: 1,
+  justifyContent: 'center',
+  padding: 20,
+},
   modalContent: {
     paddingVertical: 10,
   },
@@ -384,7 +475,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 8,
-    padding: 15,
+    padding: 15 ,
     marginBottom: 20,
     fontSize: 15,
     color: '#2D3748',
@@ -400,4 +491,14 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+  errorText: {
+  color: '#E53E3E',
+  fontSize: 14,
+  marginTop: 1,
+  textAlign: 'center',
+},
+disabledButton: {
+  backgroundColor: '#CBD5E0',
+},
+
 });

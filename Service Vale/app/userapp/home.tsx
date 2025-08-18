@@ -8,11 +8,11 @@ import { Query } from 'react-native-appwrite';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const ORDERS_COLLECTION_ID = '681d92600018a87c1478';
-const NOTIFICATIONS_COLLECTION_ID = 'note_id';
-const PAYMENTS_COLLECTION_ID = 'commission_ID';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const ORDERS_COLLECTION_ID = 'orders-id';
+const NOTIFICATIONS_COLLECTION_ID = 'engineernotification-id';
+const PAYMENTS_COLLECTION_ID = 'commission-id';
 const { width } = Dimensions.get('window');
 
 const HomeScreenuser = () => {

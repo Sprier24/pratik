@@ -13,9 +13,9 @@ import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
 
-const DATABASE_ID = '681c428b00159abb5e8b';
-const COLLECTION_ID = 'bill_ID';
-const USERS_COLLECTION_ID = '681c429800281e8a99bd';
+const DATABASE_ID = 'servicevale-database';
+const COLLECTION_ID = 'bill-id';
+const USERS_COLLECTION_ID = 'engineer-id';
 
 type Bill = {
   $id: string;
@@ -36,6 +36,7 @@ type Bill = {
   status: string;
   total: string;
   date: string;
+  engineerCommission: string;
 };
 
 type User = {
@@ -969,8 +970,11 @@ const BillPage = () => {
                     Alert.alert('Error', 'Customer signature is required');
                     return;
                   }
+
                   const billNumber = generateBillNumber();
                   const now = new Date();
+                  const commission = (parseFloat(form.serviceCharge) * 0.25).toFixed(2); // Calculate commission
+
                   const billData: Bill = {
                     $id: billNumber,
                     notes: notes.trim() || '',
@@ -990,7 +994,9 @@ const BillPage = () => {
                     status: 'paid',
                     total: calculateTotal(),
                     date: now.toISOString(),
+                    engineerCommission: commission, // Store the commission
                   };
+
                   try {
                     await databases.createDocument(
                       DATABASE_ID,
@@ -1179,6 +1185,7 @@ const BillPage = () => {
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Engineer Commission :</Text>
+                      {/* <Text style={styles.detailValue}>₹{selectedBill.engineerCommission}</Text> */}
                       <Text style={styles.detailValue}>
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                       </Text>
