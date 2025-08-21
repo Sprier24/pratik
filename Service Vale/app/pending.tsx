@@ -11,7 +11,7 @@ import { styles } from '../constants/PendingServicesScreen.styles';
 
 const DATABASE_ID = 'servicevale-database';
 const COLLECTION_ID = 'orders-id';
-const USERS_COLLECTION_ID = 'orders-id';
+const USERS_COLLECTION_ID = 'engineer-id';
 
 type Service = {
   id: string;

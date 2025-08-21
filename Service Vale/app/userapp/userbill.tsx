@@ -34,6 +34,7 @@ type Bill = {
   status: string;
   total: string;
   date: string;
+  engineerCommission: string;
 };
 
 const fieldLabels = {
@@ -109,7 +110,7 @@ const UserBill = () => {
         const currentUser = await account.get();
         const userResponse = await databases.listDocuments(
           DATABASE_ID,
-          '681c429800281e8a99bd',
+          'engineer-id',
           [Query.equal('email', currentUser.email)]
         );
         if (userResponse.documents.length > 0) {
@@ -781,6 +782,8 @@ const UserBill = () => {
                   }
                   const billNumber = generateBillNumber();
                   const now = new Date();
+                  const commission = (parseFloat(form.serviceCharge) * 0.25).toFixed(2); // Calculate commission
+
                   const billData: Bill = {
                     $id: billNumber,
                     notes: notes.trim() || '',
@@ -800,6 +803,7 @@ const UserBill = () => {
                     status: 'paid',
                     total: calculateTotal(),
                     date: now.toISOString(),
+                    engineerCommission: commission,
                   };
                   try {
                     setAllBills(prevBills => [billData, ...prevBills]);
@@ -977,7 +981,8 @@ const UserBill = () => {
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Service Commission :</Text>
+                      <Text style={styles.detailLabel}>Engineer Commission :</Text>
+                      {/* <Text style={styles.detailValue}>₹{selectedBill.engineerCommission}</Text> */}
                       <Text style={styles.detailValue}>
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                       </Text>
