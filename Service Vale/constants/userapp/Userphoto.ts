@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F7FAFC",
   },
-  authContainer: {
+  authContainer: { 
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -311,4 +311,29 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
   },
+   pendingDetailsContainer: {
+        backgroundColor: '#E6F7FF',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#1890FF',
+    },
+    pendingDetailsTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1890FF',
+        marginBottom: 8,
+    },
+    pendingDetailsText: {
+        fontSize: 14,
+        color: '#595959',
+        marginBottom: 4,
+    },
+    timerText: {
+    color: '#FFF',
+    fontSize: 12,
+    marginLeft: 8,
+    fontStyle: 'italic',
+},
 });

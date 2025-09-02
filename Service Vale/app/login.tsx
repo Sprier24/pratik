@@ -2,15 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Query } from 'appwrite';
-import { account, databases } from '../lib/appwrite';
 import { styles } from '../constants/LoginScreen.styles';
-import { Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'engineer-id';
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 const LoginScreen = () => {
     const params = useLocalSearchParams();
@@ -26,11 +24,13 @@ const LoginScreen = () => {
     const [forgotEmail, setForgotEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+    const [otp, setOtp] = useState('');
+    const [resetToken, setResetToken] = useState('');
+    const [otpModalVisible, setOtpModalVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    const [resetUserId, setResetUserId] = useState('');
-    const [resetSecret, setResetSecret] = useState('');
-    const [resetSuccess, setResetSuccess] = useState(false);
     const [isCheckingSession, setIsCheckingSession] = useState(true);
 
     const resetFields = () => {
@@ -41,58 +41,25 @@ const LoginScreen = () => {
         setForgotEmail('');
         setNewPassword('');
         setResetConfirmPassword('');
+        setOtp('');
+        setResetToken('');
     };
 
     useEffect(() => {
         const checkSession = async () => {
             try {
-                const user = await account.get();
-                if (user) {
-                    router.replace(user.labels?.includes('admin') ? '/home' : '/userapp/home');
+                const userData = await AsyncStorage.getItem('userData');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    router.replace(user.role === 'admin' ? '/home' : '/userapp/home');
                 }
+            } catch (error) {
+                console.error('Session check error:', error);
             } finally {
                 setIsCheckingSession(false);
             }
         };
         checkSession();
-    }, []);
-
-    useEffect(() => {
-        if (params?.resetPassword === 'true' && params.userId && params.secret) {
-            setResetModalVisible(true);
-            setResetUserId(params.userId as string);
-            setResetSecret(params.secret as string);
-        } else {
-            setResetModalVisible(false);
-        }
-    }, [params]);
-
-    useEffect(() => {
-        const handleDeepLink = (event: { url: string }) => {
-            const url = event.url;
-            if (url.includes('cloud.appwrite.io/v1/recovery')) {
-                const params = new URLSearchParams(url.split('?')[1]);
-                if (params.get('package') === 'com.service_app.service_vale') {
-                    const userId = params.get('userId');
-                    const secret = params.get('secret');
-                    if (userId && secret) {
-                        router.replace({
-                            pathname: '/login',
-                            params: {
-                                resetPassword: 'true',
-                                userId,
-                                secret
-                            }
-                        });
-                    }
-                }
-            }
-        };
-        const subscription = Linking.addEventListener('url', handleDeepLink);
-        Linking.getInitialURL().then(url => {
-            if (url) handleDeepLink({ url });
-        });
-        return () => subscription.remove();
     }, []);
 
     if (isCheckingSession) {
@@ -111,19 +78,39 @@ const LoginScreen = () => {
         } else if (!passwordRegex.test(password)) {
             Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
         } else {
+            setIsLoading(true);
             try {
-                await account.createEmailPasswordSession(email, password);
-                const user = await account.get();
-                const isAdmin = user.labels?.includes('admin');
+                const loginResponse = await fetch(`${YOUR_BACKEND_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email.toLowerCase(),
+                        password: password,
+                    }),
+                });
+
+                const data = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+
                 Alert.alert('Success', `Welcome to Service Vale`);
                 resetFields();
-                if (isAdmin) {
+
+                if (data.user.role === 'admin') {
                     router.replace('/home');
                 } else {
                     router.replace('/userapp/home');
                 }
             } catch (error: any) {
-                Alert.alert('Login Error', error?.message || 'An unknown error occurred');
+                Alert.alert('Login Error', error.message || 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
             }
         }
     };
@@ -138,26 +125,41 @@ const LoginScreen = () => {
         } else if (password !== confirmPassword) {
             Alert.alert('Error', 'Password do not match');
         } else {
+            setIsLoading(true);
             try {
-                const response = await databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTION_ID,
-                    [Query.equal('email', email.toLowerCase())]
-                );
-                if (response.documents.length === 0) {
-                    Alert.alert('Access Denied', 'You are not authorized to register.');
+                const registerResponse = await fetch(`${YOUR_BACKEND_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: username,
+                        email: email.toLowerCase(),
+                        password: password,
+                        role: 'engineer'
+                    }),
+                });
+
+                const data = await registerResponse.json();
+
+                if (!registerResponse.ok) {
+                    if (data.error.includes('Access denied')) {
+                        Alert.alert('Access Denied', data.error);
+                    } else if (data.error.includes('Email already exists')) {
+                        Alert.alert('Error', 'Email already exists. Please use a different email.');
+                    } else {
+                        throw new Error(data.error || 'Registration failed');
+                    }
                     return;
                 }
-                await account.create('unique()', email, password, username);
+
                 Alert.alert('Success', 'Account created successfully. Please log in.');
                 resetFields();
                 setIsLogin(true);
             } catch (error: any) {
-                if (error.code === 409) {
-                    Alert.alert('Error', 'Email already exists. Please use a different email.');
-                } else {
-                    Alert.alert('Error', error.message || 'An unknown error occurred');
-                }
+                Alert.alert('Error', error.message || 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
             }
         }
     };
@@ -167,14 +169,73 @@ const LoginScreen = () => {
     };
 
     const handleSendOTP = async () => {
+        if (!forgotEmail || !emailRegex.test(forgotEmail)) {
+            Alert.alert('Error', 'Please enter a valid email address');
+            return;
+        }
+        
+        setIsLoading(true);
         try {
-            const resetUrl = `https://cloud.appwrite.io/v1/recovery?package=com.service_app.service_vale`;
-            await account.createRecovery(forgotEmail, resetUrl);
-            Alert.alert('Email Sent', 'Check your email for reset instructions');
-            setForgotEmail('');
+            const response = await fetch(`${YOUR_BACKEND_URL}/api/auth/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: forgotEmail.toLowerCase(),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send OTP');
+            }
+
+            setResetToken(data.resetToken);
             setForgotModalVisible(false);
+            setOtpModalVisible(true);
+            Alert.alert('Success', 'OTP sent successfully to your email');
         } catch (error: any) {
-            Alert.alert('Error', error?.message || 'Failed to send recovery email');
+            Alert.alert('Error', error.message || 'Failed to send OTP');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!otp || otp.length !== 6) {
+            Alert.alert('Error', 'Please enter a valid 6-digit OTP');
+            return;
+        }
+        
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${YOUR_BACKEND_URL}/api/auth/verify-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: forgotEmail.toLowerCase(),
+                    otp: otp,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'OTP verification failed');
+            }
+
+            setResetToken(data.resetToken);
+            setOtpModalVisible(false);
+            setResetModalVisible(true);
+            Alert.alert('Success', 'OTP verified successfully');
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to verify OTP');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -191,42 +252,37 @@ const LoginScreen = () => {
             Alert.alert('Error', 'Password must contain at least one uppercase letter, one number, and one special character.');
             return;
         }
+        
+        setIsLoading(true);
         try {
-            if (!resetUserId || !resetSecret) {
-                throw new Error('Invalid reset credentials');
+            const response = await fetch(`${YOUR_BACKEND_URL}/api/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: forgotEmail.toLowerCase(),
+                    token: resetToken,
+                    newPassword: newPassword,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Password reset failed');
             }
-            await account.updateRecovery(resetUserId, resetSecret, newPassword);
-            Alert.alert(
-                'Success',
-                'Your password has been reset successfully.',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            resetFields();
-                            setResetUserId('');
-                            setResetSecret('');
-                            setResetModalVisible(false);
-                            setResetSuccess(true);
-                            router.replace('/login');
-                        }
-                    }
-                ]
-            );
+
+            Alert.alert('Success', 'Password reset successfully');
+            resetFields();
+            setResetModalVisible(false);
+            setIsLogin(true);
         } catch (error: any) {
-            Alert.alert('Error', error?.message || 'Failed to reset password');
+            Alert.alert('Error', error.message || 'Failed to reset password');
+        } finally {
+            setIsLoading(false);
         }
     };
-
-    if (isCheckingSession) {
-        return (
-            <SafeAreaView style={{ flex: 1 }}>
-                <View style={{ flex: 1, justifyContent: 'center' }}>
-                    <ActivityIndicator size="large" />
-                </View>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -252,7 +308,7 @@ const LoginScreen = () => {
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalCard}>
                                 <Text style={styles.modalTitle}>Forgot Password</Text>
-                                <Text style={styles.modalSubtitle}>Enter your email to receive a recovery link</Text>
+                                <Text style={styles.modalSubtitle}>Enter your email to receive an OTP</Text>
                                 <TextInput
                                     style={styles.modalInput}
                                     placeholder="Enter your email"
@@ -272,8 +328,50 @@ const LoginScreen = () => {
                                     <TouchableOpacity
                                         style={[styles.modalButton, styles.primaryButton]}
                                         onPress={handleSendOTP}
+                                        disabled={isLoading}
                                     >
-                                        <Text style={styles.primaryButtonText}>Send OTP</Text>
+                                        {isLoading ? (
+                                            <ActivityIndicator color="#fff" />
+                                        ) : (
+                                            <Text style={styles.primaryButtonText}>Send OTP</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal transparent animationType="fade" visible={otpModalVisible}>
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.modalCard}>
+                                <Text style={styles.modalTitle}>Verify OTP</Text>
+                                <Text style={styles.modalSubtitle}>Enter the OTP sent to your email</Text>
+                                <TextInput
+                                    style={styles.modalInput}
+                                    placeholder="Enter OTP"
+                                    placeholderTextColor="#999"
+                                    value={otp}
+                                    onChangeText={setOtp}
+                                    keyboardType="numeric"
+                                    maxLength={6}
+                                />
+                                <View style={styles.modalButtonGroup}>
+                                    <TouchableOpacity
+                                        style={[styles.modalButton, styles.secondaryButton]}
+                                        onPress={() => setOtpModalVisible(false)}
+                                    >
+                                        <Text style={styles.secondaryButtonText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.modalButton, styles.primaryButton]}
+                                        onPress={handleVerifyOTP}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <ActivityIndicator color="#fff" />
+                                        ) : (
+                                            <Text style={styles.primaryButtonText}>Verify OTP</Text>
+                                        )}
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -325,7 +423,6 @@ const LoginScreen = () => {
                                         style={[styles.modalButton, styles.secondaryButton]}
                                         onPress={() => {
                                             setResetModalVisible(false);
-                                            router.replace('/login');
                                         }}
                                     >
                                         <Text style={styles.secondaryButtonText}>Cancel</Text>
@@ -333,8 +430,13 @@ const LoginScreen = () => {
                                     <TouchableOpacity
                                         style={[styles.modalButton, styles.primaryButton]}
                                         onPress={handleResetPassword}
+                                        disabled={isLoading}
                                     >
-                                        <Text style={styles.primaryButtonText}>Update</Text>
+                                        {isLoading ? (
+                                            <ActivityIndicator color="#fff" />
+                                        ) : (
+                                            <Text style={styles.primaryButtonText}>Update</Text>
+                                        )}
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -423,10 +525,15 @@ const LoginScreen = () => {
                         <TouchableOpacity
                             style={styles.authButton}
                             onPress={isLogin ? handleLogin : handleRegister}
+                            disabled={isLoading}
                         >
-                            <Text style={styles.authButtonText}>
-                                {isLogin ? 'Sign In' : 'Sign Up'}
-                            </Text>
+                            {isLoading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.authButtonText}>
+                                    {isLogin ? 'Sign In' : 'Sign Up'}
+                                </Text>
+                            )}
                         </TouchableOpacity>
 
                         <View style={styles.authFooter}>

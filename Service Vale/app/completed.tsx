@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal, RefreshControl, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { styles } from '../constants/CompletedServicesScreen.styles';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'orders-id';
-const USERS_COLLECTION_ID = 'engineer-id';
+const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/order`;
+const ENGINEER_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
 
 type Service = {
   id: string;
@@ -40,214 +38,211 @@ const AdminCompletedServicesScreen = () => {
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceBoys, setServiceBoys] = useState<User[]>([]);
-  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(null);
+  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(
+    params.engineer ? String(params.engineer) : null
+  );
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [dateFilter, setDateFilter] = useState<Date | null>(
+    params.date ? new Date(String(params.date)) : null
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const itemsPerPage = 10;
-  const [filterType, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
   const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
-  const [totalCompleteCount, setTotalCompleteCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchServiceBoys = async () => {
+  const updateUrlParams = (engineer: string | null, date: Date | null) => {
+    const newParams: Record<string, string> = {};
+    
+    if (engineer) {
+      newParams.engineer = engineer;
+    }
+    
+    if (date) {
+      newParams.date = date.toISOString();
+    }
+    
+    router.setParams(newParams);
+  };
+
+  const fetchEngineerData = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
-      const boys = response.documents.map(doc => ({
-        id: doc.$id,
-        name: doc.name
-      }));
-      setServiceBoys(boys);
+      const response = await fetch(ENGINEER_URL);
+      const engineers = await response.json();
+      return engineers.result || [];
     } catch (error) {
-      console.error('Error fetching engineer:', error);
+      console.error('Error fetching engineer data:', error);
+      return [];
     }
   };
 
-  const fetchServices = async (page = 1, isLoadMore = false) => {
+  const fetchServices = async () => {
     try {
-      if (isLoadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('status', 'completed'),
-          Query.orderDesc('completedAt'),
-          Query.limit(itemsPerPage),
-          Query.offset((page - 1) * itemsPerPage)
-        ]
-      );
-      const formattedServices = response.documents.map(doc => {
-        const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
-        let serviceDateDisplay = '';
-        if (doc.serviceDate) {
-          const [year, month, day] = doc.serviceDate.split('-');
-          serviceDateDisplay = `${day}/${month}/${year}`;
+      setLoading(true);
+
+      const response = await fetch(
+        `${BASE_URL}/status?status=completed&all=true`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         }
-        let serviceTimeDisplay = '';
-        if (doc.serviceTime) {
-          const [hours, minutes] = doc.serviceTime.split(':');
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const ordersData = await response.json();
+
+      const formattedServices = ordersData.result.map((service: any) => {
+        let displayDate = '';
+        if (service.serviceDate) {
+          const [year, month, day] = service.serviceDate.split('-');
+          displayDate = `${day}/${month}/${year}`;
+        }
+
+        let displayTime = '';
+        if (service.serviceTime) {
+          const [hours, minutes] = service.serviceTime.split(':');
           const hourNum = parseInt(hours);
           const ampm = hourNum >= 12 ? 'PM' : 'AM';
           const displayHour = hourNum % 12 || 12;
-          serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
+          displayTime = `${displayHour}:${minutes} ${ampm}`;
         }
+
         return {
-          id: doc.$id,
-          serviceType: doc.serviceType,
-          clientName: doc.clientName,
-          address: doc.address,
-          phone: doc.phoneNumber,
-          amount: doc.billAmount,
-          status: doc.status,
-          date: rawCompletedAt ? new Date(rawCompletedAt).toLocaleString() : '',
-          serviceBoy: doc.serviceboyName,
-          serviceboyEmail: doc.serviceboyEmail,
-          serviceDate: serviceDateDisplay,
-          serviceTime: serviceTimeDisplay,
-          completedAt: rawCompletedAt
+          id: service.id,
+          serviceType: service.serviceType,
+          clientName: service.clientName,
+          address: service.address,
+          phone: service.phoneNumber,
+          amount: service.billAmount,
+          status: service.status,
+          date: service.createdAt,
+          serviceBoy: service.serviceboyName,
+          serviceDate: displayDate,
+          serviceTime: displayTime,
+          serviceboyEmail: service.serviceboyEmail,
+          completedAt: service.completedAt
         };
       });
-      if (isLoadMore) {
-        setAllServices(prev => [...prev, ...formattedServices]);
-        setServices(prev => [...prev, ...formattedServices]);
-      } else {
-        setAllServices(formattedServices);
-        setServices(formattedServices);
-      }
-      const totalCount = response.total;
-      setTotalPages(Math.ceil(totalCount / itemsPerPage));
-      setCurrentPage(page);
+
+      setAllServices(formattedServices);
+
+      applyFilters(selectedServiceBoy, dateFilter, formattedServices);
     } catch (error) {
-      console.error('Error fetching services :', error);
+      console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
-      if (isLoadMore) {
-        setIsLoadingMore(false);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const fetchEngineerCounts = async () => {
+    const handleDelete = async (id: string) => {
+      Alert.alert(
+        'Delete Service',
+        'Are you sure you want to delete this service order?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+
+            onPress: async () => {
+              try {
+                const response = await fetch(`${BASE_URL}/${id}`, {
+                  method: 'DELETE'
+                });
+  
+                if (!response.ok) {
+                  throw new Error('Failed to delete service');
+                }
+  
+                setCompletedCount(prev => prev - 1);
+                setAllServices(prev => prev.filter(service => service.id !== id));
+                setServices(prev => prev.filter(service => service.id !== id));
+                Alert.alert('Success', 'Service order deleted successfully.');
+              } catch (error) {
+                console.error('Error deleting service:', error);
+                Alert.alert('Error', 'Failed to delete service order');
+              }
+            }
+          }
+        ]
+      );
+    };
+
+  const fetchCompletedCount = async () => {
     try {
-      const boysResponse = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
-      const boys = boysResponse.documents.map(doc => doc.name);
+      const engineers = await fetchEngineerData();
+
+      const countResponse = await fetch(`${BASE_URL}/count?status=completed`);
+      const countData = await countResponse.json();
+      setCompletedCount(countData.count || 0);
+
       const counts: Record<string, number> = {
-        'All Service Engineers': 0
+        'All Service Engineers': countData.count || 0
       };
-      const allResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('status', 'completed')]
-      );
-      counts['All Service Engineers'] = allResponse.total;
-      await Promise.all(boys.map(async (name) => {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [
-            Query.equal('status', 'completed'),
-            Query.equal('serviceboyName', name)
-          ]
+
+      for (const engineer of engineers) {
+        const engineerName = engineer.engineerName || engineer.name;
+        const engineerCountResponse = await fetch(
+          `${BASE_URL}/count?status=completed&engineerId=${encodeURIComponent(engineerName)}`
         );
-        counts[name] = response.total;
-      }));
+
+        if (engineerCountResponse.ok) {
+          const engineerCountData = await engineerCountResponse.json();
+          counts[engineerName] = engineerCountData.count || 0;
+        }
+      }
+
       setEngineerCounts(counts);
     } catch (error) {
-      console.error('Error fetching engineer counts :', error);
+      console.error('Error fetching completed count:', error);
     }
   };
 
-  const fetchTotalCompleteCount = async () => {
+  const fetchServiceBoys = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('status', 'completed')]
-      );
-      setTotalCompleteCount(response.total);
+      const engineers = await fetchEngineerData();
+      setServiceBoys(engineers.map((engineer: any) => ({
+        id: engineer.id,
+        name: engineer.engineerName
+      })));
     } catch (error) {
-      console.error('Error fetching total completed count :', error);
+      console.error('Error fetching service boys:', error);
+      setServiceBoys([]);
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
+      await fetchServices();
+      await fetchCompletedCount();
       await fetchServiceBoys();
-      await fetchEngineerCounts();
-      fetchServices();
-      fetchTotalCompleteCount();
     };
+
     loadData();
-    if (params.completedService) {
-      try {
-        const newService = JSON.parse(params.completedService as string);
-        const formattedService = {
-          id: newService.id,
-          serviceType: newService.serviceType,
-          clientName: newService.clientName,
-          address: newService.address,
-          phone: newService.phoneNumber,
-          amount: newService.amount,
-          status: 'completed',
-          date: newService.date || 'Just now',
-          serviceBoy: newService.serviceBoy,
-          serviceboyEmail: newService.serviceboyEmail,
-          serviceDate: newService.serviceDate || '',
-          serviceTime: newService.serviceTime || '',
-          completedAt: newService.completedAt
-        };
-        setAllServices(prev => [formattedService, ...prev]);
-        setServices(prev => {
-          if (
-            (!selectedServiceBoy || selectedServiceBoy === newService.serviceBoy) &&
-            (!dateFilter || (newService.completedAt && isSameDay(new Date(newService.completedAt), dateFilter)))
-          ) {
-            return [formattedService, ...prev];
-          }
-          return prev;
-        });
-      } catch (error) {
-        console.error('Error parsing completed service :', error);
-      }
+  }, []);
+
+  const applyFilters = (serviceBoy: string | null, date: Date | null, servicesToFilter = allServices) => {
+    let filtered = servicesToFilter;
+
+    if (serviceBoy) {
+      filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
     }
-  }, [params.completedService]);
 
-  const loadMoreServices = () => {
-    if (!isLoadingMore && currentPage < totalPages) {
-      fetchServices(currentPage + 1, true);
+    if (date) {
+      filtered = filtered.filter(service => {
+        if (!service.completedAt) return false;
+        const completedDate = new Date(service.completedAt);
+        return isSameDay(completedDate, date);
+      });
     }
-  };
 
-  const formatToAmPm = (isoString: string) => {
-    const date = new Date(isoString);
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
-  };
-
-  const countCompletedByServiceBoy = () => {
-    return engineerCounts;
+    setServices(filtered);
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -257,40 +252,62 @@ const AdminCompletedServicesScreen = () => {
     }
     if (selectedDate) {
       setDateFilter(selectedDate);
+      updateUrlParams(selectedServiceBoy, selectedDate);
       applyFilters(selectedServiceBoy, selectedDate);
     }
   };
 
-  const applyFilters = (serviceBoy: string | null, date: Date | null) => {
-    let filtered = allServices;
-    if (serviceBoy) {
-      filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
-    }
-    if (date) {
-      filtered = filtered.filter(service => {
-        if (!service.completedAt) return false;
-        const completedDate = new Date(service.completedAt);
-        return isSameDay(completedDate, date);
-      });
-    }
-    setServices(filtered);
-    setCurrentPage(1);
-  };
-
   const filterServices = (serviceBoyName: string | null) => {
     setSelectedServiceBoy(serviceBoyName);
+    updateUrlParams(serviceBoyName, dateFilter);
     applyFilters(serviceBoyName, dateFilter);
     setFilterModalVisible(false);
   };
 
   const clearDateFilter = () => {
     setDateFilter(null);
+    updateUrlParams(selectedServiceBoy, null);
     applyFilters(selectedServiceBoy, null);
   };
 
   const clearServiceBoyFilter = () => {
     setSelectedServiceBoy(null);
+    updateUrlParams(null, dateFilter);
     applyFilters(null, dateFilter);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedServiceBoy(null);
+    setDateFilter(null);
+    updateUrlParams(null, null);
+    setServices(allServices);
+  };
+
+  const formatToAmPm = (isoString: string) => {
+    if (!isoString) return 'Completion time not available';
+
+    try {
+      const date = new Date(isoString);
+
+      if (isNaN(date.getTime())) {
+        return 'Invalid date format';
+      }
+
+      let hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+
+      return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+    } catch (error) {
+      console.error('Error formatting date:', error, isoString);
+      return 'Date format error';
+    }
   };
 
   const handleCreateBill = (service: Service) => {
@@ -299,13 +316,13 @@ const AdminCompletedServicesScreen = () => {
       params: {
         serviceData: JSON.stringify({
           serviceType: service.serviceType,
+          serviceBoy: service.serviceBoy,
           clientName: service.clientName,
           address: service.address,
           phone: service.phone,
           serviceCharge: service.amount,
           serviceDate: service.serviceDate,
           serviceTime: service.serviceTime,
-          serviceBoy: service.serviceBoy
         })
       }
     });
@@ -321,29 +338,39 @@ const AdminCompletedServicesScreen = () => {
           text: 'Move',
           onPress: async () => {
             try {
-              await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id,
-                { status: 'pending' }
-              );
-              await fetchEngineerCounts();
-              const serviceToMove = allServices.find(service => service.id === id);
-              if (serviceToMove) {
-                setAllServices(prev => prev.filter(service => service.id !== id));
-                setServices(prev => prev.filter(service => service.id !== id));
+              const response = await fetch(`${BASE_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  status: 'pending'
+                })
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to move service');
+              }
+
+              setCompletedCount(prev => prev - 1);
+              await fetchCompletedCount();
+              setAllServices(prev => prev.filter(service => service.id !== id));
+              setServices(prev => prev.filter(service => service.id !== id));
+
+              const movedService = allServices.find(service => service.id === id);
+              if (movedService) {
                 router.push({
                   pathname: '/pending',
                   params: {
                     movedService: JSON.stringify({
-                      ...serviceToMove,
-                      status: 'pending'
+                      ...movedService,
+                      status: 'Pending'
                     })
                   }
                 });
               }
             } catch (error) {
-              console.error('Error moving service :', error);
+              console.error('Error moving service:', error);
               Alert.alert('Error', 'Failed to move service to pending');
             }
           }
@@ -353,9 +380,9 @@ const AdminCompletedServicesScreen = () => {
   };
 
   const onRefresh = () => {
-    fetchServices(1);
-    fetchEngineerCounts();
-    fetchTotalCompleteCount();
+    setRefreshing(true);
+    fetchServices().finally(() => setRefreshing(false));
+    fetchCompletedCount();
   };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
@@ -384,20 +411,18 @@ const AdminCompletedServicesScreen = () => {
 
         <View style={styles.detailRow}>
           <MaterialIcons name="location-on" size={20} color="#718096" />
-          <Text style={styles.detailText}>
-            {item.address}
-          </Text>
+          <Text style={styles.detailText}>{item.address}</Text>
         </View>
 
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={20} color="#718096" />
-          <Text style={styles.detailText}>{item.phone}</Text>
+          <Text style={styles.detailText}>{item.phone || 'Not provided'}</Text>
         </View>
 
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
-            {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
+            {(item.amount ? (isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')) : '0')}
           </Text>
         </View>
       </View>
@@ -406,35 +431,60 @@ const AdminCompletedServicesScreen = () => {
         <View style={styles.dateContainer}>
           <MaterialIcons name="check-circle" size={18} color="#718096" />
           <Text style={styles.dateText}>
-            {item.completedAt
-              ? `${formatToAmPm(item.completedAt)}`
-              : 'Completion time not available'}
+            {item.completedAt ? formatToAmPm(item.completedAt) : 'Completion time not available'}
           </Text>
         </View>
-        <Text style={styles.serviceBoyText}>
-          {item.serviceBoy}
-        </Text>
+        <Text style={styles.serviceBoyText}>{item.serviceBoy}</Text>
       </View>
 
-      <View style={styles.actionButtons}>
+    <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={styles.createBillButton}
+          style={styles.whatsappButton}
           onPress={() => handleCreateBill(item)}
         >
           <MaterialIcons name="receipt-long" size={20} color="#FFF" />
-          <Text style={styles.createBillButtonText}>Create Bill</Text>
+          <Text style={styles.whatsappButtonText}>Bill</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.moveToPendingButton}
+          style={styles.completeButton}
           onPress={() => handleMoveToPending(item.id)}
         >
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
-          <Text style={styles.moveToPendingButtonText}>Back to Pending</Text>
+          <Text style={styles.completeButtonText}>Pending</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(item.id)}
+        >
+          <MaterialIcons name="delete" size={20} color="#FFF" />
+          <Text style={styles.deleteButtonText}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
+
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.push('/home')}>
+              <Feather name="arrow-left" size={25} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Completed Services</Text>
+          </View>
+          <View style={styles.headerCount}>
+            <Text style={styles.headerCountText}>0</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#5E72E4" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -447,17 +497,14 @@ const AdminCompletedServicesScreen = () => {
         </View>
 
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{totalCompleteCount}</Text>
+          <Text style={styles.headerCountText}>{completedCount}</Text>
         </View>
       </View>
 
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
-          onPress={() => {
-            setFilterType('serviceBoy');
-            setFilterModalVisible(true);
-          }}
+          onPress={() => setFilterModalVisible(true)}
         >
           <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
           <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
@@ -486,7 +533,7 @@ const AdminCompletedServicesScreen = () => {
               </TouchableOpacity>
             </View>
           )}
-          
+
           {dateFilter && (
             <View style={styles.filterChip}>
               <Text style={styles.filterChipText}>{format(dateFilter, 'dd MMM yyyy')}</Text>
@@ -530,20 +577,15 @@ const AdminCompletedServicesScreen = () => {
                     <Text style={styles.serviceType}>{item.name}</Text>
                     <View style={[styles.statusBadge, styles.completedBadge]}>
                       <Text style={styles.statusText}>
-                        {countCompletedByServiceBoy()[item.name] || 0} completed
+                        {engineerCounts[item.name] || 0} Completed
                       </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
               )}
-              refreshControl={
-                <RefreshControl
-                  refreshing={loading}
-                  onRefresh={fetchEngineerCounts}
-                />
-              }
               showsVerticalScrollIndicator={true}
             />
+
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setFilterModalVisible(false)}
@@ -561,21 +603,11 @@ const AdminCompletedServicesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          onEndReached={loadMoreServices}
-          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
-              refreshing={loading && !isLoadingMore}
+              refreshing={refreshing}
               onRefresh={onRefresh}
             />
-          }
-          ListFooterComponent={
-            isLoadingMore ? (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color="#5E72E4" />
-                <Text style={styles.loadingMoreText}>Loading more services...</Text>
-              </View>
-            ) : null
           }
         />
       ) : (

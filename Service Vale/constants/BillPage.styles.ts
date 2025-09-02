@@ -33,7 +33,7 @@ export const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 15,
   },
   starButton: {
     padding: 5,
@@ -636,7 +636,10 @@ export const styles = StyleSheet.create({
     backgroundColor: "#25D366",
   },
   deleteButton: {
-    backgroundColor: "#F56565",
+    backgroundColor: "#f56565ff",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   actionButtonText: {
     color: "#FFF",
@@ -882,4 +885,85 @@ filterItem: {
     fontWeight: 'bold',
     color: '#2B6CB0',
   },
+   errorText: {
+    color: "#E53E3E",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  selectButton: {
+    padding: 5,
+  },
+  billCardSelectable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  billCardSelected: {
+    backgroundColor: '#EBF4FF',
+    borderColor: '#5E72E4',
+  },
+  billContent: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  billInfo: {
+    flex: 1,
+  },
+  dropdownContainer: {
+        position: 'relative',
+        marginBottom: 8,
+    },
+    dropdownHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 10,
+        paddingVertical: 12,
+    paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: '#A0AEC0',
+        backgroundColor: '#F7FAFC',
+        shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+    },
+    dropdownSelectedText: {
+        fontSize: 16,
+    color: '#2D3748',
+    },
+    dropdownPlaceholderText: {
+        fontSize: 16,
+        color: '#4A5568',
+    },
+    dropdownList: {
+      position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    maxHeight: 220,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: 6,
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: 'hidden',
+    zIndex: 1000,
+    },
+    dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    },
+    dropdownItemText: {
+        fontSize: 16,
+         color: '#2D3748'
+    },
+    dropdownScrollView: {
+        maxHeight: 150,
+    },
 });

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Query } from 'appwrite';
-import { databases } from '../lib/appwrite';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -12,17 +10,19 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
+import CommissionService from './services/commissionService';
+import { Checkbox } from 'react-native-paper';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
-const USERS_COLLECTION_ID = 'engineer-id';
+const TURSO_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/bill`;
+const ENGINEER_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
 
 type Bill = {
-  $id: string;
+  id: string;
   notes: string;
   billNumber: string;
   serviceType: string;
-  serviceBoyName: string;
+  serviceboyName: string;
   customerName: string;
   contactNumber: string;
   address: string;
@@ -31,12 +31,13 @@ type Bill = {
   paymentMethod: string;
   cashGiven: string;
   change: string;
-  $createdAt: string;
+  createdAt: string;
   signature?: string;
   status: string;
   total: string;
   date: string;
   engineerCommission: string;
+  selected?: boolean;
 };
 
 type User = {
@@ -44,9 +45,12 @@ type User = {
   name: string;
 };
 
+type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave' | 'RO Filter' | 'Electrician';
+const SERVICE_TYPES: ServiceKey[] = ['AC', 'Washing Machine', 'Fridge', 'Microwave', 'RO Filter', 'Electrician'];
+
 const fieldLabels = {
   serviceType: 'Service Type',
-  serviceBoyName: 'Engineer Name',
+  serviceboyName: 'Engineer Name',
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
@@ -59,7 +63,7 @@ const BillPage = () => {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState({
     serviceType: '',
-    serviceBoyName: '',
+    serviceboyName: '',
     customerName: '',
     address: '',
     contactNumber: '',
@@ -91,7 +95,24 @@ const BillPage = () => {
   const itemsPerPage = 10;
   const [totalBillCount, setTotalBillCount] = useState(0);
   const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
-
+  const [selectedBills, setSelectedBills] = useState<string[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+   const [formData, setFormData] = useState({
+        serviceboyName: '',
+        serviceType: '',
+        customerName: '',
+        contactNumber: '',
+        address: '',
+        serviceCharge: 0,
+        notes: '',
+        paymentMethod: 'Cash',
+        total: '',
+        cashGiven: '',
+        change: '',
+        billNumber: '',
+        signature: '',
+        gstPercentage: 0,
+    });
   useEffect(() => {
     const loadData = async () => {
       await fetchServiceBoys();
@@ -101,20 +122,24 @@ const BillPage = () => {
       await fetchTotalBillCount();
     };
     loadData();
+
     if (params.serviceData) {
       try {
         const serviceData = JSON.parse(params.serviceData as string);
+        console.log('Received service data:', serviceData);
+        console.log('Service charge:', serviceData.serviceCharge);
+
         setForm({
-          serviceType: serviceData.serviceType || '',
-          serviceBoyName: serviceData.serviceBoy || '',
-          customerName: serviceData.clientName || '',
-          address: serviceData.address || '',
-          contactNumber: serviceData.phone || '',
-          serviceCharge: serviceData.serviceCharge || '',
+          serviceType: String(serviceData.serviceType || ''),
+          serviceboyName: String(serviceData.serviceBoy || ''),
+          customerName: String(serviceData.clientName || ''),
+          address: String(serviceData.address || ''),
+          contactNumber: String(serviceData.phone || ''),
+          serviceCharge: String(serviceData.serviceCharge || ''),
         });
         setIsFormVisible(true);
       } catch (error) {
-        console.error('Error parsing service data :', error);
+        console.error('Error parsing service data:', error);
       }
     }
   }, [params.serviceData]);
@@ -139,17 +164,23 @@ const BillPage = () => {
 
   const fetchServiceBoys = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
-      const boys = response.documents.map(doc => ({
-        id: doc.$id,
-        name: doc.name
+      const response = await fetch(ENGINEER_URL);
+      const data = await response.json();
+
+      let engineers = [];
+      if (data.result && Array.isArray(data.result)) {
+        engineers = data.result;
+      } else if (Array.isArray(data)) {
+        engineers = data;
+      }
+
+      const boys = engineers.map((engineer: any) => ({
+        id: engineer.id || engineer.$id,
+        name: engineer.engineerName || engineer.name
       }));
       setServiceBoys(boys);
     } catch (error) {
-      console.error('Error fetching engineers :', error);
+      console.error('Error fetching engineers:', error);
     }
   };
 
@@ -160,7 +191,7 @@ const BillPage = () => {
       return (
         bill.customerName?.toLowerCase().includes(lowerCaseQuery) ||
         bill.serviceType?.toLowerCase().includes(lowerCaseQuery) ||
-        bill.serviceBoyName?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.serviceboyName?.toLowerCase().includes(lowerCaseQuery) ||
         bill.contactNumber?.toLowerCase().includes(lowerCaseQuery) ||
         bill.address?.toLowerCase().includes(lowerCaseQuery) ||
         bill.billNumber?.toLowerCase().includes(lowerCaseQuery) ||
@@ -178,29 +209,37 @@ const BillPage = () => {
       setIsLoadingMore(true);
     }
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.orderDesc('$createdAt'),
-          Query.limit(itemsPerPage),
-          Query.offset((page - 1) * itemsPerPage)
-        ]
-      );
-      const newBills = response.documents as unknown as Bill[];
+      const response = await fetch(TURSO_BASE_URL);
+      const data = await response.json();
+
+      const newBills = data.map((bill: any) => ({
+        ...bill,
+        $id: bill.id,
+        $createdAt: bill.createdAt,
+        serviceCharge: bill.serviceCharge.toString(),
+        gstPercentage: bill.gstPercentage.toString(),
+        total: bill.total.toString(),
+        cashGiven: bill.cashGiven.toString(),
+        change: bill.change.toString(),
+        engineerCommission: bill.engineerCommission.toString()
+      }));
+
       if (isLoadMore) {
-        setAllBills(prev => [...prev, ...newBills]);
-        setBills(prev => [...prev, ...newBills]);
+        const uniqueBills = newBills.filter((newBill: { id: string; }) =>
+          !allBills.some(existingBill => existingBill.id === newBill.id)
+        );
+        setAllBills(prev => [...prev, ...uniqueBills]);
+        setBills(prev => [...prev, ...uniqueBills]);
       } else {
         setAllBills(newBills);
         setBills(newBills);
       }
-      const totalCount = response.total;
-      setTotalPages(Math.ceil(totalCount / itemsPerPage));
+
+      setTotalPages(Math.ceil(data.length / itemsPerPage));
       setCurrentPage(page);
-      setTotalBillCount(totalCount);
+      setTotalBillCount(data.length);
     } catch (error) {
-      console.error('Error fetching bills :', error);
+      console.error('Error fetching bills:', error);
       Alert.alert('Error', 'Failed to fetch bills');
     } finally {
       setIsLoading(false);
@@ -210,44 +249,46 @@ const BillPage = () => {
 
   const fetchEngineerBillCounts = async () => {
     try {
-      const boysResponse = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
-      const boys = boysResponse.documents.map(doc => doc.name);
       const counts: Record<string, number> = {
         'All Service Engineers': 0
       };
-      const allResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID
-      );
-      counts['All Service Engineers'] = allResponse.total;
-      await Promise.all(boys.map(async (name) => {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [Query.equal('serviceBoyName', name)]
-        );
-        counts[name] = response.total;
-      }));
+
+      const response = await fetch(TURSO_BASE_URL);
+      const billsData = await response.json();
+      counts['All Service Engineers'] = billsData.length;
+
+      const engineersResponse = await fetch(ENGINEER_URL);
+      const engineersData = await engineersResponse.json();
+
+      let engineers = [];
+      if (engineersData.result && Array.isArray(engineersData.result)) {
+        engineers = engineersData.result;
+      } else if (Array.isArray(engineersData)) {
+        engineers = engineersData;
+      }
+
+      engineers.forEach((engineer: any) => {
+        const engineerName = engineer.engineerName || engineer.name;
+        const engineerBillCount = billsData.filter(
+          (bill: any) => bill.serviceboyName === engineerName
+        ).length;
+        counts[engineerName] = engineerBillCount;
+      });
+
       return counts;
     } catch (error) {
-      console.error('Error fetching engineer bill counts :', error);
+      console.error('Error fetching engineer bill counts:', error);
       return {};
     }
   };
 
   const fetchTotalBillCount = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.limit(1)]
-      );
-      setTotalBillCount(response.total);
+      const response = await fetch(TURSO_BASE_URL);
+      const data = await response.json();
+      setTotalBillCount(data.length);
     } catch (error) {
-      console.error('Error fetching total bill count :', error);
+      console.error('Error fetching total bill count:', error);
     }
   };
 
@@ -269,11 +310,11 @@ const BillPage = () => {
   const applyFilters = (serviceBoy: string | null, date: Date | null) => {
     let filtered = allBills;
     if (serviceBoy) {
-      filtered = filtered.filter(bill => bill.serviceBoyName === serviceBoy);
+      filtered = filtered.filter(bill => bill.serviceboyName === serviceBoy);
     }
     if (date) {
       filtered = filtered.filter(bill => {
-        const billDate = new Date(bill.$createdAt);
+        const billDate = new Date(bill.createdAt);
         return isSameDay(billDate, date);
       });
     }
@@ -283,9 +324,9 @@ const BillPage = () => {
     setBills(filtered);
   };
 
-  const filterServices = (serviceBoyName: string | null) => {
-    setSelectedServiceBoy(serviceBoyName);
-    applyFilters(serviceBoyName, dateFilter);
+  const filterServices = (serviceboyName: string | null) => {
+    setSelectedServiceBoy(serviceboyName);
+    applyFilters(serviceboyName, dateFilter);
     setFilterModalVisible(false);
   };
 
@@ -307,11 +348,12 @@ const BillPage = () => {
   };
 
   const validateForm = () => {
+
     if (!form.serviceType.trim()) {
       Alert.alert('Error', 'Service type is required');
       return false;
     }
-    if (!form.serviceBoyName.trim()) {
+    if (!form.serviceboyName.trim()) {
       Alert.alert('Error', 'Engineer name is required');
       return false;
     }
@@ -327,20 +369,168 @@ const BillPage = () => {
       Alert.alert('Error', 'Valid 10-digit contact number is required');
       return false;
     }
-    if (!form.serviceCharge.trim() || isNaN(parseFloat(form.serviceCharge))) {
+    const serviceChargeValue = parseFloat(form.serviceCharge);
+    if (!form.serviceCharge.trim() || isNaN(serviceChargeValue)) {
       Alert.alert('Error', 'Valid service charge is required');
       return false;
     }
-    if (paymentMethod === 'cash' && (!cashGiven.trim() || isNaN(parseFloat(cashGiven)))) {
-      Alert.alert('Error', 'Valid payment amount is required');
-      return false;
+    if (paymentMethod === 'cash') {
+      const cashGivenValue = parseFloat(cashGiven);
+      if (!cashGiven.trim() || isNaN(cashGivenValue)) {
+        Alert.alert('Error', 'Valid payment amount is required');
+        return false;
+      }
     }
     return true;
   };
 
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    if (!signature) {
+      Alert.alert('Error', 'Customer signature is required');
+      return;
+    }
+
+    const billNumber = generateBillNumber();
+    const now = new Date();
+    const serviceChargeValue = parseFloat(form.serviceCharge);
+    const commission = (serviceChargeValue * 0.25).toFixed(2);
+
+    const billData = {
+      id: billNumber,
+      notes: notes.trim() || '',
+      billNumber,
+      serviceType: form.serviceType,
+      serviceboyName: form.serviceboyName,
+      customerName: form.customerName,
+      contactNumber: form.contactNumber,
+      address: form.address,
+      serviceCharge: serviceChargeValue.toString(),
+      gstPercentage: gstPercentage,
+      paymentMethod,
+      cashGiven: paymentMethod === 'cash' ? cashGiven : '0',
+      change: paymentMethod === 'cash' ? calculateChange() : '0',
+      createdAt: now.toISOString(),
+      signature: signature,
+      status: 'paid',
+      total: calculateTotal(),
+      date: now.toISOString(),
+      userId: 'default-user-id'
+    };
+
+  try {
+  const response = await fetch(TURSO_BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(billData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  console.log("✅ Bill saved to DB");
+  
+  const updatedCounts = await fetchEngineerBillCounts();
+  setEngineerCounts(updatedCounts);
+
+  await fetchBills();
+  await fetchTotalBillCount();
+
+  const htmlContent = generateBillHtml({
+    ...billData,
+    engineerCommission: commission,
+  });
+
+  let file;
+  try {
+    file = await Print.printToFileAsync({ html: htmlContent, width: 595, height: 842 });
+    console.log("✅ PDF created", file.uri);
+  } catch (e) {
+    console.error("❌ PDF generation failed", e);
+  }
+
+  if (file?.uri) {
+    try {
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Bill',
+        UTI: 'net.whatsapp.pdf',
+      });
+      console.log("✅ Shared successfully");
+    } catch (e) {
+      console.error("❌ Sharing failed", e);
+    }
+  }
+
+  router.push('/rating');
+  await CommissionService.refreshAllEngineerSummaries();
+
+  setIsFormVisible(false);
+  resetForm();
+  setSignature(null);
+
+} catch (error) { }
+  };
+
+      const CustomDropdown = ({
+        options,
+        selectedValue,
+        onValueChange,
+        placeholder,
+        style
+    }: {
+        options: { label: string; value: string }[];
+        selectedValue: string;
+        onValueChange: (value: string) => void;
+        placeholder: string;
+        style?: any;
+    }) => {
+        const [isOpen, setIsOpen] = useState(false);
+
+        return (
+            <View style={[styles.dropdownContainer, style]}>
+                <TouchableOpacity
+                    style={styles.dropdownHeader}
+                    onPress={() => setIsOpen(!isOpen)}
+                >
+                    <Text style={selectedValue ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
+                        {selectedValue || placeholder}
+                    </Text>
+                    <MaterialIcons
+                        name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                        size={24}
+                    />
+                </TouchableOpacity>
+
+                {isOpen && (
+                    <View style={styles.dropdownList}>
+                        <ScrollView
+                            style={styles.dropdownScrollView}
+                            nestedScrollEnabled={true}
+                        >
+                            {options.map((option) => (
+                                <TouchableOpacity
+                                    key={option.value}
+                                    style={styles.dropdownItem}
+                                    onPress={() => {
+                                        onValueChange(option.value);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <Text style={styles.dropdownItemText}>{option.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
+            </View>
+        );
+    };
+
+
   const generateBillHtml = (bill: Bill) => {
     return `
-      <html>
+       <html>
               <head>
                 <style>
                   html, body {
@@ -499,7 +689,7 @@ const BillPage = () => {
                     <h2 class="invoice-title">INVOICE</h2>
                     <div class="invoice-details">
                       <div><strong>Bill No : </strong> ${bill.billNumber}</div>
-                      <div><strong>Date : </strong> ${new Date(bill.$createdAt).toLocaleDateString()}</div>
+                      <div><strong>Date : </strong> ${new Date(bill.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
                 </div>
@@ -526,7 +716,7 @@ const BillPage = () => {
                   </div>
                   <div class="row">
                     <span class="label">Engineer Name : </span>
-                    <span class="value">${bill.serviceBoyName}</span>
+                    <span class="value">${bill.serviceboyName}</span>
                   </div>
                   <div class="row total-row">
                     <span class="label">Service Charge : </span>
@@ -576,7 +766,7 @@ const BillPage = () => {
                 </div>
               </body>
             </html>
-      `;
+    `;
   };
 
   const handleShareViaWhatsApp = async () => {
@@ -594,7 +784,7 @@ const BillPage = () => {
         UTI: 'net.whatsapp.pdf'
       });
     } catch (error) {
-      console.error('Error sharing via WhatsApp :', error);
+      console.error('Error sharing via WhatsApp:', error);
       Alert.alert('Error', 'Failed to share bill');
     }
   };
@@ -605,7 +795,7 @@ const BillPage = () => {
       const htmlContent = generateBillHtml(selectedBill);
       await Print.printAsync({ html: htmlContent });
     } catch (error) {
-      console.error('Error printing :', error);
+      console.error('Error printing:', error);
       Alert.alert('Print Failed', 'Unable to generate PDF');
     }
   };
@@ -613,7 +803,7 @@ const BillPage = () => {
   const resetForm = () => {
     setForm({
       serviceType: '',
-      serviceBoyName: '',
+      serviceboyName: '',
       customerName: '',
       address: '',
       contactNumber: '',
@@ -674,17 +864,73 @@ const BillPage = () => {
           text: 'Delete',
           onPress: async () => {
             try {
-              await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+              await fetch(`${TURSO_BASE_URL}/${id}`, {
+                method: 'DELETE'
+              });
+
               const counts = await fetchEngineerBillCounts();
               setEngineerCounts(counts);
+
               fetchBills();
-              setBills(prev => prev.filter(bill => bill.$id !== id));
-              setAllBills(prev => prev.filter(bill => bill.$id !== id));
+              fetchTotalBillCount();
+
               closeBillDetails();
               Alert.alert('Success', 'Bill deleted successfully.');
             } catch (error) {
-              console.error('Error deleting bill :', error);
+              console.error('Error deleting bill:', error);
               Alert.alert('Error', 'Failed to delete bill');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const toggleBillSelection = (id: string) => {
+    setSelectedBills(prev =>
+      prev.includes(id)
+        ? prev.filter(billId => billId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedBills([]);
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedBills.length === 0) return;
+
+    Alert.alert(
+      'Delete Bills',
+      `Are you sure you want to delete ${selectedBills.length} bill(s)?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              await Promise.all(
+                selectedBills.map(id =>
+                  fetch(`${TURSO_BASE_URL}/${id}`, { method: 'DELETE' })
+                )
+              );
+
+              const counts = await fetchEngineerBillCounts();
+              setEngineerCounts(counts);
+              fetchBills();
+              fetchTotalBillCount();
+
+              setSelectedBills([]);
+              setIsSelectionMode(false);
+
+              Alert.alert('Success', `${selectedBills.length} bill(s) deleted successfully.`);
+            } catch (error) {
+              console.error('Error deleting bills:', error);
+              Alert.alert('Error', 'Failed to delete bills');
             }
           }
         }
@@ -696,41 +942,63 @@ const BillPage = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.push('/home')}>
-            <Feather name="arrow-left" size={25} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Bill Management</Text>
+          {isSelectionMode ? (
+            <TouchableOpacity onPress={toggleSelectionMode}>
+              <Feather name="x" size={25} color="#FFF" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => router.push('/home')}>
+              <Feather name="arrow-left" size={25} color="#FFF" />
+            </TouchableOpacity>
+          )}
+          <View>
+            <Text style={styles.headerTitle}>
+              {isSelectionMode ? `${selectedBills.length} selected` : 'Bill Management'}
+            </Text>
+          </View>
         </View>
         <View style={styles.headerRight}>
-          <View style={styles.headerCount}>
-            <Text style={styles.headerCountText}>{totalBillCount}</Text>
-          </View>
+          {isSelectionMode ? (
+            <TouchableOpacity onPress={handleDeleteMultiple} style={styles.deleteButton}>
+              <Feather name="trash-2" size={22} color="#FFF" />
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity onPress={toggleSelectionMode} style={styles.selectButton}>
+                <Feather name="check-square" size={22} color="#FFF" />
+              </TouchableOpacity>
+              <View style={styles.headerCount}>
+                <Text style={styles.headerCountText}>{totalBillCount}</Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
 
-      {!isFormVisible ? (<View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
-          onPress={() => {
-            setFilterType('serviceBoy');
-            setFilterModalVisible(true);
-          }}
-        >
-          <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
-          <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
-            {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterButton, dateFilter && styles.activeFilter]}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <MaterialIcons name="today" size={20} color={dateFilter ? "#FFF" : "#5E72E4"} />
-          <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
-            {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {!isFormVisible ? (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
+            onPress={() => {
+              setFilterType('serviceBoy');
+              setFilterModalVisible(true);
+            }}
+          >
+            <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
+            <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
+              {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, dateFilter && styles.activeFilter]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <MaterialIcons name="today" size={20} color={dateFilter ? "#FFF" : "#5E72E4"} />
+            <Text style={[styles.filterButtonText, dateFilter && styles.activeFilterText]}>
+              {dateFilter ? format(dateFilter, 'dd MMM yyyy') : 'Filter by date'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
 
       {(selectedServiceBoy || dateFilter) && (
@@ -847,20 +1115,73 @@ const BillPage = () => {
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
-              {Object.entries(form).map(([key, value]) => (
-                <View key={key} style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
-                  <TextInput
-                    placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
-                    style={styles.input}
-                    keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
-                    value={value}
-                    onChangeText={(text) => handleChange(key, text)}
-                    editable={true}
-                    maxLength={key === 'contactNumber' ? 10 : undefined}
-                  />
-                </View>
-              ))}
+                   {/* Service Type Dropdown */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Service Type*</Text>
+                            <CustomDropdown
+                                options={SERVICE_TYPES.map(type => ({ label: type, value: type }))}
+                                selectedValue={form.serviceType}
+                                onValueChange={(value) => handleChange('serviceType', value)}
+                                placeholder="Select service type"
+                            />
+                        </View>
+
+                        {/* Engineer Name Dropdown */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Engineer Name*</Text>
+                            <CustomDropdown
+                                options={serviceBoys.map(boy => ({ label: boy.name, value: boy.name }))}
+                                selectedValue={form.serviceboyName}
+                                onValueChange={(value) => handleChange('serviceboyName', value)}
+                                placeholder="Select engineer"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Customer Name*</Text>
+                            <TextInput
+                  style={styles.input}
+                                value={form.customerName}
+                                onChangeText={(text) => handleChange('customerName', text)}
+                                placeholder="Enter customer name"
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Contact Number*</Text>
+                            <TextInput
+                  style={styles.input}
+                                value={form.contactNumber}
+                                onChangeText={(text) => handleChange('contactNumber', text)}
+                                placeholder="Enter contact number"
+                                keyboardType="numeric"
+                                maxLength={10}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Address*</Text>
+                            <TextInput
+                  style={styles.input}
+                                value={form.address}
+                                onChangeText={(text) => handleChange('address', text)}
+                                placeholder="Enter address"
+                                multiline
+                                numberOfLines={3}
+                            />
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.inputLabel}>Service Charge (₹)*</Text>
+                            <TextInput
+                  style={styles.input}
+                                value={form.serviceCharge.toString()}
+                                onChangeText={(text) => handleChange('serviceCharge', text)}
+                                placeholder="Enter service charge"
+                                keyboardType="decimal-pad"
+                            />
+                        </View>
+
 
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>GST (%)</Text>
@@ -964,75 +1285,13 @@ const BillPage = () => {
 
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={async () => {
-                  if (!validateForm()) return;
-                  if (!signature) {
-                    Alert.alert('Error', 'Customer signature is required');
-                    return;
-                  }
-
-                  const billNumber = generateBillNumber();
-                  const now = new Date();
-                  const commission = (parseFloat(form.serviceCharge) * 0.25).toFixed(2); // Calculate commission
-
-                  const billData: Bill = {
-                    $id: billNumber,
-                    notes: notes.trim() || '',
-                    billNumber,
-                    serviceType: form.serviceType,
-                    serviceBoyName: form.serviceBoyName,
-                    customerName: form.customerName,
-                    contactNumber: form.contactNumber,
-                    address: form.address,
-                    serviceCharge: form.serviceCharge,
-                    gstPercentage: gstPercentage,
-                    paymentMethod,
-                    cashGiven: paymentMethod === 'cash' ? cashGiven : '',
-                    change: paymentMethod === 'cash' ? calculateChange() : '',
-                    $createdAt: now.toISOString(),
-                    signature: signature,
-                    status: 'paid',
-                    total: calculateTotal(),
-                    date: now.toISOString(),
-                    engineerCommission: commission, // Store the commission
-                  };
-
-                  try {
-                    await databases.createDocument(
-                      DATABASE_ID,
-                      COLLECTION_ID,
-                      billNumber,
-                      billData
-                    );
-                    const htmlContent = generateBillHtml(billData);
-                    const { uri } = await Print.printToFileAsync({
-                      html: htmlContent,
-                      width: 595,
-                      height: 842,
-                    });
-                    await Sharing.shareAsync(uri, {
-                      mimeType: 'application/pdf',
-                      dialogTitle: 'Share Bill',
-                      UTI: 'net.whatsapp.pdf'
-                    });
-                    fetchBills();
-
-                    router.push('/rating');
-                    setIsFormVisible(false);
-                    resetForm();
-                    setSignature(null);
-                  } catch (error) {
-                    console.error('Error generating bill :', error);
-                    Alert.alert('Error', 'Failed to generate bill');
-                  }
-                }}
+                onPress={handleSubmit}
               >
                 <Text style={styles.submitText}>Submit & Share Bill</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
       ) : (
         <View style={styles.billsListContainer}>
           {isLoading ? (
@@ -1053,27 +1312,50 @@ const BillPage = () => {
           ) : (
             <FlatList
               data={bills}
-              keyExtractor={(item) => item.$id}
+              keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.billCard}
-                  onPress={() => showBillDetails(item)}
+                  style={[
+                    styles.billCard,
+                    isSelectionMode && styles.billCardSelectable,
+                    selectedBills.includes(item.id) && styles.billCardSelected
+                  ]}
+                  onPress={() => {
+                    if (isSelectionMode) {
+                      toggleBillSelection(item.id);
+                    } else {
+                      showBillDetails(item);
+                    }
+                  }}
+                  onLongPress={() => {
+                    toggleSelectionMode();
+                    toggleBillSelection(item.id);
+                  }}
                 >
-                  <View style={styles.billHeader}>
-                    <View>
-                      <Text style={styles.billCustomer}>{item.customerName}</Text>
-                      <Text style={styles.billService}>{item.serviceType}</Text>
-                      <Text style={styles.billNumber}>{item.billNumber}</Text>
+                  {isSelectionMode && (
+                    <Checkbox
+                      status={selectedBills.includes(item.id) ? 'checked' : 'unchecked'}
+                      onPress={() => toggleBillSelection(item.id)}
+                      color="#5E72E4"
+                    />
+                  )}
+                  <View style={styles.billContent}>
+                    <View style={styles.billHeader}>
+                      <View style={styles.billInfo}>
+                        <Text style={styles.billCustomer}>{item.customerName}</Text>
+                        <Text style={styles.billService}>{item.serviceType}</Text>
+                        <Text style={styles.billNumber}>{item.billNumber}</Text>
+                      </View>
+                      <View style={styles.billAmountContainer}>
+                        <Text style={styles.billAmount}>₹{item.total}</Text>
+                      </View>
                     </View>
-                    <View style={styles.billAmountContainer}>
-                      <Text style={styles.billAmount}>₹{item.total}</Text>
+                    <View style={styles.billDateContainer}>
+                      <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
+                      <Text style={styles.billDate}>
+                        {formatToAmPm(item.date)}
+                      </Text>
                     </View>
-                  </View>
-                  <View style={styles.billDateContainer}>
-                    <MaterialCommunityIcons name="calendar" size={14} color="#718096" />
-                    <Text style={styles.billDate}>
-                      {formatToAmPm(item.date)}
-                    </Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -1140,7 +1422,7 @@ const BillPage = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date :</Text>
                       <Text style={styles.detailValue}>
-                        {formatToAmPm(selectedBill.$createdAt || '')}
+                        {formatToAmPm(selectedBill.createdAt || '')}
                       </Text>
                     </View>
                   </View>
@@ -1169,7 +1451,7 @@ const BillPage = () => {
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Engineer :</Text>
-                      <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
+                      <Text style={styles.detailValue}>{selectedBill.serviceboyName}</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Charge :</Text>
@@ -1185,7 +1467,6 @@ const BillPage = () => {
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Engineer Commission :</Text>
-                      {/* <Text style={styles.detailValue}>₹{selectedBill.engineerCommission}</Text> */}
                       <Text style={styles.detailValue}>
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                       </Text>
@@ -1253,7 +1534,7 @@ const BillPage = () => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
-                      onPress={() => handleDeleteBill(selectedBill.$id)}
+                      onPress={() => handleDeleteBill(selectedBill.id)}
                     >
                       <MaterialIcons name="delete" size={20} color="#FFF" />
                       <Text style={styles.actionButtonText}>Delete</Text>

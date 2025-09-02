@@ -2,43 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal, Pressable, Dimensions, SafeAreaView, RefreshControl } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import { databases, storage, account } from '../lib/appwrite';
-import { Query, Models } from 'appwrite';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/Userphoto';
 import { footerStyles } from '../constants/footer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
 const parseNotes = (notes: string) => {
-    if (!notes) return { userName: '', userNotes: '' };
-    const [userName, ...rest] = notes.split('\n');
+    if (!notes) return { userName: '', userNotes: '', fullNotes: '' };
     return {
-        userName: userName?.trim() || '',
-        userNotes: rest.join('\n').trim(),
+        userName: '', 
+        userNotes: '', 
+        fullNotes: notes.trim(),
     };
 };
 
-interface PhotoDocument extends Models.Document {
+interface PhotoDocument {
+    id: string;
     beforeImageUrl?: string;
     afterImageUrl?: string;
     date: string;
     notes?: string;
+    userEmail: string;
+    createdAt: string;
 }
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'photo-id';
-const BUCKET_ID = 'photo-id';
-const { width } = Dimensions.get('window');
-const STORAGE_BASE_URL = 'https://fra.cloud.appwrite.io/v1/storage/buckets/photo_id/files';
-const PROJECT_ID = 'servicevale-id';
-
-const buildImageUrl = (fileId: string) =>
-    `${STORAGE_BASE_URL}/${fileId}/view?project=${PROJECT_ID}&mode=admin`;
+const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}`; 
 
 const PhotoComparisonPage: React.FC = () => {
     const [photoSets, setPhotoSets] = useState<PhotoDocument[]>([]);
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [previewVisible, setPreviewVisible] = useState<boolean>(false);
     const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -47,35 +40,24 @@ const PhotoComparisonPage: React.FC = () => {
     const insets = useSafeAreaInsets();
 
     useEffect(() => {
-        checkAuthStatus();
+        fetchPhotoSets();
     }, []);
-
-    useEffect(() => {
-        if (isAuthenticated) fetchPhotoSets();
-    }, [isAuthenticated]);
-
-    const checkAuthStatus = async () => {
-        setIsLoading(true);
-        try {
-            const user = await account.get();
-            setIsAuthenticated(!!user?.$id);
-        } catch {
-            setIsAuthenticated(false);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const fetchPhotoSets = async () => {
         setIsLoading(true);
         try {
-            const res = await databases.listDocuments<PhotoDocument>(
-                DATABASE_ID,
-                COLLECTION_ID,
-                [Query.orderDesc('date'), Query.limit(50)]
-            );
-            setPhotoSets(res.documents);
-        } catch {
+            const response = await fetch(`${API_BASE_URL}/photos`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load photos.');
+            }
+            
+            const data = await response.json();
+             const sortedData = data.sort((a: any, b: any) => {
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+            setPhotoSets(sortedData);
+        } catch (error) {
             Alert.alert('Error', 'Failed to load photos.');
         } finally {
             setIsLoading(false);
@@ -108,24 +90,30 @@ const PhotoComparisonPage: React.FC = () => {
                 return;
             }
 
-            const saveImageToGallery = async (fileId?: string) => {
-                if (!fileId) return;
-                const fileUrl = buildImageUrl(fileId);
-                const localPath = `${FileSystem.cacheDirectory}${fileId}.jpg`;
-                const downloadResult = await FileSystem.downloadAsync(fileUrl, localPath);
+            const saveImageToGallery = async (fileUrl?: string) => {
+                if (!fileUrl) return;
+                
+                const fullUrl = fileUrl.startsWith('http') 
+                    ? fileUrl 
+                    : `${API_BASE_URL}${fileUrl}`;
+                
+                const localPath = `${FileSystem.cacheDirectory}${fileUrl.split('/').pop()}`;
+                const downloadResult = await FileSystem.downloadAsync(fullUrl, localPath);
                 await MediaLibrary.createAssetAsync(downloadResult.uri);
             };
 
             await saveImageToGallery(item.beforeImageUrl);
             await saveImageToGallery(item.afterImageUrl);
-            if (item.beforeImageUrl) {
-                await storage.deleteFile(BUCKET_ID, item.beforeImageUrl);
+            
+            const response = await fetch(`${API_BASE_URL}/photos/${item.id}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete photo from server.');
             }
-            if (item.afterImageUrl) {
-                await storage.deleteFile(BUCKET_ID, item.afterImageUrl);
-            }
-            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, item.$id);
-            Alert.alert('Success', 'Images saved to Gallery and delete');
+            
+            Alert.alert('Success', 'Images saved to Gallery and deleted from server');
             fetchPhotoSets();
         } catch (error) {
             console.error(error);
@@ -139,20 +127,6 @@ const PhotoComparisonPage: React.FC = () => {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#5E72E4" />
-            </View>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return (
-            <View style={styles.authContainer}>
-                <Text style={styles.authText}>Please login to view service photos</Text>
-                <TouchableOpacity
-                    style={styles.loginButton}
-                    onPress={() => router.push('/login')}
-                >
-                    <Text style={styles.loginButtonText}>Go to Login</Text>
-                </TouchableOpacity>
             </View>
         );
     }
@@ -186,7 +160,7 @@ const PhotoComparisonPage: React.FC = () => {
                     </View>
                 ) : (
                     photoSets.map((item) => (
-                        <View key={item.$id} style={styles.photoCard}>
+                        <View key={item.id} style={styles.photoCard}>
                             <View style={styles.cardHeader}>
                                 <View style={styles.dateBadge}>
                                     <MaterialIcons name="date-range" size={16} color="#FFF" />
@@ -209,13 +183,20 @@ const PhotoComparisonPage: React.FC = () => {
                                         <TouchableOpacity
                                             onPress={() => {
                                                 if (item.beforeImageUrl) {
-                                                    openPreview(buildImageUrl(item.beforeImageUrl));
+                                                    const fullUrl = item.beforeImageUrl.startsWith('http') 
+                                                        ? item.beforeImageUrl 
+                                                        : `${API_BASE_URL}${item.beforeImageUrl}`;
+                                                    openPreview(fullUrl);
                                                 }
                                             }}
                                             activeOpacity={0.8}
                                         >
                                             <Image
-                                                source={{ uri: buildImageUrl(item.beforeImageUrl) }}
+                                                source={{ 
+                                                    uri: item.beforeImageUrl.startsWith('http') 
+                                                        ? item.beforeImageUrl 
+                                                        : `${API_BASE_URL}${item.beforeImageUrl}`
+                                                }}
                                                 style={styles.photoImage}
                                             />
                                         </TouchableOpacity>
@@ -233,13 +214,20 @@ const PhotoComparisonPage: React.FC = () => {
                                         <TouchableOpacity
                                             onPress={() => {
                                                 if (item.afterImageUrl) {
-                                                    openPreview(buildImageUrl(item.afterImageUrl));
+                                                    const fullUrl = item.afterImageUrl.startsWith('http') 
+                                                        ? item.afterImageUrl 
+                                                        : `${API_BASE_URL}${item.afterImageUrl}`;
+                                                    openPreview(fullUrl);
                                                 }
                                             }}
                                             activeOpacity={0.8}
                                         >
                                             <Image
-                                                source={{ uri: buildImageUrl(item.afterImageUrl) }}
+                                                source={{ 
+                                                    uri: item.afterImageUrl.startsWith('http') 
+                                                        ? item.afterImageUrl 
+                                                        : `${API_BASE_URL}${item.afterImageUrl}`
+                                                }}
                                                 style={styles.photoImage}
                                             />
                                         </TouchableOpacity>
@@ -255,7 +243,7 @@ const PhotoComparisonPage: React.FC = () => {
                             {item.notes && (
                                 <View style={styles.notesContainer}>
                                     <Text style={styles.notesText}>
-                                        {parseNotes(item.notes).userNotes || 'No notes provided'}
+                                        {parseNotes(item.notes).fullNotes || 'No notes provided'}
                                     </Text>
                                 </View>
                             )}

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, Modal, TextInput } from 'react-native';
+import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, Modal, TextInput, RefreshControl } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases } from '../lib/appwrite';
-import { Query, ID } from 'react-native-appwrite';
 import { styles } from '../constants/EngineerDetail.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, startOfMonth } from 'date-fns';
+import CommissionService from './services/commissionService';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
-const PAYMENTS_COLLECTION_ID = 'commission-id';
+const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 type TransactionItem = {
   id: string;
@@ -58,10 +56,34 @@ const EngineerDetailScreen = () => {
   const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<TransactionItem[]>([]);
-  const [hasMoreCommissions, setHasMoreCommissions] = useState(true);
-  const [commissionOffset, setCommissionOffset] = useState(0);
-  const batchSize = 50; // Number of items to load at a time
   const [paymentError, setPaymentError] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = CommissionService.addAdminListener((data) => {
+      const engineerData = data.find(e => e.name === engineerName);
+      if (engineerData) {
+        setCurrentMonthCommission(engineerData.monthlyCommission || 0);
+        setCurrentMonthPayments(engineerData.monthlyPayments || 0);
+      }
+    });
+
+    loadData();
+
+    return unsubscribe;
+  }, [engineerName]);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      await CommissionService.refreshAllEngineerSummaries();
+      await fetchCommissions();
+      await fetchPayments();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -71,7 +93,7 @@ const EngineerDetailScreen = () => {
     try {
       setIsLoading(true);
       await Promise.all([
-        fetchCommissions(true), // Reset offset when refreshing
+        fetchCommissions(),
         fetchPayments()
       ]);
     } catch (error) {
@@ -79,69 +101,57 @@ const EngineerDetailScreen = () => {
       Alert.alert('Error', 'Failed to load engineer details');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  const fetchCommissions = async (reset = false) => {
-    try {
-      const offset = reset ? 0 : commissionOffset;
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchAllData();
+  };
 
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', engineerName),
-          Query.orderDesc('date'),
-          Query.limit(batchSize),
-          Query.offset(offset)
-        ]
+  const fetchCommissions = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/bill`);
+      if (!response.ok) throw new Error('Failed to fetch commissions');
+
+      const bills = await response.json();
+
+      const engineerBills = bills.filter((bill: any) =>
+        bill.serviceboyName === engineerName
       );
 
       const today = new Date();
       const startOfCurrentMonth = startOfMonth(today).toISOString();
 
-      // Current month commissions
-      const currentMonthCommissionsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', engineerName),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
-      );
+      const monthCommission = engineerBills
+        .filter((bill: any) => new Date(bill.date) >= new Date(startOfCurrentMonth))
+        .reduce((sum: number, bill: any) => sum + (bill.engineerCommission || 0), 0);
 
-      const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
-        return sum + parseFloat(doc.engineerCommission || '0');
-      }, 0);
       setCurrentMonthCommission(monthCommission);
 
-      const commissionItems: TransactionItem[] = response.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.engineerCommission || '0'),
+      const commissionItems: TransactionItem[] = engineerBills.map((bill: any) => ({
+        id: bill.id,
+        date: bill.date,
+        amount: bill.engineerCommission || 0,
         type: 'commission',
-        customerName: doc.customerName,
-        billNumber: doc.billNumber,
-        serviceType: doc.serviceType,
+        customerName: bill.customerName,
+        billNumber: bill.billNumber,
+        serviceType: bill.serviceType,
         selected: false
       }));
 
-      // Update transactions state
-      setTransactions(prev => {
-        const existingCommissions = reset ? [] : prev.commissions;
-        const newCommissions = groupByDate([...existingCommissions.flatMap(s => s.data), ...commissionItems], true);
+      const uniqueItems = Array.from(
+        new Map(commissionItems.map(item => [item.id, item])).values()
+      );
 
-        return {
-          ...prev,
-          commissions: newCommissions
-        };
-      });
+      const newCommissions = groupByDate(uniqueItems, true);
 
-      // Update offset and hasMore flag
-      setCommissionOffset(offset + response.documents.length);
-      setHasMoreCommissions(response.documents.length === batchSize);
+      setTransactions(prev => ({
+        ...prev,
+        commissions: newCommissions
+      }));
 
-      // Apply date filter if active
       if (dateFilter) {
         const startOfDay = new Date(dateFilter);
         startOfDay.setHours(0, 0, 0, 0);
@@ -150,8 +160,8 @@ const EngineerDetailScreen = () => {
         filterByDateRange(startOfDay, endOfDay);
       } else {
         setFilteredTransactions(prev => ({
-          ...prev,
-          commissions: groupByDate([...transactions.commissions.flatMap(s => s.data), ...commissionItems], true)
+          commissions: newCommissions,
+          payments: prev.payments
         }));
       }
     } catch (error) {
@@ -160,51 +170,42 @@ const EngineerDetailScreen = () => {
     }
   };
 
+  const generateUniqueKey = (item: TransactionItem) => {
+    return `${item.type}-${item.id}-${item.date}-${item.amount}`;
+  };
+
   const fetchPayments = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [
-          Query.or([
-            Query.equal('engineerId', engineerId),
-            Query.equal('engineerName', engineerName)
-          ]),
-          Query.orderDesc('date')
-        ]
+      const response = await fetch(
+        `${API_BASE_URL}/payment/engineer/${engineerId}/${engineerName}`
       );
+
+      if (!response.ok) throw new Error('Failed to fetch payments');
+
+      const payments = await response.json();
 
       const today = new Date();
       const startOfCurrentMonth = startOfMonth(today).toISOString();
 
-      // Current month payments
-      const currentMonthPaymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [
-          Query.or([
-            Query.equal('engineerId', engineerId),
-            Query.equal('engineerName', engineerName)
-          ]),
-          Query.greaterThanEqual('date', startOfCurrentMonth),
-          Query.orderDesc('date')
-        ]
-      );
+      const monthPayments = payments
+        .filter((payment: any) => new Date(payment.date) >= new Date(startOfCurrentMonth))
+        .reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
 
-      const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
-        return sum + parseFloat(doc.amount);
-      }, 0);
       setCurrentMonthPayments(monthPayments);
 
-      const paymentItems: TransactionItem[] = response.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.amount),
+      const paymentItems: TransactionItem[] = payments.map((payment: any) => ({
+        id: payment.id,
+        date: payment.date,
+        amount: payment.amount,
         type: 'payment',
         selected: false
       }));
 
-      const paymentSections = groupByDate(paymentItems, true);
+      const uniquePaymentItems = Array.from(
+        new Map(paymentItems.map(item => [item.id, item])).values()
+      );
+
+      const paymentSections = groupByDate(uniquePaymentItems, true);
 
       setTransactions(prev => ({
         ...prev,
@@ -222,7 +223,6 @@ const EngineerDetailScreen = () => {
       throw error;
     }
   };
-
 
   const groupByDate = (items: TransactionItem[], groupByMonth = false): SectionData[] => {
     const grouped: { [key: string]: TransactionItem[] } = {};
@@ -298,17 +298,21 @@ const EngineerDetailScreen = () => {
     }
 
     try {
-      await databases.createDocument(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        ID.unique(),
-        {
+      const response = await fetch(`${API_BASE_URL}/payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           engineerId: engineerId,
           engineerName: engineerName,
-          amount: amount.toString(),
+          amount: amount,
           date: new Date().toISOString()
-        }
-      );
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to record payment');
+
       await fetchAllData();
       setPaymentAmount('');
       setPaymentError('');
@@ -344,7 +348,6 @@ const EngineerDetailScreen = () => {
     const currentYear = currentDate.getFullYear();
 
     return transactions.commissions.reduce((totalSum, section) => {
-      // Check if section is from the current month
       const sectionDate = new Date(section.data[0]?.date || 0);
       if (sectionDate.getMonth() === currentMonth &&
         sectionDate.getFullYear() === currentYear) {
@@ -419,7 +422,6 @@ const EngineerDetailScreen = () => {
     const updatedTransactions = { ...filteredTransactions };
     let found = false;
 
-    // Update the item in filtered transactions
     updatedTransactions.payments = updatedTransactions.payments.map(section => {
       const updatedData = section.data.map(i => {
         if (i.id === item.id) {
@@ -434,7 +436,6 @@ const EngineerDetailScreen = () => {
     if (found) {
       setFilteredTransactions(updatedTransactions);
 
-      // Update the item in main transactions
       const updatedMainTransactions = { ...transactions };
       updatedMainTransactions.payments = updatedMainTransactions.payments.map(section => {
         const updatedData = section.data.map(i => {
@@ -447,7 +448,6 @@ const EngineerDetailScreen = () => {
       });
       setTransactions(updatedMainTransactions);
 
-      // Update selected items list
       if (item.selected) {
         setSelectedItems(selectedItems.filter(i => i.id !== item.id));
       } else {
@@ -464,7 +464,6 @@ const EngineerDetailScreen = () => {
     setIsSelectionMode(false);
     setSelectedItems([]);
 
-    // Clear all selections in both transaction states
     const clearSelections = (sections: SectionData[]) =>
       sections.map(section => ({
         ...section,
@@ -501,10 +500,8 @@ const EngineerDetailScreen = () => {
             text: 'Delete',
             style: 'destructive',
             onPress: async () => {
-              // 1. Get IDs of payments to delete
               const paymentIdsToDelete = selectedItems.map(item => item.id);
 
-              // 2. Optimistically update UI by removing the payments
               const updatedPayments = transactions.payments
                 .map(section => ({
                   ...section,
@@ -513,7 +510,7 @@ const EngineerDetailScreen = () => {
                 .filter(section => section.data.length > 0);
 
               const updatedFilteredPayments = dateFilter
-                ? updatedPayments // If date filtered, use same logic
+                ? updatedPayments
                 : updatedPayments;
 
               setTransactions({
@@ -526,19 +523,20 @@ const EngineerDetailScreen = () => {
                 payments: updatedFilteredPayments
               });
 
-              // 3. Update current month payments calculation
               const deletedAmount = selectedItems.reduce((sum, item) => sum + item.amount, 0);
               setCurrentMonthPayments(prev => Math.max(0, prev - deletedAmount));
 
-              // 4. Clear selection
               cancelSelectionMode();
 
-              // 5. Actually delete from database
-              await Promise.all(
-                selectedItems.map(item =>
-                  databases.deleteDocument(DATABASE_ID, PAYMENTS_COLLECTION_ID, item.id)
-                )
-              );
+              const response = await fetch(`${API_BASE_URL}/payment`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: paymentIdsToDelete })
+              });
+
+              if (!response.ok) throw new Error('Failed to delete payments');
 
               Alert.alert('Success', 'Payments deleted successfully');
             }
@@ -548,18 +546,7 @@ const EngineerDetailScreen = () => {
     } catch (error) {
       console.error('Error deleting payments:', error);
       Alert.alert('Error', 'Failed to delete payments');
-      // If error occurs, refresh data to sync with server
       fetchAllData();
-    }
-  };
-
-  const loadMoreCommissions = async () => {
-    if (!hasMoreCommissions || isLoading) return;
-    try {
-      await fetchCommissions();
-    } catch (error) {
-      console.error('Error loading more commissions:', error);
-      Alert.alert('Error', 'Failed to load more commissions');
     }
   };
 
@@ -712,8 +699,16 @@ const EngineerDetailScreen = () => {
 
       <SectionList
         sections={activeTab === 'commissions' ? filteredTransactions.commissions : filteredTransactions.payments}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => generateUniqueKey(item)}
         contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={['#5E72E4']}
+            tintColor={'#5E72E4'}
+          />
+        }
         renderSectionHeader={({ section }) => (
           <View style={[
             styles.sectionHeader,
@@ -809,16 +804,6 @@ const EngineerDetailScreen = () => {
             </Text>
           </View>
         }
-        onEndReached={activeTab === 'commissions' ? loadMoreCommissions : undefined}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          activeTab === 'commissions' && hasMoreCommissions ? (
-            <View style={styles.loadingMoreContainer}>
-              <ActivityIndicator size="small" color="#5E72E4" />
-              <Text style={styles.loadingMoreText}>Loading more transactions...</Text>
-            </View>
-          ) : null
-        }
       />
 
       <Modal
@@ -853,10 +838,8 @@ const EngineerDetailScreen = () => {
                 value={paymentAmount}
                 onChangeText={(text) => {
                   setPaymentAmount(text);
-                  // Clear error when user starts typing
                   if (paymentError) setPaymentError('');
 
-                  // Validate immediately if there's input
                   if (text) {
                     const amount = parseFloat(text);
                     if (!isNaN(amount)) {

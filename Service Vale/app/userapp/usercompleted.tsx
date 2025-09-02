@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases, account } from '../../lib/appwrite';
-import { Query } from 'appwrite';
+import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
-import { styles } from '../../constants/userapp/CompletedServicesScreenuser.styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'orders-id';
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 type Service = {
   id: string;
@@ -37,87 +36,120 @@ const CompletedServicesScreenUser = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const params = useLocalSearchParams();
   const router = useRouter();
-  const [limit] = useState(25);
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
 
-  const fetchServices = async (loadMore = false) => {
+  const fetchEngineerData = async (email: string) => {
     try {
-      const currentUser = await account.get();
-      const email = currentUser.email;
-      setUserEmail(email);
-
-      const currentOffset = loadMore ? offset : 0;
-
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('status', 'completed'),
-          Query.equal('serviceboyEmail', email),
-          Query.orderDesc('completedAt'),
-          Query.limit(limit),
-          Query.offset(currentOffset)
-        ]
+      const response = await fetch(`${YOUR_BACKEND_URL}/engineer`);
+      const engineers = await response.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.email.toLowerCase() === email.toLowerCase()
       );
 
-      if (!loadMore) {
-        const countResponse = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [
-            Query.equal('status', 'completed'),
-            Query.equal('serviceboyEmail', email),
-            Query.select(['$id'])
-          ]
-        );
-        setTotalCount(countResponse.total);
+      if (engineer) {
+        return engineer.engineerName;
       }
 
-      const formattedServices = response.documents.map(doc => {
-        const rawCompletedAt = doc.completedAt || doc.$updatedAt || doc.$createdAt;
+      return null;
+    } catch (error) {
+      console.error('Error fetching engineer data:', error);
+      return null;
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+            const userDataString = await AsyncStorage.getItem('userData');
+      
+      if (!userDataString) {
+        Alert.alert('Error', 'User not logged in');
+        setLoading(false);
+        return;
+      }
+
+      const userData = JSON.parse(userDataString);
+      const email = userData.email;
+      setUserEmail(email);
+
+      const engineerName = await fetchEngineerData(email);
+      if (!engineerName) {
+        Alert.alert('Error', 'Engineer not found');
+        setLoading(false);
+        return;
+      }
+
+      const countResponse = await fetch(
+        `${YOUR_BACKEND_URL}/order/count?status=completed&engineerId=${encodeURIComponent(engineerName)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        setCompletedCount(countData.count || 0);
+      }
+
+      const response = await fetch(
+        `${YOUR_BACKEND_URL}/order/status?status=completed&all=true`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const ordersData = await response.json();
+      
+      const filteredOrders = ordersData.result.filter(
+        (order: any) => order.serviceboyEmail?.toLowerCase() === email.toLowerCase()
+      );
+
+      const formattedServices = filteredOrders.map((order: any) => {
+        const rawCompletedAt = order.completedAt || order.updatedAt || order.createdAt;
         let serviceDateDisplay = '';
-        if (doc.serviceDate) {
-          const [year, month, day] = doc.serviceDate.split('-');
+        if (order.serviceDate) {
+          const [year, month, day] = order.serviceDate.split('-');
           serviceDateDisplay = `${day}/${month}/${year}`;
         }
         let serviceTimeDisplay = '';
-        if (doc.serviceTime) {
-          const [hours, minutes] = doc.serviceTime.split(':');
+        if (order.serviceTime) {
+          const [hours, minutes] = order.serviceTime.split(':');
           const hourNum = parseInt(hours);
           const ampm = hourNum >= 12 ? 'PM' : 'AM';
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
+        
         return {
-          id: doc.$id,
-          serviceType: doc.serviceType,
-          clientName: doc.clientName,
-          address: doc.address,
-          phone: doc.phoneNumber,
-          amount: doc.billAmount,
-          status: doc.status,
+          id: order.id,
+          serviceType: order.serviceType,
+          clientName: order.clientName,
+          address: order.address,
+          phone: order.phoneNumber,
+          amount: order.billAmount,
+          status: order.status,
           date: rawCompletedAt ? new Date(rawCompletedAt).toLocaleString() : '',
-          serviceBoy: doc.serviceboyName,
-          serviceboyEmail: doc.serviceboyEmail,
+          serviceBoy: order.serviceboyName,
+          serviceboyEmail: order.serviceboyEmail,
           serviceDate: serviceDateDisplay,
           serviceTime: serviceTimeDisplay,
-          completedAt: rawCompletedAt
+          completedAt: rawCompletedAt 
         };
       });
-      if (loadMore) {
-        setServices(prev => [...prev, ...formattedServices]);
-        setAllServices(prev => [...prev, ...formattedServices]);
-        setOffset(currentOffset + limit);
-        setHasMore(response.documents.length === limit);
-      } else {
-        setServices(formattedServices);
-        setAllServices(formattedServices);
-        setOffset(limit);
-        setHasMore(response.documents.length === limit);
-      }
+
+      setServices(formattedServices);
+      setAllServices(formattedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
@@ -163,7 +195,7 @@ const CompletedServicesScreenUser = () => {
             }
             return prev;
           });
-          setTotalCount(prev => prev + 1);
+          setCompletedCount(prev => prev + 1);
         }
       } catch (error) {
         console.error('Error parsing completed service:', error);
@@ -210,6 +242,7 @@ const CompletedServicesScreenUser = () => {
     setServices(allServices);
   };
 
+
   const handleCreateBill = (service: Service) => {
     router.push({
       pathname: '/userapp/userbill',
@@ -238,15 +271,24 @@ const CompletedServicesScreenUser = () => {
           text: 'Move',
           onPress: async () => {
             try {
-              await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id,
-                { status: 'pending' }
-              );
+              const response = await fetch(`${YOUR_BACKEND_URL}/order/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  status: 'pending'
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to update order');
+              }
+
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
-              setTotalCount(prev => prev - 1);
+              setCompletedCount(prev => prev - 1);
+              
               const movedService = allServices.find(service => service.id === id);
               if (movedService) {
                 router.push({
@@ -313,16 +355,16 @@ const CompletedServicesScreenUser = () => {
         </View>
       </View>
 
-      <View style={styles.serviceFooter}>
-        <View style={styles.dateContainer}>
-          <MaterialIcons name="check-circle" size={16} color="#718096" />
-          <Text style={styles.dateText}>
-            {item.completedAt
-              ? `${formatToAmPm(item.completedAt)}`
-              : 'Completion time not available'}
-          </Text>
-        </View>
-      </View>
+   <View style={styles.serviceFooter}>
+  <View style={styles.dateContainer}>
+    <MaterialIcons name="check-circle" size={16} color="#718096" />
+    <Text style={styles.dateText}>
+      {item.completedAt
+        ? `${formatToAmPm(item.completedAt)}`
+        : 'Completion time not available'}
+    </Text>
+  </View>
+</View>
 
       <View style={styles.actionButtons}>
         <TouchableOpacity
@@ -344,11 +386,26 @@ const CompletedServicesScreenUser = () => {
     </View>
   );
 
-  const loadMoreServices = () => {
-    if (!loading && hasMore) {
-      fetchServices(true);
-    }
-  };
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="arrow-left" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Completed Services</Text>
+          </View>
+          <View style={styles.headerCount}>
+            <Text style={styles.headerCountText}>0</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#5E72E4" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -361,7 +418,7 @@ const CompletedServicesScreenUser = () => {
         </View>
 
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{totalCount}</Text>
+          <Text style={styles.headerCountText}>{completedCount}</Text>
         </View>
       </View>
 
@@ -396,28 +453,15 @@ const CompletedServicesScreenUser = () => {
         />
       )}
 
-      {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#5E72E4" />
-        </View>
-      ) : services.length > 0 ? (
+      {services.length > 0 ? (
         <FlatList
           data={services}
           renderItem={renderServiceItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          onEndReached={loadMoreServices}
-          onEndReachedThreshold={0.5}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          ListFooterComponent={
-            hasMore && !refreshing ? (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color="#5E72E4" />
-              </View>
-            ) : null
-          }
         />
       ) : (
         <View style={styles.emptyState}>

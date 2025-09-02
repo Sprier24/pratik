@@ -2,33 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, Modal, ActivityIndicator, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { Linking } from 'react-native';
 import { styles } from '../constants/PendingServicesScreen.styles';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'orders-id';
-const USERS_COLLECTION_ID = 'engineer-id';
+const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/order`;
+const ENGINEER_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
 
 type Service = {
   id: string;
   serviceType: string;
   clientName: string;
   address: string;
-  phone: string;
-  amount: string;
+  phoneNumber: string;
+  billAmount: string;
   status: string;
-  date: string;
-  serviceBoy: string;
+  createdAt: string;
+  serviceboyName: string;
   serviceDate: string;
   serviceTime: string;
   serviceboyEmail: string;
-  serviceboyContact: string;
-  sortDate: string;
-  sortTime: string;
+  serviceboyContactNumber: string;
 };
 
 type User = {
@@ -43,163 +39,176 @@ const PendingServicesScreen = () => {
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceBoys, setServiceBoys] = useState<User[]>([]);
-  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(null);
+  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(
+    params.engineer ? String(params.engineer) : null
+  );
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [dateFilter, setDateFilter] = useState<Date | null>(null);
+  const [dateFilter, setDateFilter] = useState<Date | null>(
+    params.date ? new Date(String(params.date)) : null
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [, setFilterType] = useState<'serviceBoy' | 'date'>('serviceBoy');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const itemsPerPage = 10;
+  const [refreshing, setRefreshing] = useState(false);
   const [totalPendingCount, setTotalPendingCount] = useState(0);
   const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
 
-  const fetchServiceBoys = async () => {
-    try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
-      const boys = response.documents.map(doc => ({
-        id: doc.$id,
-        name: doc.name
-      }));
-      setServiceBoys(boys);
-    } catch (error) {
-      console.error('Error fetching engineer :', error);
+  const updateUrlParams = (engineer: string | null, date: Date | null) => {
+    const newParams: Record<string, string> = {};
+    
+    if (engineer) {
+      newParams.engineer = engineer;
     }
+    
+    if (date) {
+      newParams.date = date.toISOString();
+    }
+    
+    router.setParams(newParams);
   };
 
-  const fetchServices = async (page = 1, isLoadMore = false) => {
+  const fetchAllServices = async () => {
     try {
-      if (isLoadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setLoading(true);
+      setLoading(true);
+
+      const countResponse = await fetch(`${BASE_URL}/count?status=pending`);
+      const countData = await countResponse.json();
+      const totalCount = countData.count || 0;
+
+      const response = await fetch(`${BASE_URL}/status?status=pending&limit=${totalCount}`);
+      const data = await response.json();
+
+      if (!data.result || !Array.isArray(data.result)) {
+        console.error('Unexpected API response format:', data);
+        Alert.alert('Error', 'Failed to load services - invalid data format');
+        return;
       }
 
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('status', 'pending'),
-          Query.orderAsc('serviceDate'),
-          Query.orderAsc('serviceTime'),
-          Query.limit(itemsPerPage),
-          Query.offset((page - 1) * itemsPerPage)
-        ]
-      );
+      const formattedServices = data.result.map((service: any) => {
+        let displayDate = '';
+        if (service.serviceDate) {
+          const [year, month, day] = service.serviceDate.split('-');
+          displayDate = `${day}/${month}/${year}`;
+        }
 
-      const formattedServices = response.documents.map(doc => {
-        const [year, month, day] = doc.serviceDate.split('-');
-        const displayDate = `${day}/${month}/${year}`;
-        const [hours, minutes] = doc.serviceTime.split(':');
-        const hourNum = parseInt(hours);
-        const ampm = hourNum >= 12 ? 'PM' : 'AM';
-        const displayHour = hourNum % 12 || 12;
-        const displayTime = `${displayHour}:${minutes} ${ampm}`;
+        let displayTime = '';
+        if (service.serviceTime) {
+          const [hours, minutes] = service.serviceTime.split(':');
+          const hourNum = parseInt(hours);
+          const ampm = hourNum >= 12 ? 'PM' : 'AM';
+          const displayHour = hourNum % 12 || 12;
+          displayTime = `${displayHour}:${minutes} ${ampm}`;
+        }
+
         return {
-          id: doc.$id,
-          serviceType: doc.serviceType,
-          clientName: doc.clientName,
-          address: doc.address,
-          phone: doc.phoneNumber,
-          amount: doc.billAmount,
-          status: doc.status,
-          date: new Date(doc.$createdAt).toLocaleString(),
-          serviceBoy: doc.serviceboyName,
-          serviceboyEmail: doc.serviceboyEmail,
-          serviceboyContact: doc.serviceboyContact,
+          id: service.id,
+          serviceType: service.serviceType,
+          clientName: service.clientName,
+          address: service.address,
+          phoneNumber: service.phoneNumber,
+          billAmount: service.billAmount,
+          status: service.status,
+          createdAt: service.createdAt,
+          serviceboyName: service.serviceboyName,
+          serviceboyEmail: service.serviceboyEmail,
+          serviceboyContactNumber: service.serviceboyContactNumber,
           serviceDate: displayDate,
-          serviceTime: displayTime,
-          sortDate: doc.serviceDate,
-          sortTime: doc.serviceTime
+          serviceTime: displayTime
         };
       });
 
-      if (isLoadMore) {
-        setAllServices(prev => [...prev, ...formattedServices]);
-        setServices(prev => [...prev, ...formattedServices]);
-      } else {
-        setAllServices(formattedServices);
-        setServices(formattedServices);
-      }
-
-      const totalCount = response.total;
-      setTotalPages(Math.ceil(totalCount / itemsPerPage));
-      setCurrentPage(page);
+      setAllServices(formattedServices);
+      
+      applyFilters(selectedServiceBoy, dateFilter, formattedServices);
     } catch (error) {
-      console.error('Error fetching services :', error);
+      console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
-      if (isLoadMore) {
-        setIsLoadingMore(false);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
   const fetchTotalPendingCount = async () => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('status', 'pending')]
-      );
-      setTotalPendingCount(response.total);
+      const response = await fetch(`${BASE_URL}/count?status=pending`);
+      const data = await response.json();
+      setTotalPendingCount(data.count || 0);
     } catch (error) {
-      console.error('Error fetching total pending count :', error);
+      console.error('Error fetching total pending count:', error);
     }
   };
 
   const fetchEngineerCounts = async () => {
     try {
-      const boysResponse = await databases.listDocuments(
-        DATABASE_ID,
-        USERS_COLLECTION_ID
-      );
+      const totalCountResponse = await fetch(`${BASE_URL}/count?status=pending`);
+      const totalCountData = await totalCountResponse.json();
 
-      const boys = boysResponse.documents.map(doc => doc.name);
       const counts: Record<string, number> = {
-        'All Service Engineers': 0
+        'All Service Engineers': totalCountData.count || 0
       };
 
-      const allResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('status', 'pending')]
-      );
+      const engineersResponse = await fetch(ENGINEER_URL);
+      const engineersData = await engineersResponse.json();
 
-      counts['All Service Engineers'] = allResponse.total;
-      await Promise.all(boys.map(async (name) => {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [
-            Query.equal('status', 'pending'),
-            Query.equal('serviceboyName', name)
-          ]
+      const engineers = engineersData.result && Array.isArray(engineersData.result)
+        ? engineersData.result
+        : Array.isArray(engineersData) ? engineersData : [];
+
+      for (const engineer of engineers) {
+        const engineerName = engineer.engineerName || engineer.name;
+        const engineerCountResponse = await fetch(
+          `${BASE_URL}/count?status=pending&engineerId=${encodeURIComponent(engineerName)}`
         );
-        counts[name] = response.total;
-      }));
+
+        if (engineerCountResponse.ok) {
+          const engineerCountData = await engineerCountResponse.json();
+          counts[engineerName] = engineerCountData.count || 0;
+        }
+      }
 
       setEngineerCounts(counts);
     } catch (error) {
-      console.error('Error fetching engineer counts :', error);
+      console.error('Error fetching engineer counts:', error);
+    }
+  };
+
+  const fetchServiceBoys = async () => {
+    try {
+      const response = await fetch(ENGINEER_URL);
+      const data = await response.json();
+
+      if (data.result && Array.isArray(data.result)) {
+        setServiceBoys(data.result.map((engineer: any) => ({
+          id: engineer.id,
+          name: engineer.engineerName
+        })));
+      } else {
+        if (Array.isArray(data)) {
+          setServiceBoys(data.map((engineer: any) => ({
+            id: engineer.id,
+            name: engineer.engineerName
+          })));
+        } else {
+          console.error('Unexpected API response format:', data);
+          setServiceBoys([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching service boys:', error);
+      setServiceBoys([]);
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchServiceBoys();
+      await fetchAllServices();
+      await fetchTotalPendingCount();
       await fetchEngineerCounts();
-      fetchServices();
-      fetchTotalPendingCount();
+      await fetchServiceBoys();
     };
 
     loadData();
+
     if (params.newService) {
       try {
         const newService = JSON.parse(params.newService as string);
@@ -208,18 +217,16 @@ const PendingServicesScreen = () => {
           serviceType: newService.serviceType,
           clientName: newService.clientName,
           address: newService.address,
-          phone: newService.phoneNumber,
-          amount: `₹${newService.billAmount || '0'}`,
+          phoneNumber: newService.phoneNumber,
+          billAmount: newService.billAmount,
           status: 'pending',
-          date: 'Just now',
-          serviceBoy: newService.serviceboyName,
+          createdAt: newService.createdAt,
+          serviceboyName: newService.serviceboyName,
           serviceDate: newService.serviceDate ?
             newService.serviceDate.split('-').reverse().join('/') : '',
           serviceTime: newService.serviceTime || '',
           serviceboyEmail: newService.serviceboyEmail || '',
-          serviceboyContact: newService.serviceboyContact || '',
-          sortDate: newService.serviceDate || '',
-          sortTime: newService.serviceTime || ''
+          serviceboyContactNumber: newService.serviceboyContactNumber || ''
         };
 
         setAllServices(prev => [formattedService, ...prev]);
@@ -230,22 +237,12 @@ const PendingServicesScreen = () => {
           }
           return prev;
         });
-        fetchServices();
+        fetchTotalPendingCount();
       } catch (error) {
-        console.error('Error parsing new service :', error);
+        console.error('Error parsing new service:', error);
       }
     }
   }, [params.newService]);
-
-  const loadMoreServices = () => {
-    if (!isLoadingMore && currentPage < totalPages) {
-      fetchServices(currentPage + 1, true);
-    }
-  };
-
-  const countPendingByServiceBoy = () => {
-    return engineerCounts;
-  };
 
   const handleComplete = async (id: string) => {
     Alert.alert(
@@ -257,20 +254,26 @@ const PendingServicesScreen = () => {
           text: 'Complete',
           onPress: async () => {
             try {
-              const completedAt = new Date().toISOString();
-              await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id,
-                {
+              const response = await fetch(`${BASE_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                   status: 'completed',
-                  completedAt,
-                }
-              );
+                  completedAt: new Date().toISOString()
+                })
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to complete service');
+              }
+
               setTotalPendingCount(prev => prev - 1);
               await fetchEngineerCounts();
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
+
               const completedService = allServices.find(service => service.id === id);
               if (completedService) {
                 router.push({
@@ -279,13 +282,13 @@ const PendingServicesScreen = () => {
                     completedService: JSON.stringify({
                       ...completedService,
                       status: 'completed',
-                      completedAt
+                      completedAt: new Date().toISOString()
                     })
                   }
                 });
               }
             } catch (error) {
-              console.error('Error completing service :', error);
+              console.error('Error completing service:', error);
               Alert.alert('Error', 'Failed to complete service');
             }
           }
@@ -305,18 +308,20 @@ const PendingServicesScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await databases.deleteDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id
-              );
-              setTotalPendingCount(prev => prev - 1);
+              const response = await fetch(`${BASE_URL}/${id}`, {
+                method: 'DELETE'
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete service');
+              }
+
               setTotalPendingCount(prev => prev - 1);
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               Alert.alert('Success', 'Service order deleted successfully.');
             } catch (error) {
-              console.error('Error deleting service :', error);
+              console.error('Error deleting service:', error);
               Alert.alert('Error', 'Failed to delete service order');
             }
           }
@@ -332,60 +337,65 @@ const PendingServicesScreen = () => {
     }
     if (selectedDate) {
       setDateFilter(selectedDate);
+      updateUrlParams(selectedServiceBoy, selectedDate);
       applyFilters(selectedServiceBoy, selectedDate);
     }
   };
 
-  const applyFilters = (serviceBoy: string | null, date: Date | null) => {
-    let filtered = allServices;
+  const applyFilters = (serviceBoy: string | null, date: Date | null, servicesToFilter = allServices) => {
+    let filtered = servicesToFilter;
     if (serviceBoy) {
-      filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
+      filtered = filtered.filter(service => service.serviceboyName === serviceBoy);
     }
     if (date) {
       filtered = filtered.filter(service => {
+        if (!service.serviceDate) return false;
         const [day, month, year] = service.serviceDate.split('/');
         const serviceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         return isSameDay(serviceDate, date);
       });
     }
     setServices(filtered);
-    setCurrentPage(1);
   };
 
   const onRefresh = () => {
-    fetchServices(1);
+    setRefreshing(true);
+    fetchAllServices();
     fetchTotalPendingCount();
     fetchEngineerCounts();
   };
 
   const filterServices = (serviceBoyName: string | null) => {
     setSelectedServiceBoy(serviceBoyName);
+    updateUrlParams(serviceBoyName, dateFilter);
     applyFilters(serviceBoyName, dateFilter);
     setFilterModalVisible(false);
   };
 
   const clearDateFilter = () => {
     setDateFilter(null);
+    updateUrlParams(selectedServiceBoy, null);
     applyFilters(selectedServiceBoy, null);
   };
 
   const clearServiceBoyFilter = () => {
     setSelectedServiceBoy(null);
+    updateUrlParams(null, dateFilter);
     applyFilters(null, dateFilter);
   };
 
   const sendManualWhatsAppNotification = (service: Service) => {
     const message = `Hello! ${service.clientName},\n\n` +
       `We are from Service Vale\n\n` +
-      `Your ${service.serviceType} service is scheduled for :\n` +
-      `📅 Date : ${service.serviceDate}\n` +
-      `⏰ Time : ${service.serviceTime}\n\n` +
-      `Service Engineer Details :\n` +
-      `👨‍🔧 Engineer Name : ${service.serviceBoy}\n` +
-      `Service Charge : ₹${service.amount}\n\n` +
-      `Please be ready for the service. For any queries, contact us : 635-320-2602\n\n` +
+      `Your ${service.serviceType} service is scheduled for:\n` +
+      `📅 Date: ${service.serviceDate}\n` +
+      `⏰ Time: ${service.serviceTime}\n\n` +
+      `Service Engineer Details:\n` +
+      `👨‍🔧 Engineer Name: ${service.serviceboyName}\n` +
+      `Service Charge: ₹${service.billAmount}\n\n` +
+      `Please be ready for the service. For any queries, contact us: 635-320-2602\n\n` +
       `Thank you for choosing our service!`;
-    const phone = service.phone.replace(/\D/g, '');
+    const phone = service.phoneNumber.replace(/\D/g, '');
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
@@ -431,13 +441,13 @@ const PendingServicesScreen = () => {
 
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={20} color="#718096" />
-          <Text style={styles.detailText}>{item.phone}</Text>
+          <Text style={styles.detailText}>{item.phoneNumber}</Text>
         </View>
 
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
-            {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
+            {isNaN(Number(item.billAmount)) ? '0' : Number(item.billAmount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
@@ -451,7 +461,7 @@ const PendingServicesScreen = () => {
         </View>
 
         <Text style={styles.serviceBoyText}>
-          {item.serviceBoy}
+          {item.serviceboyName}
         </Text>
       </View>
 
@@ -577,7 +587,7 @@ const PendingServicesScreen = () => {
                     <Text style={styles.serviceType}>{item.name}</Text>
                     <View style={[styles.statusBadge, styles.pendingBadge]}>
                       <Text style={styles.statusText}>
-                        {countPendingByServiceBoy()[item.name] || 0} Pending
+                        {engineerCounts[item.name] || 0} Pending
                       </Text>
                     </View>
                   </View>
@@ -596,28 +606,23 @@ const PendingServicesScreen = () => {
         </View>
       </Modal>
 
-      {services.length > 0 ? (
+      {loading ? (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="large" color="#5E72E4" />
+          <Text style={styles.loadingMoreText}>Loading services...</Text>
+        </View>
+      ) : services.length > 0 ? (
         <FlatList
           data={services}
           renderItem={renderServiceItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          onEndReached={loadMoreServices}
-          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
-              refreshing={loading && !isLoadingMore}
+              refreshing={refreshing}
               onRefresh={onRefresh}
             />
-          }
-          ListFooterComponent={
-            isLoadingMore ? (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color="#5E72E4" />
-                <Text style={styles.loadingMoreText}>Loading more services...</Text>
-              </View>
-            ) : null
           }
         />
       ) : (

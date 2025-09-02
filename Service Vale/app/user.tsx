@@ -1,37 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { ID, Query } from 'appwrite';
-import { databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from '../constants/UserDetailsForm.styles';
 import { footerStyles } from '../constants/footer';
-
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'engineer-id';
+import Constants from 'expo-constants';
 
 type User = {
-  $id?: string;
-  name: string;
+  id?: string;
+  engineerName: string;
   address: string;
-  contactNo: string;
-  aadharNo: string;
-  panNo: string;
-  city: string;
-  $createdAt?: string;
+  contactNumber: string;
   email: string;
+  aadharNumber: string;
+  panNumber: string;
+  city: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 const fieldLabels = {
-  name: 'Engineer Name',
-  contactNo: 'Contact Number',
+  engineerName: 'Engineer Name',
+  contactNumber: 'Contact Number',
   email: 'Email Address',
   address: 'Address',
-  panNo: 'PAN Number',
-  aadharNo: 'Aadhar Number',
+  panNumber: 'PAN Number',
+  aadharNumber: 'Aadhar Number',
   city: 'Hometown',
 };
+
+const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
+
+async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(BASE_URL);
+  const data = await res.json();
+
+  if (data.result && Array.isArray(data.result)) {
+    return data.result;
+  }
+
+  console.error('API did not return expected format:', data);
+  return [];
+}
+
+async function createUser(user: Omit<User, 'id'>): Promise<string> {
+  const res = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user),
+  });
+  const data = await res.json();
+  return data.id;
+}
+
+async function updateUser(id: string, user: Omit<User, 'id'>): Promise<void> {
+  await fetch(`${BASE_URL}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user),
+  });
+}
+
+async function deleteUser(id: string): Promise<void> {
+  await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+}
 
 function formatToAmPm(dateString: string): string {
   const date = new Date(dateString);
@@ -51,86 +84,124 @@ const UserDetailsForm = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
-    name: '',
+    engineerName: '',
     address: '',
-    contactNo: '',
+    contactNumber: '',
     email: '',
-    aadharNo: '',
-    panNo: '',
+    aadharNumber: '',
+    panNumber: '',
     city: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [submittedUsers, setSubmittedUsers] = useState<User[]>([]);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [submittedUsers, setSubmittedUsers] = useState<User[]>([] as User[]); const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailVisible, setIsUserDetailVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsersData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsersData = async () => {
     setIsLoading(true);
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.orderDesc('$createdAt')]
-      );
-      setSubmittedUsers(response.documents as unknown as User[]);
-    } catch (error: any) {
-      if (error?.code === 401) {
-        Alert.alert('Session Expired', 'Please log in again', [
-          { text: 'OK', onPress: () => router.replace('/') }
-        ]);
+      const users = await fetchUsers();
+      if (!Array.isArray(users)) {
+        throw new Error('Invalid response format: expected array');
       }
+      setSubmittedUsers(users);
+    } catch (error: any) {
+      console.error('Fetch error:', error);
+      setSubmittedUsers([]);
+      Alert.alert('Error', error.message || 'Failed to fetch engineers');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const users = await fetchUsers();
+      setSubmittedUsers(users);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to refresh engineers');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const cleanDocumentData = (doc: any) => {
-    const { name, address, contactNo, email, aadharNo, panNo, city } = doc;
-    return { name, address, contactNo, email, aadharNo, panNo, city };
+    const {
+      engineerName,
+      address,
+      contactNumber,
+      email,
+      aadharNumber,
+      panNumber,
+      city
+    } = doc;
+    return {
+      engineerName: engineerName ?? '',
+      address: address ?? '',
+      contactNumber: contactNumber ?? '',
+      email: email ?? '',
+      aadharNumber: aadharNumber ?? '',
+      panNumber: panNumber ?? '',
+      city: city ?? ''
+    };
   };
 
   const handleSubmit = async () => {
     if (validateForm()) {
       try {
-        if (editingIndex !== null) {
-          const userId = submittedUsers[editingIndex].$id;
-          if (!userId) throw new Error('Engineer ID is missing for update');
-          const updateData = cleanDocumentData(formData);
-          await databases.updateDocument(DATABASE_ID, COLLECTION_ID, userId, updateData);
+        setIsLoading(true);
+        const engineerData = {
+          engineerName: formData.engineerName,
+          address: formData.address,
+          contactNumber: formData.contactNumber,
+          email: formData.email,
+          aadharNumber: formData.aadharNumber,
+          panNumber: formData.panNumber,
+          city: formData.city
+        };
+
+        if (editingIndex !== null && submittedUsers[editingIndex]?.id) {
+          await updateUser(submittedUsers[editingIndex].id, engineerData);
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
-            ...updateData
+            ...engineerData
           };
           setSubmittedUsers(updatedUsers);
           setEditingIndex(null);
+          Alert.alert('Success', 'Engineer details updated successfully.');
         } else {
-          const response = await databases.createDocument(
-            DATABASE_ID,
-            COLLECTION_ID,
-            ID.unique(),
-            formData
-          );
-          setSubmittedUsers(prev => [response as unknown as User, ...prev]);
+          const newUserId = await createUser(engineerData);
+          const newUserObj: User = {
+            ...engineerData,
+            id: newUserId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          setSubmittedUsers(prev => [newUserObj, ...prev]);
+          Alert.alert('Success', 'Engineer details saved successfully.');
         }
-        Alert.alert('Success', 'Engineer details saved successfully.');
         resetForm();
         setIsFormVisible(false);
       } catch (error: any) {
         Alert.alert('Error', error?.message || 'Failed to save engineer details');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
   const handleChange = (name: string, value: string) => {
-    if (name === 'panNo') value = value.toUpperCase();
+    if (name === 'panNumber') value = value.toUpperCase();
     setFormData({ ...formData, [name]: value });
   };
 
@@ -141,10 +212,11 @@ const UserDetailsForm = () => {
         text: 'Delete',
         onPress: async () => {
           try {
-            const userId = submittedUsers[index].$id;
+            setIsLoading(true);
+            const userId = submittedUsers?.[index]?.id;
             if (!userId) throw new Error('Missing Engineer ID.');
-            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, userId);
-            setSubmittedUsers(users => users.filter(user => user.$id !== userId));
+            await deleteUser(userId);
+            setSubmittedUsers(users => users.filter(user => user.id !== userId));
             if (editingIndex === index) {
               setEditingIndex(null);
               resetForm();
@@ -152,6 +224,8 @@ const UserDetailsForm = () => {
             Alert.alert('Success', 'Engineer details deleted successfully.');
           } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to delete engineer details');
+          } finally {
+            setIsLoading(false);
           }
         }
       }
@@ -160,12 +234,12 @@ const UserDetailsForm = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      engineerName: '',
       address: '',
-      contactNo: '',
+      contactNumber: '',
       email: '',
-      aadharNo: '',
-      panNo: '',
+      aadharNumber: '',
+      panNumber: '',
       city: '',
     });
     setErrors({});
@@ -174,34 +248,42 @@ const UserDetailsForm = () => {
   const validateForm = () => {
     let valid = true;
     const newErrors: { [key: string]: string } = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'Engineer Name is required';
+
+    if (!formData.engineerName.trim()) {
+      newErrors.engineerName = 'Engineer Name is required';
       valid = false;
     }
-    if (!formData.contactNo.trim() || !/^[0-9]{10}$/.test(formData.contactNo)) {
-      newErrors.contactNo = 'Invalid contact number (10 digits required)';
+
+    if (!formData.contactNumber.trim() || !/^[0-9]{10}$/.test(formData.contactNumber)) {
+      newErrors.contactNumber = 'Invalid contact number (10 digits required)';
       valid = false;
     }
+
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
       valid = false;
     }
+
     if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email address';
       valid = false;
     }
-    if (!formData.aadharNo.trim() || !/^[0-9]{12}$/.test(formData.aadharNo)) {
-      newErrors.aadharNo = 'Invalid Aadhar number (12 digits required)';
+
+    if (!formData.aadharNumber.trim() || !/^[0-9]{12}$/.test(formData.aadharNumber)) {
+      newErrors.aadharNumber = 'Invalid Aadhar number (12 digits required)';
       valid = false;
     }
-    if (!formData.panNo.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
-      newErrors.panNo = 'Invalid PAN number (e.g., ABCDE1234F)';
+
+    if (!formData.panNumber.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNumber)) {
+      newErrors.panNumber = 'Invalid PAN number (e.g., ABCDE1234F)';
       valid = false;
     }
+
     if (!formData.city.trim()) {
       newErrors.city = 'Hometown is required';
       valid = false;
     }
+
     setErrors(newErrors);
     return valid;
   };
@@ -223,6 +305,12 @@ const UserDetailsForm = () => {
       setEditingIndex(null);
     }
   };
+
+  const filteredUsers = (Array.isArray(submittedUsers) ? submittedUsers : []).filter(user =>
+    user.engineerName?.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.contactNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -273,17 +361,15 @@ const UserDetailsForm = () => {
                       value={currentValue}
                       onChangeText={(text) => handleChange(key, text)}
                       keyboardType={
-                        key === 'contactNo' || key === 'aadharNo' ? 'numeric' :
+                        key === 'contactNumber' || key === 'aadharNumber' ? 'numeric' :
                           key === 'email' ? 'email-address' : 'default'
                       }
-                      multiline={key === 'address'}
-                      numberOfLines={key === 'address' ? 3 : 1}
                       maxLength={
-                        key === 'panNo' ? 10 :
-                          key === 'aadharNo' ? 12 :
-                            key === 'contactNo' ? 10 : undefined
+                        key === 'panNumber' ? 10 :
+                          key === 'aadharNumber' ? 12 :
+                            key === 'contactNumber' ? 10 : undefined
                       }
-                      autoCapitalize={key === 'panNo' ? 'characters' : 'words'}
+                      autoCapitalize={key === 'panNumber' ? 'characters' : 'words'}
                     />
                     {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
                   </View>
@@ -312,7 +398,7 @@ const UserDetailsForm = () => {
               ) : (
                 submittedUsers.map((user) => (
                   <TouchableOpacity
-                    key={user.$id}
+                    key={user.id}
                     style={styles.userCard}
                     onPress={() => showUserDetails(user)}
                   >
@@ -321,14 +407,14 @@ const UserDetailsForm = () => {
                         <MaterialIcons name="engineering" size={25} color="#5E72E4" />
                       </View>
                       <View style={styles.userInfo}>
-                        <Text style={styles.userName}>{user.name}</Text>
-                        <Text style={styles.userContact}>{user.contactNo}</Text>
+                        <Text style={styles.userName}>{user.engineerName}</Text>
+                        <Text style={styles.userContact}>{user.contactNumber}</Text>
                       </View>
                     </View>
                     <View style={styles.userFooter}>
                       <Text style={styles.userEmail}>{user.email}</Text>
                       <Text style={styles.userDate}>
-                        {new Date(user.$createdAt || '').toLocaleDateString()}
+                        {new Date(user.createdAt || '').toLocaleDateString()}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -361,12 +447,12 @@ const UserDetailsForm = () => {
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Name :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.name}</Text>
+                      <Text style={styles.detailValue}>{selectedUser.engineerName}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Contact Number :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.contactNo}</Text>
+                      <Text style={styles.detailValue}>{selectedUser.contactNumber}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
@@ -392,12 +478,12 @@ const UserDetailsForm = () => {
                     <Text style={styles.detailSectionTitle}>Document Details</Text>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Aadhar Number :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.aadharNo}</Text>
+                      <Text style={styles.detailValue}>{selectedUser.aadharNumber}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>PAN Number :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.panNo}</Text>
+                      <Text style={styles.detailValue}>{selectedUser.panNumber}</Text>
                     </View>
                   </View>
 
@@ -406,7 +492,7 @@ const UserDetailsForm = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Engineer Joined Date :</Text>
                       <Text style={styles.detailValue}>
-                        {selectedUser.$createdAt ? formatToAmPm(selectedUser.$createdAt) : 'N/A'}
+                        {selectedUser.createdAt ? formatToAmPm(selectedUser.createdAt) : 'N/A'}
                       </Text>
                     </View>
                   </View>
@@ -416,7 +502,7 @@ const UserDetailsForm = () => {
                       style={[styles.actionButton, styles.editButton]}
                       onPress={() => {
                         setFormData(cleanDocumentData(selectedUser));
-                        const index = submittedUsers.findIndex(u => u.$id === selectedUser.$id);
+                        const index = submittedUsers.findIndex(u => u.id === selectedUser.id);
                         if (index !== -1) {
                           setEditingIndex(index);
                         }
@@ -431,7 +517,7 @@ const UserDetailsForm = () => {
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
                       onPress={() => {
-                        handleDeleteUser(submittedUsers.findIndex(u => u.$id === selectedUser.$id));
+                        handleDeleteUser(submittedUsers.findIndex(u => u.id === selectedUser.id));
                         closeUserDetails();
                       }}
                     >

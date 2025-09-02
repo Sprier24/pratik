@@ -1,45 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Modal, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
 import { MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
 import { styles } from '../constants/ServicePage.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { footerStyles } from '../constants/footer';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'engineer-id';
+const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
+
 type ServiceKey = 'AC' | 'Washing Machine' | 'Fridge' | 'Microwave';
+type Engineer = {
+  id: string;
+  engineerName: string;
+  email: string;
+  contactNumber: string;
+};
 
 const ServicePage = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [allUsers, setAllUsers] = useState<{ id: string, name: string, email: string, phone: string }[]>([]);
+  const [allEngineers, setAllEngineers] = useState<Engineer[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceKey>('AC');
   const [selectedServiceboyName, setSelectedServiceboyName] = useState<string>('');
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const fetchAllUsers = async () => {
+    const fetchAllEngineers = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [Query.orderDesc('$createdAt')]
-        );
-        const users = response.documents.map(doc => ({
-          id: doc.$id,
-          name: doc.name,
-          email: doc.email,
-          phone: doc.contactNo
-        }));
-        setAllUsers(users);
+        const response = await fetch(BASE_URL);
+        if (!response.ok) {
+          throw new Error('Failed to fetch engineers');
+        }
+        const data = await response.json();
+
+        if (data.result && Array.isArray(data.result)) {
+          setAllEngineers(data.result.map((engineer: any) => ({
+            id: engineer.id,
+            engineerName: engineer.engineerName,
+            email: engineer.email,
+            contactNumber: engineer.contactNumber
+          })));
+        } else {
+          if (Array.isArray(data)) {
+            setAllEngineers(data.map((engineer: any) => ({
+              id: engineer.id,
+              engineerName: engineer.engineerName,
+              email: engineer.email,
+              contactNumber: engineer.contactNumber
+            })));
+          } else {
+            throw new Error('Unexpected API response format');
+          }
+        }
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching engineers:', error);
+        Alert.alert('Error', 'Failed to load engineers');
+        setLoading(false);
       }
     };
-    fetchAllUsers();
+    fetchAllEngineers();
   }, []);
 
   const handleImagePress = (serviceKey: ServiceKey) => {
@@ -47,27 +69,27 @@ const ServicePage = () => {
     setModalVisible(true);
   };
 
-  const handleApplicantPress = async (
-    applicantId: string,
-    applicantName: string,
-    applicantEmail: string,
-    applicantPhone: string
+  const handleEngineerPress = async (
+    engineerId: string,
+    engineerName: string,
+    engineerEmail: string,
+    engineerPhone: string
   ) => {
     setModalVisible(false);
-    setSelectedServiceboyName(applicantName);
+    setSelectedServiceboyName(engineerName);
     try {
       router.push({
         pathname: '/order',
         params: {
-          applicantId,
-          applicantName,
+          applicantId: engineerId,
+          applicantName: engineerName,
           serviceType: selectedServiceType,
-          applicantEmail,
-          applicantPhone
+          applicantEmail: engineerEmail,
+          applicantPhone: engineerPhone
         },
       });
     } catch (error) {
-      console.error('Error handling applicant press:', error);
+      console.error('Error handling engineer press:', error);
       Alert.alert('Error', 'Failed to assign service engineer');
     }
   };
@@ -191,19 +213,28 @@ const ServicePage = () => {
             </View>
 
             <ScrollView style={styles.modalScroll}>
-              {allUsers.length > 0 ? (
-                allUsers.map((user, index) => (
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#5E72E4" />
+                </View>
+              ) : allEngineers.length > 0 ? (
+                allEngineers.map((engineer, index) => (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => handleApplicantPress(user.id, user.name, user.email, user.phone)}
+                    onPress={() => handleEngineerPress(
+                      engineer.id,
+                      engineer.engineerName,
+                      engineer.email,
+                      engineer.contactNumber
+                    )}
                     style={styles.applicantItem}
                   >
                     <View style={styles.applicantAvatar}>
                       <MaterialIcons name="engineering" size={25} color="#5E72E4" />
                     </View>
                     <View style={styles.applicantInfo}>
-                      <Text style={styles.applicantName}>{user.name}</Text>
-                      <Text style={styles.applicantEmail}>{user.email}</Text>
+                      <Text style={styles.applicantName}>{engineer.engineerName}</Text>
+                      <Text style={styles.applicantEmail}>{engineer.email}</Text>
                     </View>
                     <AntDesign name="right" size={16} color="#A0AEC0" />
                   </TouchableOpacity>

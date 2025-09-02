@@ -3,19 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaVie
 import { useLocalSearchParams } from 'expo-router';
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { databases } from '../lib/appwrite';
-import { ID } from 'appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'orders-id';
-const NOTIFICATIONS_COLLECTION_ID = 'engineernotification-id';
+const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/order`;
+const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/notifications`;
 
 type FormData = {
   serviceboyName: string;
   serviceboyEmail: string;
-  serviceboyContact: string;
+  serviceboyContactNumber: string;
   clientName: string;
   phoneNumber: string;
   address: string;
@@ -26,6 +24,7 @@ type FormData = {
   serviceTime: string;
   timePeriod: 'AM' | 'PM';
 };
+
 
 const OrderScreen = () => {
   const { applicantName, serviceType, applicantEmail, applicantPhone } = useLocalSearchParams<{
@@ -54,7 +53,7 @@ const OrderScreen = () => {
   const [formData, setFormData] = useState<FormData>({
     serviceboyName: applicantName || '',
     serviceboyEmail: applicantEmail || '',
-    serviceboyContact: applicantPhone || '',
+    serviceboyContactNumber: applicantPhone || '',
     clientName: '',
     phoneNumber: '',
     address: '',
@@ -122,6 +121,12 @@ const OrderScreen = () => {
     if (!formData.serviceTime || !validateTime(formData.serviceTime)) {
       newErrors.serviceTime = 'Please enter a valid time (HH:MM) between 1:00 and 12:59';
     }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+    }
+    if (!formData.billAmount.trim()) {
+      newErrors.billAmount = 'Bill amount is required';
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -155,20 +160,45 @@ const OrderScreen = () => {
 
   const createNotification = async (description: string, userEmail: string) => {
     try {
-      await databases.createDocument(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        ID.unique(),
-        {
+      const response = await fetch(`${API_BASE_URL}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           description,
-          isRead: false,
-          createdAt: new Date().toISOString(),
           userEmail,
-        }
-      );
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create notification');
+      }
+
       console.log('Notification sent to:', userEmail);
     } catch (error) {
       console.error('Notification creation failed:', error);
+    }
+  };
+
+  const createOrder = async (orderData: any) => {
+    try {
+      const response = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
     }
   };
 
@@ -194,28 +224,25 @@ const OrderScreen = () => {
     setIsSubmitting(true);
 
     try {
-      await createNotification(
-        `You’ve received a new "${formData.serviceType}" service on ${formData.serviceDate} at ${formData.serviceTime} ${formData.timePeriod}.`,
-        formData.serviceboyEmail
-      );
+      const orderData = {
+        serviceboyName: formData.serviceboyName,
+        serviceboyEmail: formData.serviceboyEmail,
+        serviceboyContactNumber: formData.serviceboyContactNumber,
+        clientName: formData.clientName,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        billAmount: formData.billAmount,
+        serviceType: formData.serviceType,
+        status: 'pending',
+        serviceDate: sortableDate,
+        serviceTime: sortableTime
+      };
 
-      const response = await databases.createDocument(
-        DATABASE_ID,
-        COLLECTION_ID,
-        ID.unique(),
-        {
-          serviceboyName: formData.serviceboyName,
-          serviceboyEmail: formData.serviceboyEmail,
-          serviceboyContact: formData.serviceboyContact,
-          clientName: formData.clientName,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address,
-          billAmount: formData.billAmount,
-          serviceType: formData.serviceType,
-          status: 'pending',
-          serviceDate: sortableDate,
-          serviceTime: sortableTime
-        }
+      const response = await createOrder(orderData);
+
+      await createNotification(
+        `You've received a new "${formData.serviceType}" service on ${formData.serviceDate} at ${formData.serviceTime} ${formData.timePeriod}.`,
+        formData.serviceboyEmail
       );
 
       sendManualWhatsAppNotification({
@@ -227,7 +254,7 @@ const OrderScreen = () => {
         billAmount: formData.billAmount,
         phoneNumber: formData.phoneNumber,
         serviceboyEmail: '',
-        serviceboyContact: '',
+        serviceboyContactNumber: '',
         address: '',
         status: '',
         timePeriod: 'AM'
@@ -239,7 +266,7 @@ const OrderScreen = () => {
         pathname: '/pending',
         params: {
           newService: JSON.stringify({
-            id: response.$id,
+            id: response.id,
             serviceType: formData.serviceType,
             clientName: formData.clientName,
             address: formData.address,
@@ -248,10 +275,10 @@ const OrderScreen = () => {
             status: 'pending',
             serviceboyName: formData.serviceboyName,
             serviceboyEmail: formData.serviceboyEmail,
-            serviceboyContact: formData.serviceboyContact,
+            serviceboyContactNumber: formData.serviceboyContactNumber,
             serviceDate: formData.serviceDate,
             serviceTime: `${formData.serviceTime} ${formData.timePeriod}`,
-            createdAt: response.$createdAt
+            createdAt: new Date().toISOString()
           })
         }
       });
@@ -300,7 +327,7 @@ const OrderScreen = () => {
               <View style={styles.field}>
                 <Text style={styles.label}>Contact Number</Text>
                 <View style={styles.readOnlyContainer}>
-                  <Text style={styles.readOnlyText}>{formData.serviceboyContact}</Text>
+                  <Text style={styles.readOnlyText}>{formData.serviceboyContactNumber}</Text>
                 </View>
               </View>
 
@@ -410,7 +437,7 @@ const OrderScreen = () => {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Service Address</Text>
+                <Text style={styles.label}>Service Address <Text style={styles.required}>*</Text></Text>
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   value={formData.address}
@@ -422,7 +449,7 @@ const OrderScreen = () => {
               </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Billing Information</Text>
+            <Text style={styles.sectionTitle}>Billing Information <Text style={styles.required}>*</Text></Text>
             <Text style={styles.label1}>Service Charge</Text>
 
             <View style={styles.detailRow}>
@@ -449,7 +476,6 @@ const OrderScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 };
 

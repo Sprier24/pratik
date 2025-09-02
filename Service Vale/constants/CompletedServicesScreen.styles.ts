@@ -247,9 +247,37 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
   },
   actionButtons: {
-    marginTop: 15,
-    flexDirection: "row",
+       flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 15,
+    gap: 8,
+  },
+    whatsappButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#5E72E4",
+    padding: 12,
+    borderRadius: 8,
+  },
+  whatsappButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    marginLeft: 3,
+  },
+  completeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F59E0B",
+    padding: 12,
+    borderRadius: 8,
+  },
+  completeButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    marginLeft: 3,
   },
   createBillButton: {
     flex: 1,
@@ -311,4 +339,18 @@ loadingMoreText: {
   marginLeft: 10,
   color: '#718096',
 },
+deleteButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E53E3E",
+    padding: 12,
+    borderRadius: 8,
+  },
+  deleteButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    marginLeft: 3,
+  },
 });

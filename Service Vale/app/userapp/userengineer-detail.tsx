@@ -1,16 +1,15 @@
-import { Feather, MaterialIcons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import { View, Text, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert, SectionList, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, SafeAreaView, SectionList, Text, TouchableOpacity, View } from 'react-native';
-import { Query } from 'react-native-appwrite';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/userapp/UserEngineerDetail.styles';
-import { account, databases } from '../../lib/appwrite';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format, startOfMonth } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CommissionService from '../services/commissionService'; 
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
-const PAYMENTS_COLLECTION_ID = 'commission-id';
+const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 type TransactionItem = {
   id: string;
@@ -20,6 +19,7 @@ type TransactionItem = {
   customerName?: string;
   billNumber?: string;
   serviceType?: string;
+  status?: 'completed' | 'pending';
 };
 
 type SectionData = {
@@ -46,16 +46,288 @@ const UserEngineerDetail = () => {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'commissions' | 'payments'>('commissions');
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [userName, setUserName] = useState('');
-  const [currentMonthCommission, setCurrentMonthCommission] = useState(0);
-  const [currentMonthPayments, setCurrentMonthPayments] = useState(0);
+  const [userEmail, setUserEmail] = useState('');
+  const [commissionData, setCommissionData] = useState({
+    monthlyCommission: 0,
+    monthlyPayments: 0,
+    pendingAmount: 0
+  });
 
   useEffect(() => {
-    fetchData();
+    const getUserData = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem('userData');
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          setUserEmail(userData.email || '');
+          fetchEngineerData(userData.email);
+        } else {
+          Alert.alert('Error', 'User data not found. Please login again.');
+        }
+      } catch (error) {
+        console.error('Error getting user data from storage:', error);
+        Alert.alert('Error', 'Failed to load user data');
+      }
+    };
+
+    getUserData();
   }, []);
+
+  useEffect(() => {
+    if (!userName) return;
+
+    const unsubscribe = CommissionService.addUserListener((data) => {
+      if (data) {
+        setCommissionData({
+          monthlyCommission: data.monthlyCommission || 0,
+          monthlyPayments: data.monthlyPayments || 0,
+          pendingAmount: data.pendingAmount || 0
+        });
+      }
+    });
+
+    loadCommissionData();
+
+    return unsubscribe;
+  }, [userName]);
+
+  const fetchEngineerData = async (email: string) => {
+    try {
+      if (!email) return;
+
+      const response = await fetch(`${API_BASE_URL}/engineer`);
+      if (!response.ok) throw new Error('Failed to fetch engineer data');
+
+      const engineers = await response.json();
+
+      const engineer = engineers.result.find(
+        (eng: any) => eng.email.toLowerCase() === email.toLowerCase()
+      );
+
+      if (engineer) {
+        console.log('Found engineer:', engineer);
+        setUserName(engineer.engineerName);
+        fetchAllData(engineer.engineerName);
+      } else {
+        Alert.alert('Error', 'Engineer not found for this user');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching engineer data:', error);
+      Alert.alert('Error', 'Failed to load engineer data');
+      setIsLoading(false);
+    }
+  };
+
+  const loadCommissionData = async () => {
+    try {
+      if (userName) {
+        await CommissionService.refreshUserSummary(userName);
+      }
+    } catch (error) {
+      console.error('Error loading commission data:', error);
+      try {
+        await fetchCommissionDataFallback();
+      } catch (fallbackError) {
+        console.error('Fallback API also failed:', fallbackError);
+      }
+    }
+  };
+
+  const fetchCommissionDataFallback = async () => {
+    try {
+      if (!userName) return;
+
+      const today = new Date();
+      const startOfCurrentMonth = startOfMonth(today).toISOString();
+      const billsResponse = await fetch(`${API_BASE_URL}/bill`);
+      if (!billsResponse.ok) throw new Error('Failed to fetch bills');
+      const bills = await billsResponse.json();
+      const engineerBills = bills.filter((bill: any) =>
+        bill.serviceboyName === userName
+      );
+
+      const monthCommission = engineerBills
+        .filter((bill: any) => new Date(bill.date) >= new Date(startOfCurrentMonth))
+        .reduce((sum: number, bill: any) => sum + (bill.engineerCommission || 0), 0);
+
+      const engineerResponse = await fetch(`${API_BASE_URL}/engineer`);
+      const engineers = await engineerResponse.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.engineerName === userName
+      );
+
+      let monthPayments = 0;
+      if (engineer) {
+        const paymentsResponse = await fetch(
+          `${API_BASE_URL}/payment/engineer/${engineer.id}/${userName}`
+        );
+        if (paymentsResponse.ok) {
+          const payments = await paymentsResponse.json();
+          monthPayments = payments
+            .filter((payment: any) => new Date(payment.date) >= new Date(startOfCurrentMonth))
+            .reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
+        }
+      }
+
+      const totalCommission = engineerBills.reduce((sum: number, bill: any) =>
+        sum + (bill.engineerCommission || 0), 0
+      );
+
+      const pendingAmount = totalCommission - (monthPayments || 0);
+
+      setCommissionData({
+        monthlyCommission: monthCommission,
+        monthlyPayments: monthPayments,
+        pendingAmount: pendingAmount
+      });
+    } catch (error) {
+      console.error('Error fetching commission data:', error);
+    }
+  };
+
+  const fetchAllData = async (name: string) => {
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchCommissions(name),
+        fetchPayments(name),
+        loadCommissionData()
+      ]);
+    } catch (error) {
+      console.error('Error fetching all data:', error);
+      Alert.alert('Error', 'Failed to load commission details');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    if (userEmail && userName) {
+      fetchAllData(userName);
+    } else {
+      const getUserData = async () => {
+        try {
+          const userDataString = await AsyncStorage.getItem('userData');
+          if (userDataString) {
+            const userData = JSON.parse(userDataString);
+            setUserEmail(userData.email || '');
+            fetchEngineerData(userData.email);
+          }
+        } catch (error) {
+          console.error('Error getting user data from storage:', error);
+          setIsRefreshing(false);
+        }
+      };
+      getUserData();
+    }
+  };
+
+  const fetchCommissions = async (name: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/bill`);
+      if (!response.ok) throw new Error('Failed to fetch commissions');
+      const bills = await response.json();
+      const engineerBills = bills.filter((bill: any) =>
+        bill.serviceboyName === name
+      );
+
+      const commissionItems: TransactionItem[] = engineerBills.map((bill: any) => ({
+        id: bill.id,
+        date: bill.date,
+        amount: bill.engineerCommission || 0,
+        type: 'commission',
+        customerName: bill.customerName,
+        billNumber: bill.billNumber,
+        serviceType: bill.serviceType,
+        selected: false
+      }));
+
+      const uniqueItems = Array.from(
+        new Map(commissionItems.map(item => [item.id, item])).values()
+      );
+
+      const newCommissions = groupByDate(uniqueItems, true);
+
+      setTransactions(prev => ({
+        ...prev,
+        commissions: newCommissions
+      }));
+
+      if (dateFilter) {
+        const startOfDay = new Date(dateFilter);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateFilter);
+        endOfDay.setHours(23, 59, 59, 999);
+        filterByDateRange(startOfDay, endOfDay);
+      } else {
+        setFilteredTransactions(prev => ({
+          commissions: newCommissions,
+          payments: prev.payments
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching commissions:', error);
+      throw error;
+    }
+  };
+
+  const fetchPayments = async (name: string) => {
+    try {
+      if (!name) return;
+      const engineerResponse = await fetch(`${API_BASE_URL}/engineer`);
+      if (!engineerResponse.ok) throw new Error('Failed to fetch engineer data');
+
+      const engineers = await engineerResponse.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.engineerName === name
+      );
+
+      if (!engineer) {
+        console.error('Engineer not found for name:', name);
+        return;
+      }
+      const response = await fetch(
+        `${API_BASE_URL}/payment/engineer/${engineer.id}/${name}`
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch payments');
+
+      const payments = await response.json();
+
+      const paymentItems: TransactionItem[] = payments.map((payment: any) => ({
+        id: payment.id,
+        date: payment.date,
+        amount: payment.amount,
+        type: 'payment',
+        status: 'completed'
+      }));
+
+      const paymentSections = groupByDate(paymentItems, true);
+
+      setTransactions(prev => ({
+        ...prev,
+        payments: paymentSections
+      }));
+
+      if (!dateFilter) {
+        setFilteredTransactions(prev => ({
+          ...prev,
+          payments: paymentSections
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      throw error;
+    }
+  };
 
   const groupByDate = (items: TransactionItem[], groupByMonth = false): SectionData[] => {
     const grouped: { [key: string]: TransactionItem[] } = {};
@@ -112,117 +384,6 @@ const UserEngineerDetail = () => {
       });
   };
 
-  const fetchUserData = async () => {
-    try {
-      const currentUser = await account.get();
-      const userResponse = await databases.listDocuments(
-        DATABASE_ID,
-        'engineer-id',
-        [Query.equal('email', currentUser.email)]
-      );
-      if (userResponse.documents.length > 0) {
-        setUserName(userResponse.documents[0].name);
-      }
-      return userResponse.documents[0]?.name;
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return '';
-    }
-  };
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const name = await fetchUserData();
-      if (!name) return;
-      const today = new Date();
-      const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-      const allCommissionsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('serviceBoyName', name)]
-      );
-
-      const currentMonthCommissionsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', name),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
-      );
-
-      const monthCommission = currentMonthCommissionsResponse.documents.reduce((sum, doc) => {
-        return sum + (parseFloat(doc.serviceCharge) * 0.25);
-      }, 0);
-
-      setCurrentMonthCommission(monthCommission);
-      const allPaymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [Query.equal('engineerName', name)]
-      );
-
-      const currentMonthPaymentsResponse = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [
-          Query.equal('engineerName', name),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
-      );
-
-      const monthPayments = currentMonthPaymentsResponse.documents.reduce((sum, doc) => {
-        return sum + parseFloat(doc.amount);
-      }, 0);
-      setCurrentMonthPayments(monthPayments);
-
-      const commissionItems: TransactionItem[] = allCommissionsResponse.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.serviceCharge) * 0.25,
-        type: 'commission',
-        customerName: doc.customerName,
-        billNumber: doc.billNumber,
-        serviceType: doc.serviceType,
-        status: 'pending'
-      }));
-
-      const paymentItems: TransactionItem[] = allPaymentsResponse.documents.map(doc => ({
-        id: doc.$id,
-        date: doc.date,
-        amount: parseFloat(doc.amount),
-        type: 'payment',
-        status: 'completed'
-      }));
-
-      const commissionSections = groupByDate(commissionItems, true);
-      const paymentSections = groupByDate(paymentItems, true);
-
-      const newTransactions = {
-        commissions: commissionSections,
-        payments: paymentSections
-      };
-
-      setTransactions(newTransactions);
-
-      if (dateFilter) {
-        const startOfDay = new Date(dateFilter);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(dateFilter);
-        endOfDay.setHours(23, 59, 59, 999);
-        filterByDateRange(startOfDay, endOfDay);
-      } else {
-        setFilteredTransactions(newTransactions);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      Alert.alert('Error', 'Failed to load commission details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const calculateTotalCommission = (): number => {
     return transactions.commissions.reduce((sum: number, section: SectionData) =>
       sum + section.data.reduce((sectionSum: number, item: TransactionItem) =>
@@ -257,7 +418,7 @@ const UserEngineerDetail = () => {
       endOfDay.setHours(23, 59, 59, 999);
       filterByDateRange(startOfDay, endOfDay);
     }
-  };
+  }
 
   const filterByDateRange = (startDate: Date, endDate: Date) => {
     const filteredCommissions = transactions.commissions.map(section => ({
@@ -340,7 +501,7 @@ const UserEngineerDetail = () => {
         <View style={[styles.summaryCard, styles.commissionCard]}>
           <Text style={styles.summaryLabel}>Monthly Commission</Text>
           <Text style={styles.summaryValue}>
-            ₹{currentMonthCommission.toLocaleString('en-IN', {
+            ₹{commissionData.monthlyCommission.toLocaleString('en-IN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
             })}
@@ -350,7 +511,7 @@ const UserEngineerDetail = () => {
         <View style={[styles.summaryCard, styles.paymentCard]}>
           <Text style={styles.summaryLabel}>Monthly Paid</Text>
           <Text style={styles.summaryValue}>
-            ₹{currentMonthPayments.toLocaleString('en-IN', {
+            ₹{commissionData.monthlyPayments.toLocaleString('en-IN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
             })}
@@ -360,7 +521,7 @@ const UserEngineerDetail = () => {
         <View style={[styles.summaryCard, styles.pendingCard]}>
           <Text style={styles.summaryLabel}>Pending</Text>
           <Text style={[styles.summaryValue, styles.pendingValue]}>
-            ₹{(calculateTotalCommission() - calculateTotalPayments()).toLocaleString('en-IN')}
+            ₹{commissionData.pendingAmount.toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
@@ -385,6 +546,14 @@ const UserEngineerDetail = () => {
         sections={activeTab === 'commissions' ? filteredTransactions.commissions : filteredTransactions.payments}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={['#5E72E4']}
+            tintColor={'#5E72E4'}
+          />
+        }
         renderSectionHeader={({ section }) => (
           <View style={[
             styles.sectionHeader,
@@ -414,7 +583,6 @@ const UserEngineerDetail = () => {
             </View>
           </View>
         )}
-
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <View style={styles.itemLeft}>

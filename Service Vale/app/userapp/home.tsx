@@ -1,18 +1,15 @@
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, RefreshControl, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { Query } from 'react-native-appwrite';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
+import { RefreshControl } from 'react-native';
 import { styles } from '../../constants/userapp/HomeScreenuser.styles';
-import { account, databases } from '../../lib/appwrite';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CommissionService from '../services/commissionService';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
-const ORDERS_COLLECTION_ID = 'orders-id';
-const NOTIFICATIONS_COLLECTION_ID = 'engineernotification-id';
-const PAYMENTS_COLLECTION_ID = 'commission-id';
-const { width } = Dimensions.get('window');
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 const HomeScreenuser = () => {
   const [dailyRevenue, setDailyRevenue] = useState(0);
@@ -22,71 +19,129 @@ const HomeScreenuser = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [totalCommission, setTotalCommission] = useState(0);
-  const [pendingCommission, setPendingCommission] = useState(0);
+  const [commissionData, setCommissionData] = useState({
+    totalCommission: 0,
+    pendingCommission: 0
+  });
   const [userName, setUserName] = useState('');
   const insets = useSafeAreaInsets();
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const getUserEmail = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem('userData');
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          setUserEmail(userData.email);
+          setUserName(userData.name || '');
+        }
+      } catch (error) {
+        console.error('Error getting user email:', error);
+      }
+    };
+    getUserEmail();
+  }, []);
+
+  useEffect(() => {
+    if (!userName) return;
+
+    const unsubscribe = CommissionService.addUserListener((data) => {
+      if (data) {
+        setCommissionData({
+          totalCommission: data.monthlyCommission || 0,
+          pendingCommission: data.pendingAmount || 0
+        });
+      }
+    });
+
+    loadCommissionData();
+
+    return unsubscribe;
+  }, [userName]);
 
   const handleLogout = async () => {
-    try {
-      await account.deleteSession('current');
-      Alert.alert('Logged Out', 'You have been successfully logged out');
-      router.replace('/');
-    } catch (error) {
-      console.error('Logout Error:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              CommissionService.clearUserData();
+              
+              await AsyncStorage.multiRemove(['userData', 'userToken', 'sessionData']);
+              router.replace('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
-  const fetchUserData = async () => {
+  const fetchEngineerData = async () => {
     try {
-      const currentUser = await account.get();
-      const userResponse = await databases.listDocuments(
-        DATABASE_ID,
-        'engineer-id',
-        [Query.equal('email', currentUser.email)]
+      if (!userEmail) return;
+
+      const response = await fetch(`${YOUR_BACKEND_URL}/engineer`);
+      const engineers = await response.json();
+
+      const engineer = engineers.result.find(
+        (eng: any) => eng.email.toLowerCase() === userEmail.toLowerCase()
       );
-      if (userResponse.documents.length > 0) {
-        setUserName(userResponse.documents[0].name);
+
+      if (engineer) {
+        return engineer.engineerName; 
       }
-      return userResponse.documents[0]?.name;
+
+      return null;
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      return '';
+      console.error('Error fetching engineer data:', error);
+      return null;
     }
   };
 
   const fetchRevenueData = async () => {
     try {
-      const name = await fetchUserData();
-      if (!name) return;
+      const engineerName = await fetchEngineerData();
+      if (!engineerName) return;
+
+      const response = await fetch(`${YOUR_BACKEND_URL}/bill`);
+      const bills = await response.json();
 
       const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      const dailyBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.greaterThanEqual('date', startOfDay),
-          Query.equal('serviceBoyName', name),
-          Query.orderDesc('date')
-        ]
+      const dailyBills = bills.filter((bill: any) => {
+        const billDate = new Date(bill.createdAt || bill.date);
+        return billDate >= startOfDay &&
+          (bill.serviceboyName === engineerName || bill.serviceBoyName === engineerName);
+      });
+
+      const monthlyBills = bills.filter((bill: any) => {
+        const billDate = new Date(bill.createdAt || bill.date);
+        return billDate >= startOfMonth &&
+          (bill.serviceboyName === engineerName || bill.serviceBoyName === engineerName);
+      });
+
+      const dailyTotal = dailyBills.reduce((sum: number, bill: any) =>
+        sum + parseFloat(bill.total || 0), 0
       );
 
-      const monthlyBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.greaterThanEqual('date', startOfMonth),
-          Query.equal('serviceBoyName', name),
-          Query.orderDesc('date')
-        ]
+      const monthlyTotal = monthlyBills.reduce((sum: number, bill: any) =>
+        sum + parseFloat(bill.total || 0), 0
       );
-
-      const dailyTotal = dailyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
-      const monthlyTotal = monthlyBills.documents.reduce((sum, bill) => sum + parseFloat(bill.total || 0), 0);
 
       setDailyRevenue(dailyTotal);
       setMonthlyRevenue(monthlyTotal);
@@ -95,51 +150,76 @@ const HomeScreenuser = () => {
     }
   };
 
-  const fetchCommissionData = async () => {
+  const loadCommissionData = async () => {
     try {
-      const name = await fetchUserData();
-      if (!name) return;
+      if (userName) {
+        await CommissionService.refreshUserSummary(userName);
+      }
+    } catch (error) {
+      console.error('Error loading commission data:', error);
+      try {
+        await fetchCommissionDataFallback();
+      } catch (fallbackError) {
+        console.error('Fallback API also failed:', fallbackError);
+      }
+    }
+  };
+
+  const fetchCommissionDataFallback = async () => {
+    try {
+      if (!userName) return;
+      const engineerName = await fetchEngineerData();
+      if (!engineerName) return;
+
+      const response = await fetch(`${YOUR_BACKEND_URL}/bill`);
+      const bills = await response.json();
 
       const today = new Date();
-      const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const currentMonthBills = bills.filter((bill: any) => {
+        const billDate = new Date(bill.createdAt || bill.date);
+        return billDate >= startOfCurrentMonth &&
+          (bill.serviceboyName === engineerName || bill.serviceBoyName === engineerName);
+      });
 
-      const currentMonthBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('serviceBoyName', name),
-          Query.greaterThanEqual('date', startOfCurrentMonth)
-        ]
+      const allBills = bills.filter((bill: any) =>
+        bill.serviceboyName === engineerName || bill.serviceBoyName === engineerName
       );
 
-      const allBills = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [Query.equal('serviceBoyName', name)]
+      const engineerResponse = await fetch(`${YOUR_BACKEND_URL}/engineer`);
+      const engineers = await engineerResponse.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.engineerName === engineerName
       );
 
-      const payments = await databases.listDocuments(
-        DATABASE_ID,
-        PAYMENTS_COLLECTION_ID,
-        [Query.equal('engineerName', name)]
-      );
+      let totalPayments = 0;
+      if (engineer) {
+        const paymentsResponse = await fetch(
+          `${YOUR_BACKEND_URL}/payment/engineer/${engineer.id}/${engineerName}`
+        );
 
-      const total = currentMonthBills.documents.reduce((sum, bill) => {
+        if (paymentsResponse.ok) {
+          const payments = await paymentsResponse.json();
+          totalPayments = payments.reduce((sum: number, payment: any) =>
+            sum + parseFloat(payment.amount || '0'), 0
+          );
+        }
+      }
+
+      const total = currentMonthBills.reduce((sum: number, bill: any) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
       }, 0);
 
-      const totalCommissionsAllTime = allBills.documents.reduce((sum, bill) => {
+      const totalCommissionsAllTime = allBills.reduce((sum: number, bill: any) => {
         return sum + (parseFloat(bill.serviceCharge || '0') * 0.25);
-      }, 0);
-
-      const totalPayments = payments.documents.reduce((sum, payment) => {
-        return sum + parseFloat(payment.amount || '0');
       }, 0);
 
       const pending = totalCommissionsAllTime - totalPayments;
 
-      setTotalCommission(total);
-      setPendingCommission(pending);
+      setCommissionData({
+        totalCommission: total,
+        pendingCommission: pending
+      });
     } catch (error) {
       console.error('Error fetching commission data:', error);
     }
@@ -148,32 +228,42 @@ const HomeScreenuser = () => {
   const fetchOrders = async () => {
     try {
       setRefreshing(true);
-      const currentUser = await account.get();
-      const email = currentUser.email;
 
-      const orders = await databases.listDocuments(
-        DATABASE_ID,
-        ORDERS_COLLECTION_ID,
-        [
-          Query.equal('status', 'pending'),
-          Query.equal('serviceboyEmail', email)
-        ]
+      if (!userEmail) {
+        setPendingCount(0);
+        setCompletedCount(0);
+        return;
+      }
+
+      const engineerName = await fetchEngineerData();
+
+      if (!engineerName) {
+        console.log('No engineer found for email:', userEmail);
+        setPendingCount(0);
+        setCompletedCount(0);
+        return;
+      }
+
+      const pendingResponse = await fetch(
+        `${YOUR_BACKEND_URL}/order/count?status=pending&engineerId=${encodeURIComponent(engineerName)}`
       );
 
-      setPendingCount(orders.total);
+      if (pendingResponse.ok) {
+        const pendingData = await pendingResponse.json();
+        setPendingCount(pendingData.count || 0);
+      }
 
-      const completedOrders = await databases.listDocuments(
-        DATABASE_ID,
-        ORDERS_COLLECTION_ID,
-        [
-          Query.notEqual('status', 'pending'),
-          Query.equal('serviceboyEmail', email)
-        ]
+      const completedResponse = await fetch(
+        `${YOUR_BACKEND_URL}/order/count?status=completed&engineerId=${encodeURIComponent(engineerName)}`
       );
 
-      setCompletedCount(completedOrders.total);
+      if (completedResponse.ok) {
+        const completedData = await completedResponse.json();
+        setCompletedCount(completedData.count || 0);
+      }
     } catch (error) {
-      console.error('Appwrite error:', error);
+      console.error('Error fetching orders:', error);
+      Alert.alert('Error', 'Failed to fetch orders');
     } finally {
       setRefreshing(false);
       setIsLoading(false);
@@ -182,16 +272,37 @@ const HomeScreenuser = () => {
 
   const fetchUnreadNotifications = async () => {
     try {
-      const res = await databases.listDocuments(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        [Query.equal('isRead', false)]
+      if (!userEmail) {
+        setUnreadCount(0);
+        return;
+      }
+
+      const response = await fetch(
+        `${YOUR_BACKEND_URL}/notifications/${encodeURIComponent(userEmail)}/count`
       );
-      setUnreadCount(res.total);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch notification count');
+      }
+
+      const data = await response.json();
+      setUnreadCount(data.count);
     } catch (error) {
-      console.error('Notification fetch error:', error);
+      console.error('Notification count fetch error:', error);
+      setUnreadCount(0);
     }
   };
+
+  useEffect(() => {
+    if (!userEmail) return;
+
+    const pollNotifications = () => {
+      fetchUnreadNotifications();
+    };
+
+    const pollInterval = setInterval(pollNotifications, 30000);
+    return () => clearInterval(pollInterval);
+  }, [userEmail]);
 
   const fetchAllData = async () => {
     setIsLoading(true);
@@ -199,14 +310,16 @@ const HomeScreenuser = () => {
       fetchRevenueData(),
       fetchOrders(),
       fetchUnreadNotifications(),
-      fetchCommissionData()
+      loadCommissionData() 
     ]);
     setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (userEmail && userName) {
+      fetchAllData();
+    }
+  }, [userEmail, userName]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -233,7 +346,9 @@ const HomeScreenuser = () => {
             <MaterialIcons name="notifications" size={24} color="#FFF" />
             {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -301,14 +416,14 @@ const HomeScreenuser = () => {
             <View style={styles.commissionStat}>
               <Text style={styles.commissionStatLabel}>Total</Text>
               <Text style={styles.commissionStatValue}>
-                ₹{totalCommission.toLocaleString('en-IN')}
+                ₹{commissionData.totalCommission.toLocaleString('en-IN')}
               </Text>
             </View>
 
             <View style={styles.commissionStat}>
               <Text style={styles.commissionStatLabel}>Pending</Text>
               <Text style={[styles.commissionStatValue, styles.commissionStatPending]}>
-                ₹{pendingCommission.toLocaleString('en-IN')}
+                ₹{commissionData.pendingCommission.toLocaleString('en-IN')}
               </Text>
             </View>
           </View>
@@ -364,7 +479,7 @@ const HomeScreenuser = () => {
           onPress={() => router.push('/userapp/userprofile')}
         >
           <View style={styles.bottomButtonIcon}>
-            <Feather name="user" size={20} color="#5E72E4" />
+            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
           </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>

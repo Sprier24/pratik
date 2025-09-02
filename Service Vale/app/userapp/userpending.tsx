@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases, account } from '../../lib/appwrite';
-import { ID, Query } from 'appwrite';
 import { styles } from '../../constants/userapp/PendingServicesScreenuser.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'orders-id';
-const NOTIFICATIONS_COLLECTION_ID = 'adminnotification-id';
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 type Service = {
   id: string;
@@ -33,73 +31,143 @@ type Service = {
 const PendingServicesScreenUser = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [allServices, setAllServices] = useState<Service[]>([]);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const params = useLocalSearchParams();
   const router = useRouter();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchEngineerData = async (email: string) => {
+    try {
+      const response = await fetch(`${YOUR_BACKEND_URL}/engineer`);
+      const engineers = await response.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.email.toLowerCase() === email.toLowerCase()
+      );
+
+      if (engineer) {
+        return engineer.engineerName;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching engineer data:', error);
+      return null;
+    }
+  };
 
   const fetchServices = async () => {
     try {
-      const currentUser = await account.get();
-      const email = currentUser.email;
+      setLoading(true);
+            const userDataString = await AsyncStorage.getItem('userData');
+      
+      if (!userDataString) {
+        Alert.alert('Error', 'User not logged in');
+        setLoading(false);
+        return;
+      }
+
+      const userData = JSON.parse(userDataString);
+      const email = userData.email;
       setUserEmail(email);
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('status', 'pending'),
-          Query.equal('serviceboyEmail', email),
-          Query.orderAsc('serviceDate'),
-          Query.orderAsc('serviceTime'),
-          Query.limit(100),
-        ]
+      const engineerName = await fetchEngineerData(email);
+      if (!engineerName) {
+        Alert.alert('Error', 'Engineer not found');
+        setLoading(false);
+        return;
+      }
+      const countResponse = await fetch(
+        `${YOUR_BACKEND_URL}/order/count?status=pending&engineerId=${encodeURIComponent(engineerName)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
-      const formattedServices = response.documents.map(doc => {
-        const [year, month, day] = doc.serviceDate.split('-');
+
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        setPendingCount(countData.count || 0);
+      }
+      const response = await fetch(
+        `${YOUR_BACKEND_URL}/order/status?status=pending&all=true`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const ordersData = await response.json();
+            const filteredOrders = ordersData.result.filter(
+        (order: any) => order.serviceboyEmail?.toLowerCase() === email.toLowerCase()
+      );
+
+      const formattedServices = filteredOrders.map((order: any) => {
+        const [year, month, day] = order.serviceDate.split('-');
         const displayDate = `${day}/${month}/${year}`;
-        const [hours, minutes] = doc.serviceTime.split(':');
+        const [hours, minutes] = order.serviceTime.split(':');
         const hourNum = parseInt(hours);
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
         const displayHour = hourNum % 12 || 12;
         const displayTime = `${displayHour}:${minutes} ${ampm}`;
+        
         return {
-          id: doc.$id,
-          serviceType: doc.serviceType,
-          clientName: doc.clientName,
-          address: doc.address,
-          phone: doc.phoneNumber,
-          amount: doc.billAmount,
-          status: doc.status,
-          date: new Date(doc.$createdAt).toLocaleString(),
-          serviceBoy: doc.serviceboyName,
+          id: order.id,
+          serviceType: order.serviceType,
+          clientName: order.clientName,
+          address: order.address,
+          phone: order.phoneNumber,
+          amount: order.billAmount,
+          status: order.status,
+          date: new Date(order.createdAt).toLocaleString(),
+          serviceBoy: order.serviceboyName,
           serviceDate: displayDate,
           serviceTime: displayTime,
-          serviceboyEmail: doc.serviceboyEmail,
-          serviceboyContact: doc.serviceboyContact,
-          sortDate: doc.serviceDate,
-          sortTime: doc.serviceTime
+          serviceboyEmail: order.serviceboyEmail,
+          serviceboyContact: order.serviceboyContactNumber,
+          sortDate: order.serviceDate,
+          sortTime: order.serviceTime
         };
       });
-      formattedServices.sort((a, b) => {
+
+      formattedServices.sort((a: { sortDate: string; sortTime: string; }, b: { sortDate: any; sortTime: any; }) => {
         if (a.sortDate !== b.sortDate) {
           return a.sortDate.localeCompare(b.sortDate);
         }
         return a.sortTime.localeCompare(b.sortTime);
       });
-      setAllServices(formattedServices);
+
       setServices(formattedServices);
+      setAllServices(formattedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchServices();
   };
 
   useEffect(() => {
     fetchServices();
+  }, []);
+
+  useEffect(() => {
     if (params.newService) {
       try {
         const newService = JSON.parse(params.newService as string);
@@ -129,6 +197,7 @@ const PendingServicesScreenUser = () => {
             }
             return prev;
           });
+          setPendingCount(prev => prev + 1);
         }
       } catch (error) {
         console.error('Error parsing new service:', error);
@@ -163,16 +232,21 @@ const PendingServicesScreenUser = () => {
 
   const createNotification = async (description: string, userEmail: string) => {
     try {
-      await databases.createDocument(
-        DATABASE_ID,
-        NOTIFICATIONS_COLLECTION_ID,
-        ID.unique(),
-        {
+      const response = await fetch(`${YOUR_BACKEND_URL}/admin-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           description,
-          isRead: false,
           userEmail,
-        }
-      );
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create notification');
+      }
+
       console.log('Notification created successfully');
     } catch (error) {
       console.error('Notification creation failed:', error);
@@ -180,49 +254,83 @@ const PendingServicesScreenUser = () => {
     }
   };
 
-  const handleComplete = async (id: string) => {
-    Alert.alert(
-      'Complete Service',
-      'Are you sure this service is completed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Complete',
-          onPress: async () => {
-            try {
-              await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTION_ID,
-                id,
-                { status: 'completed' }
-              );
-              const completedService = services.find(service => service.id === id);
-              if (!completedService) return;
-              try {
-                await createNotification(
-                  `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
-                  completedService.serviceboyEmail
-                );
-              } catch (notificationError) {
-                console.warn('Notification failed (service still completed):', notificationError);
-              }
-              setServices(prev => prev.filter(service => service.id !== id));
-              setAllServices(prev => prev.filter(service => service.id !== id));
-              router.push({
-                pathname: '/userapp/usercompleted',
-                params: {
-                  completedService: JSON.stringify(completedService)
-                }
-              });
-            } catch (error) {
-              console.error('Error completing service:', error);
-              Alert.alert('Error', 'Failed to complete service');
+const handleComplete = async (id: string) => {
+  Alert.alert(
+    'Complete Service',
+    'Are you sure this service is completed?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Complete',
+        onPress: async () => {
+          try {
+            const currentTimestamp = new Date().toISOString()
+            const response = await fetch(`${YOUR_BACKEND_URL}/order/${id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                status: 'completed',
+                completedAt: currentTimestamp 
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to update order');
             }
+
+            const completedService = services.find(service => service.id === id);
+            if (!completedService) return;
+
+            const completedServiceWithTimestamp = {
+              ...completedService,
+              completedAt: currentTimestamp,
+              formattedCompletedAt: formatToAmPm(currentTimestamp) 
+            };
+
+            try {
+              await createNotification(
+                `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
+                completedService.serviceboyEmail
+              );
+            } catch (notificationError) {
+              console.warn('Notification failed (service still completed):', notificationError);
+            }
+
+            setServices(prev => prev.filter(service => service.id !== id));
+            setAllServices(prev => prev.filter(service => service.id !== id));
+            setPendingCount(prev => prev - 1);
+            
+            router.push({
+              pathname: '/userapp/usercompleted',
+              params: {
+                completedService: JSON.stringify(completedServiceWithTimestamp)
+              }
+            });
+          } catch (error) {
+            console.error('Error completing service:', error);
+            Alert.alert('Error', 'Failed to complete service');
           }
         }
-      ]
-    );
-  };
+      }
+    ]
+  );
+};
+
+const formatToAmPm = (isoString: string) => {
+  const date = new Date(isoString);
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+};
 
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
@@ -301,6 +409,27 @@ const PendingServicesScreenUser = () => {
     </View>
   );
 
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.push('/userapp/home')}>
+              <Feather name="arrow-left" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Pending Services</Text>
+          </View>
+          <View style={styles.headerCount}>
+            <Text style={styles.headerCountText}>0</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#5E72E4" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -312,7 +441,7 @@ const PendingServicesScreenUser = () => {
         </View>
 
         <View style={styles.headerCount}>
-          <Text style={styles.headerCountText}>{services.length}</Text>
+          <Text style={styles.headerCountText}>{pendingCount}</Text>
         </View>
       </View>
 
@@ -354,6 +483,8 @@ const PendingServicesScreenUser = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       ) : (
         <View style={styles.emptyState}>

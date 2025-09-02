@@ -109,6 +109,11 @@ export const styles = StyleSheet.create({
   modalScroll: {
     paddingHorizontal: 20,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   applicantItem: {
     flexDirection: "row",
     alignItems: "center",

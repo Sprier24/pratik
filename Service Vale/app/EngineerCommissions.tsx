@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
-import { databases } from '../lib/appwrite';
-import { Query } from 'react-native-appwrite';
 import { styles } from '../constants/EngineerCommissions.styles';
+import CommissionService from './services/commissionService';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
-const PAYMENTS_COLLECTION_ID = 'commission-id';
-const USERS_COLLECTION_ID = 'engineer-id';
+const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 type Engineer = {
   id: string;
@@ -21,68 +18,81 @@ type Engineer = {
 
 const EngineerCommissionsScreen = () => {
   const [engineers, setEngineers] = useState<Engineer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); 
   const [totalPending, setTotalPending] = useState(0);
 
-  useEffect(() => {
-    fetchData();
+    useEffect(() => {
+    const unsubscribe = CommissionService.addAdminListener((data) => {
+      const formattedEngineers = data.map(engineer => ({
+        id: engineer.id || engineer.name, 
+        name: engineer.name,
+        commission: engineer.totalCommission || 0,
+        payments: engineer.totalPayments || 0,
+        pending: engineer.pendingAmount || 0
+      }));
+
+      setEngineers(formattedEngineers);
+      setTotalPending(formattedEngineers.reduce((sum, e) => sum + e.pending, 0));
+      setIsLoading(false);
+    });
+
+    loadData();
+
+    return unsubscribe;
   }, []);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      await CommissionService.refreshAllEngineerSummaries();
+    } catch (error) {
+      console.error('Error loading data:', error);
+      try {
+        const response = await fetch(`${API_BASE_URL}/engineer-commissions`);
+        if (response.ok) {
+          const data = await response.json();
+          const engineersWithCommissions = data.map((engineer: any) => ({
+            id: engineer.id || engineer.engineer_id || '',
+            name: engineer.name || engineer.engineerName || 'Unknown Engineer',
+            commission: parseFloat(engineer.totalCommission) || 0,
+            payments: parseFloat(engineer.totalPayments) || 0,
+            pending: parseFloat(engineer.pendingAmount) || 0,
+          }));
+          setEngineers(engineersWithCommissions);
+          setTotalPending(engineersWithCommissions.reduce((sum: number, e: any) => sum + e.pending, 0));
+        }
+      } catch (fallbackError) {
+        console.error('Fallback API also failed:', fallbackError);
+        Alert.alert('Error', 'Failed to load engineer data');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const today = new Date();
-      const startOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      const response = await fetch(`${API_BASE_URL}/engineer-commissions`);
 
-      const [usersResponse, paymentsResponse] = await Promise.all([
-        databases.listDocuments(DATABASE_ID, USERS_COLLECTION_ID),
-        databases.listDocuments(DATABASE_ID, PAYMENTS_COLLECTION_ID)
-      ]);
+      if (!response.ok) {
+        throw new Error('Failed to fetch engineer commissions');
+      }
 
-      const engineersWithCommissions = await Promise.all(
-        usersResponse.documents.map(async (user) => {
-          const currentMonthCommissions = await databases.listDocuments(
-            DATABASE_ID,
-            COLLECTION_ID,
-            [
-              Query.equal('serviceBoyName', user.name),
-              Query.greaterThanEqual('date', startOfCurrentMonth)
-            ]
-          );
+      const engineersData = await response.json();
 
-          const monthCommission = currentMonthCommissions.documents.reduce(
-            (sum, doc) => sum + (parseFloat(doc.serviceCharge) * 0.25),
-            0
-          );
+      const engineersWithCommissions = engineersData.map((engineer: any) => ({
+        id: engineer.id || engineer.engineer_id || '',
+        name: engineer.name || engineer.engineerName || 'Unknown Engineer',
+        commission: parseFloat(engineer.totalCommission) || 0,
+        payments: parseFloat(engineer.totalPayments) || 0,
+        pending: parseFloat(engineer.pendingAmount) || 0,
+      }));
 
-          const allCommissions = await databases.listDocuments(
-            DATABASE_ID,
-            COLLECTION_ID,
-            [Query.equal('serviceBoyName', user.name)]
-          );
-          const totalCommission = allCommissions.documents.reduce(
-            (sum, doc) => (sum + (parseFloat(doc.serviceCharge) * 0.25)),
-            0
-          );
-
-          const engineerPayments = paymentsResponse.documents
-            .filter(payment => payment.engineerName === user.name)
-            .reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-          return {
-            id: user.$id,
-            name: user.name,
-            commission: monthCommission, 
-            payments: engineerPayments,
-            pending: totalCommission - engineerPayments,
-          };
-        })
-      );
-
-      const sortedEngineers = engineersWithCommissions.sort((a, b) => b.pending - a.pending);
+      const sortedEngineers = engineersWithCommissions.sort((a: any, b: any) => b.pending - a.pending);
       setEngineers(sortedEngineers);
-
-      setTotalPending(sortedEngineers.reduce((sum, e) => sum + e.pending, 0));
+      setTotalPending(sortedEngineers.reduce((sum: number, e: any) => sum + e.pending, 0));
 
     } catch (error) {
       console.error('Error fetching data:', error);

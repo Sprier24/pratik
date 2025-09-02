@@ -2,14 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ScrollView, RefreshControl, Alert } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { databases } from '../lib/appwrite';
-import { Query } from 'appwrite';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import styles from '../constants/notification';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const NOTIFICATIONS_COLLECTION = 'adminnotification-id';
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 const AdminNotificationPage = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -17,35 +15,28 @@ const AdminNotificationPage = () => {
     const [previousCount, setPreviousCount] = useState(0);
     const soundRef = useRef<Audio.Sound | null>(null);
 
-    useEffect(() => {
-        const loadSound = async () => {
-            const { sound } = await Audio.Sound.createAsync(
-                require('../assets/sounds/notification.mp3')
-            );
-            soundRef.current = sound;
-        };
-        loadSound();
-        return () => {
-            if (soundRef.current) {
-                soundRef.current.unloadAsync();
-            }
-        };
-    }, []);
-
     const fetchNotifications = async () => {
         try {
-            const res = await databases.listDocuments(
-                DATABASE_ID,
-                NOTIFICATIONS_COLLECTION,
-                [
-                    Query.orderDesc('$createdAt'),
-                    Query.limit(100)
-                ]
+            const response = await fetch(
+                `${YOUR_BACKEND_URL}/admin-notifications`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
             );
-            const newNotifications = res.documents.filter(doc => !doc.isRead);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch notifications');
+            }
+
+            const newNotifications = await response.json();
+
             if (newNotifications.length > previousCount) {
                 playNotificationSound();
             }
+
             setNotifications(newNotifications);
             setPreviousCount(newNotifications.length);
         } catch (error) {
@@ -66,11 +57,26 @@ const AdminNotificationPage = () => {
         }
     };
 
-    const markAsRead = async (id: string) => {
+    const deleteNotification = async (id: string) => {
         try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            await databases.deleteDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, id);
-            fetchNotifications();
+
+            const response = await fetch(
+                `${YOUR_BACKEND_URL}/admin-notifications/${id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to delete notification');
+            }
+
+            setNotifications(prev => prev.filter(notification => notification.id !== id));
+
         } catch (error) {
             Alert.alert('Error', 'Failed to delete notification');
         }
@@ -79,24 +85,30 @@ const AdminNotificationPage = () => {
     const deleteAllNotifications = async () => {
         Alert.alert(
             'Delete All Notifications',
-            'Are you sure you want to delete all unread notifications?',
+            'Are you sure you want to delete all notifications?',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: 'Delete All',
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            const deletePromises = notifications.map((notification) =>
-                                databases.deleteDocument(
-                                    DATABASE_ID,
-                                    NOTIFICATIONS_COLLECTION,
-                                    notification.$id
-                                )
+                            const response = await fetch(
+                                `${YOUR_BACKEND_URL}/admin-notifications/all`,
+                                {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                }
                             );
-                            await Promise.all(deletePromises);
+
+                            if (!response.ok) {
+                                throw new Error('Failed to delete all notifications');
+                            }
+
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                            fetchNotifications();
+                            setNotifications([]);
                         } catch (error) {
                             Alert.alert('Error', 'Failed to delete notifications');
                         }
@@ -120,10 +132,11 @@ const AdminNotificationPage = () => {
             <View style={styles.notificationHeader}>
                 <Ionicons name="notifications" size={20} color="#5E72E4" />
             </View>
+
             <Text style={styles.description}>{item.description}</Text>
             <View style={styles.footer}>
-                <Text style={styles.time}>{new Date(item.$createdAt).toLocaleString()}</Text>
-                <TouchableOpacity onPress={() => markAsRead(item.$id)} style={styles.dismissButton}>
+                <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
+                <TouchableOpacity onPress={() => deleteNotification(item.id)} style={styles.dismissButton}>
                     <Text style={styles.close}>Dismiss</Text>
                 </TouchableOpacity>
             </View>
@@ -136,7 +149,7 @@ const AdminNotificationPage = () => {
                 <TouchableOpacity onPress={() => router.push('/home')}>
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <Text style={styles.headerTitle}>All Notifications</Text>
                 {notifications.length > 0 ? (
                     <TouchableOpacity onPress={deleteAllNotifications}>
                         <MaterialIcons name="delete" size={24} color="#fff" />
@@ -159,14 +172,14 @@ const AdminNotificationPage = () => {
                 {notifications.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Ionicons name="notifications-off" size={48} color="#ccc" />
-                        <Text style={styles.noNotificationText}>No new notifications</Text>
+                        <Text style={styles.noNotificationText}>No notifications</Text>
                         <Text style={styles.emptySubtext}>Pull down to refresh</Text>
                     </View>
                 ) : (
                     <FlatList
                         scrollEnabled={false}
                         data={notifications}
-                        keyExtractor={(item) => item.$id}
+                        keyExtractor={(item) => item.id}
                         renderItem={renderItem}
                         contentContainerStyle={styles.listContainer}
                     />

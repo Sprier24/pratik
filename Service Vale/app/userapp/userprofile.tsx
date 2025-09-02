@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { account, databases } from '../../lib/appwrite';
-import { Query } from 'appwrite';
 import { styles } from '../../constants/userapp/ProfileScreen.styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'engineer-id';
+const YOUR_BACKEND_URL = `${Constants.expoConfig?.extra?.apiUrl}`;
 
 const ProfileScreen = () => {
     const [user, setUser] = useState({
@@ -27,25 +26,47 @@ const ProfileScreen = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const currentUser = await account.get();
-                const userEmail = currentUser.email;
-                const response = await databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTION_ID,
-                    [Query.equal('email', userEmail)]
-                );
-                if (response.documents.length > 0) {
-                    const userData = response.documents[0];
-                    setUser({
-                        name: userData.name || '',
-                        email: userData.email || userEmail,
-                        phone: userData.contactNo || '',
-                        address: userData.address || '',
-                        aadharNo: userData.aadharNo || '',
-                        panNo: userData.panNo || '',
-                        city: userData.city || '',
-                    });
+                const userDataString = await AsyncStorage.getItem('userData');
+                
+                if (!userDataString) {
+                    Alert.alert('Error', 'User not logged in');
+                    setLoading(false);
+                    return;
                 }
+
+                const userData = JSON.parse(userDataString);
+                const userEmail = userData.email;
+
+                const response = await fetch(`${YOUR_BACKEND_URL}/engineer`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch engineer data');
+                }
+
+                const engineersData = await response.json();
+                                const engineer = engineersData.result.find(
+                    (eng: any) => eng.email.toLowerCase() === userEmail.toLowerCase()
+                );
+
+                if (engineer) {
+                    setUser({
+                        name: engineer.engineerName || '',
+                        email: engineer.email || userEmail,
+                        phone: engineer.contactNumber || '',
+                        address: engineer.address || '',
+                        aadharNo: engineer.aadharNumber || '',
+                        panNo: engineer.panNumber || '',
+                        city: engineer.city || '',
+                    });
+                } else {
+                    Alert.alert('Error', 'Engineer profile not found');
+                }
+                
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -55,6 +76,24 @@ const ProfileScreen = () => {
         };
         fetchUserData();
     }, []);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.safeArea}>
+                <View style={styles.header}>
+                    <View style={styles.headerLeft}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Feather name="arrow-left" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Engineer Profile</Text>
+                    </View>
+                </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#5E72E4" />
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -116,7 +155,7 @@ const ProfileScreen = () => {
                     style={[styles.bottomButton, styles.bottomButtonActive]}
                 >
                     <View style={[styles.bottomButtonIcon, styles.bottomButtonIconActive]}>
-                        <Feather name="user" size={20} color="#FFF" />
+                        <MaterialIcons name="engineering" size={20} color="#FFF" />
                     </View>
                     <Text style={[styles.bottomButtonText, styles.bottomButtonTextActive]}>Profile</Text>
                 </TouchableOpacity>

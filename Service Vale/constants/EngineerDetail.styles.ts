@@ -413,7 +413,7 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
-    loadingMoreContainer: {
+  loadingMoreContainer: {
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -422,6 +422,16 @@ export const styles = StyleSheet.create({
   loadingMoreText: {
     marginLeft: 10,
     color: '#718096',
+  },
+  endOfListContainer: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  endOfListText: {
+    color: '#718096',
+    fontSize: 14,
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,

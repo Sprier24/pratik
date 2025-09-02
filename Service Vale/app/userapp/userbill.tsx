@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
 import { MaterialCommunityIcons, Feather, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Query } from 'appwrite';
-import { databases, account } from '../../lib/appwrite';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -11,16 +9,18 @@ import { styles } from '../../constants/userapp/UserBill.styles';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, isSameDay } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const DATABASE_ID = 'servicevale-database';
-const COLLECTION_ID = 'bill-id';
+const TURSO_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/bill`;
+const ENGINEER_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
 
 type Bill = {
-  $id: string;
+  id: string;
   notes: string;
   billNumber: string;
   serviceType: string;
-  serviceBoyName: string;
+  serviceboyName: string;
   customerName: string;
   contactNumber: string;
   address: string;
@@ -29,17 +29,16 @@ type Bill = {
   paymentMethod: string;
   cashGiven: string;
   change: string;
-  $createdAt: string;
+  createdAt: string;
   signature?: string;
   status: string;
   total: string;
   date: string;
-  engineerCommission: string;
 };
 
 const fieldLabels = {
   serviceType: 'Service Type',
-  serviceBoyName: 'Service Engineer Name',
+  serviceboyName: 'Service Engineer Name',
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
@@ -51,7 +50,7 @@ const UserBill = () => {
   const router = useRouter();
   const [form, setForm] = useState({
     serviceType: '',
-    serviceBoyName: '',
+    serviceboyName: '',
     customerName: '',
     address: '',
     contactNumber: '',
@@ -75,76 +74,106 @@ const UserBill = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
-  const fetchAllBills = async (serviceBoyName: string, cursor: string | null = null, accumulatedBills: Bill[] = []): Promise<Bill[]> => {
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userDataString = await AsyncStorage.getItem('userData');
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          setUserEmail(userData.email);
+          setUserName(userData.name || '');
+        }
+      } catch (error) {
+        console.error('Error getting user data:', error);
+      }
+    };
+    getUserData();
+  }, []);
+
+  const fetchEngineerName = async () => {
     try {
-      const queries = [
-        Query.equal('serviceBoyName', serviceBoyName),
-        Query.orderDesc('$createdAt'),
-      ];
-      if (cursor) {
-        queries.push(Query.cursorAfter(cursor));
-      }
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        queries
+      if (!userEmail) return;
+
+      const response = await fetch(ENGINEER_BASE_URL);
+      const engineers = await response.json();
+      const engineer = engineers.result.find(
+        (eng: any) => eng.email.toLowerCase() === userEmail.toLowerCase()
       );
-      const newBills = response.documents as unknown as Bill[];
-      const allBills = [...accumulatedBills, ...newBills];
-      if (response.documents.length >= 25) {
-        const lastId = response.documents[response.documents.length - 1].$id;
-        return fetchAllBills(serviceBoyName, lastId, allBills);
+
+      if (engineer) {
+        setUserName(engineer.engineerName);
+        return engineer.engineerName;
       }
-      return allBills;
+      return null;
+    } catch (error) {
+      console.error('Error fetching engineer data:', error);
+      return null;
+    }
+  };
+
+  const fetchBills = async (page = 1, isLoadMore = false) => {
+    if (page === 1) {
+      setIsLoading(true);
+    }
+    try {
+      const response = await fetch(TURSO_BASE_URL);
+      const data = await response.json();
+      const engineerName = await fetchEngineerName();
+      const filteredBills = data.filter((bill: any) =>
+        bill.serviceBoyName === engineerName || bill.serviceboyName === engineerName
+      ).map((bill: any) => ({
+        ...bill,
+        $id: bill.id,
+        $createdAt: bill.createdAt,
+        serviceCharge: bill.serviceCharge.toString(),
+        gstPercentage: bill.gstPercentage.toString(),
+        total: bill.total.toString(),
+        cashGiven: bill.cashGiven.toString(),
+        change: bill.change.toString(),
+        engineerCommission: bill.engineerCommission.toString()
+      }));
+
+      if (isLoadMore) {
+        setAllBills(prev => [...prev, ...filteredBills]);
+        setBills(prev => [...prev, ...filteredBills]);
+      } else {
+        setAllBills(filteredBills);
+        setBills(filteredBills);
+      }
     } catch (error) {
       console.error('Error fetching bills:', error);
-      return accumulatedBills;
+      Alert.alert('Error', 'Failed to fetch bills');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchUserAndBills = async () => {
+    fetchBills();
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (params.serviceData && userName) {
       try {
-        setIsLoading(true);
-        const currentUser = await account.get();
-        const userResponse = await databases.listDocuments(
-          DATABASE_ID,
-          'engineer-id',
-          [Query.equal('email', currentUser.email)]
-        );
-        if (userResponse.documents.length > 0) {
-          const name = userResponse.documents[0].name;
-          setUserName(name);
-          if (params.serviceData) {
-            try {
-              const serviceData = JSON.parse(params.serviceData as string);
-              setForm({
-                serviceType: serviceData.serviceType || '',
-                serviceBoyName: name,
-                customerName: serviceData.clientName || '',
-                address: serviceData.address || '',
-                contactNumber: serviceData.phone || '',
-                serviceCharge: serviceData.amount || '',
-              });
-              setIsFormVisible(true);
-            } catch (error) {
-              console.error('Error parsing service data:', error);
-            }
-          }
-          const allBills = await fetchAllBills(name);
-          setAllBills(allBills);
-          setBills(allBills);
-        }
+        const serviceData = JSON.parse(params.serviceData as string);
+        console.log('Received service data:', serviceData);
+        console.log('Service charge:', serviceData.amount || serviceData.serviceCharge);
+        setForm({
+          serviceType: String(serviceData.serviceType || ''),
+          serviceboyName: userName, 
+          customerName: String(serviceData.clientName || ''),
+          address: String(serviceData.address || ''),
+          contactNumber: String(serviceData.phone || ''),
+          serviceCharge: String(serviceData.amount || serviceData.serviceCharge || ''),
+        });
+        setIsFormVisible(true);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        Alert.alert('Error', 'Failed to load data');
-      } finally {
-        setIsLoading(false);
+        console.error('Error parsing service data:', error);
       }
-    };
-    fetchUserAndBills();
-  }, [params.serviceData]);
+    }
+  }, [params.serviceData, userName]);
 
   const formatToAmPm = (dateString: string) => {
     const date = new Date(dateString);
@@ -181,7 +210,7 @@ const UserBill = () => {
     setShowDatePicker(false);
     if (event.type === 'dismissed') {
       return;
-    }
+    } 
     if (selectedDate) {
       setDateFilter(selectedDate);
       filterByDate(selectedDate);
@@ -397,7 +426,7 @@ const UserBill = () => {
                   <h2 class="invoice-title">INVOICE</h2>
                   <div class="invoice-details">
                     <div><strong>Bill No : </strong> ${bill.billNumber}</div>
-                    <div><strong>Date : </strong> ${new Date(bill.$createdAt).toLocaleDateString()}</div>
+                    <div><strong>Date : </strong> ${new Date(bill.createdAt).toLocaleDateString()}</div>
                   </div>
                 </div>
               </div>
@@ -424,7 +453,7 @@ const UserBill = () => {
                 </div>
                 <div class="row">
                   <span class="label">Engineer Name : </span>
-                  <span class="value">${bill.serviceBoyName}</span>
+                  <span class="value">${bill.serviceboyName}</span>
                 </div>
                 <div class="row total-row">
                   <span class="label">Service Charge : </span>
@@ -455,13 +484,7 @@ const UserBill = () => {
                   <span class="value">₹${bill.change}</span>
                 </div>
                 ` : ''}
-              </div>       
-              ${bill.notes ? `
-                <div class="section notes-section">
-                  <div class="section-title">Notes</div>
-                  <p>${bill.notes}</p>
-                </div>
-              ` : ''}       
+              </div>            
               ${bill?.signature ? `
                 <div class="signature-section">
                   <div class="signature-title">Customer Signature</div>
@@ -482,7 +505,6 @@ const UserBill = () => {
           </html>
     `;
   };
-
   const handleShareViaWhatsApp = async () => {
     if (!selectedBill) return;
     try {
@@ -498,7 +520,7 @@ const UserBill = () => {
         UTI: 'net.whatsapp.pdf'
       });
     } catch (error) {
-      console.error('Error sharing via WhatsApp :', error);
+      console.error('Error sharing via WhatsApp:', error);
       Alert.alert('Error', 'Failed to share bill');
     }
   };
@@ -517,7 +539,7 @@ const UserBill = () => {
   const resetForm = () => {
     setForm({
       serviceType: '',
-      serviceBoyName: userName,
+      serviceboyName: userName,
       customerName: '',
       address: '',
       contactNumber: '',
@@ -566,6 +588,70 @@ const UserBill = () => {
     const base64Data = signatureData.replace('data:image/png;base64,', '');
     setSignature(base64Data);
     setIsSignatureVisible(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    if (!signature) {
+      Alert.alert('Error', 'Customer signature is required');
+      return;
+    }
+
+    const billNumber = generateBillNumber();
+    const now = new Date();
+    const billData = {
+      id: billNumber,
+      notes: notes.trim() || '',
+      billNumber,
+      serviceType: form.serviceType,
+      serviceboyName: form.serviceboyName,
+      customerName: form.customerName,
+      contactNumber: form.contactNumber,
+      address: form.address,
+      serviceCharge: form.serviceCharge,
+      gstPercentage: gstPercentage,
+      paymentMethod,
+      cashGiven: paymentMethod === 'cash' ? cashGiven : '0',
+      change: paymentMethod === 'cash' ? calculateChange() : '0',
+      createdAt: now.toISOString(),
+      signature: signature,
+      status: 'paid',
+      total: calculateTotal(),
+      date: now.toISOString(),
+      userId: 'default-user-id'
+    };
+
+    try {
+      await fetch(TURSO_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(billData)
+      });
+
+      fetchBills();
+
+      const htmlContent = generateBillHtml(billData);
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        width: 595,
+        height: 842,
+      });
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Bill',
+        UTI: 'net.whatsapp.pdf'
+      });
+
+      setIsFormVisible(false);
+      resetForm();
+      setSignature(null);
+    } catch (error) {
+      console.error('Error generating bill:', error);
+      Alert.alert('Error', 'Failed to generate bill');
+    }
   };
 
   return (
@@ -656,20 +742,33 @@ const UserBill = () => {
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
-              {Object.entries(form).map(([key, value]) => (
-                <View key={key} style={styles.formGroup}>
-                  <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
-                  <TextInput
-                    placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
-                    style={styles.input}
-                    keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
-                    value={value}
-                    onChangeText={(text) => handleChange(key, text)}
-                    editable={key !== 'serviceBoyName'}
-                    maxLength={key === 'contactNumber' ? 10 : undefined}
-                  />
-                </View>
-              ))}
+
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>{fieldLabels.serviceboyName}</Text>
+                <TextInput
+                  placeholder="Service Engineer Name"
+                  style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+                  value={userName}
+                  editable={false}
+                />
+              </View>
+
+              {Object.entries(form).map(([key, value]) => {
+                if (key === 'serviceboyName') return null;
+                return (
+                  <View key={key} style={styles.formGroup}>
+                    <Text style={styles.inputLabel}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
+                    <TextInput
+                      placeholder={`Enter ${fieldLabels[key as keyof typeof fieldLabels].toLowerCase()}`}
+                      style={styles.input}
+                      keyboardType={key === 'contactNumber' || key === 'serviceCharge' ? 'numeric' : 'default'}
+                      value={value}
+                      onChangeText={(text) => handleChange(key, text)}
+                      maxLength={key === 'contactNumber' ? 10 : undefined}
+                    />
+                  </View>
+                );
+              })}
 
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>GST (%)</Text>
@@ -782,14 +881,12 @@ const UserBill = () => {
                   }
                   const billNumber = generateBillNumber();
                   const now = new Date();
-                  const commission = (parseFloat(form.serviceCharge) * 0.25).toFixed(2); // Calculate commission
-
                   const billData: Bill = {
-                    $id: billNumber,
+                    id: billNumber,
                     notes: notes.trim() || '',
                     billNumber,
                     serviceType: form.serviceType,
-                    serviceBoyName: form.serviceBoyName,
+                    serviceboyName: form.serviceboyName,
                     customerName: form.customerName,
                     contactNumber: form.contactNumber,
                     address: form.address,
@@ -798,23 +895,24 @@ const UserBill = () => {
                     paymentMethod,
                     cashGiven: paymentMethod === 'cash' ? cashGiven : '',
                     change: paymentMethod === 'cash' ? calculateChange() : '',
-                    $createdAt: now.toISOString(),
+                    createdAt: now.toISOString(),
                     signature: signature,
                     status: 'paid',
                     total: calculateTotal(),
                     date: now.toISOString(),
-                    engineerCommission: commission,
                   };
                   try {
                     setAllBills(prevBills => [billData, ...prevBills]);
                     setBills(prevBills => [billData, ...prevBills]);
 
-                    await databases.createDocument(
-                      DATABASE_ID,
-                      COLLECTION_ID,
-                      billNumber,
-                      billData
-                    );
+                    await fetch(TURSO_BASE_URL, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(billData)
+                    });
+
                     const htmlContent = generateBillHtml(billData);
                     const { uri } = await Print.printToFileAsync({
                       html: htmlContent,
@@ -833,8 +931,8 @@ const UserBill = () => {
                     router.push('/rating');
                   } catch (error) {
                     console.error('Error generating bill:', error);
-                    setAllBills(prevBills => prevBills.filter(bill => bill.$id !== billNumber));
-                    setBills(prevBills => prevBills.filter(bill => bill.$id !== billNumber));
+                    setAllBills(prevBills => prevBills.filter(bill => bill.id !== billNumber));
+                    setBills(prevBills => prevBills.filter(bill => bill.id !== billNumber));
                     Alert.alert('Error', 'Failed to generate bill');
                   }
                 }}
@@ -864,7 +962,7 @@ const UserBill = () => {
           ) : (
             <FlatList
               data={bills}
-              keyExtractor={(item) => item.$id}
+              keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.billCard}
@@ -935,7 +1033,7 @@ const UserBill = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date :</Text>
                       <Text style={styles.detailValue}>
-                        {formatToAmPm(selectedBill.$createdAt || '')}
+                        {formatToAmPm(selectedBill.createdAt || '')}
                       </Text>
                     </View>
                   </View>
@@ -967,7 +1065,7 @@ const UserBill = () => {
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Engineer:</Text>
-                      <Text style={styles.detailValue}>{selectedBill.serviceBoyName}</Text>
+                      <Text style={styles.detailValue}>{selectedBill.serviceboyName}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
@@ -981,8 +1079,7 @@ const UserBill = () => {
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Engineer Commission :</Text>
-                      {/* <Text style={styles.detailValue}>₹{selectedBill.engineerCommission}</Text> */}
+                      <Text style={styles.detailLabel}>Service Commission :</Text>
                       <Text style={styles.detailValue}>
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                       </Text>
@@ -1127,7 +1224,7 @@ const UserBill = () => {
           onPress={() => router.push('/userapp/userprofile')}
         >
           <View style={styles.bottomButtonIcon}>
-            <Feather name="user" size={20} color="#5E72E4" />
+            <MaterialIcons name="engineering" size={20} color="#5E72E4" />
           </View>
           <Text style={styles.bottomButtonText}>Profile</Text>
         </TouchableOpacity>
