@@ -1,0 +1,299 @@
+[
+  {
+    "id": "68ac7608001ca425261e",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "362.5",
+    "date": "2025-08-25T14:41:12.458Z",
+    "createdAt": "2025-08-25T14:41:14.478+00:00",
+    "updatedAt": "2025-08-25T14:41:14.478+00:00"
+  },
+  {
+    "id": "68ad5bcf0001da123dc0",
+    "engineerId": "68aaadde003361770249",
+    "engineerName": "Afak",
+    "amount": "850",
+    "date": "2025-08-26T07:01:35.029Z",
+    "createdAt": "2025-08-26T07:01:35.463+00:00",
+    "updatedAt": "2025-08-26T07:01:35.463+00:00"
+  },
+  {
+    "id": "68b70cb5000d1aa3e53a",
+    "engineerId": "68a98f050014d0455e45",
+    "engineerName": "Amaan",
+    "amount": "150",
+    "date": "2025-09-02T15:26:45.209Z",
+    "createdAt": "2025-09-02T15:26:46.186+00:00",
+    "updatedAt": "2025-09-02T15:26:46.186+00:00"
+  },
+  {
+    "id": "68b70ccb00289a60b759",
+    "engineerId": "68aaadde003361770249",
+    "engineerName": "Afak",
+    "amount": "50",
+    "date": "2025-09-02T15:27:07.649Z",
+    "createdAt": "2025-09-02T15:27:08.584+00:00",
+    "updatedAt": "2025-09-02T15:27:08.584+00:00"
+  },
+  {
+    "id": "68bbe30900061209902c",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "350",
+    "date": "2025-09-06T07:30:17.097Z",
+    "createdAt": "2025-09-06T07:30:18.790+00:00",
+    "updatedAt": "2025-09-06T07:30:18.790+00:00"
+  },
+  {
+    "id": "68bbe31c001938625879",
+    "engineerId": "68b9478100278233a13c",
+    "engineerName": "Nadeem Khan ",
+    "amount": "212.5",
+    "date": "2025-09-06T07:30:36.403Z",
+    "createdAt": "2025-09-06T07:30:37.618+00:00",
+    "updatedAt": "2025-09-06T07:30:37.618+00:00"
+  },
+  {
+    "id": "68bbe337002951734005",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "425",
+    "date": "2025-09-06T07:31:03.662Z",
+    "createdAt": "2025-09-06T07:31:05.367+00:00",
+    "updatedAt": "2025-09-06T07:31:05.367+00:00"
+  },
+  {
+    "id": "68bed37f00105bbf6d51",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "725",
+    "date": "2025-09-08T13:00:47.261Z",
+    "createdAt": "2025-09-08T13:00:46.879+00:00",
+    "updatedAt": "2025-09-08T13:00:46.879+00:00"
+  },
+  {
+    "id": "68bedfb10010796f15c4",
+    "engineerId": "68aab618002c81a3639d",
+    "engineerName": "Husnain",
+    "amount": "637.5",
+    "date": "2025-09-08T13:52:49.264Z",
+    "createdAt": "2025-09-08T13:52:48.938+00:00",
+    "updatedAt": "2025-09-08T13:52:48.938+00:00"
+  },
+  {
+    "id": "68c15ba8001334df23d8",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "662.5",
+    "date": "2025-09-10T11:06:16.307Z",
+    "createdAt": "2025-09-10T11:06:17.271+00:00",
+    "updatedAt": "2025-09-10T11:06:17.271+00:00"
+  },
+  {
+    "id": "68c18ae90031c12a9ff9",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "400",
+    "date": "2025-09-10T14:27:53.796Z",
+    "createdAt": "2025-09-10T14:27:52.919+00:00",
+    "updatedAt": "2025-09-10T14:27:52.919+00:00"
+  },
+  {
+    "id": "68c25f9a000e2aa18ce6",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "1912.5",
+    "date": "2025-09-11T05:35:22.226Z",
+    "createdAt": "2025-09-11T05:35:23.326+00:00",
+    "updatedAt": "2025-09-11T05:35:23.326+00:00"
+  },
+  {
+    "id": "68c25fb500191a208874",
+    "engineerId": "68b9478100278233a13c",
+    "engineerName": "Nadeem Khan ",
+    "amount": "212.5",
+    "date": "2025-09-11T05:35:49.401Z",
+    "createdAt": "2025-09-11T05:35:50.453+00:00",
+    "updatedAt": "2025-09-11T05:35:50.453+00:00"
+  },
+  {
+    "id": "68c2e7bf002eea46be6e",
+    "engineerId": "68aab618002c81a3639d",
+    "engineerName": "Husnain",
+    "amount": "362.5",
+    "date": "2025-09-11T15:16:15.750Z",
+    "createdAt": "2025-09-11T15:16:16.928+00:00",
+    "updatedAt": "2025-09-11T15:16:16.928+00:00"
+  },
+  {
+    "id": "68c2e7d3001222e53611",
+    "engineerId": "68b9478100278233a13c",
+    "engineerName": "Nadeem Khan ",
+    "amount": "375",
+    "date": "2025-09-11T15:16:35.290Z",
+    "createdAt": "2025-09-11T15:16:36.453+00:00",
+    "updatedAt": "2025-09-11T15:16:36.453+00:00"
+  },
+  {
+    "id": "68c550880001f90c4776",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "562.5",
+    "date": "2025-09-13T11:07:52.031Z",
+    "createdAt": "2025-09-13T11:07:53.008+00:00",
+    "updatedAt": "2025-09-13T11:07:53.008+00:00"
+  },
+  {
+    "id": "68c5509d00047476e360",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "712.5",
+    "date": "2025-09-13T11:08:13.071Z",
+    "createdAt": "2025-09-13T11:08:14.076+00:00",
+    "updatedAt": "2025-09-13T11:08:14.076+00:00"
+  },
+  {
+    "id": "68c58c9f0008ee4f4a01",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "50",
+    "date": "2025-09-13T15:24:15.142Z",
+    "createdAt": "2025-09-13T15:24:22.569+00:00",
+    "updatedAt": "2025-09-13T15:24:22.569+00:00"
+  },
+  {
+    "id": "68c58cb40013c341b9e9",
+    "engineerId": "68a98f050014d0455e45",
+    "engineerName": "Amaan",
+    "amount": "1375",
+    "date": "2025-09-13T15:24:36.316Z",
+    "createdAt": "2025-09-13T15:24:43.729+00:00",
+    "updatedAt": "2025-09-13T15:24:43.729+00:00"
+  },
+  {
+    "id": "68c58dbe000ea7ab9686",
+    "engineerId": "68a98f050014d0455e45",
+    "engineerName": "Amaan",
+    "amount": "50",
+    "date": "2025-09-13T15:29:02.235Z",
+    "createdAt": "2025-09-13T15:29:09.647+00:00",
+    "updatedAt": "2025-09-13T15:29:09.647+00:00"
+  },
+  {
+    "id": "68c79e750039bb2e5e30",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "100",
+    "date": "2025-09-15T05:04:53.923Z",
+    "createdAt": "2025-09-15T05:04:55.127+00:00",
+    "updatedAt": "2025-09-15T05:04:55.127+00:00"
+  },
+  {
+    "id": "68c8e8330004fc458487",
+    "engineerId": "68aab618002c81a3639d",
+    "engineerName": "Husnain",
+    "amount": "212.5",
+    "date": "2025-09-16T04:31:47.079Z",
+    "createdAt": "2025-09-16T04:31:48.307+00:00",
+    "updatedAt": "2025-09-16T04:31:48.307+00:00"
+  },
+  {
+    "id": "68c921f5001b695a8ac7",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "875",
+    "date": "2025-09-16T08:38:13.438Z",
+    "createdAt": "2025-09-16T08:38:19.536+00:00",
+    "updatedAt": "2025-09-16T08:38:19.536+00:00"
+  },
+  {
+    "id": "68ca386e00048b783055",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "212.5",
+    "date": "2025-09-17T04:26:22.072Z",
+    "createdAt": "2025-09-17T04:26:22.310+00:00",
+    "updatedAt": "2025-09-17T04:26:22.310+00:00"
+  },
+  {
+    "id": "68cbb8060021cdc444b3",
+    "engineerId": "68aab618002c81a3639d",
+    "engineerName": "Husnain",
+    "amount": "425",
+    "date": "2025-09-18T07:43:02.540Z",
+    "createdAt": "2025-09-18T07:43:02.935+00:00",
+    "updatedAt": "2025-09-18T07:43:02.935+00:00"
+  },
+  {
+    "id": "68ce42d80012361f463c",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "562.5",
+    "date": "2025-09-20T05:59:52.291Z",
+    "createdAt": "2025-09-20T05:59:51.418+00:00",
+    "updatedAt": "2025-09-20T05:59:51.418+00:00"
+  },
+  {
+    "id": "68ce9e7c000cba93b810",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "212.5",
+    "date": "2025-09-20T12:30:52.203Z",
+    "createdAt": "2025-09-20T12:30:52.861+00:00",
+    "updatedAt": "2025-09-20T12:30:52.861+00:00"
+  },
+  {
+    "id": "68d0ebf9002325d4c825",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "50",
+    "date": "2025-09-22T06:26:01.562Z",
+    "createdAt": "2025-09-22T06:26:02.010+00:00",
+    "updatedAt": "2025-09-22T06:26:02.010+00:00"
+  },
+  {
+    "id": "68d7c0e0003194cabdb3",
+    "engineerId": "68ac09690013fd178ad4",
+    "engineerName": "Anjar",
+    "amount": "900",
+    "date": "2025-09-27T10:48:00.793Z",
+    "createdAt": "2025-09-27T10:48:01.568+00:00",
+    "updatedAt": "2025-09-27T10:48:01.568+00:00"
+  },
+  {
+    "id": "68d7c1470028779eba02",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "500",
+    "date": "2025-09-27T10:49:43.647Z",
+    "createdAt": "2025-09-27T10:49:44.582+00:00",
+    "updatedAt": "2025-09-27T10:49:44.582+00:00"
+  },
+  {
+    "id": "68db69fa0013014ebf9e",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "2937.5",
+    "date": "2025-09-30T05:26:18.304Z",
+    "createdAt": "2025-09-30T05:26:19.349+00:00",
+    "updatedAt": "2025-09-30T05:26:19.349+00:00"
+  },
+  {
+    "id": "68de28ff000439d8d397",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "250",
+    "date": "2025-10-02T07:25:51.067Z",
+    "createdAt": "2025-10-02T07:25:52.082+00:00",
+    "updatedAt": "2025-10-02T07:25:52.082+00:00"
+  },
+  {
+    "id": "68de6f610007116f4305",
+    "engineerId": "68b7da07002e54cd4b04",
+    "engineerName": "Afaak",
+    "amount": "200",
+    "date": "2025-10-02T12:26:09.113Z",
+    "createdAt": "2025-10-02T12:26:10.091+00:00",
+    "updatedAt": "2025-10-02T12:26:10.091+00:00"
+  }
+]
