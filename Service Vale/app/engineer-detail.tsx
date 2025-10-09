@@ -152,18 +152,12 @@ const EngineerDetailScreen = () => {
         commissions: newCommissions
       }));
 
-      if (dateFilter) {
-        const startOfDay = new Date(dateFilter);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(dateFilter);
-        endOfDay.setHours(23, 59, 59, 999);
-        filterByDateRange(startOfDay, endOfDay);
-      } else {
-        setFilteredTransactions(prev => ({
-          commissions: newCommissions,
-          payments: prev.payments
-        }));
-      }
+      // Always update filteredTransactions with the new data
+      setFilteredTransactions(prev => ({
+        ...prev,
+        commissions: newCommissions
+      }));
+
     } catch (error) {
       console.error('Error fetching commissions:', error);
       throw error;
@@ -212,12 +206,12 @@ const EngineerDetailScreen = () => {
         payments: paymentSections
       }));
 
-      if (!dateFilter) {
-        setFilteredTransactions(prev => ({
-          ...prev,
-          payments: paymentSections
-        }));
-      }
+      // Always update filteredTransactions with the new data
+      setFilteredTransactions(prev => ({
+        ...prev,
+        payments: paymentSections
+      }));
+
     } catch (error) {
       console.error('Error fetching payments:', error);
       throw error;
@@ -226,16 +220,29 @@ const EngineerDetailScreen = () => {
 
   const groupByDate = (items: TransactionItem[], groupByMonth = false): SectionData[] => {
     const grouped: { [key: string]: TransactionItem[] } = {};
+    const now = new Date();
 
     items.forEach(item => {
       const date = new Date(item.date);
       let key: string;
+
       if (groupByMonth) {
-        const now = new Date();
-        const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
-        if (date < oneMonthAgo) {
-          key = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+        // For monthly grouping
+        const monthYear = date.toLocaleDateString('en-IN', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+
+        // Check if this date is from current month
+        const isCurrentMonth = 
+          date.getMonth() === now.getMonth() && 
+          date.getFullYear() === now.getFullYear();
+
+        if (!isCurrentMonth) {
+          // Group by month for previous months
+          key = monthYear;
         } else {
+          // Group by day for current month
           key = date.toLocaleDateString('en-IN', {
             weekday: 'long',
             day: 'numeric',
@@ -244,6 +251,7 @@ const EngineerDetailScreen = () => {
           });
         }
       } else {
+        // Always group by day if not monthly grouping
         key = date.toLocaleDateString('en-IN', {
           weekday: 'long',
           day: 'numeric',
@@ -251,6 +259,7 @@ const EngineerDetailScreen = () => {
           year: 'numeric'
         });
       }
+
       if (!grouped[key]) {
         grouped[key] = [];
       }
@@ -259,9 +268,16 @@ const EngineerDetailScreen = () => {
 
     return Object.keys(grouped)
       .map(key => {
-        const dayTransactions = grouped[key].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const dayTransactions = grouped[key].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
         const totalAmount = dayTransactions.reduce((sum, item) => sum + item.amount, 0);
-        const isMonth = key.split(' ').length === 2;
+        
+        // Check if this is a monthly section (contains month name and year only)
+        const isMonth = key.split(' ').length === 2 && 
+                       !key.toLowerCase().includes('day') &&
+                       !key.toLowerCase().includes('date');
+
         return {
           title: key,
           data: dayTransactions,
@@ -270,12 +286,10 @@ const EngineerDetailScreen = () => {
         };
       })
       .sort((a, b) => {
-        if (a.isMonth && !b.isMonth) return 1;
-        if (!a.isMonth && b.isMonth) return -1;
-        if (a.isMonth && b.isMonth) {
-          return new Date(b.data[0].date).getTime() - new Date(a.data[0].date).getTime();
-        }
-        return new Date(b.data[0].date).getTime() - new Date(a.data[0].date).getTime();
+        // Sort by date, most recent first
+        const dateA = new Date(a.data[0]?.date || 0);
+        const dateB = new Date(b.data[0]?.date || 0);
+        return dateB.getTime() - dateA.getTime();
       });
   };
 
@@ -398,6 +412,7 @@ const EngineerDetailScreen = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
+    
     const filteredPayments = transactions.payments.map(section => ({
       ...section,
       data: section.data.filter(item => {
@@ -405,6 +420,7 @@ const EngineerDetailScreen = () => {
         return itemDate >= startDate && itemDate <= endDate;
       })
     })).filter(section => section.data.length > 0);
+    
     setFilteredTransactions({
       commissions: filteredCommissions,
       payments: filteredPayments
@@ -719,22 +735,15 @@ const EngineerDetailScreen = () => {
                 {section.title}
                 {section.isMonth && " (Monthly Summary)"}
               </Text>
-              {activeTab === 'commissions' && (
-                <Text style={[styles.sectionHeaderAmount]}>
-                  ₹{section.totalAmount?.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
-                </Text>
-              )}
-              {activeTab === 'payments' && (
-                <Text style={styles.sectionHeaderAmount1}>
-                  ₹{section.totalAmount?.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
-                </Text>
-              )}
+              <Text style={[
+                styles.sectionHeaderAmount,
+                
+              ]}>
+                ₹{section.totalAmount?.toLocaleString('en-IN', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </Text>
             </View>
           </View>
         )}

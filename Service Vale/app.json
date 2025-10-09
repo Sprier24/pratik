@@ -67,6 +67,7 @@
       "apiUrl": "https://servicevale-j976.onrender.com",
       "router": {},
       "eas": {
+        "projectId": "ca8dc96e-aeec-4178-8f3c-822f0a6ab5f6"
       }
     }
   }

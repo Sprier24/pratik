@@ -203,49 +203,56 @@ const BillPage = () => {
   };
 
   const fetchBills = async (page = 1, isLoadMore = false) => {
-    if (page === 1) {
-      setIsLoading(true);
+  if (page === 1) {
+    setIsLoading(true);
+  } else {
+    setIsLoadingMore(true);
+  }
+  try {
+    const response = await fetch(TURSO_BASE_URL);
+    const data = await response.json();
+
+    // Sort bills by createdAt date in descending order (newest first)
+    const sortedBills = data.sort((a: Bill, b: Bill) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    const newBills = sortedBills.map((bill: any) => ({
+      ...bill,
+      $id: bill.id,
+      $createdAt: bill.createdAt,
+      serviceCharge: bill.serviceCharge.toString(),
+      gstPercentage: bill.gstPercentage.toString(),
+      total: bill.total.toString(),
+      cashGiven: bill.cashGiven.toString(),
+      change: bill.change.toString(),
+      engineerCommission: bill.engineerCommission.toString()
+    }));
+
+    if (isLoadMore) {
+      const uniqueBills = newBills.filter((newBill: { id: string; }) =>
+        !allBills.some(existingBill => existingBill.id === newBill.id)
+      );
+      setAllBills(prev => [...prev, ...uniqueBills]);
+      setBills(prev => [...prev, ...uniqueBills]);
     } else {
-      setIsLoadingMore(true);
+      setAllBills(newBills);
+      setBills(newBills);
     }
-    try {
-      const response = await fetch(TURSO_BASE_URL);
-      const data = await response.json();
 
-      const newBills = data.map((bill: any) => ({
-        ...bill,
-        $id: bill.id,
-        $createdAt: bill.createdAt,
-        serviceCharge: bill.serviceCharge.toString(),
-        gstPercentage: bill.gstPercentage.toString(),
-        total: bill.total.toString(),
-        cashGiven: bill.cashGiven.toString(),
-        change: bill.change.toString(),
-        engineerCommission: bill.engineerCommission.toString()
-      }));
-
-      if (isLoadMore) {
-        const uniqueBills = newBills.filter((newBill: { id: string; }) =>
-          !allBills.some(existingBill => existingBill.id === newBill.id)
-        );
-        setAllBills(prev => [...prev, ...uniqueBills]);
-        setBills(prev => [...prev, ...uniqueBills]);
-      } else {
-        setAllBills(newBills);
-        setBills(newBills);
-      }
-
-      setTotalPages(Math.ceil(data.length / itemsPerPage));
-      setCurrentPage(page);
-      setTotalBillCount(data.length);
-    } catch (error) {
-      console.error('Error fetching bills:', error);
-      Alert.alert('Error', 'Failed to fetch bills');
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  };
+    setTotalPages(Math.ceil(data.length / itemsPerPage));
+    setCurrentPage(page);
+    setTotalBillCount(data.length);
+  } catch (error) {
+    console.error('Error fetching bills:', error);
+    Alert.alert('Error', 'Failed to fetch bills');
+  } finally {
+    setIsLoading(false);
+    setIsLoadingMore(false);
+  }
+};
 
   const fetchEngineerBillCounts = async () => {
     try {
