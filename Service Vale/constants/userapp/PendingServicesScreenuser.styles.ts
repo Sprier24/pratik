@@ -219,4 +219,19 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
+  createBillButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#5E72E4",
+    padding: 12,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  createBillButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
 });

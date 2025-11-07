@@ -61,8 +61,8 @@ const CompletedServicesScreenUser = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-            const userDataString = await AsyncStorage.getItem('userData');
-      
+      const userDataString = await AsyncStorage.getItem('userData');
+
       if (!userDataString) {
         Alert.alert('Error', 'User not logged in');
         setLoading(false);
@@ -110,7 +110,7 @@ const CompletedServicesScreenUser = () => {
       }
 
       const ordersData = await response.json();
-      
+
       const filteredOrders = ordersData.result.filter(
         (order: any) => order.serviceboyEmail?.toLowerCase() === email.toLowerCase()
       );
@@ -130,7 +130,7 @@ const CompletedServicesScreenUser = () => {
           const displayHour = hourNum % 12 || 12;
           serviceTimeDisplay = `${displayHour}:${minutes} ${ampm}`;
         }
-        
+
         return {
           id: order.id,
           serviceType: order.serviceType,
@@ -144,7 +144,7 @@ const CompletedServicesScreenUser = () => {
           serviceboyEmail: order.serviceboyEmail,
           serviceDate: serviceDateDisplay,
           serviceTime: serviceTimeDisplay,
-          completedAt: rawCompletedAt 
+          completedAt: rawCompletedAt
         };
       });
 
@@ -288,7 +288,7 @@ const CompletedServicesScreenUser = () => {
               setAllServices(prev => prev.filter(service => service.id !== id));
               setServices(prev => prev.filter(service => service.id !== id));
               setCompletedCount(prev => prev - 1);
-              
+
               const movedService = allServices.find(service => service.id === id);
               if (movedService) {
                 router.push({
@@ -355,18 +355,18 @@ const CompletedServicesScreenUser = () => {
         </View>
       </View>
 
-   <View style={styles.serviceFooter}>
-  <View style={styles.dateContainer}>
-    <MaterialIcons name="check-circle" size={16} color="#718096" />
-    <Text style={styles.dateText}>
-      {item.completedAt
-        ? `${formatToAmPm(item.completedAt)}`
-        : 'Completion time not available'}
-    </Text>
-  </View>
-</View>
+      <View style={styles.serviceFooter}>
+        <View style={styles.dateContainer}>
+          <MaterialIcons name="check-circle" size={16} color="#718096" />
+          <Text style={styles.dateText}>
+            {item.completedAt
+              ? `${formatToAmPm(item.completedAt)}`
+              : 'Completion time not available'}
+          </Text>
+        </View>
+      </View>
 
-      <View style={styles.actionButtons}>
+      {/* <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.createBillButton}
           onPress={() => handleCreateBill(item)}
@@ -382,7 +382,7 @@ const CompletedServicesScreenUser = () => {
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
           <Text style={styles.moveToPendingButtonText}>Move to Pending</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 

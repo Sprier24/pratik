@@ -97,22 +97,22 @@ const BillPage = () => {
   const [engineerCounts, setEngineerCounts] = useState<Record<string, number>>({});
   const [selectedBills, setSelectedBills] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-   const [formData, setFormData] = useState({
-        serviceboyName: '',
-        serviceType: '',
-        customerName: '',
-        contactNumber: '',
-        address: '',
-        serviceCharge: 0,
-        notes: '',
-        paymentMethod: 'Cash',
-        total: '',
-        cashGiven: '',
-        change: '',
-        billNumber: '',
-        signature: '',
-        gstPercentage: 0,
-    });
+  const [formData, setFormData] = useState({
+    serviceboyName: '',
+    serviceType: '',
+    customerName: '',
+    contactNumber: '',
+    address: '',
+    serviceCharge: 0,
+    notes: '',
+    paymentMethod: 'Cash',
+    total: '',
+    cashGiven: '',
+    change: '',
+    billNumber: '',
+    signature: '',
+    gstPercentage: 0,
+  });
   useEffect(() => {
     const loadData = async () => {
       await fetchServiceBoys();
@@ -203,56 +203,56 @@ const BillPage = () => {
   };
 
   const fetchBills = async (page = 1, isLoadMore = false) => {
-  if (page === 1) {
-    setIsLoading(true);
-  } else {
-    setIsLoadingMore(true);
-  }
-  try {
-    const response = await fetch(TURSO_BASE_URL);
-    const data = await response.json();
-
-    // Sort bills by createdAt date in descending order (newest first)
-    const sortedBills = data.sort((a: Bill, b: Bill) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateB - dateA; // Descending order (newest first)
-    });
-
-    const newBills = sortedBills.map((bill: any) => ({
-      ...bill,
-      $id: bill.id,
-      $createdAt: bill.createdAt,
-      serviceCharge: bill.serviceCharge.toString(),
-      gstPercentage: bill.gstPercentage.toString(),
-      total: bill.total.toString(),
-      cashGiven: bill.cashGiven.toString(),
-      change: bill.change.toString(),
-      engineerCommission: bill.engineerCommission.toString()
-    }));
-
-    if (isLoadMore) {
-      const uniqueBills = newBills.filter((newBill: { id: string; }) =>
-        !allBills.some(existingBill => existingBill.id === newBill.id)
-      );
-      setAllBills(prev => [...prev, ...uniqueBills]);
-      setBills(prev => [...prev, ...uniqueBills]);
+    if (page === 1) {
+      setIsLoading(true);
     } else {
-      setAllBills(newBills);
-      setBills(newBills);
+      setIsLoadingMore(true);
     }
+    try {
+      const response = await fetch(TURSO_BASE_URL);
+      const data = await response.json();
 
-    setTotalPages(Math.ceil(data.length / itemsPerPage));
-    setCurrentPage(page);
-    setTotalBillCount(data.length);
-  } catch (error) {
-    console.error('Error fetching bills:', error);
-    Alert.alert('Error', 'Failed to fetch bills');
-  } finally {
-    setIsLoading(false);
-    setIsLoadingMore(false);
-  }
-};
+      // Sort bills by createdAt date in descending order (newest first)
+      const sortedBills = data.sort((a: Bill, b: Bill) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      const newBills = sortedBills.map((bill: any) => ({
+        ...bill,
+        $id: bill.id,
+        $createdAt: bill.createdAt,
+        serviceCharge: bill.serviceCharge.toString(),
+        gstPercentage: bill.gstPercentage.toString(),
+        total: bill.total.toString(),
+        cashGiven: bill.cashGiven.toString(),
+        change: bill.change.toString(),
+        engineerCommission: bill.engineerCommission.toString()
+      }));
+
+      if (isLoadMore) {
+        const uniqueBills = newBills.filter((newBill: { id: string; }) =>
+          !allBills.some(existingBill => existingBill.id === newBill.id)
+        );
+        setAllBills(prev => [...prev, ...uniqueBills]);
+        setBills(prev => [...prev, ...uniqueBills]);
+      } else {
+        setAllBills(newBills);
+        setBills(newBills);
+      }
+
+      setTotalPages(Math.ceil(data.length / itemsPerPage));
+      setCurrentPage(page);
+      setTotalBillCount(data.length);
+    } catch (error) {
+      console.error('Error fetching bills:', error);
+      Alert.alert('Error', 'Failed to fetch bills');
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
   const fetchEngineerBillCounts = async () => {
     try {
@@ -425,114 +425,114 @@ const BillPage = () => {
       userId: 'default-user-id'
     };
 
-  try {
-  const response = await fetch(TURSO_BASE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(billData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-  console.log("✅ Bill saved to DB");
-  
-  const updatedCounts = await fetchEngineerBillCounts();
-  setEngineerCounts(updatedCounts);
-
-  await fetchBills();
-  await fetchTotalBillCount();
-
-  const htmlContent = generateBillHtml({
-    ...billData,
-    engineerCommission: commission,
-  });
-
-  let file;
-  try {
-    file = await Print.printToFileAsync({ html: htmlContent, width: 595, height: 842 });
-    console.log("✅ PDF created", file.uri);
-  } catch (e) {
-    console.error("❌ PDF generation failed", e);
-  }
-
-  if (file?.uri) {
     try {
-      await Sharing.shareAsync(file.uri, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Share Bill',
-        UTI: 'net.whatsapp.pdf',
+      const response = await fetch(TURSO_BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(billData),
       });
-      console.log("✅ Shared successfully");
-    } catch (e) {
-      console.error("❌ Sharing failed", e);
-    }
-  }
 
-  router.push('/rating');
-  await CommissionService.refreshAllEngineerSummaries();
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      console.log("✅ Bill saved to DB");
 
-  setIsFormVisible(false);
-  resetForm();
-  setSignature(null);
+      const updatedCounts = await fetchEngineerBillCounts();
+      setEngineerCounts(updatedCounts);
 
-} catch (error) { }
+      await fetchBills();
+      await fetchTotalBillCount();
+
+      const htmlContent = generateBillHtml({
+        ...billData,
+        engineerCommission: commission,
+      });
+
+      let file;
+      try {
+        file = await Print.printToFileAsync({ html: htmlContent, width: 595, height: 842 });
+        console.log("✅ PDF created", file.uri);
+      } catch (e) {
+        console.error("❌ PDF generation failed", e);
+      }
+
+      if (file?.uri) {
+        try {
+          await Sharing.shareAsync(file.uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Share Bill',
+            UTI: 'net.whatsapp.pdf',
+          });
+          console.log("✅ Shared successfully");
+        } catch (e) {
+          console.error("❌ Sharing failed", e);
+        }
+      }
+
+      router.push('/rating');
+      await CommissionService.refreshAllEngineerSummaries();
+
+      setIsFormVisible(false);
+      resetForm();
+      setSignature(null);
+
+    } catch (error) { }
   };
 
-      const CustomDropdown = ({
-        options,
-        selectedValue,
-        onValueChange,
-        placeholder,
-        style
-    }: {
-        options: { label: string; value: string }[];
-        selectedValue: string;
-        onValueChange: (value: string) => void;
-        placeholder: string;
-        style?: any;
-    }) => {
-        const [isOpen, setIsOpen] = useState(false);
+  const CustomDropdown = ({
+    options,
+    selectedValue,
+    onValueChange,
+    placeholder,
+    style
+  }: {
+    options: { label: string; value: string }[];
+    selectedValue: string;
+    onValueChange: (value: string) => void;
+    placeholder: string;
+    style?: any;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-        return (
-            <View style={[styles.dropdownContainer, style]}>
+    return (
+      <View style={[styles.dropdownContainer, style]}>
+        <TouchableOpacity
+          style={styles.dropdownHeader}
+          onPress={() => setIsOpen(!isOpen)}
+        >
+          <Text style={selectedValue ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
+            {selectedValue || placeholder}
+          </Text>
+          <MaterialIcons
+            name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+            size={24}
+          />
+        </TouchableOpacity>
+
+        {isOpen && (
+          <View style={styles.dropdownList}>
+            <ScrollView
+              style={styles.dropdownScrollView}
+              nestedScrollEnabled={true}
+            >
+              {options.map((option) => (
                 <TouchableOpacity
-                    style={styles.dropdownHeader}
-                    onPress={() => setIsOpen(!isOpen)}
+                  key={option.value}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    onValueChange(option.value);
+                    setIsOpen(false);
+                  }}
                 >
-                    <Text style={selectedValue ? styles.dropdownSelectedText : styles.dropdownPlaceholderText}>
-                        {selectedValue || placeholder}
-                    </Text>
-                    <MaterialIcons
-                        name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                        size={24}
-                    />
+                  <Text style={styles.dropdownItemText}>{option.label}</Text>
                 </TouchableOpacity>
-
-                {isOpen && (
-                    <View style={styles.dropdownList}>
-                        <ScrollView
-                            style={styles.dropdownScrollView}
-                            nestedScrollEnabled={true}
-                        >
-                            {options.map((option) => (
-                                <TouchableOpacity
-                                    key={option.value}
-                                    style={styles.dropdownItem}
-                                    onPress={() => {
-                                        onValueChange(option.value);
-                                        setIsOpen(false);
-                                    }}
-                                >
-                                    <Text style={styles.dropdownItemText}>{option.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-                )}
-            </View>
-        );
-    };
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    );
+  };
 
 
   const generateBillHtml = (bill: Bill) => {
@@ -1122,72 +1122,72 @@ const BillPage = () => {
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
-                   {/* Service Type Dropdown */}
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Service Type*</Text>
-                            <CustomDropdown
-                                options={SERVICE_TYPES.map(type => ({ label: type, value: type }))}
-                                selectedValue={form.serviceType}
-                                onValueChange={(value) => handleChange('serviceType', value)}
-                                placeholder="Select service type"
-                            />
-                        </View>
+              {/* Service Type Dropdown */}
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Service Type*</Text>
+                <CustomDropdown
+                  options={SERVICE_TYPES.map(type => ({ label: type, value: type }))}
+                  selectedValue={form.serviceType}
+                  onValueChange={(value) => handleChange('serviceType', value)}
+                  placeholder="Select service type"
+                />
+              </View>
 
-                        {/* Engineer Name Dropdown */}
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Engineer Name*</Text>
-                            <CustomDropdown
-                                options={serviceBoys.map(boy => ({ label: boy.name, value: boy.name }))}
-                                selectedValue={form.serviceboyName}
-                                onValueChange={(value) => handleChange('serviceboyName', value)}
-                                placeholder="Select engineer"
-                            />
-                        </View>
+              {/* Engineer Name Dropdown */}
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Engineer Name*</Text>
+                <CustomDropdown
+                  options={serviceBoys.map(boy => ({ label: boy.name, value: boy.name }))}
+                  selectedValue={form.serviceboyName}
+                  onValueChange={(value) => handleChange('serviceboyName', value)}
+                  placeholder="Select engineer"
+                />
+              </View>
 
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Customer Name*</Text>
-                            <TextInput
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Customer Name*</Text>
+                <TextInput
                   style={styles.input}
-                                value={form.customerName}
-                                onChangeText={(text) => handleChange('customerName', text)}
-                                placeholder="Enter customer name"
-                            />
-                        </View>
+                  value={form.customerName}
+                  onChangeText={(text) => handleChange('customerName', text)}
+                  placeholder="Enter customer name"
+                />
+              </View>
 
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Contact Number*</Text>
-                            <TextInput
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Contact Number*</Text>
+                <TextInput
                   style={styles.input}
-                                value={form.contactNumber}
-                                onChangeText={(text) => handleChange('contactNumber', text)}
-                                placeholder="Enter contact number"
-                                keyboardType="numeric"
-                                maxLength={10}
-                            />
-                        </View>
+                  value={form.contactNumber}
+                  onChangeText={(text) => handleChange('contactNumber', text)}
+                  placeholder="Enter contact number"
+                  keyboardType="numeric"
+                  maxLength={10}
+                />
+              </View>
 
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Address*</Text>
-                            <TextInput
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Address*</Text>
+                <TextInput
                   style={styles.input}
-                                value={form.address}
-                                onChangeText={(text) => handleChange('address', text)}
-                                placeholder="Enter address"
-                                multiline
-                                numberOfLines={3}
-                            />
-                        </View>
+                  value={form.address}
+                  onChangeText={(text) => handleChange('address', text)}
+                  placeholder="Enter address"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
 
-                        <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Service Charge (₹)*</Text>
-                            <TextInput
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Service Charge (₹)*</Text>
+                <TextInput
                   style={styles.input}
-                                value={form.serviceCharge.toString()}
-                                onChangeText={(text) => handleChange('serviceCharge', text)}
-                                placeholder="Enter service charge"
-                                keyboardType="decimal-pad"
-                            />
-                        </View>
+                  value={form.serviceCharge.toString()}
+                  onChangeText={(text) => handleChange('serviceCharge', text)}
+                  placeholder="Enter service charge"
+                  keyboardType="decimal-pad"
+                />
+              </View>
 
 
               <View style={styles.formGroup}>

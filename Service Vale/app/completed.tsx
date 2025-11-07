@@ -438,21 +438,21 @@ const AdminCompletedServicesScreen = () => {
       </View>
 
     <View style={styles.actionButtons}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.whatsappButton}
           onPress={() => handleCreateBill(item)}
         >
           <MaterialIcons name="receipt-long" size={20} color="#FFF" />
           <Text style={styles.whatsappButtonText}>Bill</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.completeButton}
           onPress={() => handleMoveToPending(item.id)}
         >
           <MaterialIcons name="pending-actions" size={20} color="#FFF" />
           <Text style={styles.completeButtonText}>Pending</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.deleteButton}

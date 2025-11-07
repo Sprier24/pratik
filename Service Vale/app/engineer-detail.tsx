@@ -152,7 +152,6 @@ const EngineerDetailScreen = () => {
         commissions: newCommissions
       }));
 
-      // Always update filteredTransactions with the new data
       setFilteredTransactions(prev => ({
         ...prev,
         commissions: newCommissions

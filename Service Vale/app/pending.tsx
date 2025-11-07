@@ -16,15 +16,15 @@ type Service = {
   serviceType: string;
   clientName: string;
   address: string;
-  phoneNumber: string;
-  billAmount: string;
+  phone: string;
+  amount: string;
   status: string;
   createdAt: string;
-  serviceboyName: string;
+  serviceBoy: string;
   serviceDate: string;
   serviceTime: string;
-  serviceboyEmail: string;
-  serviceboyContactNumber: string;
+  serviceBoyEmail: string;
+  serviceBoyContactNumber: string;
 };
 
 type User = {
@@ -38,8 +38,8 @@ const PendingServicesScreen = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [serviceBoys, setServiceBoys] = useState<User[]>([]);
-  const [selectedServiceBoy, setSelectedServiceBoy] = useState<string | null>(
+  const [serviceBoys, setserviceBoys] = useState<User[]>([]);
+  const [selectedserviceBoy, setSelectedserviceBoy] = useState<string | null>(
     params.engineer ? String(params.engineer) : null
   );
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -54,15 +54,15 @@ const PendingServicesScreen = () => {
 
   const updateUrlParams = (engineer: string | null, date: Date | null) => {
     const newParams: Record<string, string> = {};
-    
+
     if (engineer) {
       newParams.engineer = engineer;
     }
-    
+
     if (date) {
       newParams.date = date.toISOString();
     }
-    
+
     router.setParams(newParams);
   };
 
@@ -104,21 +104,21 @@ const PendingServicesScreen = () => {
           serviceType: service.serviceType,
           clientName: service.clientName,
           address: service.address,
-          phoneNumber: service.phoneNumber,
-          billAmount: service.billAmount,
+          phone: service.phoneNumber,
+          amount: service.amount,
           status: service.status,
           createdAt: service.createdAt,
-          serviceboyName: service.serviceboyName,
-          serviceboyEmail: service.serviceboyEmail,
-          serviceboyContactNumber: service.serviceboyContactNumber,
+          serviceBoy: service.serviceBoy,
+          serviceBoyEmail: service.serviceBoyEmail,
+          serviceBoyContactNumber: service.serviceBoyContactNumber,
           serviceDate: displayDate,
           serviceTime: displayTime
         };
       });
 
       setAllServices(formattedServices);
-      
-      applyFilters(selectedServiceBoy, dateFilter, formattedServices);
+
+      applyFilters(selectedserviceBoy, dateFilter, formattedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
       Alert.alert('Error', 'Failed to load services');
@@ -172,30 +172,30 @@ const PendingServicesScreen = () => {
     }
   };
 
-  const fetchServiceBoys = async () => {
+  const fetchserviceBoys = async () => {
     try {
       const response = await fetch(ENGINEER_URL);
       const data = await response.json();
 
       if (data.result && Array.isArray(data.result)) {
-        setServiceBoys(data.result.map((engineer: any) => ({
+        setserviceBoys(data.result.map((engineer: any) => ({
           id: engineer.id,
           name: engineer.engineerName
         })));
       } else {
         if (Array.isArray(data)) {
-          setServiceBoys(data.map((engineer: any) => ({
+          setserviceBoys(data.map((engineer: any) => ({
             id: engineer.id,
             name: engineer.engineerName
           })));
         } else {
           console.error('Unexpected API response format:', data);
-          setServiceBoys([]);
+          setserviceBoys([]);
         }
       }
     } catch (error) {
       console.error('Error fetching service boys:', error);
-      setServiceBoys([]);
+      setserviceBoys([]);
     }
   };
 
@@ -204,7 +204,7 @@ const PendingServicesScreen = () => {
       await fetchAllServices();
       await fetchTotalPendingCount();
       await fetchEngineerCounts();
-      await fetchServiceBoys();
+      await fetchserviceBoys();
     };
 
     loadData();
@@ -217,21 +217,21 @@ const PendingServicesScreen = () => {
           serviceType: newService.serviceType,
           clientName: newService.clientName,
           address: newService.address,
-          phoneNumber: newService.phoneNumber,
-          billAmount: newService.billAmount,
+          phone: newService.phoneNumber,
+          amount: newService.amount,
           status: 'pending',
           createdAt: newService.createdAt,
-          serviceboyName: newService.serviceboyName,
+          serviceBoy: newService.serviceBoy,
           serviceDate: newService.serviceDate ?
             newService.serviceDate.split('-').reverse().join('/') : '',
           serviceTime: newService.serviceTime || '',
-          serviceboyEmail: newService.serviceboyEmail || '',
-          serviceboyContactNumber: newService.serviceboyContactNumber || ''
+          serviceBoyEmail: newService.serviceBoyEmail || '',
+          serviceBoyContactNumber: newService.serviceBoyContactNumber || ''
         };
 
         setAllServices(prev => [formattedService, ...prev]);
         setServices(prev => {
-          if ((!selectedServiceBoy || selectedServiceBoy === newService.serviceboyName) &&
+          if ((!selectedserviceBoy || selectedserviceBoy === newService.serviceBoy) &&
             (!dateFilter || isSameDay(new Date(newService.serviceDate.split('-').join('/')), dateFilter))) {
             return [formattedService, ...prev];
           }
@@ -244,57 +244,75 @@ const PendingServicesScreen = () => {
     }
   }, [params.newService]);
 
-  const handleComplete = async (id: string) => {
-    Alert.alert(
-      'Complete Service',
-      'Are you sure this service is completed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Complete',
-          onPress: async () => {
-            try {
-              const response = await fetch(`${BASE_URL}/${id}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  status: 'completed',
-                  completedAt: new Date().toISOString()
-                })
-              });
+  // const handleComplete = async (id: string) => {
+  //   Alert.alert(
+  //     'Complete Service',
+  //     'Are you sure this service is completed?',
+  //     [
+  //       { text: 'Cancel', style: 'cancel' },
+  //       {
+  //         text: 'Complete',
+  //         onPress: async () => {
+  //           try {
+  //             const response = await fetch(`${BASE_URL}/${id}`, {
+  //               method: 'PUT',
+  //               headers: {
+  //                 'Content-Type': 'application/json',
+  //               },
+  //               body: JSON.stringify({
+  //                 status: 'completed',
+  //                 completedAt: new Date().toISOString()
+  //               })
+  //             });
 
-              if (!response.ok) {
-                throw new Error('Failed to complete service');
-              }
+  //             if (!response.ok) {
+  //               throw new Error('Failed to complete service');
+  //             }
 
-              setTotalPendingCount(prev => prev - 1);
-              await fetchEngineerCounts();
-              setAllServices(prev => prev.filter(service => service.id !== id));
-              setServices(prev => prev.filter(service => service.id !== id));
+  //             setTotalPendingCount(prev => prev - 1);
+  //             await fetchEngineerCounts();
+  //             setAllServices(prev => prev.filter(service => service.id !== id));
+  //             setServices(prev => prev.filter(service => service.id !== id));
 
-              const completedService = allServices.find(service => service.id === id);
-              if (completedService) {
-                router.push({
-                  pathname: '/completed',
-                  params: {
-                    completedService: JSON.stringify({
-                      ...completedService,
-                      status: 'completed',
-                      completedAt: new Date().toISOString()
-                    })
-                  }
-                });
-              }
-            } catch (error) {
-              console.error('Error completing service:', error);
-              Alert.alert('Error', 'Failed to complete service');
-            }
-          }
-        }
-      ]
-    );
+  //             const completedService = allServices.find(service => service.id === id);
+  //             if (completedService) {
+  //               router.push({
+  //                 pathname: '/completed',
+  //                 params: {
+  //                   completedService: JSON.stringify({
+  //                     ...completedService,
+  //                     status: 'completed',
+  //                     completedAt: new Date().toISOString()
+  //                   })
+  //                 }
+  //               });
+  //             }
+  //           } catch (error) {
+  //             console.error('Error completing service:', error);
+  //             Alert.alert('Error', 'Failed to complete service');
+  //           }
+  //         }
+  //       }
+  //     ]
+  //   );
+  // };
+
+  const handleCreateBill = (service: Service) => {
+    router.push({
+      pathname: '/bill',
+      params: {
+        serviceData: JSON.stringify({
+          serviceType: service.serviceType,
+          serviceBoy: service.serviceBoy,
+          clientName: service.clientName,
+          address: service.address,
+          phone: service.phone,
+          serviceCharge: service.amount,
+          serviceDate: service.serviceDate,
+          serviceTime: service.serviceTime,
+        })
+      }
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -337,15 +355,15 @@ const PendingServicesScreen = () => {
     }
     if (selectedDate) {
       setDateFilter(selectedDate);
-      updateUrlParams(selectedServiceBoy, selectedDate);
-      applyFilters(selectedServiceBoy, selectedDate);
+      updateUrlParams(selectedserviceBoy, selectedDate);
+      applyFilters(selectedserviceBoy, selectedDate);
     }
   };
 
   const applyFilters = (serviceBoy: string | null, date: Date | null, servicesToFilter = allServices) => {
     let filtered = servicesToFilter;
     if (serviceBoy) {
-      filtered = filtered.filter(service => service.serviceboyName === serviceBoy);
+      filtered = filtered.filter(service => service.serviceBoy === serviceBoy);
     }
     if (date) {
       filtered = filtered.filter(service => {
@@ -365,21 +383,21 @@ const PendingServicesScreen = () => {
     fetchEngineerCounts();
   };
 
-  const filterServices = (serviceBoyName: string | null) => {
-    setSelectedServiceBoy(serviceBoyName);
-    updateUrlParams(serviceBoyName, dateFilter);
-    applyFilters(serviceBoyName, dateFilter);
+  const filterServices = (serviceBoy: string | null) => {
+    setSelectedserviceBoy(serviceBoy);
+    updateUrlParams(serviceBoy, dateFilter);
+    applyFilters(serviceBoy, dateFilter);
     setFilterModalVisible(false);
   };
 
   const clearDateFilter = () => {
     setDateFilter(null);
-    updateUrlParams(selectedServiceBoy, null);
-    applyFilters(selectedServiceBoy, null);
+    updateUrlParams(selectedserviceBoy, null);
+    applyFilters(selectedserviceBoy, null);
   };
 
-  const clearServiceBoyFilter = () => {
-    setSelectedServiceBoy(null);
+  const clearserviceBoyFilter = () => {
+    setSelectedserviceBoy(null);
     updateUrlParams(null, dateFilter);
     applyFilters(null, dateFilter);
   };
@@ -391,11 +409,11 @@ const PendingServicesScreen = () => {
       `📅 Date: ${service.serviceDate}\n` +
       `⏰ Time: ${service.serviceTime}\n\n` +
       `Service Engineer Details:\n` +
-      `👨‍🔧 Engineer Name: ${service.serviceboyName}\n` +
-      `Service Charge: ₹${service.billAmount}\n\n` +
+      `👨‍🔧 Engineer Name: ${service.serviceBoy}\n` +
+      `Service Charge: ₹${service.amount}\n\n` +
       `Please be ready for the service. For any queries, contact us: 635-320-2602\n\n` +
       `Thank you for choosing our service!`;
-    const phone = service.phoneNumber.replace(/\D/g, '');
+    const phone = service.phone.replace(/\D/g, '');
     const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
@@ -441,13 +459,13 @@ const PendingServicesScreen = () => {
 
         <View style={styles.detailRow}>
           <MaterialIcons name="phone" size={20} color="#718096" />
-          <Text style={styles.detailText}>{item.phoneNumber}</Text>
+          <Text style={styles.detailText}>{item.phone}</Text>
         </View>
 
         <View style={styles.detailRow}>
           <MaterialCommunityIcons name="currency-inr" size={20} color="#718096" />
           <Text style={styles.detailText}>
-            {isNaN(Number(item.billAmount)) ? '0' : Number(item.billAmount).toLocaleString('en-IN')}
+            {isNaN(Number(item.amount)) ? '0' : Number(item.amount).toLocaleString('en-IN')}
           </Text>
         </View>
       </View>
@@ -461,7 +479,7 @@ const PendingServicesScreen = () => {
         </View>
 
         <Text style={styles.serviceBoyText}>
-          {item.serviceboyName}
+          {item.serviceBoy}
         </Text>
       </View>
 
@@ -475,11 +493,11 @@ const PendingServicesScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.completeButton}
-          onPress={() => handleComplete(item.id)}
+          style={styles.billbutton}
+          onPress={() => handleCreateBill(item)}
         >
-          <MaterialIcons name="check-circle" size={20} color="#FFF" />
-          <Text style={styles.completeButtonText}>Complete</Text>
+          <MaterialIcons name="receipt-long" size={20} color="#FFF" />
+          <Text style={styles.whatsappButtonText}>Bill</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -500,7 +518,7 @@ const PendingServicesScreen = () => {
           <TouchableOpacity onPress={() => router.push('/home')}>
             <Feather name="arrow-left" size={25} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pending Services</Text>
+          <Text style={styles.headerTitle}>Jobs Services</Text>
         </View>
 
         <View style={styles.headerCount}>
@@ -510,15 +528,15 @@ const PendingServicesScreen = () => {
 
       <View style={styles.filterContainer}>
         <TouchableOpacity
-          style={[styles.filterButton, selectedServiceBoy && styles.activeFilter]}
+          style={[styles.filterButton, selectedserviceBoy && styles.activeFilter]}
           onPress={() => {
             setFilterType('serviceBoy');
             setFilterModalVisible(true);
           }}
         >
-          <MaterialIcons name="engineering" size={20} color={selectedServiceBoy ? "#FFF" : "#5E72E4"} />
-          <Text style={[styles.filterButtonText, selectedServiceBoy && styles.activeFilterText]}>
-            {selectedServiceBoy ? selectedServiceBoy : 'Filter by Engineer'}
+          <MaterialIcons name="engineering" size={20} color={selectedserviceBoy ? "#FFF" : "#5E72E4"} />
+          <Text style={[styles.filterButtonText, selectedserviceBoy && styles.activeFilterText]}>
+            {selectedserviceBoy ? selectedserviceBoy : 'Filter by Engineer'}
           </Text>
         </TouchableOpacity>
 
@@ -533,12 +551,12 @@ const PendingServicesScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {(selectedServiceBoy || dateFilter) && (
+      {(selectedserviceBoy || dateFilter) && (
         <View style={styles.activeFiltersContainer}>
-          {selectedServiceBoy && (
+          {selectedserviceBoy && (
             <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>{selectedServiceBoy}</Text>
-              <TouchableOpacity onPress={clearServiceBoyFilter}>
+              <Text style={styles.filterChipText}>{selectedserviceBoy}</Text>
+              <TouchableOpacity onPress={clearserviceBoyFilter}>
                 <Feather name="x" size={15} color="#FFF" />
               </TouchableOpacity>
             </View>
@@ -629,11 +647,11 @@ const PendingServicesScreen = () => {
         <View style={styles.emptyState}>
           <MaterialIcons name="pending-actions" size={50} color="#A0AEC0" />
           <Text style={styles.emptyText}>
-            {selectedServiceBoy
-              ? `No pending services for ${selectedServiceBoy}`
+            {selectedserviceBoy
+              ? `No jobs services for ${selectedserviceBoy}`
               : dateFilter
-                ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`
-                : 'No pending services'
+                ? `No jobs services on ${format(dateFilter, 'MMMM d, yyyy')}`
+                : 'No jobs services'
             }
           </Text>
         </View>

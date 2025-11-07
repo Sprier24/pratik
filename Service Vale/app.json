@@ -15,7 +15,6 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.CAMERA",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
@@ -24,15 +23,13 @@
         "foregroundImage": "./assets/images/logo__.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.markwatson.service_vale",
+      "package": "com.servicevale.app",
       "intentFilters": [
         {
           "action": "VIEW",
           "data": [
             {
-              "scheme": "https",
-              "host": "cloud.appwrite.io",
-              "pathPrefix": "/v1/recovery"
+              "scheme": "servicevale"
             }
           ],
           "category": [
@@ -67,7 +64,7 @@
       "apiUrl": "https://servicevale-j976.onrender.com",
       "router": {},
       "eas": {
-        "projectId": "ca8dc96e-aeec-4178-8f3c-822f0a6ab5f6"
+        "projectId": "a75f240a-e4d2-4d68-9af8-6e66437b5bbc"
       }
     }
   }

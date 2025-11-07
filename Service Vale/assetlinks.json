@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app", 
+      "package_name": "com.markwatson.service_vale",
+      "sha256_cert_fingerprints": [
+        "93:44:6B:F3:F3:6E:51:8C:DE:73:C6:B0:01:AB:5F:C1:DA:28:B3:A6"
+      ]
+    }
+  }
+]

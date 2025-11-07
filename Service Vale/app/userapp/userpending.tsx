@@ -62,8 +62,8 @@ const PendingServicesScreenUser = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-            const userDataString = await AsyncStorage.getItem('userData');
-      
+      const userDataString = await AsyncStorage.getItem('userData');
+
       if (!userDataString) {
         Alert.alert('Error', 'User not logged in');
         setLoading(false);
@@ -108,7 +108,7 @@ const PendingServicesScreenUser = () => {
       }
 
       const ordersData = await response.json();
-            const filteredOrders = ordersData.result.filter(
+      const filteredOrders = ordersData.result.filter(
         (order: any) => order.serviceboyEmail?.toLowerCase() === email.toLowerCase()
       );
 
@@ -120,7 +120,7 @@ const PendingServicesScreenUser = () => {
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
         const displayHour = hourNum % 12 || 12;
         const displayTime = `${displayHour}:${minutes} ${ampm}`;
-        
+
         return {
           id: order.id,
           serviceType: order.serviceType,
@@ -254,83 +254,101 @@ const PendingServicesScreenUser = () => {
     }
   };
 
-const handleComplete = async (id: string) => {
-  Alert.alert(
-    'Complete Service',
-    'Are you sure this service is completed?',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Complete',
-        onPress: async () => {
-          try {
-            const currentTimestamp = new Date().toISOString()
-            const response = await fetch(`${YOUR_BACKEND_URL}/order/${id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                status: 'completed',
-                completedAt: currentTimestamp 
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to update order');
-            }
-
-            const completedService = services.find(service => service.id === id);
-            if (!completedService) return;
-
-            const completedServiceWithTimestamp = {
-              ...completedService,
-              completedAt: currentTimestamp,
-              formattedCompletedAt: formatToAmPm(currentTimestamp) 
-            };
-
+  const handleComplete = async (id: string) => {
+    Alert.alert(
+      'Complete Service',
+      'Are you sure this service is completed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Complete',
+          onPress: async () => {
             try {
-              await createNotification(
-                `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
-                completedService.serviceboyEmail
-              );
-            } catch (notificationError) {
-              console.warn('Notification failed (service still completed):', notificationError);
-            }
+              const currentTimestamp = new Date().toISOString()
+              const response = await fetch(`${YOUR_BACKEND_URL}/order/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  status: 'completed',
+                  completedAt: currentTimestamp
+                }),
+              });
 
-            setServices(prev => prev.filter(service => service.id !== id));
-            setAllServices(prev => prev.filter(service => service.id !== id));
-            setPendingCount(prev => prev - 1);
-            
-            router.push({
-              pathname: '/userapp/usercompleted',
-              params: {
-                completedService: JSON.stringify(completedServiceWithTimestamp)
+              if (!response.ok) {
+                throw new Error('Failed to update order');
               }
-            });
-          } catch (error) {
-            console.error('Error completing service:', error);
-            Alert.alert('Error', 'Failed to complete service');
+
+              const completedService = services.find(service => service.id === id);
+              if (!completedService) return;
+
+              const completedServiceWithTimestamp = {
+                ...completedService,
+                completedAt: currentTimestamp,
+                formattedCompletedAt: formatToAmPm(currentTimestamp)
+              };
+
+              try {
+                await createNotification(
+                  `Service Completed\n Engineer : ${completedService.serviceBoy}\n Service : ${completedService.serviceType}\n Customer : ${completedService.clientName}\n Date : ${completedService.serviceDate} at ${completedService.serviceTime}`,
+                  completedService.serviceboyEmail
+                );
+              } catch (notificationError) {
+                console.warn('Notification failed (service still completed):', notificationError);
+              }
+
+              setServices(prev => prev.filter(service => service.id !== id));
+              setAllServices(prev => prev.filter(service => service.id !== id));
+              setPendingCount(prev => prev - 1);
+
+              router.push({
+                pathname: '/userapp/usercompleted',
+                params: {
+                  completedService: JSON.stringify(completedServiceWithTimestamp)
+                }
+              });
+            } catch (error) {
+              console.error('Error completing service:', error);
+              Alert.alert('Error', 'Failed to complete service');
+            }
           }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
 
-const formatToAmPm = (isoString: string) => {
-  const date = new Date(isoString);
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
-};
+  const handleCreateBill = (service: Service) => {
+    router.push({
+      pathname: '/userapp/userbill',
+      params: {
+        serviceData: JSON.stringify({
+          clientName: service.clientName,
+          address: service.address,
+          phone: service.phone,
+          serviceType: service.serviceType,
+          amount: service.amount,
+          serviceDate: service.serviceDate,
+          serviceTime: service.serviceTime,
+          serviceBoy: service.serviceBoy
+        })
+      }
+    });
+  };
+
+  const formatToAmPm = (isoString: string) => {
+    const date = new Date(isoString);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}/${month}/${year} • ${hours}:${minutesStr} ${ampm}`;
+  };
 
   const renderServiceItem = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
@@ -354,7 +372,7 @@ const formatToAmPm = (isoString: string) => {
               }
             })}
           >
-            <MaterialIcons name="photo-camera" size={24} color="#5E72E4" />
+            {/* <MaterialIcons name="photo-camera" size={24} color="#5E72E4" /> */}
           </TouchableOpacity>
           <View style={[styles.statusBadge, styles.pendingBadge]}>
             <Text style={styles.statusText}>Pending</Text>
@@ -399,36 +417,36 @@ const formatToAmPm = (isoString: string) => {
 
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={styles.completeButton}
-          onPress={() => handleComplete(item.id)}
+          style={styles.createBillButton}
+          onPress={() => handleCreateBill(item)}
         >
-          <MaterialIcons name="check-circle" size={20} color="#FFF" />
-          <Text style={styles.completeButtonText}>Complete</Text>
+          <MaterialCommunityIcons name="file-document" size={20} color="#FFF" />
+          <Text style={styles.createBillButtonText}>Create Bill</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
-  if (loading && !refreshing) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => router.push('/userapp/home')}>
-              <Feather name="arrow-left" size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Pending Services</Text>
-          </View>
-          <View style={styles.headerCount}>
-            <Text style={styles.headerCountText}>0</Text>
-          </View>
-        </View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#5E72E4" />
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // if (loading && !refreshing) {
+  //   return (
+  //     <SafeAreaView style={styles.container}>
+  //       <View style={styles.header}>
+  //         <View style={styles.headerLeft}>
+  //           <TouchableOpacity onPress={() => router.push('/userapp/home')}>
+  //             <Feather name="arrow-left" size={24} color="#FFF" />
+  //           </TouchableOpacity>
+  //           <Text style={styles.headerTitle}>Jobs Services</Text>
+  //         </View>
+  //         <View style={styles.headerCount}>
+  //           <Text style={styles.headerCountText}>0</Text>
+  //         </View>
+  //       </View>
+  //       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  //         <ActivityIndicator size="large" color="#5E72E4" />
+  //       </View>
+  //     </SafeAreaView>
+  //   );
+  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -437,9 +455,8 @@ const formatToAmPm = (isoString: string) => {
           <TouchableOpacity onPress={() => router.push('/userapp/home')}>
             <Feather name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pending Services</Text>
+          <Text style={styles.headerTitle}>Jobs Services</Text>
         </View>
-
         <View style={styles.headerCount}>
           <Text style={styles.headerCountText}>{pendingCount}</Text>
         </View>
@@ -491,8 +508,8 @@ const formatToAmPm = (isoString: string) => {
           <MaterialIcons name="pending-actions" size={48} color="#A0AEC0" />
           <Text style={styles.emptyText}>
             {dateFilter
-              ? `No pending services on ${format(dateFilter, 'MMMM d, yyyy')}`
-              : 'No pending services'
+              ? `No jobs services on ${format(dateFilter, 'MMMM d, yyyy')}`
+              : 'No jobs services'
             }
           </Text>
         </View>

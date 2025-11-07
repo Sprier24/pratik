@@ -13,8 +13,6 @@ type User = {
   address: string;
   contactNumber: string;
   email: string;
-  aadharNumber: string;
-  panNumber: string;
   city: string;
   createdAt?: string;
   updatedAt?: string;
@@ -25,8 +23,6 @@ const fieldLabels = {
   contactNumber: 'Contact Number',
   email: 'Email Address',
   address: 'Address',
-  panNumber: 'PAN Number',
-  aadharNumber: 'Aadhar Number',
   city: 'Hometown',
 };
 
@@ -88,8 +84,6 @@ const UserDetailsForm = () => {
     address: '',
     contactNumber: '',
     email: '',
-    aadharNumber: '',
-    panNumber: '',
     city: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -134,26 +128,13 @@ const UserDetailsForm = () => {
     }
   };
 
-  const cleanDocumentData = (doc: any) => {
-    const {
-      engineerName,
-      address,
-      contactNumber,
-      email,
-      aadharNumber,
-      panNumber,
-      city
-    } = doc;
-    return {
-      engineerName: engineerName ?? '',
-      address: address ?? '',
-      contactNumber: contactNumber ?? '',
-      email: email ?? '',
-      aadharNumber: aadharNumber ?? '',
-      panNumber: panNumber ?? '',
-      city: city ?? ''
-    };
-  };
+  const cleanDocumentData = (doc: any) => ({
+    engineerName: doc.engineerName ?? '',
+    address: doc.address ?? '',
+    contactNumber: doc.contactNumber ?? '',
+    email: doc.email ?? '',
+    city: doc.city ?? '',
+  });
 
   const handleSubmit = async () => {
     if (validateForm()) {
@@ -164,8 +145,6 @@ const UserDetailsForm = () => {
           address: formData.address,
           contactNumber: formData.contactNumber,
           email: formData.email,
-          aadharNumber: formData.aadharNumber,
-          panNumber: formData.panNumber,
           city: formData.city
         };
 
@@ -238,8 +217,6 @@ const UserDetailsForm = () => {
       address: '',
       contactNumber: '',
       email: '',
-      aadharNumber: '',
-      panNumber: '',
       city: '',
     });
     setErrors({});
@@ -266,16 +243,6 @@ const UserDetailsForm = () => {
 
     if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email address';
-      valid = false;
-    }
-
-    if (!formData.aadharNumber.trim() || !/^[0-9]{12}$/.test(formData.aadharNumber)) {
-      newErrors.aadharNumber = 'Invalid Aadhar number (12 digits required)';
-      valid = false;
-    }
-
-    if (!formData.panNumber.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNumber)) {
-      newErrors.panNumber = 'Invalid PAN number (e.g., ABCDE1234F)';
       valid = false;
     }
 
@@ -361,15 +328,11 @@ const UserDetailsForm = () => {
                       value={currentValue}
                       onChangeText={(text) => handleChange(key, text)}
                       keyboardType={
-                        key === 'contactNumber' || key === 'aadharNumber' ? 'numeric' :
+                        key === 'contactNumber' ? 'numeric' :
                           key === 'email' ? 'email-address' : 'default'
                       }
-                      maxLength={
-                        key === 'panNumber' ? 10 :
-                          key === 'aadharNumber' ? 12 :
-                            key === 'contactNumber' ? 10 : undefined
-                      }
-                      autoCapitalize={key === 'panNumber' ? 'characters' : 'words'}
+                      maxLength={key === 'contactNumber' ? 10 : undefined}
+                      autoCapitalize="words"
                     />
                     {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
                   </View>
@@ -471,19 +434,6 @@ const UserDetailsForm = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Hometown :</Text>
                       <Text style={styles.detailValue}>{selectedUser.city}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Document Details</Text>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Aadhar Number :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.aadharNumber}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>PAN Number :</Text>
-                      <Text style={styles.detailValue}>{selectedUser.panNumber}</Text>
                     </View>
                   </View>
 

@@ -15,8 +15,6 @@ const ProfileScreen = () => {
         email: '',
         phone: '',
         address: '',
-        aadharNo: '',
-        panNo: '',
         city: '',
     });
 
@@ -27,7 +25,7 @@ const ProfileScreen = () => {
         const fetchUserData = async () => {
             try {
                 const userDataString = await AsyncStorage.getItem('userData');
-                
+
                 if (!userDataString) {
                     Alert.alert('Error', 'User not logged in');
                     setLoading(false);
@@ -49,7 +47,7 @@ const ProfileScreen = () => {
                 }
 
                 const engineersData = await response.json();
-                                const engineer = engineersData.result.find(
+                const engineer = engineersData.result.find(
                     (eng: any) => eng.email.toLowerCase() === userEmail.toLowerCase()
                 );
 
@@ -59,14 +57,12 @@ const ProfileScreen = () => {
                         email: engineer.email || userEmail,
                         phone: engineer.contactNumber || '',
                         address: engineer.address || '',
-                        aadharNo: engineer.aadharNumber || '',
-                        panNo: engineer.panNumber || '',
                         city: engineer.city || '',
                     });
                 } else {
                     Alert.alert('Error', 'Engineer profile not found');
                 }
-                
+
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -132,18 +128,6 @@ const ProfileScreen = () => {
                             <View style={styles.infoItem}>
                                 <MaterialIcons name="location-city" size={20} color="#5E72E4" />
                                 <Text style={styles.infoText}>Hometown : {user.city || 'Not provided'}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.infoSection}>
-                            <Text style={styles.sectionTitle}>Document Information</Text>
-                            <View style={styles.infoItem}>
-                                <MaterialCommunityIcons name="card-account-details" size={20} color="#5E72E4" />
-                                <Text style={styles.infoText}>Aadhar No : {user.aadharNo || 'Not provided'}</Text>
-                            </View>
-                            <View style={styles.infoItem}>
-                                <MaterialCommunityIcons name="card-account-details-outline" size={20} color="#5E72E4" />
-                                <Text style={styles.infoText}>Pan No : {user.panNo || 'Not provided'}</Text>
                             </View>
                         </View>
                     </View>

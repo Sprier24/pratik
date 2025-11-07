@@ -179,7 +179,7 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#EDF2F7",
   },
- serviceHeader: {
+  serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -196,7 +196,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
-    maxWidth: '70%',
+    maxWidth: "70%",
     flexShrink: 1,
   },
   serviceActions: {
@@ -259,6 +259,15 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 15,
     gap: 8,
+  },
+  billbutton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#5E72E4",
+    padding: 12,
+    borderRadius: 8,
   },
   whatsappButton: {
     flex: 1,
@@ -324,13 +333,13 @@ export const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   loadingMoreContainer: {
-  padding: 20,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-},
-loadingMoreText: {
-  marginLeft: 10,
-  color: '#718096',
-},
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    color: "#718096",
+  },
 });

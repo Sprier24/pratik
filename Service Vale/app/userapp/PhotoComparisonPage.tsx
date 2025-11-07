@@ -172,12 +172,6 @@ const PhotoComparisonPage = () => {
             return;
         }
 
-        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!cameraPermission.granted) {
-            Alert.alert('Permission Denied', 'Camera access is required');
-            return;
-        }
-
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.8,

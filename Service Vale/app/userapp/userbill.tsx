@@ -162,7 +162,7 @@ const UserBill = () => {
         console.log('Service charge:', serviceData.amount || serviceData.serviceCharge);
         setForm({
           serviceType: String(serviceData.serviceType || ''),
-          serviceboyName: userName, 
+          serviceboyName: userName,
           customerName: String(serviceData.clientName || ''),
           address: String(serviceData.address || ''),
           contactNumber: String(serviceData.phone || ''),
@@ -210,7 +210,7 @@ const UserBill = () => {
     setShowDatePicker(false);
     if (event.type === 'dismissed') {
       return;
-    } 
+    }
     if (selectedDate) {
       setDateFilter(selectedDate);
       filterByDate(selectedDate);
@@ -957,7 +957,7 @@ const UserBill = () => {
                   : 'No bills generated'
                 }
               </Text>
-              <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
+              {/* <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text> */}
             </View>
           ) : (
             <FlatList
@@ -995,7 +995,7 @@ const UserBill = () => {
                       : 'No bills generated'
                     }
                   </Text>
-                  <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text>
+                  {/* <Text style={styles.emptySubtext}>Go to "Completed Services" and generate a bill</Text> */}
                 </View>
               }
               contentContainerStyle={bills.length === 0 ? { flex: 1, justifyContent: 'center' } : { paddingBottom: 100 }}

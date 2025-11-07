@@ -167,7 +167,7 @@ export const styles = StyleSheet.create({
     paddingTop: 15,
     paddingBottom: 100,
   },
-   serviceCard: {
+  serviceCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
@@ -185,7 +185,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#2D3748",
-    maxWidth: '70%',
+    maxWidth: "70%",
     flexShrink: 1,
   },
   serviceTypeContainer: {
@@ -247,12 +247,12 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
   },
   actionButtons: {
-       flexDirection: "row",
+    flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 15,
     gap: 8,
   },
-    whatsappButton: {
+  whatsappButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -267,6 +267,7 @@ export const styles = StyleSheet.create({
     marginLeft: 3,
   },
   completeButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -330,16 +331,16 @@ export const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   loadingMoreContainer: {
-  padding: 20,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-},
-loadingMoreText: {
-  marginLeft: 10,
-  color: '#718096',
-},
-deleteButton: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    color: "#718096",
+  },
+  deleteButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",

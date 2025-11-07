@@ -440,7 +440,7 @@ const HomeScreenuser = () => {
               <View style={[styles.serviceIconContainer, { backgroundColor: '#FEEBC8' }]}>
                 <MaterialIcons name="pending-actions" size={24} color="#DD6B20" />
               </View>
-              <Text style={styles.serviceCardTitle}>Pending Services</Text>
+              <Text style={styles.serviceCardTitle}>Jobs Services</Text>
             </View>
 
             <Text style={styles.serviceCardCount}>{pendingCount}</Text>

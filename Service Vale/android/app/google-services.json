@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "90978443419",
+    "project_id": "servicevale-7604f",
+    "storage_bucket": "servicevale-7604f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90978443419:android:bc13b010522d30b548263e",
+        "android_client_info": {
+          "package_name": "com.service.servicevale"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLV0m7KtlZm9K6brKE8HY4-RblPQK2kOY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
