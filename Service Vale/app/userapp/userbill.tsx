@@ -26,6 +26,7 @@ type Bill = {
   address: string;
   serviceCharge: string;
   gstPercentage: string;
+  warranty: string;
   paymentMethod: string;
   cashGiven: string;
   change: string;
@@ -42,7 +43,8 @@ const fieldLabels = {
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
-  serviceCharge: 'Service Charge (₹)'
+  serviceCharge: 'Service Charge (₹)',
+  warranty: 'Warranty Time',
 };
 
 const UserBill = () => {
@@ -55,6 +57,7 @@ const UserBill = () => {
     address: '',
     contactNumber: '',
     serviceCharge: '',
+    warranty: '',
   });
 
   const [gstPercentage, setGstPercentage] = useState('0');
@@ -167,6 +170,7 @@ const UserBill = () => {
           address: String(serviceData.address || ''),
           contactNumber: String(serviceData.phone || ''),
           serviceCharge: String(serviceData.amount || serviceData.serviceCharge || ''),
+          warranty: String(serviceData.warranty || ''),
         });
         setIsFormVisible(true);
       } catch (error) {

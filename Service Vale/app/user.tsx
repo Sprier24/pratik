@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  Modal, 
+  SafeAreaView, 
+  ActivityIndicator, 
+  KeyboardAvoidingView, 
+  Platform,
+  RefreshControl // Added missing import
+} from 'react-native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,15 +42,25 @@ const fieldLabels = {
 const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/engineer`;
 
 async function fetchUsers(): Promise<User[]> {
-  const res = await fetch(BASE_URL);
-  const data = await res.json();
+  try {
+    const res = await fetch(BASE_URL);
+    const data = await res.json();
 
-  if (data.result && Array.isArray(data.result)) {
-    return data.result;
+    // Handle both response formats for compatibility
+    if (data.success && Array.isArray(data.result)) {
+      return data.result;
+    }
+    
+    if (data.result && Array.isArray(data.result)) {
+      return data.result;
+    }
+
+    console.error('API did not return expected format:', data);
+    return [];
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return [];
   }
-
-  console.error('API did not return expected format:', data);
-  return [];
 }
 
 async function createUser(user: Omit<User, 'id'>): Promise<string> {
@@ -47,19 +70,36 @@ async function createUser(user: Omit<User, 'id'>): Promise<string> {
     body: JSON.stringify(user),
   });
   const data = await res.json();
-  return data.id;
+  
+  if (data.success) {
+    return data.id;
+  } else {
+    throw new Error(data.message || 'Failed to create engineer');
+  }
 }
 
 async function updateUser(id: string, user: Omit<User, 'id'>): Promise<void> {
-  await fetch(`${BASE_URL}/${id}`, {
+  const res = await fetch(`${BASE_URL}/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user),
   });
+  
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to update engineer');
+  }
 }
 
 async function deleteUser(id: string): Promise<void> {
-  await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${BASE_URL}/${id}`, { 
+    method: 'DELETE' 
+  });
+  
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to delete engineer');
+  }
 }
 
 function formatToAmPm(dateString: string): string {
@@ -88,7 +128,8 @@ const UserDetailsForm = () => {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [submittedUsers, setSubmittedUsers] = useState<User[]>([] as User[]); const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [submittedUsers, setSubmittedUsers] = useState<User[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDetailVisible, setIsUserDetailVisible] = useState(false);
@@ -128,13 +169,22 @@ const UserDetailsForm = () => {
     }
   };
 
-  const cleanDocumentData = (doc: any) => ({
-    engineerName: doc.engineerName ?? '',
-    address: doc.address ?? '',
-    contactNumber: doc.contactNumber ?? '',
-    email: doc.email ?? '',
-    city: doc.city ?? '',
-  });
+  const cleanDocumentData = (doc: any) => {
+    const {
+      engineerName,
+      address,
+      contactNumber,
+      email,
+      city
+    } = doc;
+    return {
+      engineerName: engineerName ?? '',
+      address: address ?? '',
+      contactNumber: contactNumber ?? '',
+      email: email ?? '',
+      city: city ?? ''
+    };
+  };
 
   const handleSubmit = async () => {
     if (validateForm()) {
@@ -153,7 +203,8 @@ const UserDetailsForm = () => {
           const updatedUsers = [...submittedUsers];
           updatedUsers[editingIndex] = {
             ...updatedUsers[editingIndex],
-            ...engineerData
+            ...engineerData,
+            updatedAt: new Date().toISOString()
           };
           setSubmittedUsers(updatedUsers);
           setEditingIndex(null);
@@ -180,8 +231,11 @@ const UserDetailsForm = () => {
   };
 
   const handleChange = (name: string, value: string) => {
-    if (name === 'panNumber') value = value.toUpperCase();
     setFormData({ ...formData, [name]: value });
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleDeleteUser = async (index: number) => {
@@ -220,6 +274,7 @@ const UserDetailsForm = () => {
       city: '',
     });
     setErrors({});
+    setEditingIndex(null);
   };
 
   const validateForm = () => {
@@ -269,13 +324,12 @@ const UserDetailsForm = () => {
     setIsFormVisible(!isFormVisible);
     if (!isFormVisible) {
       resetForm();
-      setEditingIndex(null);
     }
   };
 
-  const filteredUsers = (Array.isArray(submittedUsers) ? submittedUsers : []).filter(user =>
+  const filteredUsers = submittedUsers.filter(user =>
     user.engineerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.contactNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.contactNumber?.includes(searchText) ||
     user.email?.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -283,6 +337,7 @@ const UserDetailsForm = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#5E72E4" />
+        <Text style={{ marginTop: 10, color: '#718096', fontSize: 16 }}>Loading engineers...</Text>
       </View>
     );
   }
@@ -305,7 +360,17 @@ const UserDetailsForm = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: insets.bottom + 120 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContainer, { paddingBottom: insets.bottom + 120 }]} 
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#5E72E4']}
+            />
+          }
+        >
           {isFormVisible ? (
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle}>
@@ -329,10 +394,12 @@ const UserDetailsForm = () => {
                       onChangeText={(text) => handleChange(key, text)}
                       keyboardType={
                         key === 'contactNumber' ? 'numeric' :
-                          key === 'email' ? 'email-address' : 'default'
+                        key === 'email' ? 'email-address' : 'default'
                       }
                       maxLength={key === 'contactNumber' ? 10 : undefined}
-                      autoCapitalize="words"
+                      autoCapitalize={key === 'email' ? 'none' : 'words'}
+                      multiline={key === 'address'}
+                      numberOfLines={key === 'address' ? 3 : 1}
                     />
                     {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
                   </View>
@@ -343,10 +410,26 @@ const UserDetailsForm = () => {
                 <TouchableOpacity
                   style={[styles.actionButton, styles.submitButton]}
                   onPress={handleSubmit}
+                  disabled={isLoading}
                 >
-                  <Text style={styles.actionButtonText}>
-                    {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
-                  </Text>
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.actionButtonText}>
+                      {editingIndex !== null ? 'Update Engineer' : 'Create Engineer'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: '#A0AEC0' }]}
+                  onPress={() => {
+                    resetForm();
+                    setIsFormVisible(false);
+                  }}
+                  disabled={isLoading}
+                >
+                  <Text style={[styles.actionButtonText]}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -359,9 +442,9 @@ const UserDetailsForm = () => {
                   <Text style={styles.emptySubtext}>Tap the + button to add a new engineer</Text>
                 </View>
               ) : (
-                submittedUsers.map((user) => (
+                filteredUsers.map((user, index) => (
                   <TouchableOpacity
-                    key={user.id}
+                    key={user.id || `user-${index}`}
                     style={styles.userCard}
                     onPress={() => showUserDetails(user)}
                   >
@@ -377,7 +460,7 @@ const UserDetailsForm = () => {
                     <View style={styles.userFooter}>
                       <Text style={styles.userEmail}>{user.email}</Text>
                       <Text style={styles.userDate}>
-                        {new Date(user.createdAt || '').toLocaleDateString()}
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -409,17 +492,17 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Basic Information</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Name :</Text>
+                      <Text style={styles.detailLabel}>Name:</Text>
                       <Text style={styles.detailValue}>{selectedUser.engineerName}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Contact Number :</Text>
+                      <Text style={styles.detailLabel}>Contact Number:</Text>
                       <Text style={styles.detailValue}>{selectedUser.contactNumber}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Email Address :</Text>
+                      <Text style={styles.detailLabel}>Email Address:</Text>
                       <Text style={styles.detailValue}>{selectedUser.email}</Text>
                     </View>
                   </View>
@@ -427,12 +510,12 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Address Details</Text>
                     <View style={styles.detailRow1}>
-                      <Text style={styles.detailLabel}>Address :</Text>
+                      <Text style={styles.detailLabel}>Address:</Text>
                       <Text style={styles.detailValue}>{selectedUser.address}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Hometown :</Text>
+                      <Text style={styles.detailLabel}>Hometown:</Text>
                       <Text style={styles.detailValue}>{selectedUser.city}</Text>
                     </View>
                   </View>
@@ -440,7 +523,7 @@ const UserDetailsForm = () => {
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Additional Information</Text>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Engineer Joined Date :</Text>
+                      <Text style={styles.detailLabel}>Engineer Joined Date:</Text>
                       <Text style={styles.detailValue}>
                         {selectedUser.createdAt ? formatToAmPm(selectedUser.createdAt) : 'N/A'}
                       </Text>
@@ -467,7 +550,10 @@ const UserDetailsForm = () => {
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
                       onPress={() => {
-                        handleDeleteUser(submittedUsers.findIndex(u => u.id === selectedUser.id));
+                        const index = submittedUsers.findIndex(u => u.id === selectedUser.id);
+                        if (index !== -1) {
+                          handleDeleteUser(index);
+                        }
                         closeUserDetails();
                       }}
                     >
@@ -485,6 +571,7 @@ const UserDetailsForm = () => {
       <TouchableOpacity
         style={styles.fab}
         onPress={toggleFormVisibility}
+        disabled={isLoading}
       >
         <Feather name={isFormVisible ? 'x' : 'plus'} size={24} color="#FFF" />
       </TouchableOpacity>
@@ -520,7 +607,7 @@ const UserDetailsForm = () => {
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
         >
@@ -528,7 +615,7 @@ const UserDetailsForm = () => {
             <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={footerStyles.bottomButton}

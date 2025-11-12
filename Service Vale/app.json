@@ -61,7 +61,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://servicevale-j976.onrender.com",
+      "apiUrl": "http://192.168.1.4:3000",
       "router": {},
       "eas": {
         "projectId": "a75f240a-e4d2-4d68-9af8-6e66437b5bbc"

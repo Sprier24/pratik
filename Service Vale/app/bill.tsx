@@ -28,6 +28,7 @@ type Bill = {
   address: string;
   serviceCharge: string;
   gstPercentage: string;
+  warranty: string;
   paymentMethod: string;
   cashGiven: string;
   change: string;
@@ -54,7 +55,8 @@ const fieldLabels = {
   customerName: 'Customer Name',
   address: 'Address',
   contactNumber: 'Contact Number',
-  serviceCharge: 'Service Charge (₹)'
+  serviceCharge: 'Service Charge (₹)',
+  warranty: 'Warranty Time',
 };
 
 const BillPage = () => {
@@ -68,6 +70,7 @@ const BillPage = () => {
     address: '',
     contactNumber: '',
     serviceCharge: '',
+    warranty: '',
   });
   const [gstPercentage, setGstPercentage] = useState('0');
   const [bills, setBills] = useState<Bill[]>([]);
@@ -104,6 +107,7 @@ const BillPage = () => {
     contactNumber: '',
     address: '',
     serviceCharge: 0,
+    warranty: '',
     notes: '',
     paymentMethod: 'Cash',
     total: '',
@@ -113,6 +117,7 @@ const BillPage = () => {
     signature: '',
     gstPercentage: 0,
   });
+
   useEffect(() => {
     const loadData = async () => {
       await fetchServiceBoys();
@@ -122,13 +127,11 @@ const BillPage = () => {
       await fetchTotalBillCount();
     };
     loadData();
-
     if (params.serviceData) {
       try {
         const serviceData = JSON.parse(params.serviceData as string);
         console.log('Received service data:', serviceData);
         console.log('Service charge:', serviceData.serviceCharge);
-
         setForm({
           serviceType: String(serviceData.serviceType || ''),
           serviceboyName: String(serviceData.serviceBoy || ''),
@@ -136,6 +139,7 @@ const BillPage = () => {
           address: String(serviceData.address || ''),
           contactNumber: String(serviceData.phone || ''),
           serviceCharge: String(serviceData.serviceCharge || ''),
+          warranty: String(serviceData.warranty || ''),
         });
         setIsFormVisible(true);
       } catch (error) {
@@ -166,14 +170,12 @@ const BillPage = () => {
     try {
       const response = await fetch(ENGINEER_URL);
       const data = await response.json();
-
       let engineers = [];
       if (data.result && Array.isArray(data.result)) {
         engineers = data.result;
       } else if (Array.isArray(data)) {
         engineers = data;
       }
-
       const boys = engineers.map((engineer: any) => ({
         id: engineer.id || engineer.$id,
         name: engineer.engineerName || engineer.name
@@ -196,6 +198,7 @@ const BillPage = () => {
         bill.address?.toLowerCase().includes(lowerCaseQuery) ||
         bill.billNumber?.toLowerCase().includes(lowerCaseQuery) ||
         bill.total?.toLowerCase().includes(lowerCaseQuery) ||
+        bill.warranty?.toLowerCase().includes(lowerCaseQuery) ||
         bill.paymentMethod?.toLowerCase().includes(lowerCaseQuery) ||
         (bill.notes && bill.notes.toLowerCase().includes(lowerCaseQuery))
       );
@@ -211,14 +214,11 @@ const BillPage = () => {
     try {
       const response = await fetch(TURSO_BASE_URL);
       const data = await response.json();
-
-      // Sort bills by createdAt date in descending order (newest first)
       const sortedBills = data.sort((a: Bill, b: Bill) => {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
-        return dateB - dateA; // Descending order (newest first)
+        return dateB - dateA;
       });
-
       const newBills = sortedBills.map((bill: any) => ({
         ...bill,
         $id: bill.id,
@@ -230,7 +230,6 @@ const BillPage = () => {
         change: bill.change.toString(),
         engineerCommission: bill.engineerCommission.toString()
       }));
-
       if (isLoadMore) {
         const uniqueBills = newBills.filter((newBill: { id: string; }) =>
           !allBills.some(existingBill => existingBill.id === newBill.id)
@@ -241,7 +240,6 @@ const BillPage = () => {
         setAllBills(newBills);
         setBills(newBills);
       }
-
       setTotalPages(Math.ceil(data.length / itemsPerPage));
       setCurrentPage(page);
       setTotalBillCount(data.length);
@@ -259,21 +257,17 @@ const BillPage = () => {
       const counts: Record<string, number> = {
         'All Service Engineers': 0
       };
-
       const response = await fetch(TURSO_BASE_URL);
       const billsData = await response.json();
       counts['All Service Engineers'] = billsData.length;
-
       const engineersResponse = await fetch(ENGINEER_URL);
       const engineersData = await engineersResponse.json();
-
       let engineers = [];
       if (engineersData.result && Array.isArray(engineersData.result)) {
         engineers = engineersData.result;
       } else if (Array.isArray(engineersData)) {
         engineers = engineersData;
       }
-
       engineers.forEach((engineer: any) => {
         const engineerName = engineer.engineerName || engineer.name;
         const engineerBillCount = billsData.filter(
@@ -281,7 +275,6 @@ const BillPage = () => {
         ).length;
         counts[engineerName] = engineerBillCount;
       });
-
       return counts;
     } catch (error) {
       console.error('Error fetching engineer bill counts:', error);
@@ -355,7 +348,6 @@ const BillPage = () => {
   };
 
   const validateForm = () => {
-
     if (!form.serviceType.trim()) {
       Alert.alert('Error', 'Service type is required');
       return false;
@@ -397,12 +389,10 @@ const BillPage = () => {
       Alert.alert('Error', 'Customer signature is required');
       return;
     }
-
     const billNumber = generateBillNumber();
     const now = new Date();
     const serviceChargeValue = parseFloat(form.serviceCharge);
     const commission = (serviceChargeValue * 0.25).toFixed(2);
-
     const billData = {
       id: billNumber,
       notes: notes.trim() || '',
@@ -414,6 +404,7 @@ const BillPage = () => {
       address: form.address,
       serviceCharge: serviceChargeValue.toString(),
       gstPercentage: gstPercentage,
+      warranty: form.warranty,
       paymentMethod,
       cashGiven: paymentMethod === 'cash' ? cashGiven : '0',
       change: paymentMethod === 'cash' ? calculateChange() : '0',
@@ -424,30 +415,24 @@ const BillPage = () => {
       date: now.toISOString(),
       userId: 'default-user-id'
     };
-
     try {
       const response = await fetch(TURSO_BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(billData),
       });
-
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
       console.log("✅ Bill saved to DB");
-
       const updatedCounts = await fetchEngineerBillCounts();
       setEngineerCounts(updatedCounts);
-
       await fetchBills();
       await fetchTotalBillCount();
-
       const htmlContent = generateBillHtml({
         ...billData,
         engineerCommission: commission,
       });
-
       let file;
       try {
         file = await Print.printToFileAsync({ html: htmlContent, width: 595, height: 842 });
@@ -455,7 +440,6 @@ const BillPage = () => {
       } catch (e) {
         console.error("❌ PDF generation failed", e);
       }
-
       if (file?.uri) {
         try {
           await Sharing.shareAsync(file.uri, {
@@ -468,14 +452,11 @@ const BillPage = () => {
           console.error("❌ Sharing failed", e);
         }
       }
-
       router.push('/rating');
       await CommissionService.refreshAllEngineerSummaries();
-
       setIsFormVisible(false);
       resetForm();
       setSignature(null);
-
     } catch (error) { }
   };
 
@@ -493,7 +474,6 @@ const BillPage = () => {
     style?: any;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
-
     return (
       <View style={[styles.dropdownContainer, style]}>
         <TouchableOpacity
@@ -508,7 +488,6 @@ const BillPage = () => {
             size={24}
           />
         </TouchableOpacity>
-
         {isOpen && (
           <View style={styles.dropdownList}>
             <ScrollView
@@ -533,7 +512,6 @@ const BillPage = () => {
       </View>
     );
   };
-
 
   const generateBillHtml = (bill: Bill) => {
     return `
@@ -737,6 +715,10 @@ const BillPage = () => {
                     <span class="label">Total : </span>
                     <span class="value highlight">₹${bill.total}</span>
                   </div>
+                  <div class="row">
+                    <span class="label">Warranty Time : </span>
+                    <span class="value">${bill.warranty}</span>
+                  </div>
                 </div>       
                 <div class="section payment-details">
                   <div class="section-title">Payment Details</div>
@@ -815,6 +797,7 @@ const BillPage = () => {
       address: '',
       contactNumber: '',
       serviceCharge: '',
+      warranty: '',
     });
     setPaymentMethod('cash');
     setCashGiven('');
@@ -910,7 +893,6 @@ const BillPage = () => {
 
   const handleDeleteMultiple = async () => {
     if (selectedBills.length === 0) return;
-
     Alert.alert(
       'Delete Bills',
       `Are you sure you want to delete ${selectedBills.length} bill(s)?`,
@@ -925,15 +907,12 @@ const BillPage = () => {
                   fetch(`${TURSO_BASE_URL}/${id}`, { method: 'DELETE' })
                 )
               );
-
               const counts = await fetchEngineerBillCounts();
               setEngineerCounts(counts);
               fetchBills();
               fetchTotalBillCount();
-
               setSelectedBills([]);
               setIsSelectionMode(false);
-
               Alert.alert('Success', `${selectedBills.length} bill(s) deleted successfully.`);
             } catch (error) {
               console.error('Error deleting bills:', error);
@@ -1122,7 +1101,6 @@ const BillPage = () => {
           <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 150 }]} keyboardShouldPersistTaps="handled">
             <View style={styles.formContainer}>
               <Text style={styles.sectionTitle1}>Service Details</Text>
-              {/* Service Type Dropdown */}
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Service Type*</Text>
                 <CustomDropdown
@@ -1132,8 +1110,6 @@ const BillPage = () => {
                   placeholder="Select service type"
                 />
               </View>
-
-              {/* Engineer Name Dropdown */}
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Engineer Name*</Text>
                 <CustomDropdown
@@ -1143,7 +1119,6 @@ const BillPage = () => {
                   placeholder="Select engineer"
                 />
               </View>
-
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Customer Name*</Text>
                 <TextInput
@@ -1153,7 +1128,6 @@ const BillPage = () => {
                   placeholder="Enter customer name"
                 />
               </View>
-
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Contact Number*</Text>
                 <TextInput
@@ -1165,7 +1139,6 @@ const BillPage = () => {
                   maxLength={10}
                 />
               </View>
-
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Address*</Text>
                 <TextInput
@@ -1177,7 +1150,6 @@ const BillPage = () => {
                   numberOfLines={3}
                 />
               </View>
-
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>Service Charge (₹)*</Text>
                 <TextInput
@@ -1188,8 +1160,6 @@ const BillPage = () => {
                   keyboardType="decimal-pad"
                 />
               </View>
-
-
               <View style={styles.formGroup}>
                 <Text style={styles.inputLabel}>GST (%)</Text>
                 <TextInput
@@ -1200,14 +1170,19 @@ const BillPage = () => {
                   onChangeText={setGstPercentage}
                 />
               </View>
-
               <View style={styles.paymentSummary}>
                 <View style={[styles.summaryRow]}>
                   <Text style={styles.summaryLabel}>Total Amount :</Text>
                   <Text style={styles.summaryValue}>₹{calculateTotal()}</Text>
                 </View>
               </View>
-
+              <View style={styles.formGroup}>
+                <Text style={styles.inputLabel}>Warrany Time (Optional)</Text>
+                <TextInput
+                  placeholder="Enter warranty time"
+                  style={styles.input}
+                />
+              </View>
               <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
               <TextInput
                 placeholder="Enter any additional notes"
@@ -1218,7 +1193,6 @@ const BillPage = () => {
                 numberOfLines={4}
                 maxLength={500}
               />
-
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.paymentMethodContainer}>
                 <TouchableOpacity
@@ -1248,7 +1222,6 @@ const BillPage = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
-
               {paymentMethod === 'cash' && (
                 <View style={styles.cashPaymentContainer}>
                   <Text style={styles.sectionTitle}>Cash Payment</Text>
@@ -1265,7 +1238,6 @@ const BillPage = () => {
                   </View>
                 </View>
               )}
-
               {signature ? (
                 <View style={styles.signatureContainer}>
                   <Text style={styles.signatureLabel}>Customer Signature</Text>
@@ -1289,7 +1261,6 @@ const BillPage = () => {
                   <Text style={styles.addSignatureText}>Add Customer Signature</Text>
                 </TouchableOpacity>
               )}
-
               <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handleSubmit}
@@ -1418,7 +1389,6 @@ const BillPage = () => {
                     <Feather name="x" size={25} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
-
                 <ScrollView style={styles.modalContent}>
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Bill Details</Text>
@@ -1433,7 +1403,6 @@ const BillPage = () => {
                       </Text>
                     </View>
                   </View>
-
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Customer Details</Text>
                     <View style={styles.detailRow}>
@@ -1449,7 +1418,6 @@ const BillPage = () => {
                       <Text style={styles.detailValue}>{selectedBill.address}</Text>
                     </View>
                   </View>
-
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Service Details</Text>
                     <View style={styles.detailRow}>
@@ -1478,8 +1446,11 @@ const BillPage = () => {
                         ₹{(parseFloat(selectedBill.serviceCharge) * 0.25).toFixed(2)}
                       </Text>
                     </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Warranty Time :</Text>
+                      <Text style={styles.detailValue}>{selectedBill.warranty}</Text>
+                    </View>
                   </View>
-
                   <View style={styles.detailSection}>
                     <Text style={styles.detailSectionTitle}>Payment Details</Text>
                     <View style={styles.detailRow}>
@@ -1499,14 +1470,12 @@ const BillPage = () => {
                       </>
                     )}
                   </View>
-
                   {selectedBill.notes && (
                     <View style={styles.detailSection}>
                       <Text style={styles.detailSectionTitle}>Additional Notes</Text>
                       <Text style={styles.notesText}>{selectedBill.notes}</Text>
                     </View>
                   )}
-
                   {selectedBill?.signature && (
                     <View style={styles.detailSection}>
                       <Text style={styles.detailSectionTitle}>Customer Signature</Text>
@@ -1516,7 +1485,6 @@ const BillPage = () => {
                       />
                     </View>
                   )}
-
                   <View style={styles.modalActions}>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.printButton]}
@@ -1626,7 +1594,6 @@ const BillPage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Service</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/user')}
@@ -1636,7 +1603,6 @@ const BillPage = () => {
           </View>
           <Text style={footerStyles.bottomButtonText}>Engineers</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[footerStyles.bottomButton]}
           onPress={() => router.push('/home')}
@@ -1646,8 +1612,7 @@ const BillPage = () => {
           </View>
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
         >
@@ -1655,8 +1620,7 @@ const BillPage = () => {
             <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
-        </TouchableOpacity>
-
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={[footerStyles.bottomButton, footerStyles.bottomButtonActive]}
           onPress={() => router.push('/bill')}

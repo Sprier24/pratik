@@ -282,7 +282,7 @@ const ServicePage = () => {
           <Text style={[footerStyles.bottomButtonText]}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
         >
@@ -290,7 +290,7 @@ const ServicePage = () => {
             <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={footerStyles.bottomButton}

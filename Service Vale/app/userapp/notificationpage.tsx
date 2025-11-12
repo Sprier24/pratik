@@ -10,20 +10,14 @@ import {
   Alert,
   AppState,
   AppStateStatus,
-  Platform,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { databases, account } from '../../lib/appwrite';
-import { Query } from 'appwrite';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import styles from '../../constants/userapp/notification';
-
-const DATABASE_ID = '681c428b00159abb5e8b';
-const NOTIFICATIONS_COLLECTION = 'note_id';
+import { styles } from '../../constants/userapp/notification';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -39,7 +33,6 @@ const UserNotificationPage = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [previousCount, setPreviousCount] = useState(0);
-  const [userEmail, setUserEmail] = useState('');
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
 
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -90,39 +83,12 @@ const UserNotificationPage = () => {
     }
   };
 
-  const savePushToken = async (email: string, token: string) => {
-    try {
-      const existing = await databases.listDocuments(DATABASE_ID, NOTIFICATIONS_COLLECTION, [
-        Query.equal('userEmail', email),
-        Query.equal('expoPushToken', token),
-        Query.equal('isDeviceToken', true),
-      ]);
-
-      if (existing.documents.length === 0) {
-        await databases.createDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, 'unique()', {
-          userEmail: email,
-          expoPushToken: token,
-          isDeviceToken: true,
-          description: 'Device token',
-          isRead: true,
-        });
-        console.log('Token saved in Appwrite');
-      }
-    } catch (error) {
-      console.error('Failed to save token:', error);
-    }
-  };
-
   useEffect(() => {
     const initialize = async () => {
       try {
         const token = await registerForPushNotificationsAsync();
         if (!token) return;
         setExpoPushToken(token);
-
-        const user = await account.get();
-        setUserEmail(user.email);
-        await savePushToken(user.email, token);
       } catch (error) {
         Alert.alert('Init error', 'Could not initialize notifications.');
       }
@@ -138,7 +104,7 @@ const UserNotificationPage = () => {
     return () => subscription.remove();
   }, []);
 
-  // Polling setup
+  // Polling setup (simulated updates)
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       appState.current = nextAppState;
@@ -147,16 +113,16 @@ const UserNotificationPage = () => {
     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
     intervalRef.current = setInterval(() => {
-      if (appState.current === 'active' && userEmail) {
-        fetchNotifications(userEmail);
+      if (appState.current === 'active') {
+        fetchNotifications();
       }
-    }, 10000); // 🛠️ 10 seconds polling interval
+    }, 10000); // 10 seconds
 
     return () => {
       appStateSubscription.remove();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [userEmail]);
+  }, []);
 
   const playNotificationSound = async () => {
     try {
@@ -181,64 +147,55 @@ const UserNotificationPage = () => {
     }
   };
 
-  const fetchNotifications = async (email: string) => {
+  // Mock local fetch
+  const fetchNotifications = async () => {
     try {
-      const res = await databases.listDocuments(DATABASE_ID, NOTIFICATIONS_COLLECTION, [
-        Query.equal('userEmail', email),
-        Query.equal('isDeviceToken', false),
-        Query.orderDesc('$createdAt'),
-      ]);
+      // Simulate new notification occasionally
+      const shouldAdd = Math.random() > 0.7;
+      let newNotifications = [...notifications];
 
-      const newItems = res.documents.filter((doc) => !doc.isRead);
-
-      if (newItems.length > previousCount) {
-        await playNotificationSound();
-        await sendLocalPushNotification();
-
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
+      if (shouldAdd) {
+        newNotifications = [
+          {
+            id: Date.now().toString(),
+            description: 'This is a new local notification!',
+            createdAt: new Date().toISOString(),
+            isRead: false,
+          },
+          ...newNotifications,
+        ];
       }
 
-      setNotifications(newItems);
-      setPreviousCount(newItems.length);
-    } catch {
+      if (newNotifications.length > previousCount) {
+        await playNotificationSound();
+        await sendLocalPushNotification();
+      }
+
+      setNotifications(newNotifications);
+      setPreviousCount(newNotifications.length);
+    } catch (error) {
       Alert.alert('Error', 'Could not load notifications');
     } finally {
       setRefreshing(false);
     }
   };
 
-  const markAsRead = async (id: string) => {
-    try {
-      await databases.updateDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, id, {
-        isRead: true,
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      fetchNotifications(userEmail);
-    } catch {
-      Alert.alert('Error', 'Could not mark notification as read');
-    }
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    );
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const deleteAllNotifications = async () => {
+  const deleteAllNotifications = () => {
     Alert.alert('Confirm Delete', 'Delete all unread notifications?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          try {
-            const deletions = notifications.map((n) =>
-              databases.deleteDocument(DATABASE_ID, NOTIFICATIONS_COLLECTION, n.$id)
-            );
-            await Promise.all(deletions);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            fetchNotifications(userEmail);
-          } catch {
-            Alert.alert('Error', 'Failed to delete notifications');
-          }
+          setNotifications([]);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         },
       },
     ]);
@@ -246,7 +203,7 @@ const UserNotificationPage = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    if (userEmail) fetchNotifications(userEmail);
+    fetchNotifications();
   };
 
   const renderItem = ({ item }: { item: any }) => (
@@ -256,8 +213,8 @@ const UserNotificationPage = () => {
       </View>
       <Text style={styles.description}>{item.description}</Text>
       <View style={styles.footer}>
-        <Text style={styles.time}>{new Date(item.$createdAt).toLocaleString()}</Text>
-        <TouchableOpacity onPress={() => markAsRead(item.$id)} style={styles.dismissButton}>
+        <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
+        <TouchableOpacity onPress={() => markAsRead(item.id)} style={styles.dismissButton}>
           <Text style={styles.close}>Dismiss</Text>
         </TouchableOpacity>
       </View>
@@ -295,7 +252,7 @@ const UserNotificationPage = () => {
           <FlatList
             scrollEnabled={false}
             data={notifications}
-            keyExtractor={(item) => item.$id}
+            keyExtractor={(item) => item.id}
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
           />

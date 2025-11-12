@@ -39,50 +39,42 @@ const AdminHomeScreen = () => {
     pendingEngineersCount: 0
   });
 
-  // Use the logout hook
   const { logout } = useLogout();
-
-  // Prevent back navigation on home screen
-  useEffect(() => {
-    const onBackPress = () => {
-      // Show confirmation before exiting app
-      Alert.alert(
-        'Exit App',
-        'Are you sure you want to exit?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Exit',
-            style: 'destructive',
-            onPress: () => {
-              // Exit the app
-              BackHandler.exitApp();
-            },
-          },
-        ],
-        { cancelable: true }
-      );
-      return true; 
-    };
-
-  
-    const backHandlerSubscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-    return () => {
-      
-      backHandlerSubscription.remove();
-    };
-  }, []);
+  // useEffect(() => {
+  //   const onBackPress = () => {
+  //     Alert.alert(
+  //       'Exit App',
+  //       'Are you sure you want to exit?',
+  //       [
+  //         {
+  //           text: 'Cancel',
+  //           style: 'cancel',
+  //         },
+  //         {
+  //           text: 'Exit',
+  //           style: 'destructive',
+  //           onPress: () => {
+  //             // Exit the app
+  //             BackHandler.exitApp();
+  //           },
+  //         },
+  //       ],
+  //       { cancelable: true }
+  //     );
+  //     return true;
+  //   };
+  //   const backHandlerSubscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  //   return () => {
+  //     backHandlerSubscription.remove();
+  //   };
+  // }, []);
 
   useEffect(() => {
     const unsubscribe = CommissionService.addAdminListener((data) => {
       const totalComm = data.reduce((sum, engineer) => sum + (engineer.totalCommission || 0), 0);
       const pendingComm = data.reduce((sum, engineer) => sum + (engineer.pendingAmount || 0), 0);
       const pendingEngineers = data.filter(engineer => (engineer.pendingAmount || 0) > 0).length;
-      
+
       setCommissionData({
         totalCommission: totalComm,
         pendingCommission: pendingComm,
@@ -107,7 +99,7 @@ const AdminHomeScreen = () => {
           const totalComm = data.reduce((sum: number, engineer: any) => sum + (parseFloat(engineer.totalCommission) || 0), 0);
           const pendingComm = data.reduce((sum: number, engineer: any) => sum + (parseFloat(engineer.pendingAmount) || 0), 0);
           const pendingEngineers = data.filter((engineer: any) => (parseFloat(engineer.pendingAmount) || 0) > 0).length;
-          
+
           setCommissionData({
             totalCommission: totalComm,
             pendingCommission: pendingComm,
@@ -487,7 +479,7 @@ const AdminHomeScreen = () => {
           <Text style={[footerStyles.bottomButtonText, footerStyles.bottomButtonTextActive]}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={footerStyles.bottomButton}
           onPress={() => router.push('/userphotos')}
         >
@@ -495,7 +487,7 @@ const AdminHomeScreen = () => {
             <MaterialIcons name="photo-library" size={20} color="#5E72E4" />
           </View>
           <Text style={footerStyles.bottomButtonText}>Photos</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={footerStyles.bottomButton}
