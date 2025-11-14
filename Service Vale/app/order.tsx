@@ -1,205 +1,114 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, SafeAreaView, KeyboardAvoidingView, Platform, Linking } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from '../constants/OrderScreen.styles';
-import Constants from 'expo-constants';
 
 const BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/order`;
-const API_BASE_URL = `${Constants.expoConfig?.extra?.apiUrl}/notifications`;
-
-type FormData = {
-  serviceboyName: string;
-  serviceboyEmail: string;
-  serviceboyContactNumber: string;
-  clientName: string;
-  phoneNumber: string;
-  address: string;
-  billAmount: string;
-  serviceType: string;
-  status: string;
-  serviceDate: string;
-  serviceTime: string;
-  timePeriod: 'AM' | 'PM';
-};
-
 
 const OrderScreen = () => {
-  const { applicantName, serviceType, applicantEmail, applicantPhone } = useLocalSearchParams<{
-    applicantName: string;
-    serviceType: string;
-    applicantEmail: string;
-    applicantPhone: string;
-  }>();
+  const { applicantName, serviceType, applicantEmail, applicantPhone } =
+    useLocalSearchParams<{
+      applicantName: string;
+      serviceType: string;
+      applicantEmail: string;
+      applicantPhone: string;
+    }>();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [servicesList, setServicesList] = useState<{ name: string; charge: string }[]>([]);
   const router = useRouter();
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const currentTime = new Date();
-  const defaultHours = currentTime.getHours() > 12 ? currentTime.getHours() - 12 : currentTime.getHours();
-  const defaultMinutes = currentTime.getMinutes();
-  const defaultPeriod = currentTime.getHours() >= 12 ? 'PM' : 'AM';
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const formatDateToDMY = (date: Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
+  useEffect(() => {
+    if (serviceType) {
+      const servicesArray = serviceType.split(',').map(s => s.trim());
+      setServicesList(servicesArray.map(s => ({ name: s, charge: '' })));
+    }
+  }, [serviceType]);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     serviceboyName: applicantName || '',
     serviceboyEmail: applicantEmail || '',
     serviceboyContactNumber: applicantPhone || '',
     clientName: '',
     phoneNumber: '',
     address: '',
-    billAmount: '',
-    serviceType: serviceType || '',
+    billAmount: '0',
     status: 'pending',
-    serviceDate: formatDateToDMY(new Date()),
-    serviceTime: `${defaultHours}:${defaultMinutes < 10 ? '0' + defaultMinutes : defaultMinutes}`,
-    timePeriod: defaultPeriod
+    serviceDate: new Date().toLocaleDateString('en-GB').split('/').join('-'), // DD-MM-YYYY
+    serviceTime: new Date().toISOString().split('T')[1].split('.')[0],
   });
 
-  const handleTimeChange = (text: string) => {
-    let digits = text.replace(/[^0-9:]/g, '');
-    if (digits.length > 2 && !digits.includes(':')) {
-      digits = `${digits.substring(0, 2)}:${digits.substring(2)}`;
-    }
-    if (digits.length > 5) {
-      digits = digits.substring(0, 5);
-    }
-    setFormData(prev => ({
-      ...prev,
-      serviceTime: digits
-    }));
+  // Auto calculate total
+  useEffect(() => {
+    const total = servicesList.reduce((sum, s) => sum + (parseFloat(s.charge) || 0), 0);
+    setFormData(prev => ({ ...prev, billAmount: total.toString() }));
+  }, [servicesList]);
+
+  const handleChargeChange = (index: number, value: string) => {
+    const updated = [...servicesList];
+    updated[index].charge = value;
+    setServicesList(updated);
   };
 
-  const handleChange = (name: keyof FormData, value: string) => {
+  const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleTimePeriodChange = (period: 'AM' | 'PM') => {
-    setFormData(prev => ({ ...prev, timePeriod: period }));
-  };
-
-  const handleDateChange = (_event: any, date?: Date) => {
+  const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
-    if (date) {
-      setSelectedDate(date);
-      handleChange('serviceDate', formatDateToDMY(date));
+    if (selectedDate) {
+      const formattedDate = selectedDate.toLocaleDateString('en-GB').split('/').join('-'); // DD-MM-YYYY
+      setFormData(prev => ({
+        ...prev,
+        serviceDate: formattedDate,
+      }));
     }
   };
 
-  const validateTime = (time: string) => {
-    if (!time.includes(':')) return false;
-    const [hoursStr, minutesStr] = time.split(':');
-    const hours = parseInt(hoursStr, 10);
-    const minutes = parseInt(minutesStr, 10);
-    return !isNaN(hours) && !isNaN(minutes) &&
-      hours >= 1 && hours <= 12 &&
-      minutes >= 0 && minutes <= 59;
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      const timeStr = selectedTime.toTimeString().split(' ')[0];
+      setFormData(prev => ({
+        ...prev,
+        serviceTime: timeStr,
+      }));
+    }
   };
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-    if (!formData.clientName.trim()) {
-      newErrors.clientName = 'Client name is required';
+    if (!formData.clientName || !formData.phoneNumber || !formData.address) return false;
+    if (servicesList.some(s => !s.charge.trim())) {
+      Alert.alert('Missing Charges', 'Please enter charges for all services.');
+      return false;
     }
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Invalid phone number (10 digits required)';
-    }
-    if (!formData.serviceDate) {
-      newErrors.serviceDate = 'Service date is required';
-    }
-    if (!formData.serviceTime || !validateTime(formData.serviceTime)) {
-      newErrors.serviceTime = 'Please enter a valid time (HH:MM) between 1:00 and 12:59';
-    }
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-    if (!formData.billAmount.trim()) {
-      newErrors.billAmount = 'Bill amount is required';
-    }
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const sendManualWhatsAppNotification = (service: FormData) => {
-    const message = `Hello! ${service.clientName},\n\n` +
-      `We are from Service Vale\n\n` +
-      `Your ${service.serviceType} service is scheduled for:\n` +
-      `📅 Date: ${service.serviceDate}\n` +
-      `⏰ Time: ${service.serviceTime}\n\n` +
-      `Service Engineer Details:\n` +
-      `👨‍🔧 Engineer Name: ${service.serviceboyName}\n` +
-      `Service Charge: ₹${service.billAmount}\n\n` +
-      `Please be ready for the service. For any queries, contact us: 635-320-2602\n\n` +
-      `Thank you for choosing our service!`;
-    let phone = service.phoneNumber.replace(/\D/g, '');
-    if (phone.startsWith('0')) {
-      phone = phone.substring(1);
-    }
-    if (!phone.startsWith('91')) {
-      phone = '91' + phone;
-    }
-    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'WhatsApp is not installed');
-      }
-    });
-  };
-
-  const createNotification = async (description: string, userEmail: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          description,
-          userEmail,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create notification');
-      }
-
-      console.log('Notification sent to:', userEmail);
-    } catch (error) {
-      console.error('Notification creation failed:', error);
-    }
+    return true;
   };
 
   const createOrder = async (orderData: any) => {
-    try {
-      const response = await fetch(BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
-    }
+    const res = await fetch(BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData),
+    });
+    if (!res.ok) throw new Error('Failed to create order');
+    return res.json();
   };
 
   const handleSubmit = async () => {
@@ -208,84 +117,22 @@ const OrderScreen = () => {
       return;
     }
 
-    const [hoursStr, minutesStr] = formData.serviceTime.split(':');
-    let hours = parseInt(hoursStr, 10);
-    const minutes = minutesStr;
-    if (formData.timePeriod === 'PM' && hours < 12) {
-      hours += 12;
-    } else if (formData.timePeriod === 'AM' && hours === 12) {
-      hours = 0;
-    }
-
-    const sortableTime = `${String(hours).padStart(2, '0')}:${minutes}`;
-    const [day, month, year] = formData.serviceDate.split('/');
-    const sortableDate = `${year}-${month}-${day}`;
-
     setIsSubmitting(true);
-
     try {
-      const orderData = {
-        serviceboyName: formData.serviceboyName,
-        serviceboyEmail: formData.serviceboyEmail,
-        serviceboyContactNumber: formData.serviceboyContactNumber,
-        clientName: formData.clientName,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        billAmount: formData.billAmount,
-        serviceType: formData.serviceType,
-        status: 'pending',
-        serviceDate: sortableDate,
-        serviceTime: sortableTime
-      };
+      for (const s of servicesList) {
+        const orderData = {
+          ...formData,
+          serviceType: s.name,
+          billAmount: s.charge,
+        };
+        await createOrder(orderData);
+      }
 
-      const response = await createOrder(orderData);
-
-      await createNotification(
-        `You've received a new "${formData.serviceType}" service on ${formData.serviceDate} at ${formData.serviceTime} ${formData.timePeriod}.`,
-        formData.serviceboyEmail
-      );
-
-      sendManualWhatsAppNotification({
-        clientName: formData.clientName,
-        serviceType: formData.serviceType,
-        serviceDate: formData.serviceDate,
-        serviceTime: `${formData.serviceTime} ${formData.timePeriod}`,
-        serviceboyName: formData.serviceboyName,
-        billAmount: formData.billAmount,
-        phoneNumber: formData.phoneNumber,
-        serviceboyEmail: '',
-        serviceboyContactNumber: '',
-        address: '',
-        status: '',
-        timePeriod: 'AM'
-      });
-
-      Alert.alert('Success', 'Order created successfully.');
-
-      router.push({
-        pathname: '/pending',
-        params: {
-          newService: JSON.stringify({
-            id: response.id,
-            serviceType: formData.serviceType,
-            clientName: formData.clientName,
-            address: formData.address,
-            phoneNumber: formData.phoneNumber,
-            billAmount: formData.billAmount,
-            status: 'pending',
-            serviceboyName: formData.serviceboyName,
-            serviceboyEmail: formData.serviceboyEmail,
-            serviceboyContactNumber: formData.serviceboyContactNumber,
-            serviceDate: formData.serviceDate,
-            serviceTime: `${formData.serviceTime} ${formData.timePeriod}`,
-            createdAt: new Date().toISOString()
-          })
-        }
-      });
-
-    } catch (error) {
-      console.error('Error creating order:', error);
-      Alert.alert('Error', 'Failed to create order. Please try again.');
+      Alert.alert('✅ Success', `${servicesList.length} order(s) created successfully`);
+      router.push('/pending');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to create order');
     } finally {
       setIsSubmitting(false);
     }
@@ -307,170 +154,111 @@ const OrderScreen = () => {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.formContainer}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Service Information</Text>
-              <View style={styles.field}>
-                <Text style={styles.label}>Engineer Name</Text>
-                <View style={styles.readOnlyContainer}>
-                  <Text style={styles.readOnlyText}>{formData.serviceboyName}</Text>
-                </View>
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Email Address</Text>
-                <View style={styles.readOnlyContainer}>
-                  <Text style={styles.readOnlyText}>{formData.serviceboyEmail}</Text>
-                </View>
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Contact Number</Text>
-                <View style={styles.readOnlyContainer}>
-                  <Text style={styles.readOnlyText}>{formData.serviceboyContactNumber}</Text>
-                </View>
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Service Type</Text>
-                <View style={styles.readOnlyContainer}>
-                  <Text style={styles.readOnlyText}>{serviceType}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Service Schedule</Text>
-              <View style={styles.field}>
-                <Text style={styles.label}>Service Date <Text style={styles.required}>*</Text></Text>
-                <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text>{formData.serviceDate}</Text>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                    minimumDate={new Date()}
-                  />
-                )}
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Service Time <Text style={styles.required}>*</Text></Text>
-                <View style={styles.timeInputContainer}>
-                  <TextInput
-                    style={[styles.input, styles.timeInput]}
-                    value={formData.serviceTime}
-                    onChangeText={handleTimeChange}
-                    placeholder="HH:MM"
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={5}
-                  />
-
-                  <View style={styles.timePeriodContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timePeriodButton,
-                        formData.timePeriod === 'AM' && styles.timePeriodButtonActive
-                      ]}
-                      onPress={() => handleTimePeriodChange('AM')}
-                    >
-                      <Text style={[
-                        styles.timePeriodText,
-                        formData.timePeriod === 'AM' && styles.timePeriodTextActive
-                      ]}>
-                        AM
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.timePeriodButton,
-                        formData.timePeriod === 'PM' && styles.timePeriodButtonActive
-                      ]}
-                      onPress={() => handleTimePeriodChange('PM')}
-                    >
-                      <Text style={[
-                        styles.timePeriodText,
-                        formData.timePeriod === 'PM' && styles.timePeriodTextActive
-                      ]}>
-                        PM
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Customer Details</Text>
-              <View style={styles.field}>
-                <Text style={styles.label}>
-                  Customer Name <Text style={styles.required}>*</Text>
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.clientName}
-                  onChangeText={(text) => handleChange('clientName', text)}
-                  placeholder="Enter customer name"
-                />
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Contact Number <Text style={styles.required}>*</Text></Text>
-                <View style={styles.inputContainer}>
-                  <MaterialIcons name="phone" size={20} color="#6B7280" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.inputWithIcon}
-                    placeholder="10-digit contact number"
-                    value={formData.phoneNumber}
-                    onChangeText={(text) => handleChange('phoneNumber', text)}
-                    keyboardType="phone-pad"
-                    maxLength={10}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Service Address <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  value={formData.address}
-                  onChangeText={(text) => handleChange('address', text)}
-                  placeholder="Enter Full address"
-                  multiline
-                  numberOfLines={4}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>Billing Information <Text style={styles.required}>*</Text></Text>
-            <Text style={styles.label1}>Service Charge</Text>
-
-            <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
-              <TextInput
-                style={styles.inputWithIcon}
-                value={formData.billAmount?.toString() ?? ''}
-                onChangeText={(text) => handleChange('billAmount', text)}
-                placeholder="0.00"
-                keyboardType="numeric"
-              />
-            </View>
-
+          {/* Engineer Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Engineer Information</Text>
+            <Text style={styles.label}>Name: {formData.serviceboyName}</Text>
+            <Text style={styles.label}>Email: {formData.serviceboyEmail}</Text>
+            <Text style={styles.label}>Contact: {formData.serviceboyContactNumber}</Text>
           </View>
+
+          {/* Services */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Services & Charges</Text>
+            {servicesList.map((s, i) => (
+              <View
+                key={i}
+                style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>{s.name}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MaterialCommunityIcons name="currency-inr" size={16} color="#6B7280" />
+                  <TextInput
+                    style={[styles.input, { width: 100, marginLeft: 5 }]}
+                    placeholder="0.00"
+                    keyboardType="numeric"
+                    value={s.charge}
+                    onChangeText={val => handleChargeChange(i, val)}
+                  />
+                </View>
+              </View>
+            ))}
+            <Text style={{ fontWeight: 'bold', marginTop: 10 }}>
+              Total: ₹{formData.billAmount || 0}
+            </Text>
+          </View>
+
+          {/* Service Date & Time */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Service Schedule</Text>
+
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={[styles.input, { marginBottom: 10 }]}
+            >
+              <Text style={{ color: '#000' }}>📅 {formData.serviceDate}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date()}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={() => setShowTimePicker(true)}
+              style={[styles.input, { marginBottom: 10 }]}
+            >
+              <Text style={{ color: '#000' }}>⏰ {formData.serviceTime}</Text>
+            </TouchableOpacity>
+            {showTimePicker && (
+              <DateTimePicker
+                value={new Date()}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={handleTimeChange}
+              />
+            )}
+          </View>
+
+          {/* Customer Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Customer Details</Text>
+            <TextInput
+              style={[styles.input, { marginBottom: 10 }]}
+              placeholder="Customer Name"
+              value={formData.clientName}
+              onChangeText={t => handleChange('clientName', t)}
+            />
+            <TextInput
+              style={[styles.input, { marginBottom: 10 }]}
+              placeholder="Phone Number"
+              keyboardType="numeric"
+              value={formData.phoneNumber}
+              onChangeText={t => handleChange('phoneNumber', t)}
+            />
+            <TextInput
+              style={[styles.input, styles.textArea, { marginBottom: 10 }]}
+              placeholder="Address"
+              multiline
+              value={formData.address}
+              onChangeText={t => handleChange('address', t)}
+            />
+          </View>
+
+          {/* Submit Button */}
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
             <Text style={styles.submitButtonText}>
-              {isSubmitting ? 'Creating...' : 'Create Service Order'}
+              {isSubmitting ? 'Creating Orders...' : 'Create Orders'}
             </Text>
           </TouchableOpacity>
         </ScrollView>

@@ -99,6 +99,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    marginTop:10,
     borderRadius: 8,
     padding: 14,
     fontSize: 16,
@@ -188,5 +189,29 @@ export const styles = StyleSheet.create({
   },
   timePeriodTextActive: {
     color: '#FFFFFF',
+  },
+   testButton: {
+    padding: 8,
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  
+  notificationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
+  },
+  
+  notificationInfoText: {
+    marginLeft: 8,
+    color: '#1E40AF',
+    fontSize: 14,
+    flex: 1,
   },
 });

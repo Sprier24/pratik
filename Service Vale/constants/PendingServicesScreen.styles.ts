@@ -342,4 +342,53 @@ export const styles = StyleSheet.create({
     marginLeft: 10,
     color: "#718096",
   },
+  servicesListContainer: {
+    marginVertical: 8,
+    padding: 12,
+    backgroundColor: '#F7FAFC',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#5E72E4',
+  },
+  serviceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  serviceNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  serviceNameText: {
+    fontSize: 14,
+    color: '#4A5568',
+    fontWeight: '500',
+  },
+  serviceChargeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  serviceChargeText: {
+    fontSize: 14,
+    color: '#2D3748',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  engineerInfoContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F7FAFC',
+  padding: 12,
+  marginHorizontal: 16,
+  borderRadius: 8,
+  marginTop: 8,
+},
+engineerInfoText: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#5E72E4',
+  marginLeft: 8,
+},
 });

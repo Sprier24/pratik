@@ -57,4 +57,26 @@ export const footerStyles = StyleSheet.create({
   bottomButtonTextActive: {
     color: "#FFF",
   },
+  dateTimeContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  gap: 10,
+},
+dateTimeButton: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F7FAFC',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  borderRadius: 8,
+  padding: 12,
+  gap: 8,
+},
+dateTimeButtonText: {
+  fontSize: 16,
+  color: '#2D3748',
+  fontWeight: '500',
+},
+  
 });

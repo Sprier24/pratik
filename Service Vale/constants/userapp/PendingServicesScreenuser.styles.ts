@@ -234,4 +234,48 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 8,
   },
+  servicesListContainer: {
+    marginVertical: 8,
+    padding: 12,
+    backgroundColor: '#F7FAFC',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#5E72E4',
+  },
+  loadingMoreContainer: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    color: "#718096",
+  },
+  serviceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  serviceNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  serviceNameText: {
+    fontSize: 14,
+    color: '#4A5568',
+    fontWeight: '500',
+  },
+  serviceChargeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  serviceChargeText: {
+    fontSize: 14,
+    color: '#2D3748',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
 });

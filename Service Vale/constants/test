@@ -232,7 +232,7 @@ export const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     color: "#2D3748",
   },
-  input1: {
+    input1: {
     backgroundColor: "#F7FAFC",
     borderRadius: 10,
     padding: 14,
@@ -380,16 +380,16 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
-  billsListContainer: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingRight: 20,
-    paddingLeft: 20,
-    paddingBottom: 80,
+ billsListContainer: {
+  flex: 1,
+  paddingHorizontal: 10,
+  paddingTop: 10,
+  paddingRight: 20,
+  paddingLeft: 20,
+  paddingBottom: 80, 
   },
   billsListContent: {
-    paddingBottom: 100,
+    paddingBottom: 100, 
   },
   loadingContainer: {
     flex: 1,
@@ -636,7 +636,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#25D366",
   },
   deleteButton: {
-    backgroundColor: "#f56565ff",
+    backgroundColor: "#f56565ca",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -816,18 +816,18 @@ export const styles = StyleSheet.create({
   clearSearchButton: {
     marginLeft: 8,
     padding: 4,
-  },
+  }, 
   loadingMoreContainer: {
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  loadingMoreText: {
-    marginLeft: 10,
-    color: '#718096',
-  },
-  filterItem: {
+  padding: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+loadingMoreText: {
+  marginLeft: 10,
+  color: '#718096',
+},
+filterItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -843,7 +843,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0AEC0',
   },
-  modalSafeArea: {
+   modalSafeArea: {
     flex: 1,
     backgroundColor: '#FFF',
   },
@@ -864,7 +864,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
-  signatureSection: {
+    signatureSection: {
     marginTop: 24,
     alignItems: 'center',
   },
@@ -878,14 +878,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 24,
   },
-  signatureWebView: {
+    signatureWebView: {
     flex: 1,
   },
-  totalAmount: {
+   totalAmount: {
     fontWeight: 'bold',
     color: '#2B6CB0',
   },
-  errorText: {
+   errorText: {
     color: "#E53E3E",
     fontSize: 12,
     marginTop: 4,
@@ -909,35 +909,35 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   dropdownContainer: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  dropdownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 10,
-    paddingVertical: 12,
+        position: 'relative',
+        marginBottom: 8,
+    },
+    dropdownHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 10,
+        paddingVertical: 12,
     paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#A0AEC0',
-    backgroundColor: '#F7FAFC',
-    shadowColor: '#000',
+        borderWidth: 1,
+        borderColor: '#A0AEC0',
+        backgroundColor: '#F7FAFC',
+        shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 2,
-  },
-  dropdownSelectedText: {
-    fontSize: 16,
+    },
+    dropdownSelectedText: {
+        fontSize: 16,
     color: '#2D3748',
-  },
-  dropdownPlaceholderText: {
-    fontSize: 16,
-    color: '#4A5568',
-  },
-  dropdownList: {
-    position: 'absolute',
+    },
+    dropdownPlaceholderText: {
+        fontSize: 16,
+        color: '#4A5568',
+    },
+    dropdownList: {
+      position: 'absolute',
     top: '100%',
     left: 0,
     right: 0,
@@ -954,114 +954,16 @@ export const styles = StyleSheet.create({
     elevation: 4,
     overflow: 'hidden',
     zIndex: 1000,
-  },
-  dropdownItem: {
+    },
+    dropdownItem: {
     paddingVertical: 12,
     paddingHorizontal: 14,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: '#2D3748'
-  },
-  dropdownScrollView: {
-    maxHeight: 150,
-  },
-  // Add these styles to your existing BillPage.styles.ts file
-
-  servicesContainer: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  servicesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginBottom: 12,
-  },
-  serviceItem: {
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
-  },
-  serviceInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  serviceNameInput: {
-    flex: 2,
-    marginRight: 8,
-  },
-  serviceChargeInput: {
-    flex: 1,
-    marginRight: 8,
-  },
-  removeServiceButton: {
-    padding: 8,
-    backgroundColor: '#FED7D7',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addServiceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    backgroundColor: '#EDF2F7',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#CBD5E0',
-    borderStyle: 'dashed',
-  },
-  addServiceText: {
-    marginLeft: 8,
-    color: '#5E72E4',
-    fontWeight: '600',
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#5E72E4',
-  },
-
-  dateTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  dateTimeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F7FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    padding: 12,
-    gap: 8,
-  },
-  dateTimeButtonText: {
-    fontSize: 16,
-    color: '#2D3748',
-    fontWeight: '500',
-  },
+    dropdownItemText: {
+        fontSize: 16,
+         color: '#2D3748'
+    },
+    dropdownScrollView: {
+        maxHeight: 150,
+    },
 });
